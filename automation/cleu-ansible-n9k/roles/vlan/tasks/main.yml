@@ -1,0 +1,135 @@
+---
+- name: Add VLAN definition
+  nxos_vlan:
+      admin_state: up
+      name: "{{ vlan_name }}"
+      vlan_id: "{{ vlan_id }}"
+  tags: vlan
+
+- name: Associate interfaces to VLAN
+  nxos_config:
+      lines:
+          - switchport trunk allowed vlan add {{ vlan_id }}
+      parents: interface {{ item }}
+  with_items: "{{ iflist }}"
+  when: iflist is defined
+
+- name: Add SVI definition
+  nxos_interface:
+      admin_state: up
+      name: Vlan{{ vlan_id }}
+      mode: layer3
+      mtu: "{{ svi_mtu }}"
+      description: "{{ svi_descr }}"
+  when: svi_v4_prefix is defined or svi_v6_network is defined or svi_v6_link_local is defined
+  tags: vlan
+
+- name: Add SVI v4 L3 parameters
+  nxos_l3_interface:
+      name: Vlan{{ vlan_id }}
+      ipv4: "{{ svi_v4_prefix }}.{{ core_svi_v4_suffix }}/{{ svi_subnet_len }}"
+  when: svi_v4_prefix is defined
+  tags: vlan
+
+- name: Add SVI v6 L3 parameters
+  nxos_l3_interface:
+      name: Vlan{{ vlan_id }}
+      ipv6: "{{ svi_v6_network }}{{ core_svi_v6_suffix }}/64"
+  when: svi_v6_network is defined
+  tags: vlan
+
+- name: Add SVI v6 L3 parameters
+  nxos_config:
+      lines:
+          - ipv6 address use-link-local-only
+      parents: interface Vlan{{ vlan_id }}
+  when: svi_v6_link_local is defined
+  tags: vlan
+
+- name: Add SVI OSPFv2 parameters
+  nxos_interface_ospf:
+      area: 0.0.0.0
+      ospf: 1
+      interface: Vlan{{ vlan_id }}
+  when: svi_v4_prefix is defined
+  tags: vlan
+
+- name: Add additional SVI OSPFv2 parameters
+  nxos_config:
+      lines:
+          - ip ospf network {{ ospf_type }}
+      parents: interface Vlan{{ vlan_id }}
+  when: svi_v4_prefix is defined
+  tags: vlan
+
+- name: Disable SVI OSPFv2 passive interface
+  nxos_config:
+      lines:
+          - no ip ospf passive-interface
+      parents: interface Vlan{{ vlan_id }}
+  when: svi_v4_prefix is defined and not passive_interface is defined
+  tags: vlan
+
+- name: Add SVI OSPFv3 parameters
+  nxos_config:
+      lines:
+          - ipv6 router ospfv3 1 area 0.0.0.0
+          - ospfv3 network {{ ospf_type }}
+      parents: interface Vlan{{ vlan_id }}
+  when: svi_v6_network is defined or svi_v6_link_local is defined
+  tags: vlan
+
+- name: Disable SVI OSPFv3 passive interface
+  nxos_config:
+      lines:
+          - no ospfv3 passive-interface
+      parents: interface Vlan{{ vlan_id }}
+  when: (svi_v6_network is defined or svi_v6_link_local is defined) and not passive_interface is defined
+  tags: vlan
+
+- name: Add addition SVI parameters
+  nxos_config:
+      lines:
+          - no ip redirects
+          - no ipv6 redirects
+      parents: interface Vlan{{ vlan_id }}
+  when: svi_v4_prefix is defined or svi_v6_network is defined
+  tags: vlan
+
+- name: Enable HSRP
+  nxos_config:
+      lines:
+          - hsrp version 2
+      parents: interface Vlan{{ vlan_id }}
+  when: (svi_v4_prefix is defined or svi_v6_network is defined) and use_hsrp is defined
+  tags: vlan
+
+- name: Add HSRP v4 configuration
+  nxos_config:
+      lines:
+          - authentication md5 key-chain HSRP_KEY
+          - preempt
+          - priority {{ core_hsrp_priority }}
+          - timers  1  3
+          - ip {{ svi_v4_prefix }}.{{ core_hsrp_vip_v4_suffix }}
+          - track {{ core_hsrp_v4_track }} decrement 20
+      parents:
+          - interface Vlan{{ vlan_id }}
+          - hsrp 1
+  when: svi_v4_prefix is defined and use_hsrp is defined
+  tags: vlan
+
+- name: Add HSRP v6 configuration
+  nxos_config:
+      lines:
+          - authentication md5 key-chain HSRP_KEY
+          - preempt
+          - priority {{ core_hsrp_priority }}
+          - timers  1  3
+          - ip {{ svi_v6_network }}{{ core_hsrp_vip_v6_suffix }}
+          - track {{ core_hsrp_v6_track }} decrement 20
+      parents:
+          - interface Vlan{{ vlan_id }}
+          - hsrp 2 ipv6
+  when: svi_v6_network is defined and use_hsrp is defined
+  tags: vlan

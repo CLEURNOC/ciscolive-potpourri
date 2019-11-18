@@ -1,0 +1,6 @@
+---
+- name: Run configuration commands
+  nxos_config:
+      lines: "{{ cli_commands }}"
+      parents: "{{ cli_parents }}"
+  tags: cli

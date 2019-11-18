@@ -1,0 +1,44 @@
+---
+- name: Add SNMP RO community
+  nxos_snmp_community:
+      community: "{{ snmp_ro_community }}"
+      acl: "{{ mgmt_acl_name }}"
+      group: network-operator
+  tags: snmp
+
+- name: Add SNMP RW community
+  nxos_snmp_community:
+      community: "{{ snmp_rw_community }}"
+      acl: "{{ mgmt_acl_name }}"
+      group: network-admin
+  tags: snmp
+
+- name: Add SNMP location
+  nxos_snmp_location:
+      location: "{{ snmp_location }}"
+  tags: snmp
+
+- name: Add SNMP contact
+  nxos_snmp_contact:
+      contact: "{{ snmp_contact }}"
+  tags: snmp
+
+- name: Add SNMP notification host
+  nxos_snmp_host:
+      community: "{{ snmp_notif_community }}"
+      snmp_host: "{{ snmp_notif_host }}"
+      udp: "{{ snmp_notif_port }}"
+      version: "{{ snmp_notif_version }}"
+      snmp_type: "{{ snmp_notif_type }}"
+  tags: snmp
+
+- name: Add SNMPv3 users
+  nxos_snmp_user:
+      authentication: "{{ item.hash }}"
+      group: "{{ item.group }}"
+      privacy: "{{ item.password }}"
+      encrypt: no
+      pwd: "{{ item.password }}"
+      user: "{{ item.username }}"
+  with_items: "{{ n9k_snmp_users }}"
+  tags: snmp

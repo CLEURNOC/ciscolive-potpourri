@@ -1,0 +1,26 @@
+[DC1]
+10.127.0.249 core_svi_v4_suffix="249" core_svi_v6_suffix="f9" core_hsrp_priority="105"
+10.127.0.250 core_svi_v4_suffix="250" core_svi_v6_suffix="fa" core_hsrp_priority="104"
+
+[DC2]
+10.127.0.247 core_svi_v4_suffix="247" core_svi_v6_suffix="f7" core_hsrp_priority="103"
+10.127.0.248 core_svi_v4_suffix="248" core_svi_v6_suffix="f8" core_hsrp_priority="102"
+
+[Core:children]
+DC1
+DC2
+
+[vCenter]
+10.100.253.11
+
+[DC1-MDS]
+10.127.253.11
+10.127.253.12
+
+[DC2-MDS]
+10.127.254.11
+10.127.254.12
+
+[MDS:children]
+DC1-MDS
+DC2-MDS

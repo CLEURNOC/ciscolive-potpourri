@@ -1,0 +1,157 @@
+#!/usr/bin/env python2
+
+import argparse
+import sys
+import re
+import subprocess
+import os
+
+IPV4SEG  = r'(?:25[0-5]|(?:2[0-4]|1{0,1}[0-9]){0,1}[0-9])'
+IPV4ADDR = r'(?:(?:' + IPV4SEG + r'\.){3,3}' + IPV4SEG + r')'
+IPV6SEG  = r'(?:(?:[0-9a-fA-F]){1,4})'
+IPV6GROUPS = (
+    r'(?:' + IPV6SEG + r':){7,7}' + IPV6SEG,                  # 1:2:3:4:5:6:7:8
+    r'(?:' + IPV6SEG + r':){1,7}:',                           # 1::                                 1:2:3:4:5:6:7::
+    r'(?:' + IPV6SEG + r':){1,6}:' + IPV6SEG,                 # 1::8               1:2:3:4:5:6::8   1:2:3:4:5:6::8
+    r'(?:' + IPV6SEG + r':){1,5}(?::' + IPV6SEG + r'){1,2}',  # 1::7:8             1:2:3:4:5::7:8   1:2:3:4:5::8
+    r'(?:' + IPV6SEG + r':){1,4}(?::' + IPV6SEG + r'){1,3}',  # 1::6:7:8           1:2:3:4::6:7:8   1:2:3:4::8
+    r'(?:' + IPV6SEG + r':){1,3}(?::' + IPV6SEG + r'){1,4}',  # 1::5:6:7:8         1:2:3::5:6:7:8   1:2:3::8
+    r'(?:' + IPV6SEG + r':){1,2}(?::' + IPV6SEG + r'){1,5}',  # 1::4:5:6:7:8       1:2::4:5:6:7:8   1:2::8
+    IPV6SEG + r':(?:(?::' + IPV6SEG + r'){1,6})',             # 1::3:4:5:6:7:8     1::3:4:5:6:7:8   1::8
+    r':(?:(?::' + IPV6SEG + r'){1,7}|:)',                     # ::2:3:4:5:6:7:8    ::2:3:4:5:6:7:8  ::8       ::
+    r'fe80:(?::' + IPV6SEG + r'){0,4}%[0-9a-zA-Z]{1,}',       # fe80::7:8%eth0     fe80::7:8%1  (link-local IPv6 addresses with zone index)
+    r'::(?:ffff(?::0{1,4}){0,1}:){0,1}[^\s:]' + IPV4ADDR,     # ::255.255.255.255  ::ffff:255.255.255.255  ::ffff:0:255.255.255.255 (IPv4-mapped IPv6 addresses and IPv4-translated addresses)
+    r'(?:' + IPV6SEG + r':){1,4}:[^\s:]' + IPV4ADDR,          # 2001:db8:3:4::192.0.2.33  64:ff9b::192.0.2.33 (IPv4-Embedded IPv6 Address)
+)
+IPV6ADDR = '|'.join(['(?:{})'.format(g) for g in IPV6GROUPS[::-1]]) # Reverse rows for greedy match
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        prog=sys.argv[0], description='Add a VLAN to the core')
+    parser.add_argument('--vlan-name', '-n', metavar='<VLAN_NAME>',
+                        help='Name of the VLAN to add', required=True)
+    parser.add_argument('--vlan-id', '-i', metavar='<VLAN_ID>',
+                        help='ID of the VLAN to add', type=int, required=True)
+    parser.add_argument('--svi-v4-network', metavar='<SVI_NETWORK>',
+                        help='IPv4 network address of the SVI')
+    parser.add_argument('--svi-subnet-len', metavar='<SVI_PREFIX_LEN>',
+                        help='Subnet length of the SVI v4 IP (e.g., 24 for a /24)', type=int)
+    parser.add_argument('--svi-v6-network', metavar='<SVI_NETWORK>',
+                        help='IPv6 network address of the SVI (prefix len is assumed to be /64)')
+    parser.add_argument('--svi-descr', metavar='<SVI_DESCRIPTION>',
+                        help='Description of the SVI')
+    parser.add_argument('--no-hsrp', help='Use HSRP or not (default: False)', action="store_true")
+    parser.add_argument('--no-passive-interface', help='Whether or not to have OSPF use passive interface (default: False)', action='store_true')
+    parser.add_argument('--v6-link-local', help='Only use v6 link-local addresses', action='store_true')
+    parser.add_argument('--ospf-broadcast', help='OSPF network is broadcast instead of P2P (default: P2P)', action='store_true')
+    parser.add_argument('--interfaces', metavar='<INTF_LIST>', help='List of interfaces to enable for VLAN')
+    parser.add_argument('--mtu', '-m', metavar='<MTU>',
+                        help='MTU of SVI (default: 1500)', type=int)
+    parser.add_argument('--username', '-u', metavar='<USERNAME>',
+                        help='Username to use to connect to the N9Ks', required=True)
+    parser.add_argument('--site', '-s', metavar='<SITE NAME>',
+                        help='Name of site to which to add N9Ks (default: all sites)')
+    args = parser.parse_args()
+
+    if args.vlan_id < 1 or args.vlan_id > 3967:
+        print('ERROR: VLAN ID must be between 1 and 3967')
+        sys.exit(1)
+
+    svi_prefix = None
+    use_hsrp = True
+    passive_interface = True
+    svi_v6_link_local = False
+    ospf_type = 'point-to-point'
+
+    if args.svi_v4_network:
+        m = re.match(r'(\d+)\.(\d+)\.(\d+).(\d+)', args.svi_v4_network)
+
+        if not m:
+            print('ERROR: SVI Network must be an IPv4 network address')
+            sys.exit(1)
+
+        if not args.svi_subnet_len:
+            print('ERROR: SVI Prefix Length is required when an SVI Network is specified')
+            sys.exit(1)
+
+        if int(args.svi_subnet_len) < 8 or int(args.svi_subnet_len) > 30:
+            print('ERROR: SVI Prefix Length must be between 8 and 30')
+            sys.exit(1)
+
+        if args.svi_subnet_len >= 24:
+            svi_prefix = '{}.{}.{}'.format(m.group(1), m.group(2), m.group(3))
+        elif args.svi_prefix_len < 24 and args.svi_subnet_len >= 16:
+            svi_prefix = '{}.{}'.format(m.group(1), m.group(2))
+        else:
+            svi_prefix = m.group(1)
+
+    if args.svi_v4_network or args.svi_v6_network:
+        if args.mtu and (args.mtu < 1500 or args.mtu > 9216):
+            print('ERROR: MTU must be between 1500 and 9216')
+            sys.exit(1)
+        elif not args.mtu:
+            args.mtu = 1500
+
+        if args.no_passive_interface:
+            passive_interface = False
+
+        if args.no_hsrp:
+            use_hsrp = False
+
+        if args.ospf_broadcast:
+            ospf_type = 'broadcast'
+
+    if args.svi_v6_network:
+        m = re.match(IPV6ADDR, args.svi_v6_network)
+
+        if not m:
+            print('ERROR: SVI Network must be an IPv6 network address')
+            sys.exit(1)
+
+        if args.v6_link_local:
+            print('ERROR: Cannot specify both svi-v6-network and v6-link-local')
+            sys.exit(1)
+
+    elif args.v6_link_local:
+        svi_v6_link_local = True
+
+    os.environ['ANSIBLE_FORCE_COLOR'] = 'True'
+    os.environ['ANSIBLE_HOST_KEY_CHECKING'] = 'False'
+    os.environ['ANSIBLE_PERSISTENT_COMMAND_TIMEOUT'] = '300'
+
+    command = ['ansible-playbook', '-i', 'inventory/hosts',
+               '-u', args.username, '-k', '-e',
+               'vlan_name={}'.format(
+                   args.vlan_name), '-e', 'vlan_id={}'.format(args.vlan_id), '-e', 'ansible_python_interpreter={}'.format(sys.executable),
+               '-e', 'ospf_type={}'.format(ospf_type),
+               'add-vlan-playbook.yml']
+    if args.svi_v4_network:
+        command += ['-e', 'svi_v4_prefix={}'.format(
+            svi_prefix), '-e', 'svi_subnet_len={}'.format(args.svi_subnet_len),
+            '-e', 'svi_v4_network={}'.format(args.svi_v4_network)]
+    if args.svi_v6_network:
+        command += ['-e', 'svi_v6_network={}'.format(args.svi_v6_network)]
+    if args.mtu:
+        command += ['-e', 'svi_mtu={}'.format(args.mtu)]
+    if args.svi_descr:
+        command += ['-e', 'svi_descr='.format(args.svi_descr)]
+    if use_hsrp:
+        command += ['-e', 'use_hsrp={}'.format(use_hsrp)]
+    if passive_interface:
+        command += ['-e', 'passive_interface={}'.format(passive_interface)]
+    if svi_v6_link_local:
+        command += ['-e', 'svi_v6_link_local={}'.format(svi_v6_link_local)]
+    if args.interfaces:
+        command += ['-e', '{{"iflist": [{}]}}'.format(args.interfaces)]
+    if args.site:
+        command += ['--limit', args.site]
+    p = subprocess.Popen(command, stdout=subprocess.PIPE,
+                         stderr=subprocess.STDOUT)
+    for c in iter(lambda: p.stdout.read(1), ''):
+        sys.stdout.write(c)
+        sys.stdout.flush()
+
+
+if __name__ == '__main__':
+    main()

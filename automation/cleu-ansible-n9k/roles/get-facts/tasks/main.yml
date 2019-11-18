@@ -1,0 +1,9 @@
+- name: Gather NX-OS facts
+  nxos_facts:
+      gather_subset:
+          - interfaces
+  tags: facts
+
+      #- name: Print results
+      #  debug:
+      #    var: hostvars[inventory_hostname]

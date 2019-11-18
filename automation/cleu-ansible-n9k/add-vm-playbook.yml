@@ -1,0 +1,6 @@
+---
+- name: Add a VM
+  hosts: vCenter
+  gather_facts: false
+  roles:
+      - vm

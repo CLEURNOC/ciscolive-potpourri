@@ -1,0 +1,1331 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "hideControls": false,
+  "id": 1,
+  "links": [],
+  "refresh": false,
+  "rows": [
+    {
+      "collapse": false,
+      "height": 284,
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": "Prometheus",
+          "fill": 1,
+          "id": 1,
+          "legend": {
+            "avg": true,
+            "current": true,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": true
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "span": 6,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"9\",instance=\"10.128.0.1\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "hide": false,
+              "intervalFactor": 2,
+              "legendFormat": "TenGi0/1/0_IN",
+              "refId": "A"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"10\",instance=\"10.128.0.1\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "TenGi0/1/1_IN",
+              "refId": "C"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"11\",instance=\"10.128.0.1\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "TenGi0/1/2_IN",
+              "refId": "D"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"12\",instance=\"10.128.0.1\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "TenGi0/1/3_IN",
+              "refId": "B"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"9\",instance=\"10.128.0.1\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "TenGi0/1/0_OUT",
+              "refId": "E"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"10\",instance=\"10.128.0.1\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "TenGi0/1/1_OUT",
+              "refId": "F"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"11\",instance=\"10.128.0.1\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "TenGi0/1/2_OUT",
+              "refId": "G"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"12\",instance=\"10.128.0.1\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "TenGi0/1/3_OUT",
+              "refId": "H"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "CORE1_EDGE_Interfaces",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "bps",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": false
+            }
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": null,
+          "fill": 1,
+          "id": 3,
+          "legend": {
+            "avg": true,
+            "current": true,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": true
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "span": 6,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"9\",instance=\"10.128.0.2\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "hide": false,
+              "intervalFactor": 2,
+              "legendFormat": "TE0/1/0_IN",
+              "refId": "A"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"10\",instance=\"10.128.0.2\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "hide": false,
+              "intervalFactor": 2,
+              "legendFormat": "TE0/1/1_IN",
+              "refId": "C"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"11\",instance=\"10.128.0.2\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "hide": false,
+              "intervalFactor": 2,
+              "legendFormat": "TE0/1/2_IN",
+              "refId": "D"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"12\",instance=\"10.128.0.2\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "hide": false,
+              "intervalFactor": 2,
+              "legendFormat": "TE0/1/3_IN",
+              "refId": "E"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"9\",instance=\"10.128.0.2\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "hide": false,
+              "intervalFactor": 2,
+              "legendFormat": "TE0/1/0_OUT",
+              "refId": "F"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"10\",instance=\"10.128.0.2\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "TE0/1/1_OUT",
+              "refId": "B"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"11\",instance=\"10.128.0.2\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "TE0/1/2_OUT",
+              "refId": "G"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"12\",instance=\"10.128.0.2\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "TE0/1/3_OUT",
+              "refId": "H"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "CORE2_EDGE_Interfaces",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "bps",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": false,
+      "title": "Dashboard Row",
+      "titleSize": "h6"
+    },
+    {
+      "collapse": false,
+      "height": 250,
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": "Prometheus",
+          "fill": 1,
+          "id": 2,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "span": 6,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"2\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/1_IN",
+              "refId": "A"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"3\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/2_IN",
+              "refId": "B"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"4\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/3_IN",
+              "refId": "C"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"5\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/4_IN",
+              "refId": "D"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"6\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/5_IN",
+              "refId": "E"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"7\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/6_IN",
+              "refId": "F"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"8\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/7_IN",
+              "refId": "G"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"9\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/8_IN",
+              "refId": "H"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"50\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Hu1/0/49_IN",
+              "refId": "I"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"51\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Hu1/0/50_IN",
+              "refId": "J"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"52\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Hu1/0/51_IN",
+              "refId": "K"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"53\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Hu1/0/52_IN",
+              "refId": "L"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"14\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/13_IN",
+              "refId": "M"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"15\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/14_IN",
+              "refId": "N"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"16\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/15_IN",
+              "refId": "O"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"17\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/16_IN",
+              "refId": "P"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"18\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/17_IN",
+              "refId": "Q"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"19\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/18_IN",
+              "refId": "R"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"20\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/19_IN",
+              "refId": "S"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"21\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/20_IN",
+              "refId": "T"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"2\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/1_OUT",
+              "refId": "U"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"3\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/2_OUT",
+              "refId": "V"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"4\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/3_OUT",
+              "refId": "W"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"5\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/4_OUT",
+              "refId": "X"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"6\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/5_OUT",
+              "refId": "Y"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"7\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/6_OUT",
+              "refId": "Z"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"8\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/7_OUT"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"9\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/8_OUT"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"50\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Hu1/0/49_OUT"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"51\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Hu1/0/50_OUT"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"52\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Hu1/0/51_OUT"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"53\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Hu1/0/52_OUT"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"14\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/13_OUT"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"15\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/14_OUT"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"16\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/15_OUT"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"17\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/16_OUT"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"18\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/17_OUT"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"19\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/18_OUT"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"20\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/19_OUT"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"21\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/20_OUT"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "CORE1-L3C",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "bps",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": "Prometheus",
+          "fill": 1,
+          "id": 4,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "span": 6,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"2\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/1_IN",
+              "refId": "A"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"3\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/2_IN",
+              "refId": "B"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"4\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/3_IN",
+              "refId": "C"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"5\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/4_IN",
+              "refId": "D"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"6\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/5_IN",
+              "refId": "E"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"7\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/6_IN",
+              "refId": "F"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"8\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/7_IN",
+              "refId": "G"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"9\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/8_IN",
+              "refId": "H"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"50\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Hu1/0/49_IN",
+              "refId": "I"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"51\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Hu1/0/50_IN",
+              "refId": "J"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"52\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Hu1/0/51_IN",
+              "refId": "K"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"53\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Hu1/0/52_IN",
+              "refId": "L"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"14\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/13_IN",
+              "refId": "M"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"15\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/14_IN",
+              "refId": "N"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"16\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/15_IN",
+              "refId": "O"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"17\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/16_IN",
+              "refId": "P"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"18\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/17_IN",
+              "refId": "Q"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"19\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/18_IN",
+              "refId": "R"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"20\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/19_IN",
+              "refId": "S"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"21\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/20_IN",
+              "refId": "T"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"2\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/1_OUT",
+              "refId": "U"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"3\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/2_OUT",
+              "refId": "V"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"4\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/3_OUT",
+              "refId": "W"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"5\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/4_OUT",
+              "refId": "X"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"6\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/5_OUT",
+              "refId": "Y"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"7\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/6_OUT",
+              "refId": "Z"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"8\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/7_OUT"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"9\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/8_OUT"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"50\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Hu1/0/49_OUT"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"51\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Hu1/0/50_OUT"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"52\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Hu1/0/51_OUT"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"53\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Hu1/0/52_OUT"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"14\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/13_OUT"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"15\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/14_OUT"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"16\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/15_OUT"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"17\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/16_OUT"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"18\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/17_OUT"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"19\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/18_OUT"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"20\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/19_OUT"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"21\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "Twe1/0/20_OUT"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "CORE2-L3C",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "bps",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": false,
+      "title": "Dashboard Row",
+      "titleSize": "h6"
+    },
+    {
+      "collapse": false,
+      "height": 250,
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": null,
+          "fill": 1,
+          "id": 5,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "span": 6,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"67\",instance=\"10.127.0.101\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "003-Te1/1/8_IN",
+              "refId": "A"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"67\",instance=\"10.127.0.103\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "003-Te1/1/8_OUT",
+              "refId": "B"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"67\",instance=\"10.127.0.101\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "004-Te1/1/8_IN",
+              "refId": "C"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"67\",instance=\"10.127.0.103\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "004-Te1/1/8_OUT",
+              "refId": "D"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"49\",instance=\"10.127.0.105\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "005-Te1/0/48_IN",
+              "refId": "E"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"49\",instance=\"10.127.0.105\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "005-Te1/0/48_OUT",
+              "refId": "F"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"49\",instance=\"10.127.0.107\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "006-Te1/0/48_IN",
+              "refId": "G"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"49\",instance=\"10.127.0.107\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "006-Te1/0/48_OUT",
+              "refId": "H"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"49\",instance=\"10.127.0.109\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "007-Te1/0/48_IN",
+              "refId": "I"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"49\",instance=\"10.127.0.109\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "007-Te1/0/48_OUT",
+              "refId": "J"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"49\",instance=\"10.127.0.111\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "008-Te1/0/48_IN",
+              "refId": "K"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"49\",instance=\"10.127.0.111\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "008-Te1/0/48_OUT",
+              "refId": "L"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "00x-MDF-a UPLinks to CORE1-L3C",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "bps",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": null,
+          "fill": 1,
+          "id": 6,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "span": 6,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"67\",instance=\"10.127.0.102\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "003-Te1/1/8_IN",
+              "refId": "A"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"67\",instance=\"10.127.0.102\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "003-Te1/1/8_OUT",
+              "refId": "B"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"67\",instance=\"10.127.0.104\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "004-Te1/1/8_IN",
+              "refId": "C"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"67\",instance=\"10.127.0.104\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "004-Te1/1/8_OUT",
+              "refId": "D"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"49\",instance=\"10.127.0.106\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "005-Te1/0/48_IN",
+              "refId": "E"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"49\",instance=\"10.127.0.106\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "005-Te1/0/48_OUT",
+              "refId": "F"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"49\",instance=\"10.127.0.108\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "006-Te1/0/48_IN",
+              "refId": "G"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"49\",instance=\"10.127.0.108\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "006-Te1/0/48_OUT",
+              "refId": "H"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"49\",instance=\"10.127.0.110\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "007-Te1/0/48_IN",
+              "refId": "I"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"49\",instance=\"10.127.0.110\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "007-Te1/0/48_OUT",
+              "refId": "J"
+            },
+            {
+              "expr": "delta(ifHCInOctets{ifIndex=\"49\",instance=\"10.127.0.112\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "008-Te1/0/48_IN",
+              "refId": "K"
+            },
+            {
+              "expr": "delta(ifHCOutOctets{ifIndex=\"49\",instance=\"10.127.0.10.112\",job=\"snmp\"}[5m])*8/300",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "008-Te1/0/48_OUT",
+              "refId": "L"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "00x-MDF-b UPLinks to CORE2-L3C",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "bps",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": false,
+      "title": "Dashboard Row",
+      "titleSize": "h6"
+    }
+  ],
+  "schemaVersion": 14,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ]
+  },
+  "timezone": "",
+  "title": "CLEUR19_CORE-NETWORK",
+  "version": 25
+}

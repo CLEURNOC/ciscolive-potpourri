@@ -1,0 +1,23 @@
+---
+- name: Add virtual machine
+  vmware_guest:
+      hostname: "{{ inventory_hostname }}"
+      cluster: "{{ vmware_cluster }}"
+      guest_id: "{{ guest_id }}"
+      name: "{{ guest_name }}"
+      datacenter: "{{ vmware_datacenter }}"
+      folder: /{{ vmware_datacenter }}/vm/
+      cdrom:
+          type: client
+      disk:
+          - size_gb: "{{ guest_size }}"
+            type: thin
+            datastore: "{{ guest_datastore }}"
+      hardware:
+          memory_mb: "{{ guest_mem }}"
+          num_cpus: "{{ guest_cpu }}"
+          scsi: "{{ guest_scsi }}"
+      networks:
+          - name: "{{ guest_network }}"
+      validate_certs : no
+  delegate_to: localhost

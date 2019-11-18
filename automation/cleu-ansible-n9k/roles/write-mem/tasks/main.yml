@@ -1,0 +1,5 @@
+---
+- name: Save running-config
+  nxos_config:
+      save_when: modified
+  tags: write-mem

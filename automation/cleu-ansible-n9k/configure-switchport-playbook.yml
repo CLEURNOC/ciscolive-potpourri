@@ -1,0 +1,8 @@
+---
+- name: Configure switchport
+  hosts: Core
+  gather_facts: false
+  connection: network_cli
+  roles:
+      - switchport
+      - write-mem

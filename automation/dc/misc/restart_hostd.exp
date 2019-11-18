@@ -1,0 +1,36 @@
+#!/usr/local/bin/expect
+
+
+if { ! [info exists env(ESXI_ROOT_PW)] } {
+    puts "ERROR: Please set the ESXI_ROOT_PW environment variable first!"
+    exit 1
+}
+set pw $env(ESXI_ROOT_PW)
+
+set hosts [list \
+   "dc1-hv-1.ciscolive.network" \
+   "dc1-hv-2.ciscolive.network" \
+   "dc1-hv-3.ciscolive.network" \
+   "dc1-hv-4.ciscolive.network" \
+   "dc1-hv-5.ciscolive.network" \
+   "dc1-hv-6.ciscolive.network" \
+   "dc1-hv-7.ciscolive.network" \
+   "dc1-hv-8.ciscolive.network" \
+   "dc2-hv-1.ciscolive.network" \
+   "dc2-hv-2.ciscolive.network" \
+   "dc2-hv-3.ciscolive.network" \
+   "dc2-hv-4.ciscolive.network" \
+   "dc2-hv-5.ciscolive.network" \
+   "dc2-hv-6.ciscolive.network" \
+   "dc2-hv-7.ciscolive.network" \
+   "dc2-hv-8.ciscolive.network"]
+
+foreach host $hosts {
+    eval spawn ssh -o StrictHostKeyChecking=no root@$host
+    interact -o -nobuffer -re "assword:" return
+    send "$pw\r"
+    interact -o -nobuffer -re "\]" return
+    send "/etc/init.d/hostd restart\r"
+    expect -re "\]"
+    send "exit\r"
+}

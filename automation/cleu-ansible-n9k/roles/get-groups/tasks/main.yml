@@ -1,0 +1,4 @@
+---
+- name: List groups
+  debug:
+      msg: "{{ hostvars[inventory_hostname] }} is part of {{ group_names }}"
