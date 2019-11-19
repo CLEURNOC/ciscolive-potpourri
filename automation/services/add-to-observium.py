@@ -31,6 +31,7 @@ import shlex
 import CLEUCreds
 
 MONITORING = 'cl-monitoring.ciscolive.network'
+# TODO: Move these to a central config file.
 DEV_FILE = '/home/jclarke/ping-devs.json'
 
 if __name__ == '__main__':
