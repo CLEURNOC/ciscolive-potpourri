@@ -28,6 +28,13 @@ from requests_toolbelt import MultipartEncoder
 from io import BytesIO
 import logging
 import time
+from enum import Enum, unique
+
+
+@unique
+class ResourceType(Enum):
+    ROOM = 1
+    TEAM = 2
 
 
 class Sparker():
@@ -81,7 +88,6 @@ class Sparker():
 
         return True
 
-
     def get_message(self, mid):
         if not self.check_token():
             return None
@@ -125,7 +131,7 @@ class Sparker():
 
         team_id = None
         for t in response.json()['items']:
-            if t['name'] == team:
+            if 'name' in t and t['name'] == team:
                 self._team_cache[team] = t['id']
                 return t['id']
 
@@ -168,7 +174,7 @@ class Sparker():
 
         room_id = None
         for r in response.json()['items']:
-            if r['title'] == room:
+            if 'title' in r and r['title'] == room:
                 self._room_cache['{}:{}'.format(team_id, room)] = r['id']
                 return r['id']
 
@@ -181,33 +187,108 @@ class Sparker():
 
         return None
 
-    def get_members(self, team):
+    def get_members(self, resource, type=ResourceType.TEAM):
         if not self.check_token():
             return None
 
-        team_id = None
+        payload = {}
+        url = self.SPARK_API
 
-        team_id = self.get_team_id(team)
-        if team_id is None:
+        if type == ResourceType.TEAM:
+            rid = self.get_team_id(resource)
+            if rid is None:
+                return None
+
+            url += 'team/memberships'
+            payload['teamId'] = rid
+        elif type == ResourceType.ROOM:
+            rid = self.get_room_id(None, resource)
+            if rid is None:
+                return None
+
+            url += 'memberships'
+            payload['roomId'] = rid
+        else:
+            msg = 'Resource type must be TEAM or ROOM'
+            if self._logit:
+                logging.error(msg)
+            else:
+                print(msg)
+
             return None
-
-        url = self.SPARK_API + 'team/memberships'
-
-        payload = {'teamId': team_id}
 
         try:
             response = Sparker._request_with_retry(
                 'GET', url, params=payload, headers=self._headers)
             response.raise_for_status()
         except Exception as e:
-            msg = 'Error getting team membership: {}'.format(e)
+            msg = 'Error getting resource membership: {}'.format(e)
             if self._logit:
                 logging.error(msg)
             else:
                 print(msg)
             return None
 
-        return response.json()
+        return response.json()['items']
+
+    def add_members(self, members, resource, type=ResourceType.TEAM):
+        if not self.check_token():
+            return None
+
+        payload = {}
+        url = self.SPARK_API
+        err_occurred = False
+
+        if type == ResourceType.TEAM:
+            rid = self.get_team_id(resource)
+            if rid is None:
+                return False
+
+            url += 'team/memberships'
+            payload['teamId'] = rid
+            payload['isModerator'] = False
+        elif type == ResourceType.ROOM:
+            rid = self.get_room_id(None, resource)
+            if rid is None:
+                return False
+
+            url += 'memberships'
+            payload['roomId'] = rid
+        else:
+            msg = 'Resource type must be TEAM or ROOM'
+            if self._logit:
+                logging.error(msg)
+            else:
+                print(msg)
+
+            return False
+
+        mem_list = members
+
+        if not isinstance(members, list):
+            mem_list = [members]
+
+        for member in mem_list:
+            try:
+                if 'personId' in member:
+                    payload['personId'] = member['personId']
+                    payload.pop('personEmail', None)
+                else:
+                    payload['personEmail'] = member['personEmail']
+                    payload.pop('personId', None)
+
+                response = Sparker._request_with_retry(
+                    'POST', url, json=payload, headers=self._headers)
+                response.raise_for_status()
+            except Exception as e:
+                msg = 'Error adding member %s to %s: %s' % (payload, resource, e)
+                if self._logit:
+                    logging.error(msg)
+                else:
+                    print(msg)
+                err_occurred = True
+
+        return not err_occurred
 
     def post_to_spark(self, team, room, msg):
         if not self.check_token():
