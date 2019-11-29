@@ -40,7 +40,7 @@ class ResourceType(Enum):
 class Sparker():
     SPARK_API = 'https://api.ciscospark.com/v1/'
 
-    RETRIES = 3
+    RETRIES = 5
 
     _headers = {
         'authorization': None,
@@ -73,6 +73,38 @@ class Sparker():
                 time.sleep(backoff)
                 backoff *= 2
                 i += 1
+
+    @staticmethod
+    def _get_items_pages(*args, **kwargs):
+        more_pages = True
+        result = []
+
+        while more_pages:
+            try:
+                response = Sparker._request_with_retry(*args, **kwargs)
+                response.raise_for_status()
+                result += response.json()['items']
+                if 'Link' in response.headers:
+                    links = requests.utils.parse_header_links(
+                        response.headers['Link'])
+                    found_next = False
+                    for link in links:
+                        if link['rel'] == 'next':
+                            args = (args[0], link['url'])
+                            kwargs.pop('params', None)
+                            found_next = True
+                            break
+
+                    if found_next:
+                        continue
+
+                    more_pages = False
+                else:
+                    more_pages = False
+            except Exception as e:
+                raise e
+
+        return result
 
     def set_token(self, token):
         self._headers['authorization'] = 'Bearer ' + token
@@ -118,9 +150,8 @@ class Sparker():
         url = self.SPARK_API + 'teams'
 
         try:
-            response = Sparker._request_with_retry(
+            items = Sparker._get_items_pages(
                 'GET', url, headers=self._headers)
-            response.raise_for_status()
         except Exception as e:
             msg = 'Error retrieving teams: {}'.format(e)
             if self._logit:
@@ -130,7 +161,7 @@ class Sparker():
             return None
 
         team_id = None
-        for t in response.json()['items']:
+        for t in items:
             if 'name' in t and t['name'] == team:
                 self._team_cache[team] = t['id']
                 return t['id']
@@ -161,9 +192,8 @@ class Sparker():
             params['teamId'] = team_id
 
         try:
-            response = Sparker._request_with_retry(
+            items = Sparker._get_items_pages(
                 'GET', url, headers=self._headers, params=params)
-            response.raise_for_status()
         except Exception as e:
             msg = 'Error retrieving room {}: {}'.format(room, e)
             if self._logit:
@@ -173,7 +203,7 @@ class Sparker():
             return None
 
         room_id = None
-        for r in response.json()['items']:
+        for r in items:
             if 'title' in r and r['title'] == room:
                 self._room_cache['{}:{}'.format(team_id, room)] = r['id']
                 return r['id']
@@ -218,9 +248,8 @@ class Sparker():
             return None
 
         try:
-            response = Sparker._request_with_retry(
+            items = Sparker._get_items_pages(
                 'GET', url, params=payload, headers=self._headers)
-            response.raise_for_status()
         except Exception as e:
             msg = 'Error getting resource membership: {}'.format(e)
             if self._logit:
@@ -229,13 +258,13 @@ class Sparker():
                 print(msg)
             return None
 
-        return response.json()['items']
+        return items
 
     def add_members(self, members, resource, type=ResourceType.TEAM):
         if not self.check_token():
             return None
 
-        payload = {}
+        payload = {'isModerator': False}
         url = self.SPARK_API
         err_occurred = False
 
@@ -246,7 +275,6 @@ class Sparker():
 
             url += 'team/memberships'
             payload['teamId'] = rid
-            payload['isModerator'] = False
         elif type == ResourceType.ROOM:
             rid = self.get_room_id(None, resource)
             if rid is None:
@@ -281,7 +309,8 @@ class Sparker():
                     'POST', url, json=payload, headers=self._headers)
                 response.raise_for_status()
             except Exception as e:
-                msg = 'Error adding member %s to %s: %s' % (member, resource, e)
+                msg = 'Error adding member %s to %s: %s' % (
+                    member, resource, e)
                 if self._logit:
                     logging.error(msg)
                 else:
