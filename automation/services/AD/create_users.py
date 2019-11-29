@@ -44,7 +44,7 @@ if __name__ == '__main__':
     #pyad.set_defaults(ldap_server=AD_DC, username=AD_USERNAME, password=AD_PASSWORD, ssl=True)
     ou = adcontainer.ADContainer.from_dn(AD_DN_BASE)
     if members is not None:
-        for member in members['items']:
+        for member in members:
             m = re.search(r'([^@]+)@cisco.com$', member['personEmail'])
             if m:
                 names = member['personDisplayName'].split(' ')
