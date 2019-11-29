@@ -281,7 +281,7 @@ class Sparker():
                     'POST', url, json=payload, headers=self._headers)
                 response.raise_for_status()
             except Exception as e:
-                msg = 'Error adding member %s to %s: %s' % (payload, resource, e)
+                msg = 'Error adding member %s to %s: %s' % (member, resource, e)
                 if self._logit:
                     logging.error(msg)
                 else:
