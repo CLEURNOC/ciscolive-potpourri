@@ -131,7 +131,8 @@ class Sparker():
                 'GET', url, headers=self._headers)
             response.raise_for_status()
         except Exception as e:
-            msg = 'Error getting message with ID {}: {}'.format(mid, e)
+            msg = 'Error getting message with ID {}: {}'.format(
+                mid, getattr(e, 'message', repr(e)))
             if self._logit:
                 logging.error(msg)
             else:
@@ -153,7 +154,8 @@ class Sparker():
             items = Sparker._get_items_pages(
                 'GET', url, headers=self._headers)
         except Exception as e:
-            msg = 'Error retrieving teams: {}'.format(e)
+            msg = 'Error retrieving teams: {}'.format(
+                getattr(e, 'message', repr(e)))
             if self._logit:
                 logging.error(msg)
             else:
@@ -195,7 +197,8 @@ class Sparker():
             items = Sparker._get_items_pages(
                 'GET', url, headers=self._headers, params=params)
         except Exception as e:
-            msg = 'Error retrieving room {}: {}'.format(room, e)
+            msg = 'Error retrieving room {}: {}'.format(
+                room, getattr(e, 'message', repr(e)))
             if self._logit:
                 logging.error(msg)
             else:
@@ -251,7 +254,8 @@ class Sparker():
             items = Sparker._get_items_pages(
                 'GET', url, params=payload, headers=self._headers)
         except Exception as e:
-            msg = 'Error getting resource membership: {}'.format(e)
+            msg = 'Error getting resource membership: {}'.format(
+                getattr(e, 'message', repr(e)))
             if self._logit:
                 logging.error(msg)
             else:
@@ -310,7 +314,7 @@ class Sparker():
                 response.raise_for_status()
             except Exception as e:
                 msg = 'Error adding member %s to %s: %s' % (
-                    member, resource, e)
+                    member, resource, getattr(e, 'message', repr(e)))
                 if self._logit:
                     logging.error(msg)
                 else:
@@ -344,7 +348,8 @@ class Sparker():
                 'POST', url, json=payload, headers=self._headers)
             response.raise_for_status()
         except Exception as e:
-            msg = 'Error posting message: {}'.format(e)
+            msg = 'Error posting message: {}'.format(
+                getattr(e, 'message', repr(e)))
             if self._logit:
                 logging.error(msg)
             else:
@@ -385,7 +390,8 @@ class Sparker():
                 'POST', url, data=m, headers=headers)
             response.raise_for_status()
         except Exception as e:
-            msg = 'Error posting message: {}'.format(e)
+            msg = 'Error posting message: {}'.format(
+                getattr(e, 'message', repr(e)))
             if self._logit:
                 logging.error(msg)
             else:
