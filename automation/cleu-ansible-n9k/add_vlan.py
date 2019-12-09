@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 import argparse
 import sys
@@ -135,7 +135,7 @@ def main():
     if args.mtu:
         command += ['-e', 'svi_mtu={}'.format(args.mtu)]
     if args.svi_descr:
-        command += ['-e', 'svi_descr='.format(args.svi_descr)]
+        command += ['-e', 'svi_descr={}'.format(args.svi_descr)]
     if use_hsrp:
         command += ['-e', 'use_hsrp={}'.format(use_hsrp)]
     if passive_interface:
@@ -148,8 +148,8 @@ def main():
         command += ['--limit', args.site]
     p = subprocess.Popen(command, stdout=subprocess.PIPE,
                          stderr=subprocess.STDOUT)
-    for c in iter(lambda: p.stdout.read(1), ''):
-        sys.stdout.write(c)
+    for c in iter(lambda: p.stdout.read(1), b''):
+        sys.stdout.write(c.decode('utf-8'))
         sys.stdout.flush()
 
 

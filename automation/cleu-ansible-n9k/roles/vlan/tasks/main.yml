@@ -49,7 +49,7 @@
 - name: Add SVI OSPFv2 parameters
   nxos_interface_ospf:
       area: 0.0.0.0
-      ospf: 1
+      ospf: "1"
       interface: Vlan{{ vlan_id }}
   when: svi_v4_prefix is defined
   tags: vlan
