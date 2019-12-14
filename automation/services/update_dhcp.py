@@ -33,13 +33,14 @@ import sys
 import re
 from netaddr import IPAddress
 import CLEUCreds
+from cleu.config import Config as C
 
 IDF_CNT = 99
 ADDITIONAL_IDFS = (252, 253, 254)
 FIRST_IP = 31
 LAST_IP = 253
 
-DHCP_BASE = 'https://dc1-dhcp.ciscolive.network:8443/web-services/rest/resource/Scope'
+SCOPE_BASE = C.DHCP_BASE + Scope
 
 DHCP_TEMPLATE = {
     "optionList": {
