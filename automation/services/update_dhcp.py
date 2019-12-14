@@ -35,6 +35,7 @@ from netaddr import IPAddress
 import CLEUCreds
 
 IDF_CNT = 99
+ADDITIONAL_IDFS = (252, 253, 254)
 FIRST_IP = 31
 LAST_IP = 253
 
@@ -85,11 +86,17 @@ if __name__ == '__main__':
         start = 1
         cnt = IDF_CNT
 
+        idf_set = ()
+        for i in range(start, cnt + 1):
+            idf_set += (i,)
+
+        idf_set += ADDITIONAL_IDFS
+
         if mask == '255.255.0.0':
             start = 0
             cnt = 0
 
-        for i in range(start, cnt + 1):
+        for i in idf_set:
             prefix = 'IDF-{}'.format(str(i).zfill(3))
             if i == 0:
                 prefix = 'CORE'
