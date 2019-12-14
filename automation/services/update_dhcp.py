@@ -55,7 +55,7 @@ IDF_OVERRIDES = {
     }
 }
 
-SCOPE_BASE = C.DHCP_BASE + Scope
+SCOPE_BASE = C.DHCP_BASE + 'Scope'
 
 DHCP_TEMPLATE = {
     "optionList": {
