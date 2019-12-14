@@ -126,7 +126,7 @@ if __name__ == '__main__':
             roctets = list(octets)
             roctets[3] = '254'
 
-            url = '{}/{}'.format(DHCP_BASE, scope)
+            url = '{}/{}'.format(SCOPE_BASE, scope)
 
             response = requests.request(
                 'GET', url, headers=HEADERS, verify=False)
