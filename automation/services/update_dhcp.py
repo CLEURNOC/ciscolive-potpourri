@@ -40,6 +40,21 @@ ADDITIONAL_IDFS = (252, 253, 254)
 FIRST_IP = 31
 LAST_IP = 253
 
+IDF_OVERRIDES = {
+    252: {
+        'first_ip': 160,
+        'last_ip': '250'
+    },
+    253: {
+        'first_ip': 160,
+        'last_ip': '250'
+    },
+    254: {
+        'first_ip': 160,
+        'last_ip': '250'
+    }
+}
+
 SCOPE_BASE = C.DHCP_BASE + Scope
 
 DHCP_TEMPLATE = {
@@ -57,6 +72,7 @@ HEADERS = {
 
 def mtoc(mask):
     return IPAddress(mask).netmask_bits()
+
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
@@ -88,14 +104,16 @@ if __name__ == '__main__':
         cnt = IDF_CNT
 
         idf_set = ()
-        for i in range(start, cnt + 1):
-            idf_set += (i,)
-
-        idf_set += ADDITIONAL_IDFS
 
         if mask == '255.255.0.0':
             start = 0
             cnt = 0
+
+        for i in range(start, cnt + 1):
+            idf_set += (i,)
+
+        if mask != '255.255.0.0':
+            idf_set += ADDITIONAL_IDFS
 
         for i in idf_set:
             prefix = 'IDF-{}'.format(str(i).zfill(3))
@@ -122,10 +140,16 @@ if __name__ == '__main__':
                 roctets[2] = '255'
             template['optionList']['OptionItem'].append(
                 {'number': '3', 'value': '.'.join(roctets)})
+            first_ip = FIRST_IP
+            last_ip = LAST_IP
+            if i in IDF_OVERRIDES:
+                first_ip = IDF_OVERRIDES[i]['first_ip']
+                last_ip = IDF_OVERRIDES[i]['last_ip']
+
             sipa = list(octets)
-            sipa[3] = str(FIRST_IP)
+            sipa[3] = str(first_ip)
             eipa = list(octets)
-            eipa[3] = str(LAST_IP)
+            eipa[3] = str(last_ip)
             if mask == '255.255.0.0':
                 eipa[2] = '255'
 
