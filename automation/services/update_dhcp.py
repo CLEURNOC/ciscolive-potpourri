@@ -1,4 +1,4 @@
-#!/usr/local/bin/python2
+#!/usr/bin/env python3
 #
 # Copyright (c) 2017-2019  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
@@ -34,7 +34,7 @@ import re
 from netaddr import IPAddress
 import CLEUCreds
 
-IDF_CNT = 98
+IDF_CNT = 99
 FIRST_IP = 31
 LAST_IP = 253
 
