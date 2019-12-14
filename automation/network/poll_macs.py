@@ -34,8 +34,6 @@ import paramiko
 import CLEUCreds
 
 
-IDF_COUNT = 60
-IDF_PATTERN = '10.127.0.{}'
 CACHE_FILE = '/home/jclarke/mac_counts.dat'
 CACHE_FILE_TMP = CACHE_FILE + '.tmp'
 
