@@ -1,4 +1,4 @@
-#!/usr/local/bin/python2
+#!/usr/bin/env python3
 #
 # Copyright (c) 2017-2019  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
@@ -37,14 +37,9 @@ import traceback
 import socket
 import logging
 import CLEUCreds
+from cleu.config import Config as C
 
-PI = 'cl-pi.ciscolive.network'
-
-CMX_GW = 'http://cl-freebsd.ciscolive.network:8002/api/v0.1/cmx'
-DHCP_BASE = 'https://dc1-dhcp.ciscolive.network:8443/web-services/rest/resource'
-TOOL_BASE = 'https://tool.ciscolive.network/n/static/port.html?'
 AT_MACADDR = 9
-AD_DOMAIN = 'ad.ciscolive.network'
 
 CNR_HEADERS = {
     'Accept': 'application/json',
@@ -62,8 +57,6 @@ def is_ascii(s):
 
 
 def get_from_cmx(**kwargs):
-    global CMX_GW
-
     marker = 'green'
     if 'user' in kwargs and kwargs['user'] == 'gru':
         marker = 'gru'
@@ -73,7 +66,7 @@ def get_from_cmx(**kwargs):
             CMX_GW, kwargs['ip'], marker)
     elif 'mac' in kwargs:
         url = '{}?mac={}&marker={}&size=1440'.format(
-            CMX_GW, kwargs['mac'], marker)
+            C.CMX_GW, kwargs['mac'], marker)
     else:
         return None
 
@@ -97,17 +90,16 @@ def get_from_cmx(**kwargs):
 
 
 def get_from_pi(**kwargs):
-    global PI
 
     if 'user' in kwargs:
         url = 'https://{}/webacs/api/v2/data/ClientDetails.json?.full=true&userName="{}"&status=ASSOCIATED'.format(
-            PI, kwargs['user'])
+            C.PI, kwargs['user'])
     elif 'mac' in kwargs:
         url = 'https://{}/webacs/api/v2/data/ClientDetails.json?.full=true&macAddress="{}"&status=ASSOCIATED'.format(
-            PI, kwargs['mac'])
+            C.PI, kwargs['mac'])
     elif 'ip' in kwargs:
         url = 'https://{}/webacs/api/v2/data/ClientDetails.json?.full=true&ipAddress="{}"&status=ASSOCIATED'.format(
-            PI, kwargs['ip'])
+            C.PI, kwargs['ip'])
     else:
         return None
 
@@ -139,6 +131,8 @@ def get_from_pi(**kwargs):
 
 
 def parse_relay_info(outd):
+    global DEFAULT_INT_TYPE
+
     res = {}
     if 'relayAgentCircuitId' in outd:
         octets = outd['relayAgentCircuitId'].split(':')
@@ -164,11 +158,11 @@ def parse_relay_info(outd):
 
 
 def check_for_reservation(ip):
-    global DHCP_BASE, CNR_HEADERS
+    global CNR_HEADERS
 
     res = {}
 
-    url = '{}/Reservation/{}'.format(DHCP_BASE, ip)
+    url = '{}/Reservation/{}'.format(C.DHCP_BASE, ip)
     try:
         response = requests.request(
             'GET', url, headers=CNR_HEADERS, verify=False)
@@ -185,11 +179,11 @@ def check_for_reservation(ip):
 
 
 def check_for_reservation_by_mac(mac):
-    global DHCP_BASE, CNR_HEADERS
+    global CNR_HEADERS
 
     res = {}
 
-    url = '{}/Reservation'.format(DHCP_BASE)
+    url = '{}/Reservation'.format(C.DHCP_BASE)
     try:
         response = requests.request(
             'GET', url, headers=CNR_HEADERS, params={'lookupKey': mac}, verify=False)
@@ -209,9 +203,9 @@ def check_for_reservation_by_mac(mac):
 
 
 def create_reservation(ip, mac):
-    global DHCP_BASE, CNR_HEADERS, AT_MACADDR
+    global CNR_HEADERS, AT_MACADDR
 
-    url = '{}/Reservation'.format(DHCP_BASE)
+    url = '{}/Reservation'.format(C.DHCP_BASE)
     payload = {
         'ipaddr': ip,
         'lookupKey': '01:06:' + mac,
@@ -225,17 +219,17 @@ def create_reservation(ip, mac):
 def delete_reservation(ip):
     global DHCP_BASE, CNR_HEADERS
 
-    url = '{}/Reservation/{}'.format(DHCP_BASE, ip)
+    url = '{}/Reservation/{}'.format(C.DHCP_BASE, ip)
     response = requests.request(
         'DELETE', url, headers=CNR_HEADERS, verify=False)
     response.raise_for_status()
 
 
 def check_for_lease(ip):
-    global DHCP_BASE, CNR_HEADERS
+    global CNR_HEADERS
 
     res = {}
-    url = '{}/Lease/{}'.format(DHCP_BASE, ip)
+    url = '{}/Lease/{}'.format(C.DHCP_BASE, ip)
     try:
         response = requests.request(
             'GET', url, headers=CNR_HEADERS, verify=False)
@@ -266,10 +260,10 @@ def check_for_lease(ip):
 
 
 def check_for_mac(mac):
-    global DHCP_BASE, CNR_HEADERS
+    global CNR_HEADERS
 
     res = {}
-    url = '{}/Lease'.format(DHCP_BASE)
+    url = '{}/Lease'.format(C.DHCP_BASE)
 
     try:
         response = requests.request(
@@ -313,13 +307,12 @@ def print_pi(spark, what, ents, msg):
             condet = 'is a **{}** client'.format(res['connectionType'])
         if 'vendor' in res:
             vendet = 'of vendor type **{}**'.format(res['vendor'])
-        spark.post_to_spark(SPARK_TEAM, SPARK_ROOM, '{} {} {} {}, connected to {}**{}** on interface **{}** with MAC address **{}** and IP address **{}** in **VLAN {}** located in **{}**.'.format(
+        spark.post_to_spark(C.SPARK_TEAM, SPARK_ROOM, '{} {} {} {}, connected to {}**{}** on interface **{}** with MAC address **{}** and IP address **{}** in **VLAN {}** located in **{}**.'.format(
             msg, what, condet, vendet, apdet, res['deviceName'], res['clientInterface'], res['macAddress'], res['ipAddress']['address'], res['vlan'], res['location']))
 
 
 spark = Sparker(token=CLEUCreds.SPARK_TOKEN, logit=True)
 
-SPARK_TEAM = 'CL19 NOC Team'
 SPARK_ROOM = 'DHCP Queries'
 
 if __name__ == '__main__':
@@ -340,7 +333,7 @@ if __name__ == '__main__':
         print('{"result":"success"}')
         sys.exit(0)
 
-    tid = spark.get_team_id(SPARK_TEAM)
+    tid = spark.get_team_id(C.SPARK_TEAM)
     if tid is None:
         logging.error('Failed to get Spark Team ID')
         print('{"result":"fail"}')
@@ -370,7 +363,7 @@ if __name__ == '__main__':
     found_hit = False
 
     if re.search(r'\bhelp\b', txt, re.I):
-        spark.post_to_spark(SPARK_TEAM, SPARK_ROOM, 'To lookup a reservation, type `@Live NOC Bot reservation IP`.  To lookup a lease by MAC, ask about the MAC.  To lookup a lease by IP ask about the IP.  To look up a user, ask about "user USERNAME".<br>Some question might be, `@Live NOC Bot who has lease 1.2.3.4` or `@Live NOC Bot what lease does 00:11:22:33:44:55 have` or `@Live NOC Bot tell me about user jsmith`.')
+        spark.post_to_spark(C.SPARK_TEAM, SPARK_ROOM, 'To lookup a reservation, type `@Live NOC Bot reservation IP`.  To lookup a lease by MAC, ask about the MAC.  To lookup a lease by IP ask about the IP.  To look up a user, ask about "user USERNAME".<br>Some question might be, `@Live NOC Bot who has lease 1.2.3.4` or `@Live NOC Bot what lease does 00:11:22:33:44:55 have` or `@Live NOC Bot tell me about user jsmith`.')
         found_hit = True
 
     try:
@@ -398,9 +391,9 @@ if __name__ == '__main__':
                         mac=ent['clientDetailsDTO']['macAddress'].lower(), user=usecret)
                     if cmxres is not None:
                         spark.post_to_spark_with_attach(
-                            SPARK_TEAM, SPARK_ROOM, '{}\'s location from CMX'.format(m.group('uname')), cmxres, '{}_location.jpg'.format(m.group('uname')), 'image/jpeg')
+                            C.SPARK_TEAM, SPARK_ROOM, '{}\'s location from CMX'.format(m.group('uname')), cmxres, '{}_location.jpg'.format(m.group('uname')), 'image/jpeg')
             else:
-                spark.post_to_spark(SPARK_TEAM, SPARK_ROOM,
+                spark.post_to_spark(C.SPARK_TEAM, SPARK_ROOM,
                                     'Sorry, I can\'t find {}.'.format(m.group('uname')))
 
         m = re.search(
@@ -413,20 +406,20 @@ if __name__ == '__main__':
             found_hit = True
             if message_from not in ALLOWED_TO_DELETE:
                 spark.post_to_spark(
-                    SPARK_TEAM, SPARK_ROOM, 'I\'m sorry, {}.  I can\'t do that for you.'.format(message_from))
+                    C.SPARK_TEAM, SPARK_ROOM, 'I\'m sorry, {}.  I can\'t do that for you.'.format(message_from))
             else:
                 res = check_for_reservation(m.group(2))
                 if res is None:
                     spark.post_to_spark(
-                        SPARK_TEAM, SPARK_ROOM, 'I didn\'t find a reservation for {}.'.format(m.group(2)))
+                        C.SPARK_TEAM, SPARK_ROOM, 'I didn\'t find a reservation for {}.'.format(m.group(2)))
                 else:
                     try:
                         delete_reservation(m.group(2))
                         spark.post_to_spark(
-                            SPARK_TEAM, SPARK_ROOM, 'Reservation for {} deleted successfully.'.format(m.group(2)))
+                            C.SPARK_TEAM, SPARK_ROOM, 'Reservation for {} deleted successfully.'.format(m.group(2)))
                     except Exception as e:
                         spark.post_to_spark(
-                            SPARK_TEAM, SPARK_ROOM, 'Failed to delete reservation for {}: {}'.format(m.group(2)))
+                            C.SPARK_TEAM, SPARK_ROOM, 'Failed to delete reservation for {}: {}'.format(m.group(2)))
 
         m = re.search(
             r'(make|create|add)\s+reservation.*?([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)', txt, re.I)
@@ -435,25 +428,25 @@ if __name__ == '__main__':
             res = check_for_reservation(m.group(2))
             if res is not None:
                 spark.post_to_spark(
-                    SPARK_TEAM, SPARK_ROOM, '_{}_ is already reserved by a client with MAC **{}**'.format(m.group(2), res['mac']))
+                    C.SPARK_TEAM, SPARK_ROOM, '_{}_ is already reserved by a client with MAC **{}**'.format(m.group(2), res['mac']))
             else:
                 lres = check_for_lease(m.group(2))
                 if lres is None:
                     spark.post_to_spark(
-                        SPARK_TEAM, SPARK_ROOM, 'Did not find an existing lease for {}'.format(m.group(2)))
+                        C.SPARK_TEAM, SPARK_ROOM, 'Did not find an existing lease for {}'.format(m.group(2)))
                 else:
                     try:
                         rres = check_for_reservation_by_mac(lres['mac'])
                         if rres is not None:
-                            spark.post_to_spark(SPARK_TEAM, SPARK_ROOM, '_{}_ already has a reservation for {} in scope {}.'.format(
+                            spark.post_to_spark(C.SPARK_TEAM, SPARK_ROOM, '_{}_ already has a reservation for {} in scope {}.'.format(
                                 lres['mac'], rres['ip'], lres['scope']))
                         else:
                             create_reservation(m.group(2), lres['mac'])
                             spark.post_to_spark(
-                                SPARK_TEAM, SPARK_ROOM, 'Successfully added reservation for {}.'.format(m.group(2)))
+                                C.SPARK_TEAM, SPARK_ROOM, 'Successfully added reservation for {}.'.format(m.group(2)))
                     except Exception as e:
                         spark.post_to_spark(
-                            SPARK_TEAM, SPARK_ROOM, 'Failed to add reservation for {}: {}'.format(m.group(2), e))
+                            C.SPARK_TEAM, SPARK_ROOM, 'Failed to add reservation for {}: {}'.format(m.group(2), e))
 
         m = re.search(
             r'reservation.*?([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)', txt, re.I)
@@ -462,10 +455,10 @@ if __name__ == '__main__':
             res = check_for_reservation(m.group(1))
             if res is not None:
                 spark.post_to_spark(
-                    SPARK_TEAM, SPARK_ROOM, '_{}_ is reserved by a client with MAC **{}** in scope **{}**.'.format(m.group(1), res['mac'], res['scope']))
+                    C.SPARK_TEAM, SPARK_ROOM, '_{}_ is reserved by a client with MAC **{}** in scope **{}**.'.format(m.group(1), res['mac'], res['scope']))
             else:
                 spark.post_to_spark(
-                    SPARK_TEAM, SPARK_ROOM, 'I did not find a reservation for {}.'.format(m.group(1)))
+                    C.SPARK_TEAM, SPARK_ROOM, 'I did not find a reservation for {}.'.format(m.group(1)))
 
         m = re.findall(r'\b([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\b', txt)
         if not found_hit and len(m) > 0:
@@ -487,7 +480,7 @@ if __name__ == '__main__':
                             port_info = '<a href="{}switch_name={}&port_name={}">**{}**</a>'.format(
                                 TOOL_BASE, res['relay-info']['switch'], res['relay-info']['port'], res['relay-info']['port'])
 
-                        spark.post_to_spark(SPARK_TEAM, SPARK_ROOM, '_{}_ is no longer leased, but _WAS_ leased by a client with name **{}** and MAC **{}** in scope **{}** (state: **{}**) and was connected to switch **{}** on port {} in VLAN **{}**.'.format(
+                        spark.post_to_spark(C.SPARK_TEAM, SPARK_ROOM, '_{}_ is no longer leased, but _WAS_ leased by a client with name **{}** and MAC **{}** in scope **{}** (state: **{}**) and was connected to switch **{}** on port {} in VLAN **{}**.'.format(
                             hit, res['name'], res['mac'], res['scope'], res['state'], res['relay-info']['switch'], port_info, res['relay-info']['vlan']))
                     else:
                         port_info = res['relay-info']['port']
@@ -495,23 +488,23 @@ if __name__ == '__main__':
                             port_info = '<a href="{}switch_name={}&port_name={}">**{}**</a>'.format(
                                 TOOL_BASE, res['relay-info']['switch'], res['relay-info']['port'], res['relay-info']['port'])
 
-                        spark.post_to_spark(SPARK_TEAM, SPARK_ROOM, '_{}_ is leased by a client with name **{}** and MAC **{}** in scope **{}** (state: **{}**) and is connected to switch **{}** on port {} in VLAN **{}**.'.format(
+                        spark.post_to_spark(C.SPARK_TEAM, SPARK_ROOM, '_{}_ is leased by a client with name **{}** and MAC **{}** in scope **{}** (state: **{}**) and is connected to switch **{}** on port {} in VLAN **{}**.'.format(
                             hit, res['name'], res['mac'], res['scope'], res['state'], res['relay-info']['switch'], port_info, res['relay-info']['vlan']))
                     if pires is not None:
                         print_pi(spark, hit, pires,
                                  'I also found this from Prime Infra:')
                     if cmxres is not None:
                         spark.post_to_spark_with_attach(
-                            SPARK_TEAM, SPARK_ROOM, 'Location from CMX', cmxres, '{}_location.jpg'.format(hit), 'image/jpeg')
+                            C.SPARK_TEAM, SPARK_ROOM, 'Location from CMX', cmxres, '{}_location.jpg'.format(hit), 'image/jpeg')
                 else:
-                    spark.post_to_spark(SPARK_TEAM, SPARK_ROOM,
+                    spark.post_to_spark(C.SPARK_TEAM, SPARK_ROOM,
                                         'I did not find a lease for {}.'.format(hit))
                     if pires is not None:
                         print_pi(spark, hit, pires,
                                  'But I did get this from Prime Infra:')
                     if cmxres is not None:
                         spark.post_to_spark_with_attach(
-                            SPARK_TEAM, SPARK_ROOM, 'Location from CMX', cmxres, '{}_location.jpg'.format(hit), 'image/jpeg')
+                            C.SPARK_TEAM, SPARK_ROOM, 'Location from CMX', cmxres, '{}_location.jpg'.format(hit), 'image/jpeg')
 
         m = re.findall('\\b(?:(?:[0-9A-Fa-f]{1,4}:){6}(?:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}|(?:(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))|::(?:[0-9A-Fa-f]{1,4}:){5}(?:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}|(?:(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))|(?:[0-9A-Fa-f]{1,4})?::(?:[0-9A-Fa-f]{1,4}:){4}(?:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}|(?:(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))|(?:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4})?::(?:[0-9A-Fa-f]{1,4}:){3}(?:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}|(?:(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))|(?:(?:[0-9A-Fa-f]{1,4}:){,2}[0-9A-Fa-f]{1,4})?::(?:[0-9A-Fa-f]{1,4}:){2}(?:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}|(?:(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))|(?:(?:[0-9A-Fa-f]{1,4}:){,3}[0-9A-Fa-f]{1,4})?::[0-9A-Fa-f]{1,4}:(?:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}|(?:(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))|(?:(?:[0-9A-Fa-f]{1,4}:){,4}[0-9A-Fa-f]{1,4})?::(?:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}|(?:(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))|(?:(?:[0-9A-Fa-f]{1,4}:){,5}[0-9A-Fa-f]{1,4})?::[0-9A-Fa-f]{1,4}|(?:(?:[0-9A-Fa-f]{1,4}:){,6}[0-9A-Fa-f]{1,4})?::)\\b', txt)
         if not found_hit and len(m) > 0:
@@ -524,11 +517,11 @@ if __name__ == '__main__':
                         mac=pires[0]['clientDetailsDTO']['macAddress'])
                     if cmxres is not None:
                         spark.post_to_spark_with_attach(
-                            SPARK_TEAM, SPARK_ROOM, 'Location from CMX', cmxres, '{}_location.jpg'.format(hit), 'image/jpeg')
+                            C.SPARK_TEAM, SPARK_ROOM, 'Location from CMX', cmxres, '{}_location.jpg'.format(hit), 'image/jpeg')
 
                 else:
                     spark.post_to_spark(
-                        SPARK_TEAM, SPARK_ROOM, 'I did not find anything about {} in Prime Infra.'.format(hit))
+                        C.SPARK_TEAM, SPARK_ROOM, 'I did not find anything about {} in Prime Infra.'.format(hit))
 
         m = re.findall(r'\b(([a-fA-F0-9]{1,2}:[a-fA-F0-9]{1,2}:[a-fA-F0-9]{1,2}:[a-fA-F0-9]{1,2}:[a-fA-F0-9]{1,2}:[a-fA-F0-9]{1,2})|([a-fA-F0-9]{4}\.[a-fA-F0-9]{4}\.[a-fA-F0-9]{4})|([a-fA-F0-9]{1,2}-[a-fA-F0-9]{1,2}-[a-fA-F0-9]{1,2}-[a-fA-F0-9]{1,2}-[a-fA-F0-9]{1,2}-[a-fA-F0-9]{1,2}))\b', txt)
         if not found_hit and len(m) > 0:
@@ -539,32 +532,32 @@ if __name__ == '__main__':
                 cmxres = get_from_cmx(mac=re.sub(r'(\d+,)+', '', hit[0]))
                 if res is not None:
                     if re.search(r'available', res['state']):
-                        spark.post_to_spark(SPARK_TEAM, SPARK_ROOM, 'Client with MAC _{}_ no longer has a lease, but _USED TO HAVE_ lease **{}** (hostname: **{}**) in scope **{}** (state: **{}**) and was connected to switch **{}** on port **{}** in VLAN **{}**.'.format(
+                        spark.post_to_spark(C.SPARK_TEAM, SPARK_ROOM, 'Client with MAC _{}_ no longer has a lease, but _USED TO HAVE_ lease **{}** (hostname: **{}**) in scope **{}** (state: **{}**) and was connected to switch **{}** on port **{}** in VLAN **{}**.'.format(
                             hit[0], res['ip'], res['name'], res['scope'], res['state'], res['relay-info']['switch'], res['relay-info']['port'], res['relay-info']['vlan']))
                     else:
-                        spark.post_to_spark(SPARK_TEAM, SPARK_ROOM, 'Client with MAC _{}_ has lease **{}** (hostname: **{}**) in scope **{}** (state: **{}**) and is connected to switch **{}** on port **{}** in VLAN **{}**.'.format(
+                        spark.post_to_spark(C.SPARK_TEAM, SPARK_ROOM, 'Client with MAC _{}_ has lease **{}** (hostname: **{}**) in scope **{}** (state: **{}**) and is connected to switch **{}** on port **{}** in VLAN **{}**.'.format(
                             hit[0], res['ip'], res['name'], res['scope'], res['state'], res['relay-info']['switch'], res['relay-info']['port'], res['relay-info']['vlan']))
                     if pires is not None:
-                        #spark.post_to_spark(SPARK_TEAM, SPARK_ROOM, '```\n{}\n```'.format(json.dumps(pires, indent=4)))
+                        #spark.post_to_spark(C.SPARK_TEAM, SPARK_ROOM, '```\n{}\n```'.format(json.dumps(pires, indent=4)))
                         print_pi(spark, hit[0], pires,
                                  'I also found this from Prime Infra:')
                     if cmxres is not None:
                         spark.post_to_spark_with_attach(
-                            SPARK_TEAM, SPARK_ROOM, 'Location from CMX', cmxres, '{}_location.jpg'.format(hit[0]), 'image/jpeg')
+                            C.SPARK_TEAM, SPARK_ROOM, 'Location from CMX', cmxres, '{}_location.jpg'.format(hit[0]), 'image/jpeg')
                 else:
-                    spark.post_to_spark(SPARK_TEAM, SPARK_ROOM,
+                    spark.post_to_spark(C.SPARK_TEAM, SPARK_ROOM,
                                         'I did not find a lease for {}.'.format(hit[0]))
                     if pires is not None:
                         print_pi(spark, hit[0], pires,
                                  'But I did get this from Prime Infra:')
                     if cmxres is not None:
                         spark.post_to_spark_with_attach(
-                            SPARK_TEAM, SPARK_ROOM, 'Location from CMX', cmxres, '{}_location.jpg'.format(hit[0]), 'image/jpeg')
+                            C.SPARK_TEAM, SPARK_ROOM, 'Location from CMX', cmxres, '{}_location.jpg'.format(hit[0]), 'image/jpeg')
 
         m = re.search(r'answer', txt, re.I)
         if not found_hit and m:
             found_hit = True
-            spark.post_to_spark(SPARK_TEAM, SPARK_ROOM, 'The answer is 42.')
+            spark.post_to_spark(C.SPARK_TEAM, SPARK_ROOM, 'The answer is 42.')
 
         m = re.findall(r'([\w\d\-\.]+)', txt)
         if not found_hit and len(m) > 0:
@@ -581,25 +574,25 @@ if __name__ == '__main__':
                     if res is not None:
                         if re.search(r'available', res['state']):
                             found_hit = True
-                            spark.post_to_spark(SPARK_TEAM, SPARK_ROOM, 'Client with hostname _{}_ no longer has a lease, but _USED TO HAVE_ lease **{}** (hostname: **{}**) in scope **{}** (state: **{}**) and was connected to switch **{}** on port **{}** in VLAN **{}**.'.format(
+                            spark.post_to_spark(C.SPARK_TEAM, SPARK_ROOM, 'Client with hostname _{}_ no longer has a lease, but _USED TO HAVE_ lease **{}** (hostname: **{}**) in scope **{}** (state: **{}**) and was connected to switch **{}** on port **{}** in VLAN **{}**.'.format(
                                 hit, ip, res['name'], res['scope'], res['state'], res['relay-info']['switch'], res['relay-info']['port'], res['relay-info']['vlan']))
                         else:
                             found_hit = True
-                            spark.post_to_spark(SPARK_TEAM, SPARK_ROOM, 'Client with hostname _{}_ has lease **{}** (hostname: **{}**) in scope **{}** (state: **{}**) and is connected to switch **{}** on port **{}** in VLAN **{}**.'.format(
+                            spark.post_to_spark(C.SPARK_TEAM, SPARK_ROOM, 'Client with hostname _{}_ has lease **{}** (hostname: **{}**) in scope **{}** (state: **{}**) and is connected to switch **{}** on port **{}** in VLAN **{}**.'.format(
                                 hit, ip, res['name'], res['scope'], res['state'], res['relay-info']['switch'], res['relay-info']['port'], res['relay-info']['vlan']))
                         if pires is not None:
                             found_hit = True
-                            #spark.post_to_spark(SPARK_TEAM, SPARK_ROOM, '```\n{}\n```'.format(json.dumps(pires, indent=4)))
+                            #spark.post_to_spark(C.SPARK_TEAM, SPARK_ROOM, '```\n{}\n```'.format(json.dumps(pires, indent=4)))
                             print_pi(spark, hit, pires,
                                      'I also found this from Prime Infra:')
                             cmxres = get_from_cmx(
                                 mac=pires[0]['clientDetailsDTO']['macAddress'])
                             if cmxres is not None:
                                 spark.post_to_spark_with_attach(
-                                    SPARK_TEAM, SPARK_ROOM, 'Location from CMX', cmxres, '{}_location.jpg'.format(hit), 'image/jpeg')
+                                    C.SPARK_TEAM, SPARK_ROOM, 'Location from CMX', cmxres, '{}_location.jpg'.format(hit), 'image/jpeg')
                     else:
                         found_hit = True
-                        spark.post_to_spark(SPARK_TEAM, SPARK_ROOM,
+                        spark.post_to_spark(C.SPARK_TEAM, SPARK_ROOM,
                                             'I did not find a lease for {}.'.format(hit))
                         if pires is not None:
                             print_pi(spark, hit, pires,
@@ -608,15 +601,15 @@ if __name__ == '__main__':
                                 mac=pires[0]['clientDetailsDTO']['macAddress'])
                             if cmxres is not None:
                                 spark.post_to_spark_with_attach(
-                                    SPARK_TEAM, SPARK_ROOM, 'Location from CMX', cmxres, '{}_location.jpg'.format(hit), 'image/jpeg')
+                                    C.SPARK_TEAM, SPARK_ROOM, 'Location from CMX', cmxres, '{}_location.jpg'.format(hit), 'image/jpeg')
 
         if not found_hit:
-            spark.post_to_spark(SPARK_TEAM, SPARK_ROOM,
+            spark.post_to_spark(C.SPARK_TEAM, SPARK_ROOM,
                                 'Sorry, I didn\'t get that.  Please give me a MAC or IP (or "reservation IP" or "user USER") or just ask for "help".')
     except Exception as e:
         logging.error('Error in obtaining data: {}'.format(
             traceback.format_exc()))
-        spark.post_to_spark(SPARK_TEAM, SPARK_ROOM,
+        spark.post_to_spark(C.SPARK_TEAM, SPARK_ROOM,
                             'Whoops, I encountered an error:<br>\n```\n{}\n```'.format(traceback.format_exc()))
 
     print('{"result":"success"}')
