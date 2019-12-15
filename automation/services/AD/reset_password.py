@@ -240,14 +240,16 @@ def get_main():
            <div class="form-group">
              <input type="submit" name="submit" value="Reset My Password!" class="btn btn-primary">
              <input type="reset" name="reset" value="Start Over" class="btn btn-default">
-           </div>
-           <input type="hidden" name="vpnuser" value="%s"/>
+           </div>'''
+    page += '\n<input type="hidden" name="vpnuser" value="%s"/>' % (
+        request.args.get('vpnuser'))
+    page += '''
          </form>
        </div>
      </div>
      </div>
   </body>
-</html>''' % (request.args.get('vpnuser'))
+</html>'''
 
     return Response(page, mimetype='text/html')
 
