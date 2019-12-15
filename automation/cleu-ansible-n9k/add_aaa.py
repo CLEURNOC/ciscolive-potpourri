@@ -24,7 +24,7 @@ def main():
 
     command = ['ansible-playbook', '-i', 'inventory/hosts',
                '-u', args.username, '-k', '-e',
-               'tacacs_key={}'.format(args.key),
+               'tacacs_key={}'.format(args.key), '-e', 'ansible_python_interpreter={}'.format(sys.executable),
                'add-aaa-playbook.yml']
     if args.site:
         command += ['--limit', args.site]

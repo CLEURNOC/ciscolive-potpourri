@@ -1,8 +1,14 @@
 ---
+- name: Enable TACACS+ feature
+  nxos_feature:
+      feature: tacacs+
+      state: enabled
+  tags: aaa
+
 - name: Add TACACS+ hosts
   nxos_aaa_server_host:
       address: "{{ item.host }}"
-      encrypt_type: "{{ item.encrypt_type }}"
+      encrypt_type: "0"
       host_timeout: "{{ tacacs_host_timeout }}"
       key: "{{ tacacs_key }}"
       server_type: tacacs
@@ -21,7 +27,8 @@
   nxos_config:
       lines:
           - deadtime 10
-          - source-interface loopback0
+          - source-interface {{ tacacs_source_interface }}
+          - use-vrf {{ tacacs_vrf }}
       parents: aaa group server tacacs+ {{ tacacs_group_name }}
   tags: aaa
 

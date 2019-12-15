@@ -18,9 +18,17 @@
 MCC_DC1
 MCC_DC2
 
+[MCC:vars]
+tacacs_source_interface="mgmt0"
+tacacs_vrf="management"
+
 [Core:children]
 DC1
 DC2
+
+[Core:vars]
+tacacs_source_interface="loopback0"
+tacacs_vrf="default"
 
 [vCenter]
 10.100.252.11
