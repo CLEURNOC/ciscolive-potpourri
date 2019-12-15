@@ -6,17 +6,17 @@
 10.127.0.247 core_svi_v4_suffix="247" core_svi_v6_suffix="f7" core_hsrp_priority="103"
 10.127.0.248 core_svi_v4_suffix="248" core_svi_v6_suffix="f8" core_hsrp_priority="102"
 
-[MCC-DC1]
+[MCC_DC1]
 10.127.253.25
 10.127.253.26
 
-[MCC-DC2]
+[MCC_DC2]
 10.127.254.25
 10.127.254.26
 
 [MCC:children]
-MCC-DC1
-MCC-DC2
+MCC_DC1
+MCC_DC2
 
 [Core:children]
 DC1
