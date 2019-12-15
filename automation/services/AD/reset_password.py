@@ -177,7 +177,7 @@ def reset_password():
   <body>
     <h1>Password Changed Successfully!</h1>'''
 
-    if vpnuser:
+    if vpnuser and vpnuser == 'true':
         resp += '\n<h1>Please disconnect your VPN and connect again with your AD credentials.</h1>'
 
     resp += '''
