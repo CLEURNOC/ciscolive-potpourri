@@ -10,3 +10,10 @@ core_hsrp_vip_v4_suffix: "254"
 core_hsrp_vip_v6_suffix: "fe"
 core_hsrp_v4_track: "3"
 core_hsrp_v6_track: "5"
+
+# TACACS+ variables
+tacacs_group_name: ISE
+tacacs_host_timeout: "10"
+tacacs_servers:
+    - { host: 10.100.253.7 }
+    - { host: 10.100.254.7 }

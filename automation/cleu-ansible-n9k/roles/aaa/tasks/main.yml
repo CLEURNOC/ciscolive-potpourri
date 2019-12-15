@@ -1,0 +1,33 @@
+---
+- name: Add TACACS+ hosts
+  nxos_aaa_server_host:
+      address: "{{ item.host }}"
+      encrypt_type: "{{ item.encrypt_type }}"
+      host_timeout: "{{ tacacs_host_timeout }}"
+      key: "{{ tacacs_key }}"
+      server_type: tacacs
+  with_items: "{{ tacacs_servers }}"
+  tags: aaa
+
+- name: Add AAA group server
+  nxos_config:
+      lines:
+          - server {{ item.host }}
+      parents: aaa group server tacacs+ {{ tacacs_group_name }}
+  with_items: "{{ tacacs_servers }}"
+  tags: aaa
+
+- name: Add additional TACACS+ group config
+  nxos_config:
+      lines:
+          - deadtime 10
+          - source-interface loopback0
+      parents: aaa group server tacacs+ {{ tacacs_group_name }}
+  tags: aaa
+
+- name: Configure authentication order
+  nxos_config:
+      lines:
+          - aaa authentication login default group {{ tacacs_group_name }} local
+          - aaa authentication login console none
+  tags: aaa

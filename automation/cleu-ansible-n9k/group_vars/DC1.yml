@@ -7,7 +7,3 @@ n9k_site: DC1
 
 # Site-specific SNMP location.
 snmp_location: "002"
-
-# Site-specific management prefix.
-mgmt_prefix: "172.27"
-mgmt_network: "172.27.0.0/16"
