@@ -254,5 +254,5 @@ def get_main():
 
 if __name__ == '__main__':
     app.secret_key = CLEUCreds.AD_PASSWORD
-    app.run(host='10.100.253.25', port=8443,
+    app.run(host='10.100.252.25', port=8443,
             threaded=True, ssl_context=('chain.pem', 'privkey.pem'))
