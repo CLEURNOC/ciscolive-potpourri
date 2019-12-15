@@ -6,24 +6,36 @@ import re
 import subprocess
 import os
 
-IPV4SEG  = r'(?:25[0-5]|(?:2[0-4]|1{0,1}[0-9]){0,1}[0-9])'
+IPV4SEG = r'(?:25[0-5]|(?:2[0-4]|1{0,1}[0-9]){0,1}[0-9])'
 IPV4ADDR = r'(?:(?:' + IPV4SEG + r'\.){3,3}' + IPV4SEG + r')'
-IPV6SEG  = r'(?:(?:[0-9a-fA-F]){1,4})'
+IPV6SEG = r'(?:(?:[0-9a-fA-F]){1,4})'
 IPV6GROUPS = (
     r'(?:' + IPV6SEG + r':){7,7}' + IPV6SEG,                  # 1:2:3:4:5:6:7:8
-    r'(?:' + IPV6SEG + r':){1,7}:',                           # 1::                                 1:2:3:4:5:6:7::
-    r'(?:' + IPV6SEG + r':){1,6}:' + IPV6SEG,                 # 1::8               1:2:3:4:5:6::8   1:2:3:4:5:6::8
-    r'(?:' + IPV6SEG + r':){1,5}(?::' + IPV6SEG + r'){1,2}',  # 1::7:8             1:2:3:4:5::7:8   1:2:3:4:5::8
-    r'(?:' + IPV6SEG + r':){1,4}(?::' + IPV6SEG + r'){1,3}',  # 1::6:7:8           1:2:3:4::6:7:8   1:2:3:4::8
-    r'(?:' + IPV6SEG + r':){1,3}(?::' + IPV6SEG + r'){1,4}',  # 1::5:6:7:8         1:2:3::5:6:7:8   1:2:3::8
-    r'(?:' + IPV6SEG + r':){1,2}(?::' + IPV6SEG + r'){1,5}',  # 1::4:5:6:7:8       1:2::4:5:6:7:8   1:2::8
-    IPV6SEG + r':(?:(?::' + IPV6SEG + r'){1,6})',             # 1::3:4:5:6:7:8     1::3:4:5:6:7:8   1::8
-    r':(?:(?::' + IPV6SEG + r'){1,7}|:)',                     # ::2:3:4:5:6:7:8    ::2:3:4:5:6:7:8  ::8       ::
-    r'fe80:(?::' + IPV6SEG + r'){0,4}%[0-9a-zA-Z]{1,}',       # fe80::7:8%eth0     fe80::7:8%1  (link-local IPv6 addresses with zone index)
-    r'::(?:ffff(?::0{1,4}){0,1}:){0,1}[^\s:]' + IPV4ADDR,     # ::255.255.255.255  ::ffff:255.255.255.255  ::ffff:0:255.255.255.255 (IPv4-mapped IPv6 addresses and IPv4-translated addresses)
-    r'(?:' + IPV6SEG + r':){1,4}:[^\s:]' + IPV4ADDR,          # 2001:db8:3:4::192.0.2.33  64:ff9b::192.0.2.33 (IPv4-Embedded IPv6 Address)
+    # 1::                                 1:2:3:4:5:6:7::
+    r'(?:' + IPV6SEG + r':){1,7}:',
+    # 1::8               1:2:3:4:5:6::8   1:2:3:4:5:6::8
+    r'(?:' + IPV6SEG + r':){1,6}:' + IPV6SEG,
+    # 1::7:8             1:2:3:4:5::7:8   1:2:3:4:5::8
+    r'(?:' + IPV6SEG + r':){1,5}(?::' + IPV6SEG + r'){1,2}',
+    # 1::6:7:8           1:2:3:4::6:7:8   1:2:3:4::8
+    r'(?:' + IPV6SEG + r':){1,4}(?::' + IPV6SEG + r'){1,3}',
+    # 1::5:6:7:8         1:2:3::5:6:7:8   1:2:3::8
+    r'(?:' + IPV6SEG + r':){1,3}(?::' + IPV6SEG + r'){1,4}',
+    # 1::4:5:6:7:8       1:2::4:5:6:7:8   1:2::8
+    r'(?:' + IPV6SEG + r':){1,2}(?::' + IPV6SEG + r'){1,5}',
+    # 1::3:4:5:6:7:8     1::3:4:5:6:7:8   1::8
+    IPV6SEG + r':(?:(?::' + IPV6SEG + r'){1,6})',
+    # ::2:3:4:5:6:7:8    ::2:3:4:5:6:7:8  ::8       ::
+    r':(?:(?::' + IPV6SEG + r'){1,7}|:)',
+    # fe80::7:8%eth0     fe80::7:8%1  (link-local IPv6 addresses with zone index)
+    r'fe80:(?::' + IPV6SEG + r'){0,4}%[0-9a-zA-Z]{1,}',
+    # ::255.255.255.255  ::ffff:255.255.255.255  ::ffff:0:255.255.255.255 (IPv4-mapped IPv6 addresses and IPv4-translated addresses)
+    r'::(?:ffff(?::0{1,4}){0,1}:){0,1}[^\s:]' + IPV4ADDR,
+    # 2001:db8:3:4::192.0.2.33  64:ff9b::192.0.2.33 (IPv4-Embedded IPv6 Address)
+    r'(?:' + IPV6SEG + r':){1,4}:[^\s:]' + IPV4ADDR,
 )
-IPV6ADDR = '|'.join(['(?:{})'.format(g) for g in IPV6GROUPS[::-1]]) # Reverse rows for greedy match
+# Reverse rows for greedy match
+IPV6ADDR = '|'.join(['(?:{})'.format(g) for g in IPV6GROUPS[::-1]])
 
 
 def main():
@@ -41,11 +53,16 @@ def main():
                         help='IPv6 network address of the SVI (prefix len is assumed to be /64)')
     parser.add_argument('--svi-descr', metavar='<SVI_DESCRIPTION>',
                         help='Description of the SVI')
-    parser.add_argument('--no-hsrp', help='Use HSRP or not (default: False)', action="store_true")
-    parser.add_argument('--no-passive-interface', help='Whether or not to have OSPF use passive interface (default: False)', action='store_true')
-    parser.add_argument('--v6-link-local', help='Only use v6 link-local addresses', action='store_true')
-    parser.add_argument('--ospf-broadcast', help='OSPF network is broadcast instead of P2P (default: P2P)', action='store_true')
-    parser.add_argument('--interfaces', metavar='<INTF_LIST>', help='List of interfaces to enable for VLAN')
+    parser.add_argument(
+        '--no-hsrp', help='Use HSRP or not (default: False)', action="store_true")
+    parser.add_argument('--no-passive-interface',
+                        help='Whether or not to have OSPF use passive interface (default: False)', action='store_true')
+    parser.add_argument(
+        '--v6-link-local', help='Only use v6 link-local addresses', action='store_true')
+    parser.add_argument(
+        '--ospf-broadcast', help='OSPF network is broadcast instead of P2P (default: P2P)', action='store_true')
+    parser.add_argument('--interfaces', metavar='<INTF_LIST>',
+                        help='List of interfaces to enable for VLAN')
     parser.add_argument('--mtu', '-m', metavar='<MTU>',
                         help='MTU of SVI (default: 1500)', type=int)
     parser.add_argument('--username', '-u', metavar='<USERNAME>',
