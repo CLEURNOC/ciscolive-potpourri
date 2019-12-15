@@ -109,7 +109,7 @@ def authenticate():
     return Response(
         'Failed to verify credentials for password reset.\n'
         'You have to login with proper credentials.', 401,
-        {'WWW-Authenticate': 'Basic realm="CLEU Password Reset"'})
+        {'WWW-Authenticate': 'Basic realm="CLEU Password Reset; !!!ENTER YOUR AD USERNAME AND PASSWORD!!!"'})
 
 
 def requires_auth(f):
@@ -127,6 +127,7 @@ def requires_auth(f):
 def reset_password():
     new_pw = request.form.get('new_pass')
     new_pw_confirm = request.form.get('new_pass_confirm')
+    vpnuser = request.form.get('vpnuser')
     if new_pw.strip() == '' or new_pw_confirm.strip() == '':
         return Response('''
 <html>
@@ -168,15 +169,22 @@ def reset_password():
     adu.grant_password_lease()
     del session['dn']
 
-    return Response('''
+    resp = '''
 <html>
   <head>
     <title>Password Changed Successfully!</title>
   </head>
   <body>
-    <h1>Password Changed Successfully!</h1>
-  </body>
-</html>''', mimetype='text/html')
+    <h1>Password Changed Successfully!</h1>'''
+
+    if vpnuser:
+        resp += '\n<h1>Please disconnect your VPN and connect again with your AD credentials.</h1>'
+
+    resp += '''
+ </body>
+</html>'''
+
+    return Response(resp, mimetype='text/html')
 
 
 @app.route('/')
@@ -233,14 +241,16 @@ def get_main():
              <input type="submit" name="submit" value="Reset My Password!" class="btn btn-primary">
              <input type="reset" name="reset" value="Start Over" class="btn btn-default">
            </div>
+           <input type="hidden" name="vpnuser" value="{}"/>
          </form>
        </div>
      </div>
      </div>
   </body>
-</html>'''
+</html>'''.format(request.args.get('vpnuser'))
 
     return Response(page, mimetype='text/html')
+
 
 if __name__ == '__main__':
     app.secret_key = CLEUCreds.AD_PASSWORD
