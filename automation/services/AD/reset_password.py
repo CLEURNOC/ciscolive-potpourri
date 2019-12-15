@@ -241,13 +241,13 @@ def get_main():
              <input type="submit" name="submit" value="Reset My Password!" class="btn btn-primary">
              <input type="reset" name="reset" value="Start Over" class="btn btn-default">
            </div>
-           <input type="hidden" name="vpnuser" value="{}"/>
+           <input type="hidden" name="vpnuser" value="%s"/>
          </form>
        </div>
      </div>
      </div>
   </body>
-</html>'''.format(request.args.get('vpnuser'))
+</html>''' % (request.args.get('vpnuser'))
 
     return Response(page, mimetype='text/html')
 
