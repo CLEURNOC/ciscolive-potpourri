@@ -180,7 +180,7 @@ def main():
         else:
             user = '{}@cisco.com'.format(user)
 
-        m = re.search(r'(\S+)@)', user)
+        m = re.search(r'(\S+)@', user)
         username = m.group(1)
 
         body = 'Please find the CLEU Data Centre Access details below\r\n\r\n'
