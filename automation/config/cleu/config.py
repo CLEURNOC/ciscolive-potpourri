@@ -13,4 +13,5 @@ class Config:
     VCENTER = 'cl-vcenter.ciscolive.network'
     SMTP_SERVER = '10.100.252.13'
     VPN_SERVER = 'vpn.ciscolive.network'
+    VPN_SERVER_IP = '10.100.252.14'
     CISCOLIVE_YEAR = '2020'
