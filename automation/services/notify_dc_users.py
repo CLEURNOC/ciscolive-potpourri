@@ -174,13 +174,7 @@ def main():
             users[owner].append(vm)
 
     for user, vms in users.items():
-        username = user
-        if re.search(r';', user):
-            [user, username] = user.split(';')
-        else:
-            user = '{}@cisco.com'.format(user)
-
-        m = re.search(r'(\S+)@', user)
+        m = re.search(r'<?(\S+)@', user)
         username = m.group(1)
 
         body = 'Please find the CLEU Data Centre Access details below\r\n\r\n'
@@ -189,8 +183,7 @@ def main():
         body += '(Note: if you get a sinkhole error on the Cisco network, VPN to {} instead.)\r\n'.format(VPN_SERVER_IP)
         body += 'Once connected, go to {} and login with {} and password {}\r\n'.format(
             PW_RESET_URL, username, CLEUCreds.DEFAULT_USER_PASSWORD)
-        body += 'Reset your password.  You must use a complex password that contains lower and\r\n'
-        body += 'uppercase letters, numbers, or a special character.\r\n'
+        body += 'Reset your password.  You must use a complex password that contains lower and uppercase letters, numbers, or a special character.\r\n'
         body += 'After resetting your password, drop the VPN and reconnect to {} with {} and the new password you just set.\r\n\r\n'.format(
             VPN_SERVER, username)
         body += 'You can use any of the following Jump Hosts to access the data centre:\r\n\r\n'
