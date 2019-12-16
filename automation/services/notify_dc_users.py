@@ -242,7 +242,7 @@ def main():
             if not is_ova and vm['vlan'] != '':
                 print('===Adding VM for {}==='.format(vm['name']))
                 mem = vm['mem'] * 1024
-                scsi = 'lsiLogic'
+                scsi = 'lsilogic'
 
                 if re.search(r'^win', ostype):
                     scsi = 'lsilogicsas'
