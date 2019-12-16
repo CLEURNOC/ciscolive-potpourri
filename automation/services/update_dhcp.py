@@ -115,6 +115,10 @@ if __name__ == '__main__':
         if mask != '255.255.0.0':
             idf_set += ADDITIONAL_IDFS
 
+        if mask.startswith('10.'):
+            octets = mask.split('.')
+            idf_set = (octets[2],)
+
         for i in idf_set:
             prefix = 'IDF-{}'.format(str(i).zfill(3))
             if i == 0:
