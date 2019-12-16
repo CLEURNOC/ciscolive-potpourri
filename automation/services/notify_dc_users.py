@@ -61,16 +61,16 @@ NETWORK_MAP = {
 }
 
 OSTYPE_LIST = [
-    (r'?iubuntu', 'ubuntu64Guest'),
-    (r'?iwindows 10', 'windows9_64Guest'),
-    (r'?iwindows 2012', 'windows8Server64Guest'),
-    (r'?iwindows 201(6|9)', 'windows9Server64Guest'),
-    (r'?idebian 8', 'debian8_64Guest'),
-    (r'?idebian', 'debian9_64Guest'),
-    (r'?icentos 7', 'centos7_64Guest'),
-    (r'?icentos', 'centos8_64Guest'),
-    (r'?ired hat', 'rhel7_64Guest'),
-    (r'?ilinux', 'other3xLinux64Guest')
+    (r'(?i)ubuntu', 'ubuntu64Guest'),
+    (r'(?i)windows 10', 'windows9_64Guest'),
+    (r'(?i)windows 2012', 'windows8Server64Guest'),
+    (r'(?i)windows 201(6|9)', 'windows9Server64Guest'),
+    (r'(?i)debian 8', 'debian8_64Guest'),
+    (r'(?i)debian', 'debian9_64Guest'),
+    (r'(?i)centos 7', 'centos7_64Guest'),
+    (r'(?i)centos', 'centos8_64Guest'),
+    (r'(?i)red hat', 'rhel7_64Guest'),
+    (r'(?i)linux', 'other3xLinux64Guest')
 ]
 
 DNS1 = '10.100.253.6'
