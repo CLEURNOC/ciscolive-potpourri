@@ -15,3 +15,4 @@ class Config:
     VPN_SERVER = 'vpn.ciscolive.network'
     VPN_SERVER_IP = '10.100.252.14'
     CISCOLIVE_YEAR = '2020'
+    PW_RESET_URL = 'https://cl-jump-01.ciscolive.network:8443'
