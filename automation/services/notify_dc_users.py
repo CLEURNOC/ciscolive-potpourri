@@ -3,8 +3,7 @@
 from __future__ import print_function
 import pickle
 import os.path
-import os.environ
-import os.chdir
+import os
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
@@ -284,7 +283,8 @@ def main():
 
         body += 'Joe, Kris and Anthony\r\n\r\n'
 
-        subject = 'Cisco Live Europe {} Data Centre Access Info'.format(CISCOLIVE_YEAR)
+        subject = 'Cisco Live Europe {} Data Centre Access Info'.format(
+            CISCOLIVE_YEAR)
 
         smtp = smtplib.SMTP(SMTP_SEVER)
         msg = EmailMessage()
