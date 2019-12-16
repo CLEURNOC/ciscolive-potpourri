@@ -180,6 +180,9 @@ def main():
         else:
             user = '{}@cisco.com'.format(user)
 
+        m = re.search(r'(\S+)@)', user)
+        username = m.group(1)
+
         body = 'Please find the CLEU Data Centre Access details below\r\n\r\n'
         body += 'Before you can access the Data Centre from remote, AnyConnect to {} and login with {} / {}\r\n'.format(
             VPN_SERVER, CLEUCreds.VPN_USER, CLEUCreds.VPN_PASS)
@@ -208,7 +211,7 @@ def main():
         body += 'AD DOMAIN     : {}\r\n'.format(AD_DOMAIN)
         body += 'Syslog/NetFlow: {}\r\n\r\n'.format(SYSLOG)
 
-        body += 'vCenter is {}.  You MUST use the web client.  Your AD credentials above will work there.  VMs that don\'t require an OVA have been pre-created, but require installation and configuration.  If you use an OVA, you will need to deploy it yourself.\r\n\r\n'
+        body += 'vCenter is {}.  You MUST use the web client.  Your AD credentials above will work there.  VMs that don\'t require an OVA have been pre-created, but require installation and configuration.  If you use an OVA, you will need to deploy it yourself.\r\n\r\n'.format(VCENTER)
 
         body += 'Your VM details are:\r\n\r\n'
         for vm in vms:
@@ -288,8 +291,11 @@ def main():
 
             print('===DONE===')
 
-            body += '{}          : {} (Subnet: {}, GW: {}, v6 Prefix: {}, v6 GW: {})  : Deploy the {} datastore in the "{}" cluster.\r\n\r\nFor this VM upload ISOs to the {} datastore.  There is an "ISOs" folder there already.\r\n\r\n'.format(
-                vm['name'], vm['ip'], NETWORK_MAP[vm['vlan']]['subnet'], NETWORK_MAP[vm['vlan']]['gw'], NETWORK_MAP[vm['vlan']]['prefix'], NETWORK_MAP[vm['vlan']]['gw6'], DC_MAP[vm['dc']], cluster, iso_ds)
+            octets = vm['ip'].split('.')
+            v6_hextet = hex(octets[3])
+
+            body += '{}          : {} (v6: {}{}) (Subnet: {}, GW: {}, v6 Prefix: {}/64, v6 GW: {})  : Deploy to the {} datastore in the "{}" cluster.\r\n\r\nFor this VM upload ISOs to the {} datastore.  There is an "ISOs" folder there already.\r\n\r\n'.format(
+                vm['name'], vm['ip'], NETWORK_MAP[vm['vlan']]['prefix'], v6_hextet, NETWORK_MAP[vm['vlan']]['subnet'], NETWORK_MAP[vm['vlan']]['gw'], NETWORK_MAP[vm['vlan']]['prefix'], NETWORK_MAP[vm['vlan']]['gw6'], DC_MAP[vm['dc']], cluster, iso_ds)
 
         body += 'Let us know via Webex Teams if you need any other details.\r\n\r\n'
 
