@@ -292,7 +292,7 @@ def main():
             print('===DONE===')
 
             octets = vm['ip'].split('.')
-            v6_hextet = hex(octets[3])
+            v6_hextet = hex(int(octets[3]))
 
             body += '{}          : {} (v6: {}{}) (Subnet: {}, GW: {}, v6 Prefix: {}/64, v6 GW: {})  : Deploy to the {} datastore in the "{}" cluster.\r\n\r\nFor this VM upload ISOs to the {} datastore.  There is an "ISOs" folder there already.\r\n\r\n'.format(
                 vm['name'], vm['ip'], NETWORK_MAP[vm['vlan']]['prefix'], v6_hextet, NETWORK_MAP[vm['vlan']]['subnet'], NETWORK_MAP[vm['vlan']]['gw'], NETWORK_MAP[vm['vlan']]['prefix'], NETWORK_MAP[vm['vlan']]['gw6'], DC_MAP[vm['dc']], cluster, iso_ds)
