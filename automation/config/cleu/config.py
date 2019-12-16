@@ -10,3 +10,7 @@ class Config:
     TOOL_BASE = 'https://tool.ciscolive.network/n/static/port.html?'
     AD_DOMAIN = 'ad.' + DNS_DOMAIN
     TOOL = 'tool.ciscolive.network'
+    VCENTER = 'cl-vcenter.ciscolive.network'
+    SMTP_SERVER = '10.100.252.13'
+    VPN_SERVER = 'vpn.ciscolive.network'
+    CISCOLIVE_YEAR = '2020'
