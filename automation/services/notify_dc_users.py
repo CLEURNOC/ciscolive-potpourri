@@ -186,7 +186,7 @@ def main():
         body += 'Reset your password.  You must use a complex password that contains lower and uppercase letters, numbers, or a special character.\r\n'
         body += 'After resetting your password, drop the VPN and reconnect to {} with {} and the new password you just set.\r\n\r\n'.format(
             VPN_SERVER, username)
-        body += 'You can use any of the following Jump Hosts to access the data centre:\r\n\r\n'
+        body += 'You can use any of the following Windows Jump Hosts to access the data centre using RDP:\r\n\r\n'
 
         for js in JUMP_HOSTS:
             body += '{}\r\n'.format(js)
