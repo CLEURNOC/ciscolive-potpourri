@@ -2,7 +2,7 @@
 - name: Configure switchport
   hosts:
       - Core
-      - MDS
+      - MCC
   gather_facts: false
   connection: network_cli
   roles:
