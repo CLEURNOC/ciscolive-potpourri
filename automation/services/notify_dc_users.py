@@ -60,7 +60,7 @@ NETWORK_MAP = {
     }
 }
 
-OSTYPE_MAP = [
+OSTYPE_LIST = [
     (r'?iubuntu', 'ubuntu64Guest'),
     (r'?iwindows 10', 'windows9_64Guest'),
     (r'?iwindows 2012', 'windows8Server64Guest'),
