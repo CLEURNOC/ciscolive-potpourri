@@ -181,7 +181,7 @@ def main():
             VPN_SERVER, CLEUCreds.VPN_USER, CLEUCreds.VPN_PASS)
         body += '(Note: if you get a sinkhole error on the Cisco network, VPN to {} instead.)\r\n'.format(VPN_SERVER_IP)
         body += 'Once connected, go to {} and login with {} and password {}\r\n'.format(
-            PW_RESET_URL, username, CLEUCreds.DEFAULT_PW)
+            PW_RESET_URL, username, CLEUCreds.DEFAULT_USER_PASSWORD)
         body += 'Reset your password.  You must use a complex password that contains lower and\r\n'
         body += 'uppercase letters, numbers, or a special character.\r\n'
         body += 'After resetting your password, drop the VPN and reconnect to {} with {} and the new password you just set.\r\n\r\n'.format(
