@@ -29,7 +29,7 @@ DC_MAP = {
     'HyperFlex-DC2': 'DC2-HX-DS-01'
 }
 
-DEFAULT_CLUSTER = 'CiscoLive'
+DEFAULT_CLUSTER = 'FlexPod'
 
 HX_DCs = {
     'HyperFlex-DC1': 1,
