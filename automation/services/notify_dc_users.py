@@ -103,8 +103,8 @@ SHEET_VLAN = 12
 
 
 def main():
-    if len(sys.args) != 2:
-        print('usage: {} ROW_RANGE'.format(sys.args[0]))
+    if len(sys.argv) != 2:
+        print('usage: {} ROW_RANGE'.format(sys.argv[0]))
         sys.exit(1)
 
     if not os.path.exists('gs_token.pickle'):
@@ -124,7 +124,7 @@ def main():
 
     vm_sheet = service.spreadsheets()
     vm_result = vm_sheet.values().get(spreadsheetId=SPREADSHEET_ID,
-                                      range=sys.args[1]).execute()
+                                      range=sys.argv[1]).execute()
     vm_values = vm_result.get('values', [])
 
     if not vm_values:
