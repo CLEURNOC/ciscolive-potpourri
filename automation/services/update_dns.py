@@ -8,9 +8,7 @@ import sys
 import re
 from argparse import ArgumentParser
 import CLEUCreds
-
-DNS_BASE = 'https://dc1-dns.ciscolive.network:8443/web-services/rest/resource/'
-DOMAIN = 'ciscolive.network'
+from cleu.config import Config as C
 
 HEADERS = {
     'authorization': CLEUCreds.JCLARKE_BASIC,
@@ -64,10 +62,10 @@ if __name__ == '__main__':
         hostname = h[0]
         ip = h[1]
 
-        url = DNS_BASE + 'CCMHost' + '/{}'.format(hostname)
+        url = C.DNS_BASE + 'CCMHost' + '/{}'.format(hostname)
 
         response = requests.request(
-            'GET', url, params={'zoneOrigin': DOMAIN}, headers=HEADERS, verify=False)
+            'GET', url, params={'zoneOrigin': C.DNS_DOMAIN}, headers=HEADERS, verify=False)
         if response.status_code != 404:
             host_obj = response.json()
             a = host_obj['addrs']['stringItem'][0]
@@ -75,7 +73,7 @@ if __name__ == '__main__':
             if a != ip:
                 try:
                     response = requests.request('DELETE', url, params={
-                                                'zoneOrigin': DOMAIN}, headers=HEADERS, verify=False)
+                                                'zoneOrigin': C.DNS_DOMAIN}, headers=HEADERS, verify=False)
                     response.raise_for_status()
                 except Exception as e:
                     sys.stderr.write(
@@ -99,7 +97,7 @@ if __name__ == '__main__':
                         ]
                     },
                     'name': hostname,
-                    'zoneOrigin': DOMAIN
+                    'zoneOrigin': C.DNS_DOMAIN
                 }
                 response = requests.request(
                     'PUT', url, headers=HEADERS, json=host_obj, verify=False)
