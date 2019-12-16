@@ -134,7 +134,7 @@ def main():
     i = 0
     users = {}
 
-    for row in values:
+    for row in vm_values:
         i += 1
         owners = row[SHEET_CONTACT].trim().split(',')
         name = row[SHEET_HOSTNAME].trim()
