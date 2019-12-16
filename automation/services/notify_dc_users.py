@@ -192,7 +192,7 @@ def main():
             body += '{}\r\n'.format(js)
 
         body += '\r\nIf a Jump Host is full, try the next one.\r\n\r\n'
-        body += 'Your login is {} (or {}@{} on Windows).  Your password is the same you used for the VPN\r\n\r\n'.format(
+        body += 'Your login is {} (or {}@{} on Windows).  Your password is the same you used for the VPN.\r\n\r\n'.format(
             username, username, AD_DOMAIN)
         body += 'The network details for your VM(s) are:\r\n\r\n'
         body += 'DNS1          : {}\r\n'.format(DNS1)
@@ -204,7 +204,8 @@ def main():
         body += 'AD DOMAIN     : {}\r\n'.format(AD_DOMAIN)
         body += 'Syslog/NetFlow: {}\r\n\r\n'.format(SYSLOG)
 
-        body += 'vCenter is {}.  You MUST use the web client.  Your AD credentials above will work there.  VMs that don\'t require an OVA have been pre-created, but require installation and configuration.  If you use an OVA, you will need to deploy it yourself.\r\n\r\n'.format(VCENTER)
+        body += 'vCenter is {}.  You MUST use the web client.  Your AD credentials above will work there.  VMs that don\'t require an OVA have been pre-created, but require installation and configuration.  If you use an OVA, you will need to deploy it yourself.\r\n\r\n'.format(
+            VCENTER)
 
         body += 'Your VM details are:\r\n\r\n'
         for vm in vms:
@@ -285,10 +286,9 @@ def main():
             print('===DONE===')
 
             octets = vm['ip'].split('.')
-            v6_hextet = hex(int(octets[3]))
 
             body += '{}          : {} (v6: {}{}) (Subnet: {}, GW: {}, v6 Prefix: {}/64, v6 GW: {})  : Deploy to the {} datastore in the "{}" cluster.\r\n\r\nFor this VM upload ISOs to the {} datastore.  There is an "ISOs" folder there already.\r\n\r\n'.format(
-                vm['name'], vm['ip'], NETWORK_MAP[vm['vlan']]['prefix'], v6_hextet, NETWORK_MAP[vm['vlan']]['subnet'], NETWORK_MAP[vm['vlan']]['gw'], NETWORK_MAP[vm['vlan']]['prefix'], NETWORK_MAP[vm['vlan']]['gw6'], DC_MAP[vm['dc']], cluster, iso_ds)
+                vm['name'], vm['ip'], NETWORK_MAP[vm['vlan']]['prefix'], format(v6_hextet, 'x'), NETWORK_MAP[vm['vlan']]['subnet'], NETWORK_MAP[vm['vlan']]['gw'], NETWORK_MAP[vm['vlan']]['prefix'], NETWORK_MAP[vm['vlan']]['gw6'], DC_MAP[vm['dc']], cluster, iso_ds)
 
         body += 'Let us know via Webex Teams if you need any other details.\r\n\r\n'
 
