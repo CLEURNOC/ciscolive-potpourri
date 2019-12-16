@@ -291,7 +291,7 @@ def main():
         subject = 'Cisco Live Europe {} Data Centre Access Info'.format(
             CISCOLIVE_YEAR)
 
-        smtp = smtplib.SMTP(SMTP_SEVER)
+        smtp = smtplib.SMTP(SMTP_SERVER)
         msg = EmailMessage()
         msg.set_content(body)
 
