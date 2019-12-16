@@ -248,8 +248,8 @@ def main():
                     scsi = 'lsilogicsas'
 
                 os.chdir(ANSIBLE_PATH)
-                command = ['ansible-playbook', '-i', 'inventory/hosts', '-e', 'vmware_cluster={}'.format(cluster), '-e', 'vmware_datacenter={}'.format(DATACENTER), '-e', 'guest_id={}'.format(ostype), '-e', 'guest_name={}'.format(vm['name']), '-e', 'guest_size={}'.format(
-                    vm['disk']), '-e', 'guest_mem={}'.format(mem), '-e', 'guest_cpu={}'.format(vm['cpu']), '-e', 'guest_datastore={}'.format(DC_MAP[vm['dc']]), '-e', 'guest_network={}'.format(vm['vlan']), '-e', 'guest_scsi={}'.format(scsi), '-e', 'ansible_python_interpreter={}'.format(sys.executable), 'add-vm-playbook.yml']
+                command = ['ansible-playbook', '-i', 'inventory/hosts', '-e', '"vmware_cluster=\'{}\'"'.format(cluster), '-e', '"vmware_datacenter=\'{}\'"'.format(DATACENTER), '-e', 'guest_id={}'.format(ostype), '-e', 'guest_name={}'.format(vm['name']), '-e', 'guest_size={}'.format(
+                    vm['disk']), '-e', 'guest_mem={}'.format(mem), '-e', 'guest_cpu={}'.format(vm['cpu']), '-e', 'guest_datastore={}'.format(DC_MAP[vm['dc']]), '-e', '"guest_network=\'{}\'"'.format(vm['vlan']), '-e', 'guest_scsi={}'.format(scsi), '-e', 'ansible_python_interpreter={}'.format(sys.executable), 'add-vm-playbook.yml']
 
                 p = subprocess.Popen(
                     command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
