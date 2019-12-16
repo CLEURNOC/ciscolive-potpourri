@@ -69,7 +69,7 @@ OSTYPE_MAP = [
     (r'?idebian', 'debian9_64Guest'),
     (r'?icentos 7', 'centos7_64Guest'),
     (r'?icentos', 'centos8_64Guest'),
-    (r'?ired hat', 'rhel7_64Guest')
+    (r'?ired hat', 'rhel7_64Guest'),
     (r'?ilinux', 'other3xLinux64Guest')
 ]
 
