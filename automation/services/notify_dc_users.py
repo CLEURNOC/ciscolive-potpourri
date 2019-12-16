@@ -65,7 +65,7 @@ OSTYPE_MAP = [
     (r'?iwindows 10', 'windows9_64Guest'),
     (r'?iwindows 2012', 'windows8Server64Guest'),
     (r'?iwindows 201(6|9)', 'windows9Server64Guest'),
-    (r'?idebian 8', 'debian8_64Guest')
+    (r'?idebian 8', 'debian8_64Guest'),
     (r'?idebian', 'debian9_64Guest'),
     (r'?icentos 7', 'centos7_64Guest'),
     (r'?icentos', 'centos8_64Guest'),
