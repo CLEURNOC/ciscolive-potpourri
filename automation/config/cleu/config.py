@@ -1,6 +1,6 @@
 class Config:
     WEBEX_TEAM = 'CLEUR 20 NOC'
-    DNS_BASE = 'https://dc1-dns.ciscolive.local:8443/web-services/rest/resource/'
+    DNS_BASE = 'https://dc1-dns.ciscolive.network:8443/web-services/rest/resource/'
     DHCP_BASE = 'https://dc1-dhcp.ciscolive.network:8443/web-services/rest/resource/'
     DNS_DOMAIN = 'ciscolive.network'
     MONITORING = 'cl-monitoring.ciscolive.network'
