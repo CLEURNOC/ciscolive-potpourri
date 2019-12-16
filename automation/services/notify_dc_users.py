@@ -166,7 +166,7 @@ def main():
                 'ip': ip,
                 'dc': dc
             }
-            users[owner].append()
+            users[owner].append(vm)
 
     for user, vms in users.items():
         username = user
