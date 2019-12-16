@@ -122,7 +122,7 @@ def main():
 
     gs_service = build('sheets', 'v4', credentials=creds)
 
-    vm_sheet = service.spreadsheets()
+    vm_sheet = gs_service.spreadsheets()
     vm_result = vm_sheet.values().get(spreadsheetId=SPREADSHEET_ID,
                                       range=sys.argv[1]).execute()
     vm_values = vm_result.get('values', [])
@@ -138,7 +138,7 @@ def main():
         i += 1
         owners = row[SHEET_CONTACT].trim().split(',')
         name = row[SHEET_HOSTNAME].trim()
-        os = row[SHEET_OS].trim()
+        opsys = row[SHEET_OS].trim()
         is_ova = row[SHEET_OVA].trim()
         cpu = int(row[SHEET_CPU].trim())
         mem = int(row[SHEET_RAM].trim())
@@ -157,7 +157,7 @@ def main():
 
             vm = {
                 'name': name.upper(),
-                'os': os,
+                'os': opsys,
                 'mem': mem,
                 'is_ova': is_ova,
                 'cpu': cpu,
