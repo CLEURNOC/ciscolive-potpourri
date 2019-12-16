@@ -1,4 +1,4 @@
-#!/usr/local/bin/python2
+#!/usr/bin/env python3
 
 import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning

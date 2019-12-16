@@ -271,7 +271,7 @@ def main():
                 vm['name'], vm['ip']))
 
             os.chdir(UPDATE_DNS_PATH)
-            command = ['./update_dns.py', '--ip',
+            command = ['{}/update_dns.py'.format(UPDATE_DNS_PATH), '--ip',
                        vm['ip'], '--host', vm['name']]
 
             p = subprocess.Popen(
