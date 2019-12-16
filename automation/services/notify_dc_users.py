@@ -253,12 +253,16 @@ def main():
 
                 p = subprocess.Popen(
                     command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                output = ''
+                for c in iter(lambda: p.stdout.read(1), b''):
+                    output += c.decode('utf-8')
+
                 p.wait()
                 rc = p.returncode
 
                 if rc != 0:
                     print(
-                        '\n\n***ERROR: Failed to add VM {}!'.format(vm['name']))
+                        '\n\n***ERROR: Failed to add VM {}\n{}!'.format(vm['name'], output))
                     continue
 
                 print('===DONE===')
@@ -272,11 +276,14 @@ def main():
 
             p = subprocess.Popen(
                 command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            output = ''
+            for c in iter(lambda: p.stdout.read(1), b''):
+                output += c.decode('utf-8')
             p.wait()
             rc = p.returncode
 
             if rc != 0:
-                print('\n\n***ERROR: Failed to add DNS record!')
+                print('\n\n***ERROR: Failed to add DNS record!\n{}'.format(output))
                 continue
 
             print('===DONE===')
