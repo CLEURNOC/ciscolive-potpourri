@@ -88,6 +88,7 @@ ANSIBLE_PATH = '/home/jclarke/src/git/ciscolive/automation/cleu-ansible-n9k'
 UPDATE_DNS_PATH = '/home/jclarke'
 DATACENTER = 'CiscoLive'
 CISCOLIVE_YEAR = C.CISCOLIVE_YEAR
+PW_RESET_URL = C.PW_RESET_URL
 
 SPREADSHEET_ID = '1ExTNQJ7SArHSJKfPOj_x1O2aTj76dHjlG8kCDHW39hw'
 SHEET_HOSTNAME = 0
