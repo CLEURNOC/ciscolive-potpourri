@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 import argparse
 import sys
@@ -187,8 +187,8 @@ def main():
 
     p = subprocess.Popen(command, stdout=subprocess.PIPE,
                          stderr=subprocess.STDOUT)
-    for c in iter(lambda: p.stdout.read(1), ''):
-        sys.stdout.write(c)
+    for c in iter(lambda: p.stdout.read(1), b''):
+        sys.stdout.write(c.decode('utf-8'))
         sys.stdout.flush()
 
 
