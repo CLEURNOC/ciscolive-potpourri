@@ -1,4 +1,4 @@
-#!/usr/local/bin/python2
+#!//usr/bin/nv python3
 #
 # Copyright (c) 2017-2019  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
@@ -33,8 +33,9 @@ import sys
 import re
 from netaddr import IPAddress
 import CLEUCreds
+from cleu.config import Config as C
 
-DHCP_BASE = 'https://dc1-dhcp.ciscolive.network:8443/web-services/rest/resource/Reservation'
+DHCP_BASE = C.DHCP_BASE + 'Reservation'
 
 HEADERS = {
     'authorization': CLEUCreds.JCLARKE_BASIC,
@@ -44,7 +45,7 @@ HEADERS = {
 
 if __name__ == '__main__':
     url = DHCP_BASE
-    ans = raw_input('Are you sure you want to clean reservations (y/N): ')
+    ans = input('Are you sure you want to clean reservations (y/N): ')
     if not re.search(r'^[yY]', ans):
         print('Exiting...')
         sys.exit(0)

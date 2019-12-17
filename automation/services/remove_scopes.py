@@ -1,4 +1,4 @@
-#!/usr/local/bin/python2
+#!/usr/bin/env python3
 #
 # Copyright (c) 2017-2019  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
@@ -30,18 +30,17 @@ from subprocess import Popen, PIPE
 import re
 import shlex
 import os
-
-DHCP_SERVER = '10.100.253.9'
+from cleu.config import Config as C
 
 if __name__ == '__main__':
     match = None
     ans = None
     if len(sys.argv) == 2:
         match = sys.argv[1]
-        ans = raw_input(
+        ans = input(
             'Really delete all scopes that match "{}" (y/N): '.format(match))
     else:
-        ans = raw_input('Really delete all scopes (y/N): ')
+        ans = input('Really delete all scopes (y/N): ')
 
     if not re.search(r'^[yY]', ans):
         print('Exiting...')
