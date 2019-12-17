@@ -152,7 +152,7 @@ def main():
     if args.mtu:
         command += ['-e', 'svi_mtu={}'.format(args.mtu)]
     if args.svi_descr:
-        command += ['-e', 'svi_descr={}'.format(args.svi_descr)]
+        command += ['-e', 'svi_descr=\'{}\''.format(args.svi_descr)]
     if use_hsrp:
         command += ['-e', 'use_hsrp={}'.format(use_hsrp)]
     if passive_interface:
