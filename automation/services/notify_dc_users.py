@@ -157,6 +157,7 @@ def main():
             continue
 
         for owner in owners:
+            owner = owner.strip()
             if owner not in users:
                 users[owner] = []
 
