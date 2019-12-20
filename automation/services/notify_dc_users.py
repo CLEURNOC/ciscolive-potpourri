@@ -141,16 +141,20 @@ def main():
 
     for row in vm_values:
         i += 1
-        owners = row[SHEET_CONTACT].strip().split(',')
-        name = row[SHEET_HOSTNAME].strip()
-        opsys = row[SHEET_OS].strip()
-        is_ova = row[SHEET_OVA].strip()
-        cpu = int(row[SHEET_CPU].strip())
-        mem = int(row[SHEET_RAM].strip())
-        disk = int(row[SHEET_DISK].strip())
-        dc = row[SHEET_DC].strip()
-        vlan = row[SHEET_VLAN].strip()
-        ip = row[SHEET_IP].strip()
+        try:
+            owners = row[SHEET_CONTACT].strip().split(',')
+            name = row[SHEET_HOSTNAME].strip()
+            opsys = row[SHEET_OS].strip()
+            is_ova = row[SHEET_OVA].strip()
+            cpu = int(row[SHEET_CPU].strip())
+            mem = int(row[SHEET_RAM].strip())
+            disk = int(row[SHEET_DISK].strip())
+            dc = row[SHEET_DC].strip()
+            vlan = row[SHEET_VLAN].strip()
+            ip = row[SHEET_IP].strip()
+        except Exception as e:
+            print('WARNING: Failed to process malformed row {}: {}'.format(i, e))
+            continue
 
         if name == '' or ip == '' or dc == '':
             print('WARNING: Ignorning malformed row {}'.format(i))
