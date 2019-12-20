@@ -206,7 +206,7 @@ def main():
         body += 'vCenter is {}.  You MUST use the web client.  Your AD credentials above will work there.  VMs that don\'t require an OVA have been pre-created, but require installation and configuration.  If you use an OVA, you will need to deploy it yourself.\r\n\r\n'.format(
             VCENTER)
 
-        body += 'Your VM details are:\r\n\r\n'
+        body += 'Your VM details are as follows.  DNS records have been pre-created for the VM name (i.e., hostname) below:\r\n\r\n'
         for vm in vms:
             iso_ds = ISO_DS
             cluster = DEFAULT_CLUSTER
