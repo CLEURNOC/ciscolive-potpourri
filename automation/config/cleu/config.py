@@ -10,9 +10,9 @@ class Config:
     TOOL_BASE = 'https://tool.ciscolive.network/n/static/port.html?'
     AD_DOMAIN = 'ad.' + DNS_DOMAIN
     TOOL = 'tool.ciscolive.network'
-    VCENTER = 'cl-vcenter.ciscolive.network'
+    VCENTER = 'cl-vcenter.ad.ciscolive.network'
     SMTP_SERVER = '10.100.252.13'
-    VPN_SERVER = 'vpn.ciscolive.network'
-    VPN_SERVER_IP = '10.100.252.14'
+    VPN_SERVER = 'cl-production.ciscolive.eu'
+    VPN_SERVER_IP = '64.103.25.43'
     CISCOLIVE_YEAR = '2020'
     PW_RESET_URL = 'https://cl-jump-01.ciscolive.network:8443'

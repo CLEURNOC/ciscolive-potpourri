@@ -180,8 +180,7 @@ def main():
         body = 'Please find the CLEU Data Centre Access details below\r\n\r\n'
         body += 'Before you can access the Data Centre from remote, AnyConnect to {} and login with {} / {}\r\n'.format(
             VPN_SERVER, CLEUCreds.VPN_USER, CLEUCreds.VPN_PASS)
-        body += '(Note: if you get a sinkhole error on the Cisco network, VPN to {} instead.)\r\n'.format(VPN_SERVER_IP)
-        body += 'Once connected, go to {} and login with {} and password {}\r\n'.format(
+        body += 'Once connected, your browser should redirect you to the password change tool.  If not go to {} and login with {} and password {}\r\n'.format(
             PW_RESET_URL, username, CLEUCreds.DEFAULT_USER_PASSWORD)
         body += 'Reset your password.  You must use a complex password that contains lower and uppercase letters, numbers, or a special character.\r\n'
         body += 'After resetting your password, drop the VPN and reconnect to {} with {} and the new password you just set.\r\n\r\n'.format(
