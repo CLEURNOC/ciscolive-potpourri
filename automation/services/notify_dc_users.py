@@ -291,8 +291,8 @@ def main():
 
             octets = vm['ip'].split('.')
 
-            body += '{}          : {} (v6: {}{}) (Subnet: {}, GW: {}, v6 Prefix: {}/64, v6 GW: {})  : Deploy to the {} datastore in the "{}" cluster.\r\n\r\nFor this VM upload ISOs to the {} datastore.  There is an "ISOs" folder there already.\r\n\r\n'.format(
-                vm['name'], vm['ip'], NETWORK_MAP[vm['vlan']]['prefix'], format(int(octets[3]), 'x'), NETWORK_MAP[vm['vlan']]['subnet'], NETWORK_MAP[vm['vlan']]['gw'], NETWORK_MAP[vm['vlan']]['prefix'], NETWORK_MAP[vm['vlan']]['gw6'], DC_MAP[vm['dc']], cluster, iso_ds)
+            body += '{}          : {} (v6: {}{}) (Network: {}, Subnet: {}, GW: {}, v6 Prefix: {}/64, v6 GW: {})  : Deploy to the {} datastore in the "{}" cluster.\r\n\r\nFor this VM upload ISOs to the {} datastore.  There is an "ISOs" folder there already.\r\n\r\n'.format(
+                vm['name'], vm['ip'], vm['vlan'], NETWORK_MAP[vm['vlan']]['prefix'], format(int(octets[3]), 'x'), NETWORK_MAP[vm['vlan']]['subnet'], NETWORK_MAP[vm['vlan']]['gw'], NETWORK_MAP[vm['vlan']]['prefix'], NETWORK_MAP[vm['vlan']]['gw6'], DC_MAP[vm['dc']], cluster, iso_ds)
 
         body += 'Let us know via Webex Teams if you need any other details.\r\n\r\n'
 
