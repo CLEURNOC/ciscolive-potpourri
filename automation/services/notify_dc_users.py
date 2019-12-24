@@ -212,6 +212,7 @@ def main():
             VCENTER)
 
         body += 'Your VM details are as follows.  DNS records have been pre-created for the VM name (i.e., hostname) below:\r\n\r\n'
+        created = {}
         for vm in vms:
             iso_ds = ISO_DS
             cluster = DEFAULT_CLUSTER
@@ -240,7 +241,7 @@ def main():
                 print('WARNING: Did not find OS type for {}'.format(vm['os']))
                 continue
 
-            if not is_ova and vm['vlan'] != '':
+            if not is_ova and vm['vlan'] != '' and vm['name'] not in created:
                 print('===Adding VM for {}==='.format(vm['name']))
                 mem = vm['mem'] * 1024
                 scsi = 'lsilogic'
@@ -268,31 +269,33 @@ def main():
 
                 print('===DONE===')
 
-            print('===Adding DNS record for {} ==> {}==='.format(
-                vm['name'], vm['ip']))
+            if vm['name'] not in created:
+                print('===Adding DNS record for {} ==> {}==='.format(
+                    vm['name'], vm['ip']))
 
-            os.chdir(UPDATE_DNS_PATH)
-            command = ['{}/update_dns.py'.format(UPDATE_DNS_PATH), '--ip',
-                       vm['ip'], '--host', vm['name']]
+                os.chdir(UPDATE_DNS_PATH)
+                command = ['{}/update_dns.py'.format(UPDATE_DNS_PATH), '--ip',
+                           vm['ip'], '--host', vm['name']]
 
-            p = subprocess.Popen(
-                command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-            output = ''
-            for c in iter(lambda: p.stdout.read(1), b''):
-                output += c.decode('utf-8')
-            p.wait()
-            rc = p.returncode
+                p = subprocess.Popen(
+                    command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                output = ''
+                for c in iter(lambda: p.stdout.read(1), b''):
+                    output += c.decode('utf-8')
+                p.wait()
+                rc = p.returncode
 
-            if rc != 0:
-                print('\n\n***ERROR: Failed to add DNS record!\n{}'.format(output))
-                continue
+                if rc != 0:
+                    print('\n\n***ERROR: Failed to add DNS record!\n{}'.format(output))
+                    continue
 
-            print('===DONE===')
+                print('===DONE===')
 
             octets = vm['ip'].split('.')
 
             body += '{}          : {} (v6: {}{}) (Network: {}, Subnet: {}, GW: {}, v6 Prefix: {}/64, v6 GW: {})  : Deploy to the {} datastore in the "{}" cluster.\r\n\r\nFor this VM upload ISOs to the {} datastore.  There is an "ISOs" folder there already.\r\n\r\n'.format(
                 vm['name'], vm['ip'], vm['vlan'], NETWORK_MAP[vm['vlan']]['prefix'], format(int(octets[3]), 'x'), NETWORK_MAP[vm['vlan']]['subnet'], NETWORK_MAP[vm['vlan']]['gw'], NETWORK_MAP[vm['vlan']]['prefix'], NETWORK_MAP[vm['vlan']]['gw6'], DC_MAP[vm['dc']], cluster, iso_ds)
+            created[vm['name']] = True
 
         body += 'Let us know via Webex Teams if you need any other details.\r\n\r\n'
 
