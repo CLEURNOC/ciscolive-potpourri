@@ -220,7 +220,7 @@ def main():
                 if vm['dc'].endswith('2'):
                     iso_ds = ISO_DS_HX2
                 else:
-                    iso_ds = ISO_DS_HX
+                    iso_ds = ISO_DS_HX1
 
                 cluster = vm['dc']
 
