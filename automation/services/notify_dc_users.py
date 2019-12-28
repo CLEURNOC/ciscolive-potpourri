@@ -136,7 +136,9 @@ def main():
         print('ERROR: Did not read anything from Google Sheets!')
         sys.exit(1)
 
-    i = 0
+    (rstart, rend) = sys.argv[1].split(':')
+
+    i = int(rstart) - 1
     users = {}
 
     for row in vm_values:
