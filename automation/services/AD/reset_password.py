@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2017-2018  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2019  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,20 +32,19 @@ from flask import request, Response, session
 from flask import Flask
 import pythoncom
 import CLEUCreds
+from cleu.config import Config as C
 
 
-AD_DN_BASE = 'cn=Users, dc=ad, dc=ciscolive, dc=network'
-AD_DOMAIN = 'ad.ciscolive.network'
-AD_DC = 'dc1-ad.ad.ciscolive.network'
+AD_DC = 'dc1-ad.' + AD_DOMAIN
 
 app = Flask('CLEU Password Reset')
 
 
 def query_user(username, password, target_user):
-    global AD_DC, AD_DN_BASE
+    global AD_DC
 
     try:
-        adcontainer.ADContainer.from_dn(AD_DN_BASE, options={
+        adcontainer.ADContainer.from_dn(C.AD_DN_BASE, options={
                                         'ldap_server': AD_DC, 'username': username, 'password': password})
     except Exception as e:
         print(e)
@@ -55,7 +54,7 @@ def query_user(username, password, target_user):
         q = adquery.ADQuery(
             options={'ldap_server': AD_DC, 'username': username, 'password': password})
         q.execute_query(attributes=['distinguishedName'], where_clause="sAMAccountName='{}'".format(
-            target_user), base_dn=AD_DN_BASE, options={'ldap_server': AD_DC, 'username': username, 'password': password})
+            target_user), base_dn=C.AD_DN_BASE, options={'ldap_server': AD_DC, 'username': username, 'password': password})
         for row in q.get_results():
             return row['distinguishedName']
     except Exception as e:
@@ -64,16 +63,18 @@ def query_user(username, password, target_user):
 
 
 def check_auth(username, password):
-    global AD_DOMAIN
-
     pythoncom.CoInitialize()
+
+    if username == C.VPN_USER or username == C.VPN_USER + '@' + C.AD_DOMAIN:
+        return False
+
     if 'dn' in session:
         return True
 
-    if not re.search(r'@{}$'.format(AD_DOMAIN), username):
-        username += '@{}'.format(AD_DOMAIN)
+    if not re.search(r'@{}$'.format(C.AD_DOMAIN), username):
+        username += '@{}'.format(C.AD_DOMAIN)
 
-    target_username = username.replace('@{}'.format(AD_DOMAIN), '')
+    target_username = username.replace('@{}'.format(C.AD_DOMAIN), '')
 
     try:
         dn = query_user(username, password, target_username)

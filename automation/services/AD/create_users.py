@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2017-2018  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2019  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,19 +30,15 @@ import re
 import sparker
 import CLEUCreds
 import time
+from cleu.config import Config as C
 
-
-AD_DN_BASE = 'cn=Users, dc=ad, dc=ciscolive, dc=network'
-DEFAULT_GROUP = 'NOC Users'
-AD_DOMAIN = 'ad.ciscolive.network'
-
-SPARK_TEAM = 'CL19 NOC Team'
+DEFAULT_GROUP = 'CL NOC Users'
 
 if __name__ == '__main__':
     spark = sparker.Sparker(token=CLEUCreds.SPARK_TOKEN)
-    members = spark.get_members(SPARK_TEAM)
+    members = spark.get_members(C.WEBEX_TEAM)
     #pyad.set_defaults(ldap_server=AD_DC, username=AD_USERNAME, password=AD_PASSWORD, ssl=True)
-    ou = adcontainer.ADContainer.from_dn(AD_DN_BASE)
+    ou = adcontainer.ADContainer.from_dn(C.AD_DN_BASE)
     if members is not None:
         for member in members:
             m = re.search(r'([^@]+)@cisco.com$', member['personEmail'])
@@ -54,7 +50,7 @@ if __name__ == '__main__':
                         fullname, AD_DN_BASE))
                     if ad_user is not None:
                         sys.stderr.write(
-                            'Not creating {} as they already exist.\n'.format(m.group(1)))
+                            'Not creating {} ({}) as they already exist.\n'.format(m.group(1), fullname))
                         continue
                 except Exception:
                     pass
@@ -69,7 +65,7 @@ if __name__ == '__main__':
                 try:
                     new_user.update_attribute('sAMAccountName', m.group(1))
                     new_user.update_attribute(
-                        'userPrincipalName', '{}@{}'.format(m.group(1), AD_DOMAIN))
+                        'userPrincipalName', '{}@{}'.format(m.group(1), C.AD_DOMAIN))
                 except Exception:
                     try:
                         new_user.delete()
@@ -82,11 +78,12 @@ if __name__ == '__main__':
                 try:
                     new_user.force_pwd_change_on_login()
                 except Exception as e:
-                    sys.stderr.write('Error setting password policy for user {}: {}'.format(m.group(1), e))
+                    sys.stderr.write(
+                        'Error setting password policy for user {}: {}'.format(m.group(1), e))
                 def_group = adgroup.ADGroup.from_cn(DEFAULT_GROUP)
                 def_group.add_members([new_user])
                 print('Added user {}'.format(m.group(1)))
                 time.sleep(1)
     else:
         sys.stderr.write(
-            'Unable to get members from Spark.\nMake sure the bot is part of the Spark team.\n')
+            'Unable to get members from Webex Teams.\nMake sure the bot is part of the Webex team.\n')
