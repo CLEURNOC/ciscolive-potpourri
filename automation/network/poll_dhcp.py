@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 #
 # Copyright (c) 2017-2019  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
@@ -36,7 +36,7 @@ requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 import CLEUCreds
 
-DHCP_SERVERS = ['10.100.253.9', '10.100.253.109']
+DHCP_SERVERS = ['10.100.253.9', '10.100.254.9']
 CACHE_FILE = '/home/jclarke/dhcp_metrics.dat'
 CACHE_FILE_TMP = CACHE_FILE + '.tmp'
 

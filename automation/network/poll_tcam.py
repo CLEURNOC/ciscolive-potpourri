@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 #
 # Copyright (c) 2017-2019  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
@@ -34,10 +34,10 @@ import sparker
 from multiprocessing import Pool
 import traceback
 import CLEUCreds
+from cleu.config import Config as C
 
 
 devices = ['CORE1-WA', 'CORE2-WA']
-TEAM_NAME = 'CL19 NOC Team'
 ROOM_NAME = 'Core Alarms'
 CACHE_FILE = '/home/jclarke/tcam_util.json'
 
@@ -54,7 +54,7 @@ def exec_command(chan, cmd, dev):
 
 
 def get_results(dev, cache):
-    global TEAM_NAME, ROOM_NAME, spark
+    global ROOM_NAME, spark
     commands = [
         'show platform hardware fed active fwd-asic resource tcam utilization']
 
@@ -117,7 +117,7 @@ def get_results(dev, cache):
         if perc >= 75.0:
             msg = '**!!! DANGER DANGER DANGER DANGER !!!**<br>{} on {} is {}% used'.format(
                 metric, dev, perc)
-            spark.post_to_spark(TEAM_NAME, ROOM_NAME, msg)
+            spark.post_to_spark(C.WEBEX_TEAM, ROOM_NAME, msg)
 
         cache[dev][metric] = perc
 

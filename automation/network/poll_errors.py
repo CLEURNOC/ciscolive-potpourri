@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 #
 # Copyright (c) 2017-2019  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
@@ -29,6 +29,7 @@ import os
 import json
 from sparker import Sparker
 import CLEUCreds
+from cleu.config import Config as C
 
 CACHE_FILE = '/home/jclarke/errors_cache.dat'
 THRESHOLD = 1
@@ -36,10 +37,9 @@ WINDOW = 12
 REARM = 6
 
 
-SPARK_TEAM = 'CL19 NOC Team'
-SPARK_ROOM = 'Data Center Alarms'
+WEBEX_ROOM = 'Data Center Alarms'
 
-devices = ['dc1-fcsw-1', 'dc1-fcsw-2', 'dc2-fcsw-1', 'dc2-fcsw-2',
+devices = ['dc1-mccsw-1', 'dc1-mccsw-2', 'dc2-mccsw-1', 'dc2-mccsw-2',
            'dc1-ethsw-1', 'dc1-ethsw-2', 'dc2-ethsw-1', 'dc2-ethsw-2']
 
 ignore_interfaces = {}
@@ -110,17 +110,17 @@ if __name__ == '__main__':
                         found_error = True
                         if curr_state[device][ins]['count'] < WINDOW and not curr_state[device][ins]['suppressed']:
                             spark.post_to_spark(
-                                SPARK_TEAM, SPARK_ROOM, '**WARNING**: Interface **{}** ({}) on device _{}_ has seen an increase of **{}** {} since the last poll (previous: {}, current: {}).'.format(if_descr, if_alias, device, diff, k, prev_state[device][ins][k], v))
+                                C.WEBEX_TEAM, WEBEX_ROOM, '**WARNING**: Interface **{}** ({}) on device _{}_ has seen an increase of **{}** {} since the last poll (previous: {}, current: {}).'.format(if_descr, if_alias, device, diff, k, prev_state[device][ins][k], v))
                         elif not curr_state[device][ins]['suppressed']:
                             curr_state[device][ins]['suppressed'] = True
                             spark.post_to_spark(
-                                SPARK_TEAM, SPARK_ROOM, 'Suppressing alarms for interface **{}** ({}) on device _{}_'.format(if_descr, if_alias, device))
+                                C.WEBEX_TEAM, WEBEX_ROOM, 'Suppressing alarms for interface **{}** ({}) on device _{}_'.format(if_descr, if_alias, device))
             if not found_error:
                 if curr_state[device][ins]['count'] > 0:
                     curr_state[device][ins]['count'] -= 1
                     if curr_state[device][ins]['count'] < REARM and curr_state[device][ins]['suppressed']:
                         spark.post_to_spark(
-                            SPARK_TEAM, SPARK_ROOM, 'Interface **{}** ({}) on device _{}_ is no longer seeing an increase of errors'.format(if_descr, if_alias, device))
+                            C.WEBEX_TEAM, WEBEX_ROOM, 'Interface **{}** ({}) on device _{}_ is no longer seeing an increase of errors'.format(if_descr, if_alias, device))
                         curr_state[device][ins]['suppressed'] = False
             else:
                 curr_state[device][ins]['count'] += 1

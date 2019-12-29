@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 #
 # Copyright (c) 2017-2019  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
@@ -33,6 +33,7 @@ import shlex
 import re
 import json
 import CLEUCreds
+from cleu.config import Config as C
 
 routers = {}
 
@@ -44,8 +45,7 @@ commands = {
 cache_dir = '/home/jclarke/routing-tables'
 ROUTER_FILE = '/home/jclarke/routers.json'
 
-SPARK_TEAM = 'CL19 NOC Team'
-SPARK_ROOM = 'Core Alarms'
+WEBEX_ROOM = 'Core Alarms'
 
 if __name__ == '__main__':
     spark = Sparker(token=CLEUCreds.SPARK_TOKEN)
@@ -102,7 +102,7 @@ if __name__ == '__main__':
 
                     if rc != 0:
                         spark.post_to_spark(
-                            SPARK_TEAM, SPARK_ROOM, '**ALERT**: Routing table diff ({}) on **{}**:\n```\n{}\n```'.format(command, router, re.sub(cache_dir + '/', '', out)))
+                            C.WEBEX_TEAM, WEBEX_ROOM, '**ALERT**: Routing table diff ({}) on **{}**:\n```\n{}\n```'.format(command, router, re.sub(cache_dir + '/', '', out)))
                         time.sleep(1)
                         #print('XXX: Out = \'{}\''.format(out))
 
