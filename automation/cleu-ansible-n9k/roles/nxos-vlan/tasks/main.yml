@@ -14,6 +14,7 @@
       parents: interface {{ item }}
   with_items: "{{ iflist }}"
   when: iflist is defined
+  tags: vlan
 
 - name: Add SVI definition
   nxos_interfaces:

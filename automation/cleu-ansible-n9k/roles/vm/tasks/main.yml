@@ -21,3 +21,4 @@
           - name: "{{ guest_network }}"
       validate_certs : no
   delegate_to: localhost
+  tags: vm
