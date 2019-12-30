@@ -1,8 +1,8 @@
 ---
-- name: Configure core switches
+- name: Configure network switches
   hosts: Core
   gather_facts: false
   connection: network_cli
   roles:
-      - vlan
+      - nxos-vlan
       - write-mem
