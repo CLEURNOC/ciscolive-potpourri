@@ -1,93 +1,104 @@
 ---
 - name: Configure switchport interface
-  nxos_interface:
-      admin_state: up
-      name: "{{ item.name }}"
-      mode: layer2
+  nxos_interfaces:
+      config:
+        - name: "{{ item.name }}"
+          enabled: True
+          mode: layer2
   with_items: "{{ n9k_switchports }}"
   tags: switchport
 
 - name: Configure switchport description
-  nxos_interface:
-      name: "{{ item.name }}"
-      description: "{{ item.descr }}"
+  nxos_interfaces:
+      config:
+        - name: "{{ item.name }}"
+          description: "{{ item.descr }}"
   with_items: "{{ n9k_switchports }}"
   when: item.descr is defined
   tags: switchport
 
 - name: Configure switchport MTU
-  nxos_interface:
-      name: "{{ item.name }}"
-      mtu: "{{ item.mtu }}"
+  nxos_interfaces:
+      config:
+        - name: "{{ item.name }}"
+          mtu: "{{ item.mtu }}"
   with_items: "{{ n9k_switchports }}"
   when: item.mtu is defined
   tags: switchport
 
 - name: Configure switchport access parameters
-  nxos_l2_interface:
-      name: "{{ item.name }}"
-      mode: access
-      access_vlan: "{{ item.access_vlan }}"
+  nxos_l2_interfaces:
+      config:
+        - name: "{{ item.name }}"
+          access:
+            vlan: "{{ item.access_vlan }}"
   with_items: "{{ n9k_switchports }}"
   when: item.mode == "access"
   tags: switchport
 
 - name: Configure switchport trunk parameters
-  nxos_l2_interface:
-      name: "{{ item.name }}"
-      mode: trunk
-      trunk_allowed_vlans: "{{ item.trunk_allowed_vlans }}"
+  nxos_l2_interfaces:
+      config:
+        - name: "{{ item.name }}"
+          trunk:
+            allowed_vlans: "{{ item.trunk_allowed_vlans }}"
   with_items: "{{ n9k_switchports }}"
   when: item.mode == "trunk"
   tags: switchport
 
 - name: Configure port-channel interface
-  nxos_interface:
-      name: Port-channel{{ item.port_channel }}
-      admin_state: up
-      mode: layer2
+  nxos_interfaces:
+      config:
+        - name: Port-channel{{ item.port_channel }}
+          enabled: True
+          mode: layer2
   with_items: "{{ n9k_switchports }}"
   when: item.port_channel is defined
   tags: switchport
 
 - name: Configure port-channel description
-  nxos_interface:
-      name: Port-channel{{ item.port_channel }}
-      description: "{{ item.pc_descr }}"
+  nxos_interfaces:
+      config:
+        - name: Port-channel{{ item.port_channel }}
+          description: "{{ item.pc_descr }}"
   with_items: "{{ n9k_switchports }}"
   when: item.port_channel is defined and item.pc_descr is defined
   tags: switchport
 
 - name: Configure port-channel description
-  nxos_interface:
-      name: Port-channel{{ item.port_channel }}
-      description: "{{ item.descr }}"
+  nxos_interfaces:
+      config:
+        - name: Port-channel{{ item.port_channel }}
+          description: "{{ item.descr }}"
   with_items: "{{ n9k_switchports }}"
   when: item.port_channel is defined and item.descr is defined
   tags: switchport
 
 - name: Configure port-channel MTU
-  nxos_interface:
-      name: Port-channel{{ item.port_channel }}
-      mtu: "{{ item.mtu }}"
+  nxos_interfaces:
+      config:
+        - name: Port-channel{{ item.port_channel }}
+          mtu: "{{ item.mtu }}"
   with_items: "{{ n9k_switchports }}"
   when: item.port_channel is defined and item.mtu is defined
   tags: switchport
 
 - name: Configure port-channel access parameters
-  nxos_l2_interface:
-      name: Port-channel{{ item.port_channel }}
-      mode: access
-      access_vlan: "{{ item.access_vlan }}"
+  nxos_l2_interfaces:
+      config:
+        - name: Port-channel{{ item.port_channel }}
+          access:
+            vlan: "{{ item.access_vlan }}"
   with_items: "{{ n9k_switchports }}"
   when: item.port_channel is defined and item.mode == "access"
   tags: switchport
 
 - name: Configure port-channel trunk parameters
-  nxos_l2_interface:
-      name: Port-channel{{ item.port_channel }}
-      mode: trunk
-      trunk_allowed_vlans: "{{ item.trunk_allowed_vlans }}"
+  nxos_l2_interfaces:
+      config:
+        - name: Port-channel{{ item.port_channel }}
+          trunk:
+            allowed_vlans: "{{ item.trunk_allowed_vlans }}"
   with_items: "{{ n9k_switchports }}"
   when: item.port_channel is defined and item.mode == "trunk"
   tags: switchport

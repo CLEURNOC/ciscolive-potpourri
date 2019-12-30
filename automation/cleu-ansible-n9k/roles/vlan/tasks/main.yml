@@ -1,9 +1,10 @@
 ---
 - name: Add VLAN definition
-  nxos_vlan:
-      admin_state: up
-      name: "{{ vlan_name }}"
-      vlan_id: "{{ vlan_id }}"
+  nxos_vlans:
+      config:
+        - vlan_id: "{{ vlan_id }}"
+          enabled: True
+          name: "{{ vlan_name }}"
   tags: vlan
 
 - name: Associate interfaces to VLAN
@@ -15,26 +16,31 @@
   when: iflist is defined
 
 - name: Add SVI definition
-  nxos_interface:
-      admin_state: up
-      name: Vlan{{ vlan_id }}
-      mode: layer3
-      mtu: "{{ svi_mtu }}"
-      description: "{{ svi_descr }}"
+  nxos_interfaces:
+      config:
+        - name: Vlan{{ vlan_id }}
+          enabled: True
+          mode: layer3
+          mtu: "{{ svi_mtu }}"
+          description: "{{ svi_descr }}"
   when: svi_v4_prefix is defined or svi_v6_network is defined or svi_v6_link_local is defined
   tags: vlan
 
 - name: Add SVI v4 L3 parameters
-  nxos_l3_interface:
-      name: Vlan{{ vlan_id }}
-      ipv4: "{{ svi_v4_prefix }}.{{ core_svi_v4_suffix }}/{{ svi_subnet_len }}"
+  nxos_l3_interfaces:
+      config:
+        - name: Vlan{{ vlan_id }}
+          ipv4:
+            - address: "{{ svi_v4_prefix }}.{{ core_svi_v4_suffix }}/{{ svi_subnet_len }}"
   when: svi_v4_prefix is defined
   tags: vlan
 
 - name: Add SVI v6 L3 parameters
-  nxos_l3_interface:
-      name: Vlan{{ vlan_id }}
-      ipv6: "{{ svi_v6_network }}{{ core_svi_v6_suffix }}/64"
+  nxos_l3_interfaces:
+      config:
+        - name: Vlan{{ vlan_id }}
+          ipv6:
+            - address: "{{ svi_v6_network }}{{ core_svi_v6_suffix }}/64"
   when: svi_v6_network is defined
   tags: vlan
 
@@ -49,7 +55,7 @@
 - name: Add SVI OSPFv2 parameters
   nxos_interface_ospf:
       area: 0.0.0.0
-      ospf: "1"
+      ospf: "{{ ospf_pid }}"
       interface: Vlan{{ vlan_id }}
   when: svi_v4_prefix is defined
   tags: vlan
