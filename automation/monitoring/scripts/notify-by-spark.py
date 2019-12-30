@@ -1,4 +1,4 @@
-#!/usr/local/bin/python2.7
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2017-2019  Joe Clarke <jclarke@cisco.com>
@@ -25,37 +25,51 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+
 import sparker
 import sys
 import logging
 import re
 import argparse
-import CLEUCreds
+
+GOOD = '✅'
+BAD = '🚨🚨'
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s : %(message)s',
                         filename='/var/log/spark.log', level=logging.DEBUG)
 
     parser = argparse.ArgumentParser(
-        prog=sys.argv[0], description="Send notifications to a Spark room")
+        prog=sys.argv[0], description='Send notifications to a Spark room')
     parser.add_argument('--team', '-t', metavar='<TEAM NAME>',
-                        help='Spark Team name to use')
+                        help='Webex Teams Team name to use')
     parser.add_argument('--room', '-r', metavar='<ROOM NAME>',
-                        help='Spark Room name to use', required=True)
+                        help='Webex Teams Room name to use', required=True)
+    parser.add_argument('--token', '-T', metavar='<TOKEN>',
+                        help='Spark Token to use to post', required=True)
+    parser.add_argument('--good', '-g', action='store_true',
+                        help='Is this a good message')
+    parser.add_argument('--bad', '-b', action='store_true',
+                        help='Is this a bad message')
 
     parser.set_defaults(team=None)
     args = parser.parse_args()
 
-    spark = sparker.Sparker(logit=True, token=CLEUCreds.SPARK_TOKEN)
+    spark = sparker.Sparker(logit=True, token=args.token)
 
     if not args.team and re.search(r':', args.room):
-        team,room = args.room.split(':')
+        team, room = args.room.split(':')
         args.team = team
         args.room = room
 
     msg = ''
 
-    for line in sys.stdin.read():
-        msg += line
+    for c in sys.stdin.read():
+        msg += c
+
+    if args.good and not args.bad:
+        msg = GOOD + ' ' + msg
+    elif args.bad and not args.good:
+        msg = BAD + ' ' + msg
 
     spark.post_to_spark(args.team, args.room, msg)
