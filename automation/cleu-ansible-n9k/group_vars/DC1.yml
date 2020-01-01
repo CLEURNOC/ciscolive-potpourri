@@ -7,3 +7,6 @@ n9k_site: DC1
 
 # Site-specific SNMP location.
 snmp_location: "002"
+
+# Site-specific IDF details
+idf_id: "253"

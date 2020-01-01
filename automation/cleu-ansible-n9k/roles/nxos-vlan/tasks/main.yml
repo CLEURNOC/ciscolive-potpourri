@@ -5,7 +5,31 @@
         - vlan_id: "{{ vlan_id }}"
           enabled: True
           name: "{{ vlan_name }}"
-  tags: vlan
+  tags:
+    - NXOS
+    - vlan
+    - nxos-vlan
+    - add-vlan
+    - add-nxos-vlan
+
+- name: Generate list of interfaces (stretched)
+  set_fact: iflist="{{ port_channels | list }}"
+  when: generate_iflist is True and is_stretched is True
+  tags:
+    - NXOS
+    - vlan
+    - nxos-vlan
+    - allow-vlan
+
+- name: Generate list of interfaces (non-stretched)
+  set_fact: iflist="{{ iflist }} + [{{ item }}]"
+  with_items: "{{ port_channels | list }}"
+  when: generate_iflist is True and is_stretched is False and port_channels[item] is False
+  tags:
+    - NXOS
+    - vlan
+    - nxos-vlan
+    - allow-vlan
 
 - name: Associate interfaces to VLAN
   nxos_config:
@@ -14,7 +38,11 @@
       parents: interface {{ item }}
   with_items: "{{ iflist }}"
   when: iflist is defined
-  tags: vlan
+  tags:
+    - NXOS
+    - vlan
+    - nxos-vlan
+    - allow-vlan
 
 - name: Add SVI definition
   nxos_interfaces:
@@ -24,8 +52,52 @@
           mode: layer3
           mtu: "{{ svi_mtu }}"
           description: "{{ svi_descr }}"
-  when: svi_v4_prefix is defined or svi_v6_network is defined or svi_v6_link_local is defined
-  tags: vlan
+  when: svi_mtu is defined and svi_descr is defined
+  tags:
+    - NXOS
+    - vlan
+    - nxos-vlan
+    - add-svi
+
+- name: Set per-DC v4 IDF ID
+  set_fact: v4_idf_id={{ idf_id }}
+  when: is_stretched is False and build_v4 is True
+  tags:
+      - NXOS
+      - vlan
+      - nxos-vlan
+      - add-svi-l3
+      - add-svi-l3-v4
+
+- name: Set stretched v4 IDF ID
+  set_fact: v4_idf_id={{ stretched_idf_id }}
+  when: is_stretched is True and build_v4 is True
+  tags:
+      - NXOS
+      - vlan
+      - nxos-vlan
+      - add-svi-l3
+      - add-svi-l3-v4
+
+- name: Construct SVI IPv4 address
+  set_fact: svi_v4_prefix={{ base_major_net }}.{{ vlan_id }}.{{ v4_idf_id }}
+  when: build_v4 is True
+  tags:
+      - NXOS
+      - vlan
+      - nxos-vlan
+      - add-svi-l3
+      - add-svi-l3-v4
+
+- name: Set SVI subnet length
+  set_fact: svi_subnet_len="24"
+  when: build_v4 is True
+  tags:
+      - NXOS
+      - vlan
+      - nxos-vlan
+      - add-svi-l3
+      - add-svi-l3-v4
 
 - name: Add SVI v4 L3 parameters
   nxos_l3_interfaces:
@@ -34,7 +106,42 @@
           ipv4:
             - address: "{{ svi_v4_prefix }}.{{ core_svi_v4_suffix }}/{{ svi_subnet_len }}"
   when: svi_v4_prefix is defined
-  tags: vlan
+  tags:
+    - NXOS
+    - vlan
+    - nxos-vlan
+    - add-svi-l3
+    - add-svi-l3-v4
+
+- name: Set per-DC v6 IDF ID
+  set_fact: v6_idf_id="{{ '%0x' % idf_id|int }}"
+  when: is_stretched is False and build_v6 is True
+  tags:
+    - NXOS
+    - vlan
+    - nxos-vlan
+    - add-svi-l3
+    - add-svi-l3-v6
+
+- name: Set stretched v6 IDF ID
+  set_fact: v6_idf_id="{{ '%0x' % stretched_idf_id|int }}"
+  when: is_stretched is True and build_v6 is True
+  tags:
+    - NXOS
+    - vlan
+    - nxos-vlan
+    - add-svi-l3
+    - add-svi-l3-v6
+
+- name: Construct SVI v6 address
+  set_fact: svi_v6_network="{{ base_v6_prefix }}:{{ '%0x' % vlan_id|int }}{{ v6_idf_id }}::"
+  when: build_v6 is True
+  tags:
+    - NXOS
+    - vlan
+    - nxos-vlan
+    - add-svi-l3
+    - add-svi-l3-v6
 
 - name: Add SVI v6 L3 parameters
   nxos_l3_interfaces:
@@ -43,7 +150,12 @@
           ipv6:
             - address: "{{ svi_v6_network }}{{ core_svi_v6_suffix }}/64"
   when: svi_v6_network is defined
-  tags: vlan
+  tags:
+    - NXOS
+    - vlan
+    - nxos-vlan
+    - add-svi-l3
+    - add-svi-l3-v6
 
 - name: Add SVI v6 L3 parameters
   nxos_config:
@@ -51,7 +163,12 @@
           - ipv6 address use-link-local-only
       parents: interface Vlan{{ vlan_id }}
   when: svi_v6_link_local is defined
-  tags: vlan
+  tags:
+    - NXOS
+    - vlan
+    - nxos-vlan
+    - add-svi-l3
+    - add-svi-l3-v6
 
 - name: Add SVI OSPFv2 parameters
   nxos_interface_ospf:
@@ -59,7 +176,12 @@
       ospf: "{{ ospf_pid }}"
       interface: Vlan{{ vlan_id }}
   when: svi_v4_prefix is defined
-  tags: vlan
+  tags:
+    - NXOS
+    - vlan
+    - nxos-vlan
+    - add-ospf
+    - add-ospfv2
 
 - name: Add additional SVI OSPFv2 parameters
   nxos_config:
@@ -67,7 +189,12 @@
           - ip ospf network {{ ospf_type }}
       parents: interface Vlan{{ vlan_id }}
   when: svi_v4_prefix is defined
-  tags: vlan
+  tags:
+    - NXOS
+    - vlan
+    - nxos-vlan
+    - add-ospf
+    - add-ospfv2
 
 - name: Disable SVI OSPFv2 passive interface
   nxos_config:
@@ -75,7 +202,12 @@
           - no ip ospf passive-interface
       parents: interface Vlan{{ vlan_id }}
   when: svi_v4_prefix is defined and not passive_interface is defined
-  tags: vlan
+  tags:
+    - NXOS
+    - vlan
+    - nxos-vlan
+    - add-ospf
+    - add-ospfv2
 
 - name: Add SVI OSPFv3 parameters
   nxos_config:
@@ -84,7 +216,12 @@
           - ospfv3 network {{ ospf_type }}
       parents: interface Vlan{{ vlan_id }}
   when: svi_v6_network is defined or svi_v6_link_local is defined
-  tags: vlan
+  tags:
+    - NXOS
+    - vlan
+    - nxos-vlan
+    - add-ospf
+    - add-ospfv3
 
 - name: Disable SVI OSPFv3 passive interface
   nxos_config:
@@ -92,7 +229,12 @@
           - no ospfv3 passive-interface
       parents: interface Vlan{{ vlan_id }}
   when: (svi_v6_network is defined or svi_v6_link_local is defined) and not passive_interface is defined
-  tags: vlan
+  tags:
+    - NXOS
+    - vlan
+    - nxos-vlan
+    - add-ospf
+    - add-ospfv3
 
 - name: Add addition SVI parameters
   nxos_config:
@@ -101,7 +243,11 @@
           - no ipv6 redirects
       parents: interface Vlan{{ vlan_id }}
   when: svi_v4_prefix is defined or svi_v6_network is defined
-  tags: vlan
+  tags:
+    - NXOS
+    - vlan
+    - nxos-vlan
+    - add-svi-l3
 
 - name: Enable HSRP
   nxos_config:
@@ -109,7 +255,11 @@
           - hsrp version 2
       parents: interface Vlan{{ vlan_id }}
   when: (svi_v4_prefix is defined or svi_v6_network is defined) and use_hsrp is defined
-  tags: vlan
+  tags:
+    - NXOS
+    - vlan
+    - nxos-vlan
+    - add-hsrp
 
 - name: Add HSRP v4 configuration
   nxos_config:
@@ -124,7 +274,12 @@
           - interface Vlan{{ vlan_id }}
           - hsrp 1
   when: svi_v4_prefix is defined and use_hsrp is defined
-  tags: vlan
+  tags:
+      - NXOS
+      - vlan
+      - nxos-vlan
+      - add-hsrp
+      - add-hsrp-v4
 
 - name: Add HSRP v6 configuration
   nxos_config:
@@ -139,4 +294,9 @@
           - interface Vlan{{ vlan_id }}
           - hsrp 2 ipv6
   when: svi_v6_network is defined and use_hsrp is defined
-  tags: vlan
+  tags:
+      - NXOS
+      - vlan
+      - nxos-vlan
+      - add-hsrp
+      - add-hsrp-v6

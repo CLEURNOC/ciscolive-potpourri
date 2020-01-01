@@ -1,8 +1,8 @@
-[DC1]
+[NXOS_DC1]
 10.127.0.249 core_svi_v4_suffix="249" core_svi_v6_suffix="f9" core_hsrp_priority="105"
 10.127.0.250 core_svi_v4_suffix="250" core_svi_v6_suffix="fa" core_hsrp_priority="104"
 
-[DC2]
+[NXOS_DC2]
 10.127.0.247 core_svi_v4_suffix="247" core_svi_v6_suffix="f7" core_hsrp_priority="103"
 10.127.0.248 core_svi_v4_suffix="248" core_svi_v6_suffix="f8" core_hsrp_priority="102"
 
@@ -14,6 +14,18 @@
 10.127.254.25
 10.127.254.26
 
+[UCS_DC1]
+10.127.253.42
+
+[UCS_DC2]
+10.127.254.42
+
+[HX_DC1]
+10.127.253.72
+
+[HX_DC2]
+10.127.254.72
+
 [MCC:children]
 MCC_DC1
 MCC_DC2
@@ -22,13 +34,33 @@ MCC_DC2
 tacacs_source_interface="mgmt0"
 tacacs_vrf="management"
 
-[Core:children]
-DC1
-DC2
+[UCS:children]
+UCS_DC1
+UCS_DC2
 
-[Core:vars]
+[HX:children]
+HX_DC1
+HX_DC2
+
+[NXOS:children]
+NXOS_DC1
+NXOS_DC2
+
+[NXOS:vars]
 tacacs_source_interface="loopback0"
 tacacs_vrf="default"
 
 [vCenter]
 10.100.252.11
+
+[DC1:children]
+NXOS_DC1
+UCS_DC1
+HX_DC1
+vCenter
+
+[DC2:children]
+NXOS_DC2
+UCS_DC2
+HX_DC2
+vCenter

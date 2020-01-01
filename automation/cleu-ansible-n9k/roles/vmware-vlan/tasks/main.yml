@@ -1,0 +1,27 @@
+---
+- name: Set the list of VMware clusters
+  set_fact: vm_clusters="{{ cluster_vswitch | list }}"
+  when: vm_clusters is not defined
+  tags:
+    - vCenter
+    - vlan
+    - vmware-vlan
+    - add-vlan
+    - add-vmware-vlan
+
+- name: Add VLAN to VMware cluster
+  vmware_portgroup:
+    hostname: "{{ inventory_hostname }}"
+    cluster: "{{ item }}"
+    switch: "{{ cluster_vswitch[item] }}"
+    portgroup: "{{ vm_vlan_name }}"
+    vlan_id: "{{ vlan_id }}"
+    validate_certs: no
+  delegate_to: localhost
+  with_items: "{{ vm_clusters }}"
+  tags:
+    - vCenter
+    - vlan
+    - vmware-vlan
+    - add-vlan
+    - add-vmware-vlan

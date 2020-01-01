@@ -11,8 +11,17 @@ core_hsrp_vip_v6_suffix: "fe"
 core_hsrp_v4_track: "3"
 core_hsrp_v6_track: "5"
 
+# Base IPv4 Variables
+base_major_net: "10"
+
+# Base IPv6 Variables
+base_v6_prefix: "2a05:f8c0:2"
+
 # OSPF Variables
 ospf_pid: "1"
+
+# IDF Variables
+stretched_idf_id: "252"
 
 # TACACS+ variables
 tacacs_group_name: ISE
@@ -20,3 +29,17 @@ tacacs_host_timeout: "10"
 tacacs_servers:
     - { host: 10.100.253.7 }
     - { host: 10.100.254.7 }
+
+# Port-channel variables
+port_channels:
+  - port-channel99: True
+  - port-channel66: False
+  - port-channel67: False
+  - port-channel11: False
+  - port-channel12: False
+
+# VMware variables
+cluster_vswitch:
+  - FlexPod: vSwitch0
+  - HyperFlex-DC1: vswitch-hx-vm-network
+  - HyperFlex-DC2: vswitch-hx-vm-network

@@ -1,0 +1,16 @@
+---
+- name: Add VLAN to UCS
+  ucs_vlans:
+    fabric: common
+    hostname: "{{ inventory_hostname }}"
+    id: "{{ vlan_id }}"
+    name: "{{ vlan_name }}"
+    password: "{{ ucs_mgr_password }}"
+    username: "{{ ucs_mgr_username }}"
+  delegate_to: localhost
+  tags:
+    - UCS
+    - vlan
+    - ucs-vlan
+    - add-vlan
+    - add-ucs-vlan
