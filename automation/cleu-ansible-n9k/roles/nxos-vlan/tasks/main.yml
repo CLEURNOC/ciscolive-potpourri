@@ -41,7 +41,7 @@
           - switchport trunk allowed vlan add {{ vlan_id }}
       parents: interface {{ item }}
   with_items: "{{ iflist }}"
-  when: iflist is defined and (delete_vlan is not defined or not delete_vlan|bool)
+  when: (delete_vlan is not defined or not delete_vlan|bool) and iflist is defined
   tags:
     - nxos
     - vlan
@@ -56,7 +56,7 @@
           mode: layer3
           mtu: "{{ svi_mtu }}"
           description: "{{ svi_descr }}"
-  when: svi_mtu is defined and svi_descr is defined and (delete_vlan is not defined or not delete_vlan|bool)
+  when: (delete_vlan is not defined or not delete_vlan|bool) and svi_mtu is defined and svi_descr is defined
   tags:
     - nxos
     - vlan
@@ -65,7 +65,7 @@
 
 - name: Set per-DC v4 IDF ID
   set_fact: v4_idf_id={{ idf_id }}
-  when: not is_stretched|bool and build_v4|bool and (delete_vlan is not defined or not delete_vlan|bool)
+  when: (delete_vlan is not defined or not delete_vlan|bool) and not is_stretched|bool and build_v4|bool
   tags:
       - nxos
       - vlan
@@ -75,7 +75,7 @@
 
 - name: Set stretched v4 IDF ID
   set_fact: v4_idf_id={{ stretched_idf_id }}
-  when: is_stretched|bool and build_v4|bool and (delete_vlan is not defined or not delete_vlan|bool)
+  when: (delete_vlan is not defined or not delete_vlan|bool) and is_stretched|bool and build_v4|bool
   tags:
       - nxos
       - vlan
@@ -85,7 +85,7 @@
 
 - name: Construct SVI IPv4 address
   set_fact: svi_v4_prefix={{ base_major_net }}.{{ vlan_id }}.{{ v4_idf_id }} svi_subnet_len="24"
-  when: build_v4|bool and (delete_vlan is not defined or not delete_vlan|bool)
+  when: (delete_vlan is not defined or not delete_vlan|bool) and build_v4|bool
   tags:
       - nxos
       - vlan
@@ -99,7 +99,7 @@
         - name: Vlan{{ vlan_id }}
           ipv4:
             - address: "{{ svi_v4_prefix }}.{{ core_svi_v4_suffix }}/{{ svi_subnet_len }}"
-  when: svi_v4_prefix is defined and (delete_vlan is not defined or not delete_vlan|bool)
+  when: (delete_vlan is not defined or not delete_vlan|bool) and svi_v4_prefix is defined
   tags:
     - nxos
     - vlan
@@ -109,7 +109,7 @@
 
 - name: Set per-DC v6 IDF ID
   set_fact: v6_idf_id="{{ '%0x' % idf_id|int }}"
-  when: not is_stretched|bool and build_v6|bool and (delete_vlan is not defined or not delete_vlan|bool)
+  when: (delete_vlan is not defined or not delete_vlan|bool) and not is_stretched|bool and build_v6|bool
   tags:
     - nxos
     - vlan
@@ -119,7 +119,7 @@
 
 - name: Set stretched v6 IDF ID
   set_fact: v6_idf_id="{{ '%0x' % stretched_idf_id|int }}"
-  when: is_stretched|bool and build_v6|bool and (delete_vlan is not defined or not delete_vlan|bool)
+  when: (delete_vlan is not defined or not delete_vlan|bool) and is_stretched|bool and build_v6|bool
   tags:
     - nxos
     - vlan
@@ -129,7 +129,7 @@
 
 - name: Construct SVI v6 address
   set_fact: svi_v6_network="{{ base_v6_prefix }}:{{ '%0x' % vlan_id|int }}{{ v6_idf_id }}::"
-  when: build_v6|bool and (delete_vlan is not defined or not delete_vlan|bool)
+  when: (delete_vlan is not defined or not delete_vlan|bool) and build_v6|bool
   tags:
     - nxos
     - vlan
@@ -143,7 +143,7 @@
         - name: Vlan{{ vlan_id }}
           ipv6:
             - address: "{{ svi_v6_network }}{{ core_svi_v6_suffix }}/64"
-  when: svi_v6_network is defined and (delete_vlan is not defined or not delete_vlan|bool)
+  when: (delete_vlan is not defined or not delete_vlan|bool) and svi_v6_network is defined
   tags:
     - nxos
     - vlan
@@ -156,7 +156,7 @@
       lines:
           - ipv6 address use-link-local-only
       parents: interface Vlan{{ vlan_id }}
-  when: svi_v6_link_local is defined and (delete_vlan is not defined or not delete_vlan|bool)
+  when: (delete_vlan is not defined or not delete_vlan|bool) and svi_v6_link_local is defined
   tags:
     - nxos
     - vlan
@@ -169,7 +169,7 @@
       area: 0.0.0.0
       ospf: "{{ ospf_pid }}"
       interface: Vlan{{ vlan_id }}
-  when: svi_v4_prefix is defined and (delete_vlan is not defined or not delete_vlan|bool)
+  when: (delete_vlan is not defined or not delete_vlan|bool) and svi_v4_prefix is defined
   tags:
     - nxos
     - vlan
@@ -182,7 +182,7 @@
       lines:
           - ip ospf network {{ ospf_type }}
       parents: interface Vlan{{ vlan_id }}
-  when: svi_v4_prefix is defined and (delete_vlan is not defined or not delete_vlan|bool)
+  when: (delete_vlan is not defined or not delete_vlan|bool) and svi_v4_prefix is defined
   tags:
     - nxos
     - vlan
@@ -195,7 +195,7 @@
       lines:
           - no ip ospf passive-interface
       parents: interface Vlan{{ vlan_id }}
-  when: svi_v4_prefix is defined and not passive_interface is defined and (delete_vlan is not defined or not delete_vlan|bool)
+  when: (delete_vlan is not defined or not delete_vlan|bool) and svi_v4_prefix is defined and not passive_interface is defined
   tags:
     - nxos
     - vlan
@@ -209,7 +209,7 @@
           - ipv6 router ospfv3 1 area 0.0.0.0
           - ospfv3 network {{ ospf_type }}
       parents: interface Vlan{{ vlan_id }}
-  when: svi_v6_network is defined or svi_v6_link_local is defined and (delete_vlan is not defined or not delete_vlan|bool)
+  when: (delete_vlan is not defined or not delete_vlan|bool) and svi_v6_network is defined or svi_v6_link_local is defined
   tags:
     - nxos
     - vlan
@@ -222,7 +222,7 @@
       lines:
           - no ospfv3 passive-interface
       parents: interface Vlan{{ vlan_id }}
-  when: (svi_v6_network is defined or svi_v6_link_local is defined) and not passive_interface is defined and (delete_vlan is not defined or not delete_vlan|bool)
+  when: (delete_vlan is not defined or not delete_vlan|bool) and (svi_v6_network is defined or svi_v6_link_local is defined) and not passive_interface is defined
   tags:
     - nxos
     - vlan
@@ -236,7 +236,7 @@
           - no ip redirects
           - no ipv6 redirects
       parents: interface Vlan{{ vlan_id }}
-  when: svi_v4_prefix is defined or svi_v6_network is defined and (delete_vlan is not defined or not delete_vlan|bool)
+  when: (delete_vlan is not defined or not delete_vlan|bool) and svi_v4_prefix is defined or svi_v6_network is defined
   tags:
     - nxos
     - vlan
@@ -248,7 +248,7 @@
       lines:
           - hsrp version 2
       parents: interface Vlan{{ vlan_id }}
-  when: (svi_v4_prefix is defined or svi_v6_network is defined) and use_hsrp is defined and (delete_vlan is not defined or not delete_vlan|bool)
+  when: (delete_vlan is not defined or not delete_vlan|bool) and (svi_v4_prefix is defined or svi_v6_network is defined) and use_hsrp is defined
   tags:
     - nxos
     - vlan
@@ -267,7 +267,7 @@
       parents:
           - interface Vlan{{ vlan_id }}
           - hsrp 1
-  when: svi_v4_prefix is defined and use_hsrp is defined and (delete_vlan is not defined or not delete_vlan|bool)
+  when: (delete_vlan is not defined or not delete_vlan|bool) and svi_v4_prefix is defined and use_hsrp is defined
   tags:
       - nxos
       - vlan
@@ -287,7 +287,7 @@
       parents:
           - interface Vlan{{ vlan_id }}
           - hsrp 2 ipv6
-  when: svi_v6_network is defined and use_hsrp is defined and (delete_vlan is not defined or not delete_vlan|bool)
+  when: (delete_vlan is not defined or not delete_vlan|bool) and svi_v6_network is defined and use_hsrp is defined
   tags:
       - nxos
       - vlan
@@ -313,7 +313,7 @@
           - switchport trunk allowed vlan remove {{ vlan_id }}
       parents: interface {{ item }}
   with_items: "{{ iflist }}"
-  when: iflist is defined and delete_vlan is defined and delete_vlan|bool
+  when: delete_vlan is defined and delete_vlan|bool and iflist is defined
   tags:
     - nxos
     - vlan
