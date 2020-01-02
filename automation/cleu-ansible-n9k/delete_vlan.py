@@ -88,7 +88,7 @@ def main():
                '-e', 'delete_vlan=True',
                '-e', 'is_stretched={}'.format(is_stretched),
                '-e', 'generate_iflist={}'.format(generate_iflist),
-               'add-vlan-playbook.yml']
+               'delete-vlan-playbook.yml']
     if args.interface and len(args.interface) > 0:
         command += ['-e',
                     '{{"iflist": [{}]}}'.format(','.join(args.interface))]
