@@ -321,7 +321,7 @@
 
 - name: Delete VLAN definition
   nxos_vlan:
-      vlan_id: {{ vlan_id }}
+      vlan_id: "{{ vlan_id }}"
       state: absent
   when: delete_vlan is defined and delete_vlan|bool
   tags:
