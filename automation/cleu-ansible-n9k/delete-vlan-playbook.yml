@@ -1,0 +1,22 @@
+---
+- name: Configure network switches
+  hosts: NXOS
+  gather_facts: false
+  connection: network_cli
+  roles:
+      - nxos-vlan
+      - write-mem
+
+- name: Configure UCS Clusters
+  hosts:
+    - UCS
+    - HX
+  gather_facts: false
+  roles:
+      - ucs-vlan
+
+- name: Configure ESXi hosts through vCenter
+  hosts: vCenter
+  gather_facts: false
+  roles:
+      - vmware-vlan

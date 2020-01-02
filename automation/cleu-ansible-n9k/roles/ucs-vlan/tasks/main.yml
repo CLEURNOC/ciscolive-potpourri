@@ -9,9 +9,27 @@
     password: "{{ ucs_mgr_password }}"
     username: "{{ ucs_mgr_username }}"
   delegate_to: localhost
+  when: delete_vlan is not defined or delete_vlan is False
   tags:
     - ucs
     - vlan
     - ucs-vlan
     - add-vlan
     - add-ucs-vlan
+
+- name: Delete VLAN from UCS
+  ucs_vlans:
+    fabric: common
+    hostname: "{{ inventory_hostname }}"
+    name: "{{ vlan_name }}"
+    password: "{{ ucs_mgr_password }}"
+    state: absent
+    username: "{{ ucs_mgr_username }}"
+  delegate_to: localhost
+  when: delete_vlan is defined and delete_vlan is True
+  tags:
+    - ucs
+    - vlan
+    - ucs-vlan
+    - delete-vlan
+    - delete-ucs-vlan
