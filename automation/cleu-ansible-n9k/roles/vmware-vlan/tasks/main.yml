@@ -22,7 +22,7 @@
     validate_certs: no
   delegate_to: localhost
   with_items: "{{ vm_clusters }}"
-  when: delete_vlan is not defined or delete_vlan is False
+  when: delete_vlan is not defined or not delete_vlan
   tags:
     - vcenter
     - vlan
@@ -41,7 +41,7 @@
     validate_certs: no
   delegate_to: localhost
   with_items: "{{ vm_clusters }}"
-  when: delete_vlan is defined and delete_vlan is True
+  when: delete_vlan is defined and delete_vlan
   tags:
     - vcenter
     - vlan
