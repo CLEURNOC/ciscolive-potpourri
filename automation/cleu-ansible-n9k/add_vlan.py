@@ -91,6 +91,8 @@ def main():
                         help='Comma-separated list of task tags to execute')
     parser.add_argument(
         '--list-tags', help='List available task tags', action='store_true')
+    parser.add_argument(
+        '--check-only', help='Only check syntax and attempt to predict changes', action='store_true')
     args = parser.parse_args()
 
     if args.vlan_id < 1 or args.vlan_id > 3967:
@@ -255,6 +257,8 @@ def main():
         command += ['--tags', args.tags]
     if args.list_tags:
         command += ['--list-tags']
+    if args.check_only:
+        command += ['-C']
     p = subprocess.Popen(command, stdout=subprocess.PIPE,
                          stderr=subprocess.STDOUT)
     for c in iter(lambda: p.stdout.read(1), b''):
