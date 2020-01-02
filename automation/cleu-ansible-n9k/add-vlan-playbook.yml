@@ -8,7 +8,9 @@
       - write-mem
 
 - name: Configure UCS Clusters
-  hosts: UCS,HX
+  hosts:
+    - UCS
+    - HX
   gather_facts: false
   roles:
       - ucs-vlan
