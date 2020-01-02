@@ -9,7 +9,7 @@
     password: "{{ ucs_mgr_password }}"
     username: "{{ ucs_mgr_username }}"
   delegate_to: localhost
-  when: delete_vlan is not defined or not delete_vlan
+  when: delete_vlan is not defined or not delete_vlan|bool
   tags:
     - ucs
     - vlan
@@ -26,7 +26,7 @@
     state: absent
     username: "{{ ucs_mgr_username }}"
   delegate_to: localhost
-  when: delete_vlan is defined and delete_vlan
+  when: delete_vlan is defined and delete_vlan|bool
   tags:
     - ucs
     - vlan
