@@ -1,6 +1,7 @@
 ---
 - name: Set the list of VMware clusters
-  set_fact: vm_clusters="{{ cluster_vswitch | list }}"
+  set_fact: vm_clusters="{{ vm_clusters }} + [{{ item.key }}]"
+  with_items: "{{ lookup('dict', cluster_vswitch) }}"
   when: vm_clusters is not defined
   tags:
     - vCenter
@@ -20,7 +21,7 @@
   delegate_to: localhost
   with_items: "{{ vm_clusters }}"
   tags:
-    - vCenter
+    - vcenter
     - vlan
     - vmware-vlan
     - add-vlan

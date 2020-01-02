@@ -32,14 +32,14 @@ tacacs_servers:
 
 # Port-channel variables
 port_channels:
-  - port-channel99: True
-  - port-channel66: False
-  - port-channel67: False
-  - port-channel11: False
-  - port-channel12: False
+  port-channel99: True
+  port-channel66: False
+  port-channel67: False
+  port-channel11: False
+  port-channel12: False
 
 # VMware variables
 cluster_vswitch:
-  - FlexPod: vSwitch0
-  - HyperFlex-DC1: vswitch-hx-vm-network
-  - HyperFlex-DC2: vswitch-hx-vm-network
+  FlexPod: vSwitch0
+  HyperFlex-DC1: vswitch-hx-vm-network
+  HyperFlex-DC2: vswitch-hx-vm-network

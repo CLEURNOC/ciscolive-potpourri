@@ -9,7 +9,7 @@
     username: "{{ ucs_mgr_username }}"
   delegate_to: localhost
   tags:
-    - UCS
+    - ucs
     - vlan
     - ucs-vlan
     - add-vlan
