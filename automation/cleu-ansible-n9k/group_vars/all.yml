@@ -23,6 +23,11 @@ ospf_pid: "1"
 # IDF Variables
 stretched_idf_id: "252"
 
+# DHCP variables
+dhcp_servers:
+  - 10.100.253.9
+  - 10.100.254.9
+
 # TACACS+ variables
 tacacs_group_name: ISE
 tacacs_host_timeout: "10"

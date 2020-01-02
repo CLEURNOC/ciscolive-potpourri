@@ -294,6 +294,19 @@
       - add-hsrp
       - add-hsrp-v6
 
+- name: Add DHCP relays
+  nxos_config:
+      lines:
+          - ip dhcp relay address {{ item }}
+      parents: interface Vlan{{ vlan_id }}
+  when: (delete_vlan is not defined or not delete_vlan|bool) and svi_v4_prefix is defined
+  with_items: "{{ dhcp_servers }}"
+  tags:
+    - nxos
+    - vlan
+    - nxos-vlan
+    - add-dhcp-relay
+
 - name: Remove SVI
   nxos_interfaces:
       config:
