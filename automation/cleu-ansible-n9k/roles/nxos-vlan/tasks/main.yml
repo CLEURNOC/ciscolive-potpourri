@@ -2,7 +2,7 @@
 - name: Add VLAN definition
   nxos_vlans:
       config:
-        - vlan_id: "{{ vlan_id }}"
+        - vlan_id: "{{ vlan_id|int }}"
           enabled: True
           name: "{{ vlan_name }}"
   when: delete_vlan is not defined or not delete_vlan|bool
@@ -323,7 +323,7 @@
 - name: Delete VLAN definition
   nxos_vlans:
       config:
-        - vlan_id: "{{ vlan_id }}"
+        - vlan_id: "{{ vlan_id|int }}"
       state: deleted
   when: delete_vlan is defined and delete_vlan|bool
   tags:
