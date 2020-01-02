@@ -82,7 +82,7 @@ def main():
     command = ['ansible-playbook', '-i', 'inventory/hosts',
                '-u', args.username, '-k', '-e',
                'vlan_name={}'.format(
-                   args.vlan_name), '-e', 'vlan_id={}'.format(args.vlan_id), '-e', 'vm_vlan_name=\'{}\''.format(vm_vlan_name),
+                   args.vlan_name), '-e', 'vlan_id={}'.format(args.vlan_id), '-e', 'vm_vlan_name=\'{}\''.format(args.vm_vlan_name),
                '-e', 'ansible_python_interpreter={}'.format(sys.executable),
                '-e', '@{}'.format(cred_file.name),
                '-e', 'delete_vlan=True',
