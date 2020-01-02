@@ -267,7 +267,7 @@ def main():
 
     p.poll()
 
-    if os.path.isfile(cred_file):
+    if os.path.isfile(cred_file.name):
         os.remove(cred_file.name)
 
 
