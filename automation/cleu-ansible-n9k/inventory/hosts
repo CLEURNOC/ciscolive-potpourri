@@ -50,6 +50,12 @@ NXOS_DC2
 tacacs_source_interface="loopback0"
 tacacs_vrf="default"
 
+[HX:vars]
+multicast_policy="HyperFlex"
+
+[UCS:vars]
+multicast_policy=""
+
 [vCenter]
 10.100.252.11
 

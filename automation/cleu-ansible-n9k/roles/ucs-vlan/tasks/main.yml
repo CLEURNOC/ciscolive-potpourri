@@ -4,6 +4,7 @@
     fabric: common
     hostname: "{{ inventory_hostname }}"
     id: "{{ vlan_id }}"
+    multicast_policy: "{{ multicast_policy }}"
     name: "{{ vlan_name }}"
     password: "{{ ucs_mgr_password }}"
     username: "{{ ucs_mgr_username }}"
