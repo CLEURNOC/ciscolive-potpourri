@@ -62,6 +62,7 @@ def main():
     os.environ['ANSIBLE_FORCE_COLOR'] = 'True'
     os.environ['ANSIBLE_HOST_KEY_CHECKING'] = 'False'
     os.environ['ANSIBLE_PERSISTENT_COMMAND_TIMEOUT'] = '300'
+    os.environ['ANSIBLE_DEPRECATION_WARNINGS'] = 'False'
 
     if 'AD_PASSWORD' not in os.environ:
         print(
