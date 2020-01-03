@@ -1,6 +1,6 @@
 ---
 - name: Add VLAN definition
-  nxos_vlans:
+  nxos_vlan:
       vlan_id: "{{ vlan_id }}"
       admin_state: up
       name: "{{ vlan_name }}"
