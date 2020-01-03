@@ -52,7 +52,6 @@
       config:
         - name: Vlan{{ vlan_id }}
           enabled: True
-          mode: layer3
           mtu: "{{ svi_mtu }}"
           description: "{{ svi_descr }}"
   when: (delete_vlan is not defined or not delete_vlan|bool) and svi_mtu is defined and svi_descr is defined
