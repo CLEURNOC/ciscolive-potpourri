@@ -201,7 +201,7 @@ def main():
         sys.exit(1)
 
     os.environ['VMWARE_USER'] = args.username
-    os.environ['VMWARE_PASSWORD'] = os.environ['VMWARE_PASSWORD']
+    os.environ['VMWARE_PASSWORD'] = os.environ['AD_PASSWORD']
 
     cred_file = tempfile.NamedTemporaryFile(mode='w', delete=False)
     vars = {
