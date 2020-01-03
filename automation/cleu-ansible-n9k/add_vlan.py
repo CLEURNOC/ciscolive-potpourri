@@ -49,10 +49,10 @@ def main():
         prog=sys.argv[0], description='Add a VLAN to the network')
     parser.add_argument('--vlan-name', '-n', metavar='<VLAN_NAME>',
                         help='Name of the VLAN to add', required=True)
-    parser.add_argument('--vm-vlan-name', metavar='<VM_VLAN_NAME>',
-                        help='Name of the VLAN port group in VMware (default: vlan-name)')
     parser.add_argument('--vlan-id', '-i', metavar='<VLAN_ID>',
                         help='ID of the VLAN to add', type=int, required=True)
+    parser.add_argument('--vm-vlan-name', metavar='<VM_VLAN_NAME>',
+                        help='Name of the VLAN port group in VMware (required when adding to vCenter)')
     parser.add_argument('--svi-v4-network', metavar='<SVI_NETWORK>',
                         help='IPv4 network address of the SVI')
     parser.add_argument('--svi-subnet-len', metavar='<SVI_PREFIX_LEN>',
@@ -60,17 +60,19 @@ def main():
     parser.add_argument(
         '--svi-standard-v4', help='Follow the standard rules to add a MAJOR.VLAN.IDF.0/24 SVI address', action='store_true')
     parser.add_argument('--svi-v6-network', metavar='<SVI_NETWORK>',
-                        help='IPv6 network address of the SVI (prefix len is assumed to be /64)')
+                        help='IPv6 network address of the SVI (should end with "::"; prefix len is assumed to be /64)')
     parser.add_argument(
         '--svi-standard-v6', help='Follow the standard rules to add a PREFIX:[VLAN][IDF]::/64 SVI address', action='store_true')
     parser.add_argument('--svi-descr', metavar='<SVI_DESCRIPTION>',
                         help='Description of the SVI')
+    parser.add_argument('--mtu', '-m', metavar='<MTU>',
+                        help='MTU of SVI (default: 9216)', type=int)
     parser.add_argument(
         '--is-stretched', help='VLAN is stretched between both data centres (default: False)', action='store_true')
     parser.add_argument(
-        '--no-hsrp', help='Use HSRP or not (default: False)', action='store_true')
+        '--no-hsrp', help='Use HSRP or not (default: HSRP will be configured)', action='store_true')
     parser.add_argument('--no-passive-interface',
-                        help='Whether or not to have OSPF use passive interface (default: False)', action='store_true')
+                        help='Whether or not to have OSPF use passive interface (default: SVI will be a passive interface)', action='store_true')
     parser.add_argument(
         '--v6-link-local', help='Only use v6 link-local addresses (default: global IPv6 is expected)', action='store_true')
     parser.add_argument(
@@ -81,8 +83,6 @@ def main():
         '--generate-iflist', help='Automatically generate a list of allowed interfaces for VLAN (default: False)', action='store_true')
     parser.add_argument('--vmware-cluster', action='append', metavar='<CLUSTER>',
                         help='VMware cluster to configure for VLAN (can be specified more than once) (default: all clusters are configured)')
-    parser.add_argument('--mtu', '-m', metavar='<MTU>',
-                        help='MTU of SVI (default: 9216)', type=int)
     parser.add_argument('--username', '-u', metavar='<USERNAME>',
                         help='Username to use to connect to the N9Ks', required=True)
     parser.add_argument('--limit', '-L', metavar='<HOSTS_OR_GROUP_NAMES>',
@@ -92,7 +92,7 @@ def main():
     parser.add_argument(
         '--list-tags', help='List available task tags', action='store_true')
     parser.add_argument(
-        '--check-only', help='Only check syntax and attempt to predict changes', action='store_true')
+        '--test-only', help='Only check syntax and attempt to predict changes (NO CHANGES WILL BE MADE)', action='store_true')
     args = parser.parse_args()
 
     if args.vlan_id < 1 or args.vlan_id > 3967:
@@ -106,12 +106,8 @@ def main():
     svi_v6_link_local = False
     build_v6 = True
     ospf_type = 'point-to-point'
-    vm_vlan_name = args.vlan_name
     is_stretched = False
     generate_iflist = False
-
-    if args.vm_vlan_name:
-        vm_vlan_name = args.vm_vlan_name
 
     if args.svi_v4_network and args.svi_standard_v4:
         print('ERROR: Cannot specify both --svi-v4-network and --svi-standard-v4.')
@@ -218,7 +214,7 @@ def main():
     command = ['ansible-playbook', '-i', 'inventory/hosts',
                '-u', args.username, '-k', '-e',
                'vlan_name={}'.format(
-                   args.vlan_name), '-e', 'vlan_id={}'.format(args.vlan_id), '-e', 'vm_vlan_name=\'{}\''.format(vm_vlan_name),
+                   args.vlan_name), '-e', 'vlan_id={}'.format(args.vlan_id),
                '-e', 'ansible_python_interpreter={}'.format(sys.executable),
                '-e', '@{}'.format(cred_file.name),
                '-e', 'build_v4={}'.format(build_v4),
@@ -227,6 +223,8 @@ def main():
                '-e', 'generate_iflist={}'.format(generate_iflist),
                '-e', 'ospf_type={}'.format(ospf_type),
                'add-vlan-playbook.yml']
+    if args.vm_vlan_name:
+        command += ['-e', 'vm_vlan_name=\'{}\''.format(args.vm_vlan_name)]
     if args.svi_v4_network:
         command += ['-e', 'svi_v4_prefix={}'.format(
             svi_prefix), '-e', 'svi_subnet_len={}'.format(args.svi_subnet_len),
@@ -257,7 +255,7 @@ def main():
         command += ['--tags', args.tags]
     if args.list_tags:
         command += ['--list-tags']
-    if args.check_only:
+    if args.test_only:
         command += ['-C']
     p = subprocess.Popen(command, stdout=subprocess.PIPE,
                          stderr=subprocess.STDOUT)

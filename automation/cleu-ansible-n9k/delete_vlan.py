@@ -19,9 +19,9 @@ def main():
     parser.add_argument('--vlan-name', '-n', metavar='<VLAN_NAME>',
                         help='Name of the VLAN to add', required=True)
     parser.add_argument('--vm-vlan-name', metavar='<VM_VLAN_NAME>',
-                        help='Name of the VLAN port group in VMware ', required=True)
+                        help='Name of the VLAN port group in VMware (required when removing VLAN from vCenter)')
     parser.add_argument('--vlan-id', '-i', metavar='<VLAN_ID>',
-                        help='ID of the VLAN to add', type=int, required=True)
+                        help='ID of the VLAN to delete', type=int, required=True)
     parser.add_argument(
         '--is-stretched', help='VLAN is stretched between both data centres (default: False)', action='store_true')
     parser.add_argument('--interface', action='append', metavar='<INTF>',
@@ -39,7 +39,7 @@ def main():
     parser.add_argument(
         '--list-tags', help='List available task tags', action='store_true')
     parser.add_argument(
-        '--check-only', help='Only check syntax and attempt to predict changes', action='store_true')
+        '--test-only', help='Only check syntax and attempt to predict changes (NO CHANGES WILL BE MADE)', action='store_true')
     args = parser.parse_args()
 
     if args.vlan_id < 1 or args.vlan_id > 3967:
@@ -82,13 +82,15 @@ def main():
     command = ['ansible-playbook', '-i', 'inventory/hosts',
                '-u', args.username, '-k', '-e',
                'vlan_name={}'.format(
-                   args.vlan_name), '-e', 'vlan_id={}'.format(args.vlan_id), '-e', 'vm_vlan_name=\'{}\''.format(args.vm_vlan_name),
+                   args.vlan_name), '-e', 'vlan_id={}'.format(args.vlan_id),
                '-e', 'ansible_python_interpreter={}'.format(sys.executable),
                '-e', '@{}'.format(cred_file.name),
                '-e', 'delete_vlan=True',
                '-e', 'is_stretched={}'.format(is_stretched),
                '-e', 'generate_iflist={}'.format(generate_iflist),
                'delete-vlan-playbook.yml']
+    if args.vm_vlan_name:
+        command += ['-e', 'vm_vlan_name=\'{}\''.format(args.vm_vlan_name)]
     if args.interface and len(args.interface) > 0:
         command += ['-e',
                     '{{"iflist": [{}]}}'.format(','.join(args.interface))]
@@ -103,7 +105,7 @@ def main():
         command += ['--tags', args.tags]
     if args.list_tags:
         command += ['--list-tags']
-    if args.check_only:
+    if args.test_only:
         command += ['-C']
     p = subprocess.Popen(command, stdout=subprocess.PIPE,
                          stderr=subprocess.STDOUT)
