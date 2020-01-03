@@ -95,7 +95,7 @@ def main():
         command += ['-e',
                     '{{"iflist": [{}]}}'.format(','.join(args.interface))]
     if args.generate_iflist:
-        command += ['-e', '{{"iflist": []}}']
+        command += ['-e', '{"iflist": []}']
     if args.vmware_cluster and len(args.vmware_cluster) > 0:
         command += ['-e',
                     '{{"vm_clusters": [{}]}}'.format(','.join(args.vmware_cluster))]
