@@ -50,6 +50,7 @@ cluster_vswitch:
   HyperFlex-DC2: vswitch-hx-vm-network
 
 # ACL variables
+# TODO: Automate the update of these templates
 v4_acl_name: IPV4-ACL-COMMON_VLAN
 v4_acl_template:
   -  remark STANDARD-PERMITS-v1
