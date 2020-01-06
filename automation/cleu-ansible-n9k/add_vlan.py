@@ -65,6 +65,8 @@ def main():
         '--svi-standard-v6', help='Follow the standard rules to add a PREFIX:[VLAN][IDF]::/64 SVI address', action='store_true')
     parser.add_argument('--svi-descr', metavar='<SVI_DESCRIPTION>',
                         help='Description of the SVI')
+    parser.add_argument(
+        '--no-add-acl', help='Do not add the standard ACL restrictions to the SVI (default: add the ACLs)', action='store_true')
     parser.add_argument('--mtu', '-m', metavar='<MTU>',
                         help='MTU of SVI (default: 9216)', type=int)
     parser.add_argument(
@@ -108,6 +110,7 @@ def main():
     ospf_type = 'point-to-point'
     is_stretched = False
     generate_iflist = False
+    add_acl = True
 
     if args.svi_v4_network and args.svi_standard_v4:
         print('ERROR: Cannot specify both --svi-v4-network and --svi-standard-v4.')
@@ -191,6 +194,9 @@ def main():
     elif args.v6_link_local:
         svi_v6_link_local = True
 
+    if args.no_add_acl:
+        add_acl = False
+
     os.environ['ANSIBLE_FORCE_COLOR'] = 'True'
     os.environ['ANSIBLE_HOST_KEY_CHECKING'] = 'False'
     os.environ['ANSIBLE_PERSISTENT_COMMAND_TIMEOUT'] = '300'
@@ -223,6 +229,7 @@ def main():
                '-e', 'is_stretched={}'.format(is_stretched),
                '-e', 'generate_iflist={}'.format(generate_iflist),
                '-e', 'ospf_type={}'.format(ospf_type),
+               '-e', 'add_acl={}'.format(add_acl),
                'add-vlan-playbook.yml']
     if args.vm_vlan_name:
         command += ['-e', 'vm_vlan_name=\'{}\''.format(args.vm_vlan_name)]

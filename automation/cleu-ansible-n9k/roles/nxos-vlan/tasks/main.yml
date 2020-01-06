@@ -306,6 +306,30 @@
     - nxos-vlan
     - add-dhcp-relay
 
+- name: Add v4 ACL
+  nxos_acl_interface:
+      direction: ingress
+      interface: Vlan{{ vlan_id }}
+      name: "{{ v4_acl_name }}"
+  when: (delete_vlan is not defined or not delete_vlan|bool) and svi_v4_prefix is defined and add_acl|bool
+  tags:
+    - nxos
+    - vlan
+    - nxos-vlan
+    - add-v4-acl
+
+- name: Add v6 ACL
+  nxos_config:
+      lines:
+          - ipv6 traffic-filter {{ v6_acl_name }} in
+      parents: interface Vlan{{ vlan_id }}
+  when: (delete_vlan is not defined or not delete_vlan|bool) and svi_v6_network and add_acl|bool
+  tags:
+    - nxos
+    - vlan
+    - nxos-vlan
+    - add-v6-acl
+
 - name: Remove SVI
   nxos_interfaces:
       config:

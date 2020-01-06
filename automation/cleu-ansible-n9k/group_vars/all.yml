@@ -48,3 +48,141 @@ cluster_vswitch:
   FlexPod: vSwitch0
   HyperFlex-DC1: vswitch-hx-vm-network
   HyperFlex-DC2: vswitch-hx-vm-network
+
+# ACL variables
+v4_acl_name: IPV4-ACL-COMMON_VLAN
+v4_acl_template:
+  -  remark STANDARD-PERMITS-v1
+  -  remark HELP-SERVER
+  -  permit tcp any host 10.100.252.5 eq www
+  -  permit tcp any host 10.100.253.5 eq www
+  -  permit tcp any host 10.100.254.5 eq www
+  -  permit tcp any eq 22 host 10.100.252.5 gt 1024
+  -  permit tcp any eq 22 host 10.100.253.5 gt 1024
+  -  permit tcp any eq 22 host 10.100.254.5 gt 1024
+  -  permit tcp any eq 23 host 10.100.252.5 gt 1024
+  -  permit tcp any eq 23 host 10.100.253.5 gt 1024
+  -  permit tcp any eq 23 host 10.100.254.5 gt 1024
+  -  remark PING-SWEEPER
+  -  permit icmp any host 10.100.252.5 echo-reply
+  -  permit icmp any host 10.100.253.5 echo-reply
+  -  permit icmp any host 10.100.254.5 echo-reply
+  -  remark PERMIT-DHCP
+  -  permit udp any any eq bootps
+  -  remark PERMIT-DNS
+  -  permit udp any host 10.100.252.6 eq domain
+  -  permit udp any host 10.100.253.6 eq domain
+  -  permit udp any host 10.100.254.6 eq domain
+  -  remark PERMIT-NTP
+  -  permit udp any host 10.100.253.4 eq ntp
+  -  permit udp any host 10.100.254.4 eq ntp
+  -  remark PERMIT-AP-ONBOARDING
+  -  permit ip any host 10.130.0.7
+  -  permit ip any host 10.130.0.9
+  -  remark PERMIT-MULTICAST-v1
+  -  permit ip any 224.0.0.0 15.255.255.255
+  -  remark PERMIT-IGMP
+  -  permit igmp any any
+  -  remark END-STANDARD-PERMITS-v1
+  -  remark PERMIT-INTER-VLAN-TRAFFIC-SITEWIDE-v1
+  -  permit ip 10.2.0.0 0.0.255.255 10.2.0.0 0.0.255.255
+  -  permit ip 10.3.0.0 0.0.255.255 10.3.0.0 0.0.255.255
+  -  permit ip 10.7.0.0 0.0.255.255 10.7.0.0 0.0.255.255
+  -  permit ip 10.16.0.0 0.0.255.255 10.16.0.0 0.0.255.255
+  -  permit ip 10.17.0.0 0.0.255.255 10.17.0.0 0.0.255.255
+  -  permit ip 10.18.0.0 0.0.255.255 10.18.0.0 0.0.255.255
+  -  permit ip 10.19.0.0 0.0.255.255 10.19.0.0 0.0.255.255
+  -  permit ip 10.20.0.0 0.0.255.255 10.20.0.0 0.0.255.255
+  -  permit ip 10.21.0.0 0.0.255.255 10.21.0.0 0.0.255.255
+  -  permit ip 10.22.0.0 0.0.255.255 10.22.0.0 0.0.255.255
+  -  permit ip 10.23.0.0 0.0.255.255 10.23.0.0 0.0.255.255
+  -  permit ip 10.24.0.0 0.0.255.255 10.24.0.0 0.0.255.255
+  -  permit ip 10.25.0.0 0.0.255.255 10.25.0.0 0.0.255.255
+  -  permit ip 10.32.0.0 0.0.255.255 10.32.0.0 0.0.255.255
+  -  permit ip 10.33.0.0 0.0.255.255 10.33.0.0 0.0.255.255
+  -  permit ip 10.34.0.0 0.0.255.255 10.34.0.0 0.0.255.255
+  -  permit ip 10.35.0.0 0.0.255.255 10.35.0.0 0.0.255.255
+  -  permit ip 10.36.0.0 0.0.255.255 10.36.0.0 0.0.255.255
+  -  permit ip 10.38.0.0 0.0.255.255 10.38.0.0 0.0.255.255
+  -  permit ip 10.39.0.0 0.0.255.255 10.39.0.0 0.0.255.255
+  -  permit ip 10.40.0.0 0.0.255.255 10.40.0.0 0.0.255.255
+  -  permit ip 10.41.0.0 0.0.255.255 10.41.0.0 0.0.255.255
+  -  permit ip 10.42.0.0 0.0.255.255 10.42.0.0 0.0.255.255
+  -  permit ip 10.43.0.0 0.0.255.255 10.43.0.0 0.0.255.255
+  -  permit ip 10.100.0.0 0.0.255.255 10.100.0.0 0.0.255.255
+  -  permit ip 10.127.0.0 0.0.255.255 10.127.0.0 0.0.255.255
+  -  remark PERMIT-VLAN16-to-VLAN23-for-LABS
+  -  permit ip 10.16.0.0 0.0.255.255 10.23.0.0 0.0.255.255
+  -  permit ip 10.23.0.0 0.0.255.255 10.16.0.0 0.0.255.255
+  -  remark DENY-INTERNAL-v1
+  -  deny   ip any 10.0.0.0 0.255.255.255
+  -  deny   ip any 172.16.0.0 0.15.255.255
+  -  deny   ip any 192.168.0.0 0.0.255.255
+  -  remark DENY-INTERNET-FOR-VLAN2-Quarantine-v1
+  -  deny   ip 10.2.0.0 0.0.255.255 any
+  -  remark PERMIT-INTERNET-v1
+  -  permit ip any any
+
+v6_acl_name: IPV6-ACL-COMMON-VLAN
+v6_acl_template:
+  -  remark ACL-V6
+  -  remark ACE-V6-STANDARD-PERMITS
+  -  remark PERMIT-ND
+  -  permit icmp any any nd-ns
+  -  permit icmp any any nd-na
+  -  remark PERMIT-ICMP
+  -  permit icmp any any router-solicitation
+  -  permit icmp any any packet-too-big
+  -  permit icmp any any time-exceeded
+  -  permit icmp any any echo-reply
+  -  permit icmp any any echo-request
+  -  remark PERMIT-DNS CPNR
+  -  permit udp any host 2a05:f8c0:0002:64fd::6 eq domain
+  -  permit tcp any host 2a05:f8c0:0002:64fd::6 eq domain
+  -  permit udp any host 2a05:f8c0:0002:64fd::6a eq domain
+  -  permit tcp any host 2a05:f8c0:0002:64fd::6a eq domain
+  -  remark PERMIT-NTP
+  -  permit udp any host 2a05:f8c0:0002:64fd::04
+  -  permit udp any host 2a05:f8c0:0002:64fd::68
+  -  remark PERMIT-MULTICAST
+  -  permit ipv6 any ff00::/8
+  -  remark PERMIT-MLD
+  -  permit icmp any any mld-report
+  -  permit icmp any any mld-v2-report
+  -  remark END-STANDARD-PERMITS
+  -  remark PERMIT-INTER-VLAN-TRAFFIC-SITEWIDE
+  -  permit ipv6 2a05:f8c0:0002:0200::/56 2a05:f8c0:0002:0200::/56
+  -  permit ipv6 2a05:f8c0:0002:0300::/56 2a05:f8c0:0002:0300::/56
+  -  permit ipv6 2a05:f8c0:0002:0700::/56 2a05:f8c0:0002:0700::/56
+  -  permit ipv6 2a05:f8c0:0002:1000::/56 2a05:f8c0:0002:1000::/56
+  -  permit ipv6 2a05:f8c0:0002:1100::/56 2a05:f8c0:0002:1100::/56
+  -  permit ipv6 2a05:f8c0:0002:1200::/56 2a05:f8c0:0002:1200::/56
+  -  permit ipv6 2a05:f8c0:0002:1300::/56 2a05:f8c0:0002:1300::/56
+  -  permit ipv6 2a05:f8c0:0002:1400::/56 2a05:f8c0:0002:1400::/56
+  -  permit ipv6 2a05:f8c0:0002:1500::/56 2a05:f8c0:0002:1500::/56
+  -  permit ipv6 2a05:f8c0:0002:1600::/56 2a05:f8c0:0002:1600::/56
+  -  permit ipv6 2a05:f8c0:0002:1700::/56 2a05:f8c0:0002:1700::/56
+  -  permit ipv6 2a05:f8c0:0002:1800::/56 2a05:f8c0:0002:1800::/56
+  -  permit ipv6 2a05:f8c0:0002:1900::/56 2a05:f8c0:0002:1900::/56
+  -  permit ipv6 2a05:f8c0:0002:2000::/56 2a05:f8c0:0002:2000::/56
+  -  permit ipv6 2a05:f8c0:0002:2100::/56 2a05:f8c0:0002:2100::/56
+  -  permit ipv6 2a05:f8c0:0002:2200::/56 2a05:f8c0:0002:2200::/56
+  -  permit ipv6 2a05:f8c0:0002:2300::/56 2a05:f8c0:0002:2300::/56
+  -  permit ipv6 2a05:f8c0:0002:2400::/56 2a05:f8c0:0002:2400::/56
+  -  permit ipv6 2a05:f8c0:0002:2600::/56 2a05:f8c0:0002:2600::/56
+  -  permit ipv6 2a05:f8c0:0002:2700::/56 2a05:f8c0:0002:2700::/56
+  -  permit ipv6 2a05:f8c0:0002:2800::/56 2a05:f8c0:0002:2800::/56
+  -  permit ipv6 2a05:f8c0:0002:2900::/56 2a05:f8c0:0002:2900::/56
+  -  permit ipv6 2a05:f8c0:0002:2a00::/56 2a05:f8c0:0002:2a00::/56
+  -  permit ipv6 2a05:f8c0:0002:2b00::/56 2a05:f8c0:0002:2b00::/56
+  -  permit ipv6 2a05:f8c0:0002:6400::/56 2a05:f8c0:0002:6400::/56
+  -  permit ipv6 2a05:f8c0:0002:7f00::/56 2a05:f8c0:0002:7f00::/56
+  -  remark remark PERMIT-VLAN16-to-VLAN23-for-LABS
+  -  permit ipv6 2a05:f8c0:0002:1000::/56 2a05:f8c0:0002:1700::/56
+  -  permit ipv6 2a05:f8c0:0002:1700::/56 2a05:f8c0:0002:1000::/56
+  -  remark DENY-INTERNAL
+  -  deny ipv6 any 2a05:f8c0:0002::/48
+  -  remark DENY-INTERNET-FOR-VLAN2-Quarantine
+  -  deny ipv6 2a05:f8c0:0002:0200::/56 any
+  -  remark ACE-V6-PERMIT-INTERNET
+  -  permit ipv6 any any
