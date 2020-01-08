@@ -46,44 +46,24 @@ IPV6ADDR = "|".join(["(?:{})".format(g) for g in IPV6GROUPS[::-1]])
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        prog=sys.argv[0], description="Add a VLAN to the network"
+    parser = argparse.ArgumentParser(prog=sys.argv[0], description="Add a VLAN to the network")
+    parser.add_argument(
+        "--vlan-name", "-n", metavar="<VLAN_NAME>", help="Name of the VLAN to add", required=True,
     )
     parser.add_argument(
-        "--vlan-name",
-        "-n",
-        metavar="<VLAN_NAME>",
-        help="Name of the VLAN to add",
-        required=True,
+        "--vlan-id", "-i", metavar="<VLAN_ID>", help="ID of the VLAN to add", type=int, required=True,
     )
     parser.add_argument(
-        "--vlan-id",
-        "-i",
-        metavar="<VLAN_ID>",
-        help="ID of the VLAN to add",
-        type=int,
-        required=True,
+        "--vm-vlan-name", metavar="<VM_VLAN_NAME>", help="Name of the VLAN port group in VMware (required when adding to vCenter)",
     )
     parser.add_argument(
-        "--vm-vlan-name",
-        metavar="<VM_VLAN_NAME>",
-        help="Name of the VLAN port group in VMware (required when adding to vCenter)",
+        "--svi-v4-network", metavar="<SVI_NETWORK>", help="IPv4 network address of the SVI",
     )
     parser.add_argument(
-        "--svi-v4-network",
-        metavar="<SVI_NETWORK>",
-        help="IPv4 network address of the SVI",
+        "--svi-subnet-len", metavar="<SVI_PREFIX_LEN>", help="Subnet length of the SVI v4 IP (e.g., 24 for a /24)", type=int,
     )
     parser.add_argument(
-        "--svi-subnet-len",
-        metavar="<SVI_PREFIX_LEN>",
-        help="Subnet length of the SVI v4 IP (e.g., 24 for a /24)",
-        type=int,
-    )
-    parser.add_argument(
-        "--svi-standard-v4",
-        help="Follow the standard rules to add a MAJOR.VLAN.IDF.0/24 SVI address",
-        action="store_true",
+        "--svi-standard-v4", help="Follow the standard rules to add a MAJOR.VLAN.IDF.0/24 SVI address", action="store_true",
     )
     parser.add_argument(
         "--svi-v6-network",
@@ -91,30 +71,18 @@ def main():
         help='IPv6 network address of the SVI (should end with "::"; prefix len is assumed to be /64)',
     )
     parser.add_argument(
-        "--svi-standard-v6",
-        help="Follow the standard rules to add a PREFIX:[VLAN][IDF]::/64 SVI address",
-        action="store_true",
+        "--svi-standard-v6", help="Follow the standard rules to add a PREFIX:[VLAN][IDF]::/64 SVI address", action="store_true",
+    )
+    parser.add_argument("--svi-descr", metavar="<SVI_DESCRIPTION>", help="Description of the SVI")
+    parser.add_argument(
+        "--no-add-acl", help="Do not add the standard ACL restrictions to the SVI (default: add the ACLs)", action="store_true",
+    )
+    parser.add_argument("--mtu", "-m", metavar="<MTU>", help="MTU of SVI (default: 9216)", type=int)
+    parser.add_argument(
+        "--is-stretched", help="VLAN is stretched between both data centres (default: False)", action="store_true",
     )
     parser.add_argument(
-        "--svi-descr", metavar="<SVI_DESCRIPTION>", help="Description of the SVI"
-    )
-    parser.add_argument(
-        "--no-add-acl",
-        help="Do not add the standard ACL restrictions to the SVI (default: add the ACLs)",
-        action="store_true",
-    )
-    parser.add_argument(
-        "--mtu", "-m", metavar="<MTU>", help="MTU of SVI (default: 9216)", type=int
-    )
-    parser.add_argument(
-        "--is-stretched",
-        help="VLAN is stretched between both data centres (default: False)",
-        action="store_true",
-    )
-    parser.add_argument(
-        "--no-hsrp",
-        help="Use HSRP or not (default: HSRP will be configured)",
-        action="store_true",
+        "--no-hsrp", help="Use HSRP or not (default: HSRP will be configured)", action="store_true",
     )
     parser.add_argument(
         "--no-passive-interface",
@@ -122,25 +90,16 @@ def main():
         action="store_true",
     )
     parser.add_argument(
-        "--v6-link-local",
-        help="Only use v6 link-local addresses (default: global IPv6 is expected)",
-        action="store_true",
+        "--v6-link-local", help="Only use v6 link-local addresses (default: global IPv6 is expected)", action="store_true",
     )
     parser.add_argument(
-        "--ospf-broadcast",
-        help="OSPF network is broadcast instead of P2P (default: P2P)",
-        action="store_true",
+        "--ospf-broadcast", help="OSPF network is broadcast instead of P2P (default: P2P)", action="store_true",
     )
     parser.add_argument(
-        "--interface",
-        action="append",
-        metavar="<INTF>",
-        help="Interface to enable for VLAN (can be specified more than once)",
+        "--interface", action="append", metavar="<INTF>", help="Interface to enable for VLAN (can be specified more than once)",
     )
     parser.add_argument(
-        "--generate-iflist",
-        help="Automatically generate a list of allowed interfaces for VLAN (default: False)",
-        action="store_true",
+        "--generate-iflist", help="Automatically generate a list of allowed interfaces for VLAN (default: False)", action="store_true",
     )
     parser.add_argument(
         "--vmware-cluster",
@@ -149,11 +108,7 @@ def main():
         help="VMware cluster to configure for VLAN (can be specified more than once) (default: all clusters are configured)",
     )
     parser.add_argument(
-        "--username",
-        "-u",
-        metavar="<USERNAME>",
-        help="Username to use to connect to the N9Ks",
-        required=True,
+        "--username", "-u", metavar="<USERNAME>", help="Username to use to connect to the N9Ks", required=True,
     )
     parser.add_argument(
         "--limit",
@@ -162,17 +117,11 @@ def main():
         help="Comma-separated list of hosts or host group names (from inventory/hosts) on which to restrict operations",
     )
     parser.add_argument(
-        "--tags",
-        metavar="<TAG_LIST>",
-        help="Comma-separated list of task tags to execute",
+        "--tags", metavar="<TAG_LIST>", help="Comma-separated list of task tags to execute",
     )
+    parser.add_argument("--list-tags", help="List available task tags", action="store_true")
     parser.add_argument(
-        "--list-tags", help="List available task tags", action="store_true"
-    )
-    parser.add_argument(
-        "--test-only",
-        help="Only check syntax and attempt to predict changes (NO CHANGES WILL BE MADE)",
-        action="store_true",
+        "--test-only", help="Only check syntax and attempt to predict changes (NO CHANGES WILL BE MADE)", action="store_true",
     )
     args = parser.parse_args()
 
@@ -220,9 +169,7 @@ def main():
             sys.exit(1)
 
         if not args.svi_subnet_len:
-            print(
-                "ERROR: SVI Prefix Length is required when an SVI Network is specified."
-            )
+            print("ERROR: SVI Prefix Length is required when an SVI Network is specified.")
             sys.exit(1)
 
         if int(args.svi_subnet_len) < 8 or int(args.svi_subnet_len) > 30:
@@ -236,12 +183,7 @@ def main():
         else:
             svi_prefix = m.group(1)
 
-    if (
-        args.svi_v4_network
-        or args.svi_v6_network
-        or args.svi_standard_v4
-        or args.svi_standard_v6
-    ):
+    if args.svi_v4_network or args.svi_v6_network or args.svi_standard_v4 or args.svi_standard_v6:
         if args.mtu and (args.mtu < 1500 or args.mtu > 9216):
             print("ERROR: MTU must be between 1500 and 9216.")
             sys.exit(1)
@@ -287,9 +229,7 @@ def main():
     os.environ["ANSIBLE_DEPRECATION_WARNINGS"] = "False"
 
     if "AD_PASSWORD" not in os.environ:
-        print(
-            "ERROR: AD_PASSWORD must be set in the environment first (used for vCenter and UCS)."
-        )
+        print("ERROR: AD_PASSWORD must be set in the environment first (used for vCenter and UCS).")
         sys.exit(1)
 
     os.environ["VMWARE_USER"] = args.username
