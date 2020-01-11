@@ -22,6 +22,7 @@
     - nxos-vlan
     - allow-vlan
     - remove-vlan
+    - remove-ucs-vlan
 
 - name: Generate list of interfaces (non-stretched)
   set_fact: iflist="{{ iflist }} + [{{ item.key }}]"
@@ -33,6 +34,7 @@
     - nxos-vlan
     - allow-vlan
     - remove-vlan
+    - remove-ucs-vlan
 
 - name: Associate interfaces to VLAN
   nxos_config:
@@ -46,6 +48,7 @@
     - vlan
     - nxos-vlan
     - allow-vlan
+    - allow-nxos-vlan
 
 - name: Add SVI definition
   nxos_interfaces:
@@ -354,6 +357,7 @@
     - vlan
     - nxos-vlan
     - remove-vlan
+    - remove-ucs-vlan
 
 - name: Delete VLAN definition
   nxos_vlan:
