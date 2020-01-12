@@ -37,23 +37,20 @@ from cleu.config import Config as C
 
 routers = {}
 
-commands = {
-    'ip_route': 'show ip route',
-    'ipv6_route': 'show ipv6 route'
-}
+commands = {"ip_route": "show ip route", "ipv6_route": "show ipv6 route"}
 
-cache_dir = '/home/jclarke/routing-tables'
-ROUTER_FILE = '/home/jclarke/routers.json'
+cache_dir = "/home/jclarke/routing-tables"
+ROUTER_FILE = "/home/jclarke/routers.json"
 
-WEBEX_ROOM = 'Core Alarms'
+WEBEX_ROOM = "Core Alarms"
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     spark = Sparker(token=CLEUCreds.SPARK_TOKEN)
     ssh_client = paramiko.SSHClient()
     ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
     try:
-        fd = open(ROUTER_FILE, 'r')
+        fd = open(ROUTER_FILE, "r")
         routers = json.load(fd)
         fd.close()
     except:
@@ -61,11 +58,17 @@ if __name__ == '__main__':
 
     for router, ip in routers.items():
         try:
-            ssh_client.connect(ip, username=CLEUCreds.NET_USER, password=CLEUCreds.NET_PASS,
-                               timeout=60, allow_agent=False, look_for_keys=False)
+            ssh_client.connect(
+                ip,
+                username=CLEUCreds.NET_USER,
+                password=CLEUCreds.NET_PASS,
+                timeout=60,
+                allow_agent=False,
+                look_for_keys=False,
+            )
             chan = ssh_client.invoke_shell()
             for fname, command in commands.items():
-                output = ''
+                output = ""
                 try:
                     chan.sendall("term length 0\n")
                     chan.sendall("term width 0\n")
@@ -74,43 +77,52 @@ if __name__ == '__main__':
                     while i < 10:
                         if chan.recv_ready():
                             break
-                        time.sleep(.5)
+                        time.sleep(0.5)
                         i += 1
                     while chan.recv_ready():
                         output = output + chan.recv(65535)
                 except Exception as ie:
-                    print('Failed to get {} from {}: {}'.format(
-                        command, router, ie))
+                    print("Failed to get {} from {}: {}".format(command, router, ie))
                     continue
 
-                fpath = '{}/{}-{}'.format(cache_dir, fname, router)
-                curr_path = fpath + '.curr'
-                prev_path = fpath + '.prev'
-                fd = open(curr_path, 'w')
-                output = re.sub(r'\r', '', output)
-                output = re.sub(r'([\d\.]+) (\[[^\n]+)',
-                                '\\1\n          \\2', output)
-                fd.write(
-                    re.sub(r'(via [\d\.]+), [^,\n]+([,\n])', '\\1\\2', output))
+                fpath = "{}/{}-{}".format(cache_dir, fname, router)
+                curr_path = fpath + ".curr"
+                prev_path = fpath + ".prev"
+                fd = open(curr_path, "w")
+                output = re.sub(r"\r", "", output)
+                output = re.sub(r"([\d\.]+) (\[[^\n]+)", "\\1\n          \\2", output)
+                fd.write(re.sub(r"(via [\d\.]+), [^,\n]+([,\n])", "\\1\\2", output))
                 fd.close()
 
                 if os.path.exists(prev_path):
                     proc = Popen(
-                        shlex.split('/usr/bin/diff -E -b -B -w -u {} {}'.format(prev_path, curr_path)), stdout=PIPE, stderr=PIPE)
+                        shlex.split(
+                            "/usr/bin/diff -E -b -B -w -u {} {}".format(
+                                prev_path, curr_path
+                            )
+                        ),
+                        stdout=PIPE,
+                        stderr=PIPE,
+                    )
                     out, err = proc.communicate()
                     rc = proc.returncode
 
                     if rc != 0:
                         spark.post_to_spark(
-                            C.WEBEX_TEAM, WEBEX_ROOM, '**ALERT**: Routing table diff ({}) on **{}**:\n```\n{}\n```'.format(command, router, re.sub(cache_dir + '/', '', out)))
+                            C.WEBEX_TEAM,
+                            WEBEX_ROOM,
+                            "**ALERT**: Routing table diff ({}) on **{}**:\n```\n{}\n```".format(
+                                command, router, re.sub(cache_dir + "/", "", out)
+                            ),
+                        )
                         time.sleep(1)
-                        #print('XXX: Out = \'{}\''.format(out))
+                        # print('XXX: Out = \'{}\''.format(out))
 
                 os.rename(curr_path, prev_path)
 
         except Exception as e:
             ssh_client.close()
-            print('Failed to get routing tables from {}: {}'.format(router, e))
+            print("Failed to get routing tables from {}: {}".format(router, e))
             continue
 
         ssh_client.close()
