@@ -159,14 +159,15 @@ def main():
 
     if args.svi_v4_network:
         m = re.match(r"(\d+)\.(\d+)\.(\d+).(\d+)", args.svi_v4_network)
-        for i in range(1, 5):
-            if int(m.group(i)) > 255:
-                print("ERROR: Invalid SVI IPv4 address, {}".format(args.svi_v4_network))
-                sys.exit(1)
 
         if not m:
             print("ERROR: SVI Network must be an IPv4 network address.")
             sys.exit(1)
+
+        for i in range(1, 5):
+            if int(m.group(i)) > 255:
+                print("ERROR: Invalid SVI IPv4 address, {}".format(args.svi_v4_network))
+                sys.exit(1)
 
         if not args.svi_subnet_len:
             print("ERROR: SVI Prefix Length is required when an SVI Network is specified.")
