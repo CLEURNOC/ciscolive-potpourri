@@ -32,44 +32,61 @@ import logging
 import re
 import argparse
 
-GOOD = '✅'
-BAD = '🚨🚨'
+GOOD = "✅"
+BAD = "🚨🚨"
 
-if __name__ == '__main__':
-    logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s : %(message)s',
-                        filename='/var/log/spark.log', level=logging.DEBUG)
+if __name__ == "__main__":
+    logging.basicConfig(
+        format="%(asctime)s - %(name)s - %(levelname)s : %(message)s",
+        filename="/var/log/spark.log",
+        level=logging.DEBUG,
+    )
 
     parser = argparse.ArgumentParser(
-        prog=sys.argv[0], description='Send notifications to a Spark room')
-    parser.add_argument('--team', '-t', metavar='<TEAM NAME>',
-                        help='Webex Teams Team name to use')
-    parser.add_argument('--room', '-r', metavar='<ROOM NAME>',
-                        help='Webex Teams Room name to use', required=True)
-    parser.add_argument('--token', '-T', metavar='<TOKEN>',
-                        help='Spark Token to use to post', required=True)
-    parser.add_argument('--good', '-g', action='store_true',
-                        help='Is this a good message')
-    parser.add_argument('--bad', '-b', action='store_true',
-                        help='Is this a bad message')
+        prog=sys.argv[0], description="Send notifications to a Spark room"
+    )
+    parser.add_argument(
+        "--team", "-t", metavar="<TEAM NAME>", help="Webex Teams Team name to use"
+    )
+    parser.add_argument(
+        "--room",
+        "-r",
+        metavar="<ROOM NAME>",
+        help="Webex Teams Room name to use",
+        required=True,
+    )
+    parser.add_argument(
+        "--token",
+        "-T",
+        metavar="<TOKEN>",
+        help="Spark Token to use to post",
+        required=True,
+    )
+    parser.add_argument(
+        "--good", "-g", action="store_true", help="Is this a good message"
+    )
+    parser.add_argument(
+        "--bad", "-b", action="store_true", help="Is this a bad message"
+    )
 
     parser.set_defaults(team=None)
     args = parser.parse_args()
 
     spark = sparker.Sparker(logit=True, token=args.token)
 
-    if not args.team and re.search(r':', args.room):
-        team, room = args.room.split(':')
+    if not args.team and re.search(r":", args.room):
+        team, room = args.room.split(":")
         args.team = team
         args.room = room
 
-    msg = ''
+    msg = ""
 
     for c in sys.stdin.read():
         msg += c
 
     if args.good and not args.bad:
-        msg = GOOD + ' ' + msg
+        msg = GOOD + " " + msg
     elif args.bad and not args.good:
-        msg = BAD + ' ' + msg
+        msg = BAD + " " + msg
 
     spark.post_to_spark(args.team, args.room, msg)
