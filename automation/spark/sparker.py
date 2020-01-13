@@ -37,23 +37,20 @@ class ResourceType(Enum):
     TEAM = 2
 
 
-class Sparker():
-    SPARK_API = 'https://api.ciscospark.com/v1/'
+class Sparker:
+    SPARK_API = "https://api.ciscospark.com/v1/"
 
     RETRIES = 5
 
-    _headers = {
-        'authorization': None,
-        'content-type': 'application/json'
-    }
+    _headers = {"authorization": None, "content-type": "application/json"}
 
     _logit = False
 
     def __init__(self, **kwargs):
-        if 'logit' in kwargs:
-            self._logit = kwargs['logit']
-        if 'token' in kwargs:
-            self._headers['authorization'] = 'Bearer ' + kwargs['token']
+        if "logit" in kwargs:
+            self._logit = kwargs["logit"]
+        if "token" in kwargs:
+            self._headers["authorization"] = "Bearer " + kwargs["token"]
         self._team_cache = {}
         self._room_cache = {}
 
@@ -67,7 +64,11 @@ class Sparker():
                 response.raise_for_status()
                 return response
             except Exception as e:
-                if (response.status_code != 429 and response.status_code != 503 and response.status_code != 400) or i == Sparker.RETRIES:
+                if (
+                    response.status_code != 429
+                    and response.status_code != 503
+                    and response.status_code != 400
+                ) or i == Sparker.RETRIES:
                     return response
 
                 time.sleep(backoff)
@@ -83,15 +84,14 @@ class Sparker():
             try:
                 response = Sparker._request_with_retry(*args, **kwargs)
                 response.raise_for_status()
-                result += response.json()['items']
-                if 'Link' in response.headers:
-                    links = requests.utils.parse_header_links(
-                        response.headers['Link'])
+                result += response.json()["items"]
+                if "Link" in response.headers:
+                    links = requests.utils.parse_header_links(response.headers["Link"])
                     found_next = False
                     for link in links:
-                        if link['rel'] == 'next':
-                            args = (args[0], link['url'])
-                            kwargs.pop('params', None)
+                        if link["rel"] == "next":
+                            args = (args[0], link["url"])
+                            kwargs.pop("params", None)
                             found_next = True
                             break
 
@@ -107,14 +107,14 @@ class Sparker():
         return result
 
     def set_token(self, token):
-        self._headers['authorization'] = 'Bearer ' + token
+        self._headers["authorization"] = "Bearer " + token
 
     def check_token(self):
-        if self._headers['authorization'] is None:
+        if self._headers["authorization"] is None:
             if self._logit:
-                logging.error('Spark token is not set!')
+                logging.error("Spark token is not set!")
             else:
-                print('Spark token is not set!')
+                print("Spark token is not set!")
 
             return False
 
@@ -124,15 +124,15 @@ class Sparker():
         if not self.check_token():
             return None
 
-        url = self.SPARK_API + 'messages' + '/' + mid
+        url = self.SPARK_API + "messages" + "/" + mid
 
         try:
-            response = Sparker._request_with_retry(
-                'GET', url, headers=self._headers)
+            response = Sparker._request_with_retry("GET", url, headers=self._headers)
             response.raise_for_status()
         except Exception as e:
-            msg = 'Error getting message with ID {}: {}'.format(
-                mid, getattr(e, 'message', repr(e)))
+            msg = "Error getting message with ID {}: {}".format(
+                mid, getattr(e, "message", repr(e))
+            )
             if self._logit:
                 logging.error(msg)
             else:
@@ -148,14 +148,12 @@ class Sparker():
         if team in self._team_cache:
             return self._team_cache[team]
 
-        url = self.SPARK_API + 'teams'
+        url = self.SPARK_API + "teams"
 
         try:
-            items = Sparker._get_items_pages(
-                'GET', url, headers=self._headers)
+            items = Sparker._get_items_pages("GET", url, headers=self._headers)
         except Exception as e:
-            msg = 'Error retrieving teams: {}'.format(
-                getattr(e, 'message', repr(e)))
+            msg = "Error retrieving teams: {}".format(getattr(e, "message", repr(e)))
             if self._logit:
                 logging.error(msg)
             else:
@@ -164,12 +162,12 @@ class Sparker():
 
         team_id = None
         for t in items:
-            if 'name' in t and t['name'] == team:
-                self._team_cache[team] = t['id']
-                return t['id']
+            if "name" in t and t["name"] == team:
+                self._team_cache[team] = t["id"]
+                return t["id"]
 
         if team_id is None:
-            msg = 'Error finding team ID for {}'.format(team)
+            msg = "Error finding team ID for {}".format(team)
             if self._logit:
                 logging.error(msg)
             else:
@@ -182,23 +180,25 @@ class Sparker():
             return None
 
         if team_id is None:
-            team_id = ''
+            team_id = ""
 
-        if '{}:{}'.format(team_id, room) in self._room_cache:
-            return self._room_cache['{}:{}'.format(team_id, room)]
+        if "{}:{}".format(team_id, room) in self._room_cache:
+            return self._room_cache["{}:{}".format(team_id, room)]
 
-        url = self.SPARK_API + 'rooms'
+        url = self.SPARK_API + "rooms"
         params = {}
 
-        if team_id != '':
-            params['teamId'] = team_id
+        if team_id != "":
+            params["teamId"] = team_id
 
         try:
             items = Sparker._get_items_pages(
-                'GET', url, headers=self._headers, params=params)
+                "GET", url, headers=self._headers, params=params
+            )
         except Exception as e:
-            msg = 'Error retrieving room {}: {}'.format(
-                room, getattr(e, 'message', repr(e)))
+            msg = "Error retrieving room {}: {}".format(
+                room, getattr(e, "message", repr(e))
+            )
             if self._logit:
                 logging.error(msg)
             else:
@@ -207,12 +207,12 @@ class Sparker():
 
         room_id = None
         for r in items:
-            if 'title' in r and r['title'] == room:
-                self._room_cache['{}:{}'.format(team_id, room)] = r['id']
-                return r['id']
+            if "title" in r and r["title"] == room:
+                self._room_cache["{}:{}".format(team_id, room)] = r["id"]
+                return r["id"]
 
         if room_id is None:
-            msg = 'Failed to find room ID for {}'.format(room)
+            msg = "Failed to find room ID for {}".format(room)
             if self._logit:
                 logging.error(msg)
             else:
@@ -232,17 +232,17 @@ class Sparker():
             if rid is None:
                 return None
 
-            url += 'team/memberships'
-            payload['teamId'] = rid
+            url += "team/memberships"
+            payload["teamId"] = rid
         elif type == ResourceType.ROOM:
             rid = self.get_room_id(None, resource)
             if rid is None:
                 return None
 
-            url += 'memberships'
-            payload['roomId'] = rid
+            url += "memberships"
+            payload["roomId"] = rid
         else:
-            msg = 'Resource type must be TEAM or ROOM'
+            msg = "Resource type must be TEAM or ROOM"
             if self._logit:
                 logging.error(msg)
             else:
@@ -252,10 +252,12 @@ class Sparker():
 
         try:
             items = Sparker._get_items_pages(
-                'GET', url, params=payload, headers=self._headers)
+                "GET", url, params=payload, headers=self._headers
+            )
         except Exception as e:
-            msg = 'Error getting resource membership: {}'.format(
-                getattr(e, 'message', repr(e)))
+            msg = "Error getting resource membership: {}".format(
+                getattr(e, "message", repr(e))
+            )
             if self._logit:
                 logging.error(msg)
             else:
@@ -268,7 +270,7 @@ class Sparker():
         if not self.check_token():
             return None
 
-        payload = {'isModerator': False}
+        payload = {"isModerator": False}
         url = self.SPARK_API
         err_occurred = False
 
@@ -277,17 +279,17 @@ class Sparker():
             if rid is None:
                 return False
 
-            url += 'team/memberships'
-            payload['teamId'] = rid
+            url += "team/memberships"
+            payload["teamId"] = rid
         elif type == ResourceType.ROOM:
             rid = self.get_room_id(None, resource)
             if rid is None:
                 return False
 
-            url += 'memberships'
-            payload['roomId'] = rid
+            url += "memberships"
+            payload["roomId"] = rid
         else:
-            msg = 'Resource type must be TEAM or ROOM'
+            msg = "Resource type must be TEAM or ROOM"
             if self._logit:
                 logging.error(msg)
             else:
@@ -302,19 +304,23 @@ class Sparker():
 
         for member in mem_list:
             try:
-                if 'personId' in member:
-                    payload['personId'] = member['personId']
-                    payload.pop('personEmail', None)
+                if "personId" in member:
+                    payload["personId"] = member["personId"]
+                    payload.pop("personEmail", None)
                 else:
-                    payload['personEmail'] = member['personEmail']
-                    payload.pop('personId', None)
+                    payload["personEmail"] = member["personEmail"]
+                    payload.pop("personId", None)
 
                 response = Sparker._request_with_retry(
-                    'POST', url, json=payload, headers=self._headers)
+                    "POST", url, json=payload, headers=self._headers
+                )
                 response.raise_for_status()
             except Exception as e:
-                msg = 'Error adding member %s to %s: %s' % (
-                    member, resource, getattr(e, 'message', repr(e)))
+                msg = "Error adding member %s to %s: %s" % (
+                    member,
+                    resource,
+                    getattr(e, "message", repr(e)),
+                )
                 if self._logit:
                     logging.error(msg)
                 else:
@@ -338,18 +344,17 @@ class Sparker():
         if room_id is None:
             return False
 
-        url = self.SPARK_API + 'messages'
+        url = self.SPARK_API + "messages"
 
-        payload = {'roomId': room_id,
-                   'markdown': msg}
+        payload = {"roomId": room_id, "markdown": msg}
 
         try:
             response = Sparker._request_with_retry(
-                'POST', url, json=payload, headers=self._headers)
+                "POST", url, json=payload, headers=self._headers
+            )
             response.raise_for_status()
         except Exception as e:
-            msg = 'Error posting message: {}'.format(
-                getattr(e, 'message', repr(e)))
+            msg = "Error posting message: {}".format(getattr(e, "message", repr(e)))
             if self._logit:
                 logging.error(msg)
             else:
@@ -373,25 +378,21 @@ class Sparker():
         if room_id is None:
             return False
 
-        url = self.SPARK_API + 'messages'
+        url = self.SPARK_API + "messages"
 
         bio = BytesIO(attach)
 
-        payload = {'roomId': room_id,
-                   'markdown': msg,
-                   'files': (fname, bio, ftype)}
+        payload = {"roomId": room_id, "markdown": msg, "files": (fname, bio, ftype)}
         m = MultipartEncoder(fields=payload)
 
         headers = self._headers
-        headers['content-type'] = m.content_type
+        headers["content-type"] = m.content_type
 
         try:
-            response = Sparker._request_with_retry(
-                'POST', url, data=m, headers=headers)
+            response = Sparker._request_with_retry("POST", url, data=m, headers=headers)
             response.raise_for_status()
         except Exception as e:
-            msg = 'Error posting message: {}'.format(
-                getattr(e, 'message', repr(e)))
+            msg = "Error posting message: {}".format(getattr(e, "message", repr(e)))
             if self._logit:
                 logging.error(msg)
             else:
