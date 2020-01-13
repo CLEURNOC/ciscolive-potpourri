@@ -27,32 +27,31 @@
 import netsnmp
 import os
 import json
-from sparker import Sparker
+from sparker import Sparker, MessageType
 import CLEUCreds
 from cleu.config import Config as C
 
-CACHE_FILE = '/home/jclarke/errors_cache.dat'
+CACHE_FILE = "/home/jclarke/errors_cache.dat"
 THRESHOLD = 1
 WINDOW = 12
 REARM = 6
 
 
-WEBEX_ROOM = 'Data Center Alarms'
+WEBEX_ROOM = "Data Centre Alarms"
 
-devices = ['dc1-mccsw-1', 'dc1-mccsw-2', 'dc2-mccsw-1', 'dc2-mccsw-2',
-           'dc1-ethsw-1', 'dc1-ethsw-2', 'dc2-ethsw-1', 'dc2-ethsw-2']
+devices = ["dc1-mccsw-1", "dc1-mccsw-2", "dc2-mccsw-1", "dc2-mccsw-2", "dc1-ethsw-1", "dc1-ethsw-2", "dc2-ethsw-1", "dc2-ethsw-2"]
 
 ignore_interfaces = {}
 
 prev_state = {}
 curr_state = {}
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     spark = Sparker(token=CLEUCreds.SPARK_TOKEN)
 
     if os.path.exists(CACHE_FILE):
-        fd = open(CACHE_FILE, 'r')
+        fd = open(CACHE_FILE, "r")
         prev_state = json.load(fd)
         fd.close()
 
@@ -60,22 +59,30 @@ if __name__ == '__main__':
 
         swent = {}
 
-        vars = netsnmp.VarList(netsnmp.Varbind('ifDescr'), netsnmp.Varbind('ifInErrors'), netsnmp.Varbind(
-            'ifOutErrors'), netsnmp.Varbind('ifInDiscards'), netsnmp.Varbind('ifOutDiscards'), netsnmp.Varbind('ifAlias'))
-        netsnmp.snmpwalk(vars,
-                         Version=3,
-                         DestHost=device,
-                         SecLevel='authPriv',
-                         SecName='CLEUR',
-                         AuthProto='SHA',
-                         AuthPass=CLEUCreds.SNMP_AUTH_PASS,
-                         PrivProto='DES',
-                         PrivPass=CLEUCreds.SNMP_PRIV_PASS)
+        vars = netsnmp.VarList(
+            netsnmp.Varbind("ifDescr"),
+            netsnmp.Varbind("ifInErrors"),
+            netsnmp.Varbind("ifOutErrors"),
+            netsnmp.Varbind("ifInDiscards"),
+            netsnmp.Varbind("ifOutDiscards"),
+            netsnmp.Varbind("ifAlias"),
+        )
+        netsnmp.snmpwalk(
+            vars,
+            Version=3,
+            DestHost=device,
+            SecLevel="authPriv",
+            SecName="CLEUR",
+            AuthProto="SHA",
+            AuthPass=CLEUCreds.SNMP_AUTH_PASS,
+            PrivProto="DES",
+            PrivPass=CLEUCreds.SNMP_PRIV_PASS,
+        )
         for var in vars:
             if var.iid not in swent:
                 swent[var.iid] = {}
-                swent[var.iid]['count'] = 0
-                swent[var.iid]['suppressed'] = False
+                swent[var.iid]["count"] = 0
+                swent[var.iid]["suppressed"] = False
 
             swent[var.iid][var.tag] = var.val
 
@@ -86,45 +93,60 @@ if __name__ == '__main__':
         for ins, vard in curr_state[device].items():
             if not ins in prev_state[device]:
                 continue
-            if not 'ifDescr' in vard:
+            if not "ifDescr" in vard:
                 continue
-            if not 'ifAlias' in vard:
-                vard['ifAlias'] = ''
-            if 'count' in prev_state[device][ins]:
-                curr_state[device][ins]['count'] = prev_state[device][ins]['count']
+            if not "ifAlias" in vard:
+                vard["ifAlias"] = ""
+            if "count" in prev_state[device][ins]:
+                curr_state[device][ins]["count"] = prev_state[device][ins]["count"]
 
-            if 'suppressed' in prev_state[device][ins]:
-                curr_state[device][ins]['suppressed'] = prev_state[
-                    device][ins]['suppressed']
-            if_descr = vard['ifDescr']
-            if_alias = vard['ifAlias']
+            if "suppressed" in prev_state[device][ins]:
+                curr_state[device][ins]["suppressed"] = prev_state[device][ins]["suppressed"]
+            if_descr = vard["ifDescr"]
+            if_alias = vard["ifAlias"]
             if device in ignore_interfaces and if_descr in ignore_interfaces[device]:
                 continue
             found_error = False
             for k, v in vard.items():
-                if k == 'ifDescr' or k == 'ifAlias' or k == 'count' or k == 'suppressed':
+                if k == "ifDescr" or k == "ifAlias" or k == "count" or k == "suppressed":
                     continue
                 if k in prev_state[device][ins]:
                     diff = int(v) - int(prev_state[device][ins][k])
                     if diff >= THRESHOLD:
                         found_error = True
-                        if curr_state[device][ins]['count'] < WINDOW and not curr_state[device][ins]['suppressed']:
+                        if curr_state[device][ins]["count"] < WINDOW and not curr_state[device][ins]["suppressed"]:
                             spark.post_to_spark(
-                                C.WEBEX_TEAM, WEBEX_ROOM, '**WARNING**: Interface **{}** ({}) on device _{}_ has seen an increase of **{}** {} since the last poll (previous: {}, current: {}).'.format(if_descr, if_alias, device, diff, k, prev_state[device][ins][k], v))
-                        elif not curr_state[device][ins]['suppressed']:
-                            curr_state[device][ins]['suppressed'] = True
+                                C.WEBEX_TEAM,
+                                WEBEX_ROOM,
+                                "Interface **{}** ({}) on device _{}_ has seen an increase of **{}** {} since the last poll (previous: {}, current: {}).".format(
+                                    if_descr, if_alias, device, diff, k, prev_state[device][ins][k], v
+                                ),
+                                MessageType.WARNING,
+                            )
+                        elif not curr_state[device][ins]["suppressed"]:
+                            curr_state[device][ins]["suppressed"] = True
                             spark.post_to_spark(
-                                C.WEBEX_TEAM, WEBEX_ROOM, 'Suppressing alarms for interface **{}** ({}) on device _{}_'.format(if_descr, if_alias, device))
+                                C.WEBEX_TEAM,
+                                WEBEX_ROOM,
+                                "Suppressing alarms for interface **{}** ({}) on device _{}_".format(if_descr, if_alias, device),
+                                MessageType.GOOD,
+                            )
             if not found_error:
-                if curr_state[device][ins]['count'] > 0:
-                    curr_state[device][ins]['count'] -= 1
-                    if curr_state[device][ins]['count'] < REARM and curr_state[device][ins]['suppressed']:
+                if curr_state[device][ins]["count"] > 0:
+                    curr_state[device][ins]["count"] -= 1
+                    if curr_state[device][ins]["count"] < REARM and curr_state[device][ins]["suppressed"]:
                         spark.post_to_spark(
-                            C.WEBEX_TEAM, WEBEX_ROOM, 'Interface **{}** ({}) on device _{}_ is no longer seeing an increase of errors'.format(if_descr, if_alias, device))
-                        curr_state[device][ins]['suppressed'] = False
+                            C.WEBEX_TEAM,
+                            WEBEX_ROOM,
+                            "Interface **{}** ({}) on device _{}_ is no longer seeing an increase of errors".format(
+                                if_descr, if_alias, device
+                            ),
+                            MessageType.GOOD,
+                        )
+                        curr_state[device][ins]["suppressed"] = False
             else:
-                curr_state[device][ins]['count'] += 1
+                curr_state[device][ins]["count"] += 1
 
-    fd = open(CACHE_FILE, 'w')
+    fd = open(CACHE_FILE, "w")
     json.dump(curr_state, fd, indent=4)
     fd.close()

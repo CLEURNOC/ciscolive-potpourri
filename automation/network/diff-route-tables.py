@@ -26,7 +26,7 @@
 
 import paramiko
 import os
-from sparker import Sparker
+from sparker import Sparker, MessageType
 import time
 from subprocess import Popen, PIPE
 import shlex
@@ -59,12 +59,7 @@ if __name__ == "__main__":
     for router, ip in routers.items():
         try:
             ssh_client.connect(
-                ip,
-                username=CLEUCreds.NET_USER,
-                password=CLEUCreds.NET_PASS,
-                timeout=60,
-                allow_agent=False,
-                look_for_keys=False,
+                ip, username=CLEUCreds.NET_USER, password=CLEUCreds.NET_PASS, timeout=60, allow_agent=False, look_for_keys=False,
             )
             chan = ssh_client.invoke_shell()
             for fname, command in commands.items():
@@ -95,15 +90,7 @@ if __name__ == "__main__":
                 fd.close()
 
                 if os.path.exists(prev_path):
-                    proc = Popen(
-                        shlex.split(
-                            "/usr/bin/diff -E -b -B -w -u {} {}".format(
-                                prev_path, curr_path
-                            )
-                        ),
-                        stdout=PIPE,
-                        stderr=PIPE,
-                    )
+                    proc = Popen(shlex.split("/usr/bin/diff -E -b -B -w -u {} {}".format(prev_path, curr_path)), stdout=PIPE, stderr=PIPE,)
                     out, err = proc.communicate()
                     rc = proc.returncode
 
@@ -111,9 +98,8 @@ if __name__ == "__main__":
                         spark.post_to_spark(
                             C.WEBEX_TEAM,
                             WEBEX_ROOM,
-                            "**ALERT**: Routing table diff ({}) on **{}**:\n```\n{}\n```".format(
-                                command, router, re.sub(cache_dir + "/", "", out)
-                            ),
+                            "Routing table diff ({}) on **{}**:\n```\n{}\n```".format(command, router, re.sub(cache_dir + "/", "", out)),
+                            MessageType.BAD,
                         )
                         time.sleep(1)
                         # print('XXX: Out = \'{}\''.format(out))
