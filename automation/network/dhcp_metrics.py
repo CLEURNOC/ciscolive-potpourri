@@ -29,24 +29,27 @@ from flask import Response
 import json
 import CLEUCreds
 from gevent.wsgi import WSGIServer
+from cleu.config import Config as C
 
 
-CACHE_FILE = '/home/jclarke/dhcp_metrics.dat'
+CACHE_FILE = "/home/jclarke/dhcp_metrics.dat"
+PORT = 8083
 
-app = Flask('DHCP Stats Fetcher')
+app = Flask("DHCP Stats Fetcher")
 
 
-@app.route('/metrics')
+@app.route("/metrics")
 def get_metrics():
     global CACHE_FILE
 
-    fd = open(CACHE_FILE, 'r')
+    fd = open(CACHE_FILE, "r")
     macs = json.load(fd)
     fd.close()
 
-    return Response('\n'.join(macs), mimetype='text/plain')
+    return Response("\n".join(macs), mimetype="text/plain")
 
-if __name__ == '__main__':
-#    app.run(host='10.100.253.13', port=8081, threaded=True)
-    http_server = WSGIServer(('10.100.252.13', 8083), app)
+
+if __name__ == "__main__":
+    #    app.run(host='10.100.253.13', port=8081, threaded=True)
+    http_server = WSGIServer((C.WSGI_SERVER, PORT), app)
     http_server.serve_forever()

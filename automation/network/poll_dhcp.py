@@ -36,14 +36,11 @@ requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 import CLEUCreds
 
-DHCP_SERVERS = ['10.100.253.9', '10.100.254.9']
-CACHE_FILE = '/home/jclarke/dhcp_metrics.dat'
-CACHE_FILE_TMP = CACHE_FILE + '.tmp'
+DHCP_SERVERS = ["10.100.253.9", "10.100.254.9"]
+CACHE_FILE = "/home/jclarke/dhcp_metrics.dat"
+CACHE_FILE_TMP = CACHE_FILE + ".tmp"
 
-CNR_HEADERS = {
-    'Authorization': CLEUCreds.JCLARKE_BASIC,
-    'Accept': 'application/json'
-}
+CNR_HEADERS = {"Authorization": CLEUCreds.JCLARKE_BASIC, "Accept": "application/json"}
 
 
 def get_metrics():
@@ -52,15 +49,13 @@ def get_metrics():
     res = []
 
     for server in DHCP_SERVERS:
-        url = 'https://{}:8443/web-services/rest/stats/DHCPServer'.format(
-            server)
+        url = "https://{}:8443/web-services/rest/stats/DHCPServer".format(server)
 
         try:
-            response = requests.request('GET', url, params={
-                                        'nrClass': 'DHCPServerActivityStats'}, headers=CNR_HEADERS, verify=False)
+            response = requests.request("GET", url, params={"nrClass": "DHCPServerActivityStats"}, headers=CNR_HEADERS, verify=False)
             response.raise_for_status()
         except Exception as e:
-            print('Failed to get stats {}'.format(e))
+            print("Failed to get stats {}".format(e))
             continue
 
         j = response.json()
@@ -71,10 +66,10 @@ def get_metrics():
     return res
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     response = get_metrics()
 
-    fd = open(CACHE_FILE_TMP, 'w')
+    fd = open(CACHE_FILE_TMP, "w")
     json.dump(response, fd, indent=4)
     fd.close()
 
