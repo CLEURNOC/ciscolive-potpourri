@@ -340,6 +340,18 @@ class Sparker:
         if not self.check_token():
             return None
 
+        mt = None
+
+        try:
+            mt = MessageType(mtype)
+        except Exception as e:
+            msg = "Invalid message type: {}".format(getattr(e, "message", repr(e)))
+            if self._logit:
+                logging.error(msg)
+            else:
+                print(msg)
+            return False
+
         team_id = None
 
         if team is not None:
@@ -353,7 +365,7 @@ class Sparker:
 
         url = self.SPARK_API + "messages"
 
-        payload = {"roomId": room_id, "markdown": mtype + msg}
+        payload = {"roomId": room_id, "markdown": mt.value + msg}
 
         try:
             response = Sparker._request_with_retry(
@@ -376,6 +388,18 @@ class Sparker:
         if not self.check_token():
             return None
 
+        mt = None
+
+        try:
+            mt = MessageType(mtype)
+        except Exception as e:
+            msg = "Invalid message type: {}".format(getattr(e, "message", repr(e)))
+            if self._logit:
+                logging.error(msg)
+            else:
+                print(msg)
+            return False
+
         team_id = None
 
         if team is not None:
@@ -393,7 +417,7 @@ class Sparker:
 
         payload = {
             "roomId": room_id,
-            "markdown": mtype + msg,
+            "markdown": mt.value + msg,
             "files": (fname, bio, ftype),
         }
         m = MultipartEncoder(fields=payload)
