@@ -41,6 +41,7 @@ class ResourceType(Enum):
 class MessageType(Enum):
     GOOD = "✅ "
     BAD = "🚨🚨 "
+    WARNING = "✴️ "
     NEUTRAL = ""
 
 
