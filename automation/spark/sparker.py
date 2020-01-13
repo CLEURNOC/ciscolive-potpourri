@@ -37,6 +37,13 @@ class ResourceType(Enum):
     TEAM = 2
 
 
+@unique
+class MessageType(Enum):
+    GOOD = "✅ "
+    BAD = "🚨🚨 "
+    NEUTRAL = ""
+
+
 class Sparker:
     SPARK_API = "https://api.ciscospark.com/v1/"
 
@@ -329,7 +336,7 @@ class Sparker:
 
         return not err_occurred
 
-    def post_to_spark(self, team, room, msg):
+    def post_to_spark(self, team, room, msg, mtype=MessageType.NEUTRAL):
         if not self.check_token():
             return None
 
@@ -346,7 +353,7 @@ class Sparker:
 
         url = self.SPARK_API + "messages"
 
-        payload = {"roomId": room_id, "markdown": msg}
+        payload = {"roomId": room_id, "markdown": mtype + msg}
 
         try:
             response = Sparker._request_with_retry(
@@ -363,7 +370,9 @@ class Sparker:
 
         return True
 
-    def post_to_spark_with_attach(self, team, room, msg, attach, fname, ftype):
+    def post_to_spark_with_attach(
+        self, team, room, msg, attach, fname, ftype, mtype=MessageType.NEUTRAL
+    ):
         if not self.check_token():
             return None
 
@@ -382,7 +391,11 @@ class Sparker:
 
         bio = BytesIO(attach)
 
-        payload = {"roomId": room_id, "markdown": msg, "files": (fname, bio, ftype)}
+        payload = {
+            "roomId": room_id,
+            "markdown": mtype + msg,
+            "files": (fname, bio, ftype),
+        }
         m = MultipartEncoder(fields=payload)
 
         headers = self._headers
