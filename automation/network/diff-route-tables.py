@@ -98,7 +98,9 @@ if __name__ == "__main__":
                         spark.post_to_spark(
                             C.WEBEX_TEAM,
                             WEBEX_ROOM,
-                            "Routing table diff ({}) on **{}**:\n```\n{}\n```".format(command, router, re.sub(cache_dir + "/", "", out)),
+                            "Routing table diff ({}) on **{}**:\n```\n{}\n```".format(
+                                command, router, re.sub(cache_dir + "/", "", out.decode("utf-8"))
+                            ),
                             MessageType.BAD,
                         )
                         time.sleep(1)
