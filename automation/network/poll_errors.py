@@ -56,6 +56,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--ignore-interfaces-file", "-i", metavar="<IGNORE_FILE>", help="Path to JSON file that maps devices and interfaces to ignore"
     )
+    args = parser.parse_args()
 
     devices = None
     try:
