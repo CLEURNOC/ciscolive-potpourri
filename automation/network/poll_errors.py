@@ -38,6 +38,8 @@ THRESHOLD = 1
 WINDOW = 12
 REARM = 6
 
+IF_UP = 1
+
 prev_state = {}
 curr_state = {}
 
@@ -98,6 +100,7 @@ if __name__ == "__main__":
             netsnmp.Varbind("ifInDiscards"),
             netsnmp.Varbind("ifOutDiscards"),
             netsnmp.Varbind("ifAlias"),
+            netsnmp.Varbind("ifOperStatus"),
         )
         netsnmp.snmpwalk(
             vars,
@@ -126,6 +129,8 @@ if __name__ == "__main__":
             if not ins in prev_state[device]:
                 continue
             if not "ifDescr" in vard:
+                continue
+            if int(vard["ifOperStauts"]) == IF_UP:
                 continue
             if not "ifAlias" in vard:
                 vard["ifAlias"] = ""
