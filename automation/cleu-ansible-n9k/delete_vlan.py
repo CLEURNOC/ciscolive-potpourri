@@ -154,8 +154,6 @@ def main():
         command += ["-e", "vm_vlan_name='{}'".format(args.vm_vlan_name)]
     if args.interface and len(args.interface) > 0:
         command += ["-e", '{{"iflist": [{}]}}'.format(",".join(args.interface))]
-    if args.generate_iflist:
-        command += ["-e", '{"iflist": []}']
     if args.vmware_cluster and len(args.vmware_cluster) > 0:
         command += [
             "-e",
