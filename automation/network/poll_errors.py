@@ -28,6 +28,7 @@ import netsnmp
 import os
 import json
 import argparse
+import sys
 from sparker import Sparker, MessageType
 import CLEUCreds
 from cleu.config import Config as C
