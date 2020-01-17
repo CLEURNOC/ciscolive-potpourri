@@ -90,7 +90,7 @@ if __name__ == "__main__":
                 fd.close()
 
                 if os.path.exists(prev_path):
-                    proc = Popen(shlex.split("/usr/bin/diff -E -b -B -w -u {} {}".format(prev_path, curr_path)), stdout=PIPE, stderr=PIPE,)
+                    proc = Popen(shlex.split("/usr/bin/diff -b -B -w -u {} {}".format(prev_path, curr_path)), stdout=PIPE, stderr=PIPE,)
                     out, err = proc.communicate()
                     rc = proc.returncode
 
