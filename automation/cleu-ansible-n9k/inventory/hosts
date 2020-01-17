@@ -52,13 +52,11 @@ tacacs_vrf="default"
 
 [HX:vars]
 multicast_policy="HyperFlex"
-connectivity_module_type="vnic_template"
-connectivity_module_name="hx-vm-network"
+vnic_templates='["hx-vm-network-a", "hx-vm-network-b"]'
 
 [UCS:vars]
 multicast_policy=""
-connectivity_module_type="lan_connectivity"
-connectivity_module_name="CLEU_LAN_Policy"
+vnic_templates='["vnic-vlans-a", "vnic-vlans-b"]'
 
 [vCenter]
 10.100.252.11

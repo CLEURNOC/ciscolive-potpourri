@@ -17,16 +17,17 @@
     - add-vlan
     - add-ucs-vlan
 
-- name: Add VLAN to vNIC template A
+- name: Add VLAN to vNIC templates
   ucs_vnic_template:
     hostname: "{{ inventory_hostname }}"
-    name: "{{ connectivity_module_name }}-a"
+    name: "{{ item }}"
     password: "{{ ucs_mgr_password }}"
     username: "{{ ucs_mgr_username }}"
     vlans_list:
       - name: "{{ vlan_name }}"
   delegate_to: localhost
-  when: connectivity_module_type == "vnic_template" and (delete_vlan is not defined or not delete_vlan|bool)
+  with_items: "{{ vnic_templates }}"
+  when: delete_vlan is not defined or not delete_vlan|bool
   tags:
       - ucs
       - vlan
@@ -34,52 +35,18 @@
       - allow-vlan
       - allow-ucs-vlan
 
-- name: Add VLAN to vNIC template B
+- name: Remove VLAN from vNIC templates
   ucs_vnic_template:
     hostname: "{{ inventory_hostname }}"
-    name: "{{ connectivity_module_name }}-b"
-    password: "{{ ucs_mgr_password }}"
-    username: "{{ ucs_mgr_username }}"
-    vlans_list:
-      - name: "{{ vlan_name }}"
-  delegate_to: localhost
-  when: connectivity_module_type == "vnic_template" and (delete_vlan is not defined or not delete_vlan|bool)
-  tags:
-      - ucs
-      - vlan
-      - ucs-vlan
-      - allow-vlan
-      - allow-ucs-vlan
-
-- name: Remove VLAN from vNIC template A
-  ucs_vnic_template:
-    hostname: "{{ inventory_hostname }}"
-    name: "{{ connectivity_module_name }}-a"
+    name: "{{ item }}"
     password: "{{ ucs_mgr_password }}"
     username: "{{ ucs_mgr_username }}"
     vlans_list:
       - name: "{{ vlan_name }}"
         state: absent
   delegate_to: localhost
-  when: connectivity_module_type == "vnic_template" and delete_vlan is defined and delete_vlan|bool
-  tags:
-      - ucs
-      - vlan
-      - ucs-vlan
-      - remove-vlan
-      - remove-ucs-vlan
-
-- name: Remove VLAN from vNIC template B
-  ucs_vnic_template:
-    hostname: "{{ inventory_hostname }}"
-    name: "{{ connectivity_module_name }}-b"
-    password: "{{ ucs_mgr_password }}"
-    username: "{{ ucs_mgr_username }}"
-    vlans_list:
-      - name: "{{ vlan_name }}"
-        state: absent
-  delegate_to: localhost
-  when: connectivity_module_type == "vnic_template" and delete_vlan is defined and delete_vlan|bool
+  with_items: "{{ vnic_templates }}"
+  when: delete_vlan is defined and delete_vlan|bool
   tags:
       - ucs
       - vlan
