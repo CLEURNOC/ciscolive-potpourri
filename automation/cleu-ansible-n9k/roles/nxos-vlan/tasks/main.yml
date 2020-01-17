@@ -12,6 +12,19 @@
     - add-vlan
     - add-nxos-vlan
 
+- name: Initialize iflist
+  set_fact:
+    iflist: []
+  when: generate_iflist|bool
+  tags:
+    - nxos
+    - vlan
+    - nxos-vlan
+    - allow-vlan
+    - allow-nxos-vlan
+    - remove-vlan
+    - remove-ucs-vlan
+
 - name: Generate list of interfaces (stretched)
   set_fact:
     iflist: "{{ iflist + [item.key] }}"

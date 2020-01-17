@@ -298,8 +298,6 @@ def main():
         command += ["-e", "svi_v6_link_local={}".format(svi_v6_link_local)]
     if args.interface and len(args.interface) > 0:
         command += ["-e", '{{"iflist": [{}]}}'.format(",".join(args.interface))]
-    if generate_iflist:
-        command += ["-e", '{"iflist": []}']
     if args.vmware_cluster and len(args.vmware_cluster) > 0:
         command += [
             "-e",
