@@ -80,7 +80,7 @@ if __name__ == "__main__":
             )
             sys.exit(1)
 
-    cache_file = CACHE_FILE + args.name + ".dat"
+    cache_file = CACHE_FILE + "_" + args.name + ".dat"
 
     if os.path.exists(cache_file):
         fd = open(cache_file, "r")
