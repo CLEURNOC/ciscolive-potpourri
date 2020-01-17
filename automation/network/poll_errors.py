@@ -130,7 +130,7 @@ if __name__ == "__main__":
                 continue
             if not "ifDescr" in vard:
                 continue
-            if int(vard["ifOperStatus"]) == IF_UP:
+            if "ifOperStatus" in vard and int(vard["ifOperStatus"]) == IF_UP:
                 continue
             if not "ifAlias" in vard:
                 vard["ifAlias"] = ""
