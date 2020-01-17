@@ -52,7 +52,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--device-file", "-f", metavar="<DEVICE_FILE>", help="Path to the JSON file containing the devices to poll", required=True,
     )
-    parser.add_argument("--webex-room", "-r", metavar="<ROOM_NAME>", help="Name of Webex room to send alerts to", requireed=True)
+    parser.add_argument("--webex-room", "-r", metavar="<ROOM_NAME>", help="Name of Webex room to send alerts to", required=True)
     parser.add_argument(
         "--ignore-interfaces-file", "-i", metavar="<IGNORE_FILE>", help="Path to JSON file that maps devices and interfaces to ignore"
     )
