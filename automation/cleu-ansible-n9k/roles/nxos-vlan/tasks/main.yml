@@ -13,7 +13,7 @@
     - add-nxos-vlan
 
 - name: Generate list of interfaces (stretched)
-  set_fact: iflist="{{ iflist }} + [{{ item.key }}]"
+  set_fact: iflist="{{ iflist + [{{ item.key }}] }}"
   with_items: "{{ lookup('dict', port_channels) }}"
   when: generate_iflist|bool and is_stretched|bool
   tags:
@@ -26,7 +26,7 @@
     - remove-ucs-vlan
 
 - name: Generate list of interfaces (non-stretched)
-  set_fact: iflist="{{ iflist }} + [{{ item.key }}]"
+  set_fact: iflist="{{ iflist + [{{ item.key }}] }}"
   with_items: "{{ lookup('dict', port_channels) }}"
   when: generate_iflist|bool and not is_stretched|bool and not port_channels[item.key]|bool
   tags:
