@@ -21,6 +21,7 @@
     - vlan
     - nxos-vlan
     - allow-vlan
+    - allow-nxos-vlan
     - remove-vlan
     - remove-ucs-vlan
 
@@ -33,6 +34,7 @@
     - vlan
     - nxos-vlan
     - allow-vlan
+    - allow-nxos-vlan
     - remove-vlan
     - remove-ucs-vlan
 
