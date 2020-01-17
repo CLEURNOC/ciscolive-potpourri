@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright (c) 2017-2019  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2020  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,21 +27,15 @@
 import netsnmp
 import os
 import json
+import argparse
 from sparker import Sparker, MessageType
 import CLEUCreds
 from cleu.config import Config as C
 
-CACHE_FILE = "/home/jclarke/errors_cache.dat"
+CACHE_FILE = "/home/jclarke/errors_cache"
 THRESHOLD = 1
 WINDOW = 12
 REARM = 6
-
-
-WEBEX_ROOM = "Data Centre Alarms"
-
-devices = ["dc1-mccsw-1", "dc1-mccsw-2", "dc2-mccsw-1", "dc2-mccsw-2", "dc1-ethsw-1", "dc1-ethsw-2", "dc2-ethsw-1", "dc2-ethsw-2"]
-
-ignore_interfaces = {}
 
 prev_state = {}
 curr_state = {}
@@ -50,8 +44,44 @@ if __name__ == "__main__":
 
     spark = Sparker(token=CLEUCreds.SPARK_TOKEN)
 
-    if os.path.exists(CACHE_FILE):
-        fd = open(CACHE_FILE, "r")
+    parser = argparse.ArgumentParser(prog=sys.argv[0], description="Poll errors from network devices")
+    parser.add_argument(
+        "--name", "-n", metavar="<NAME>", help="Name of the poller", required=True,
+    )
+    parser.add_argument(
+        "--device-file", "-f", metavar="<DEVICE_FILE>", help="Path to the JSON file containing the devices to poll", required=True,
+    )
+    parser.add_argument("--webex-room", "-r", metavar="<ROOM_NAME>", help="Name of Webex room to send alerts to", requireed=True)
+    parser.add_argument(
+        "--ignore-interfaces-file", "-i", metavar="<IGNORE_FILE>", help="Path to JSON file that maps devices and interfaces to ignore"
+    )
+
+    devices = None
+    try:
+        with open(args.device_file) as fd:
+            devices = json.load(fd)
+    except Exception as e:
+        print("ERROR: Failed to load device file {}: {}".format(args.device_file, getattr(e, "message", repr(e))))
+        sys.exit(1)
+
+    ignore_interfaces = {}
+
+    if args.ignore_interfaces_file:
+        try:
+            with open(args.ignore_interfaces_file) as fd:
+                ignore_interfaces = json.load(fd)
+        except Exception as e:
+            print(
+                "ERROR: Failed to load the ignore interfaces file {}: {}".format(
+                    args.ignore_interfaces_file, getattr(e, "message", repr(e))
+                )
+            )
+            sys.exit(1)
+
+    cache_file = CACHE_FILE + args.name + ".dat"
+
+    if os.path.exists(cache_file):
+        fd = open(cache_file, "r")
         prev_state = json.load(fd)
         fd.close()
 
@@ -117,7 +147,7 @@ if __name__ == "__main__":
                         if curr_state[device][ins]["count"] < WINDOW and not curr_state[device][ins]["suppressed"]:
                             spark.post_to_spark(
                                 C.WEBEX_TEAM,
-                                WEBEX_ROOM,
+                                args.webex_room,
                                 "Interface **{}** ({}) on device _{}_ has seen an increase of **{}** {} since the last poll (previous: {}, current: {}).".format(
                                     if_descr, if_alias, device, diff, k, prev_state[device][ins][k], v
                                 ),
@@ -127,7 +157,7 @@ if __name__ == "__main__":
                             curr_state[device][ins]["suppressed"] = True
                             spark.post_to_spark(
                                 C.WEBEX_TEAM,
-                                WEBEX_ROOM,
+                                args.webex_room,
                                 "Suppressing alarms for interface **{}** ({}) on device _{}_".format(if_descr, if_alias, device),
                                 MessageType.GOOD,
                             )
@@ -137,7 +167,7 @@ if __name__ == "__main__":
                     if curr_state[device][ins]["count"] < REARM and curr_state[device][ins]["suppressed"]:
                         spark.post_to_spark(
                             C.WEBEX_TEAM,
-                            WEBEX_ROOM,
+                            args.webex_room,
                             "Interface **{}** ({}) on device _{}_ is no longer seeing an increase of errors".format(
                                 if_descr, if_alias, device
                             ),
@@ -147,6 +177,6 @@ if __name__ == "__main__":
             else:
                 curr_state[device][ins]["count"] += 1
 
-    fd = open(CACHE_FILE, "w")
+    fd = open(cache_file, "w")
     json.dump(curr_state, fd, indent=4)
     fd.close()
