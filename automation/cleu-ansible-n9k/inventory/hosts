@@ -1,30 +1,78 @@
 [NXOS_DC1]
-10.127.0.249 core_svi_v4_suffix="249" core_svi_v6_suffix="f9" core_hsrp_priority="105"
-10.127.0.250 core_svi_v4_suffix="250" core_svi_v6_suffix="fa" core_hsrp_priority="104"
+dc1-ethsw-1.ciscolive.network core_svi_v4_suffix="249" core_svi_v6_suffix="f9" core_hsrp_priority="105"
+dc1-ethsw-2.ciscolive.network core_svi_v4_suffix="250" core_svi_v6_suffix="fa" core_hsrp_priority="104"
 
 [NXOS_DC2]
-10.127.0.247 core_svi_v4_suffix="247" core_svi_v6_suffix="f7" core_hsrp_priority="103"
-10.127.0.248 core_svi_v4_suffix="248" core_svi_v6_suffix="f8" core_hsrp_priority="102"
+dc2-ethsw-1.ciscolive.network core_svi_v4_suffix="247" core_svi_v6_suffix="f7" core_hsrp_priority="103"
+dc2-ethsw-2.ciscolive.network core_svi_v4_suffix="248" core_svi_v6_suffix="f8" core_hsrp_priority="102"
+
+[EDGE1]
+core1-edge.ciscolive.network
+
+[EDGE2]
+core2-edge.ciscolive.network
+
+[TS_DC1]
+dc1-ts.ciscolive.network
+
+[TS_DC2]
+dc2-ts.ciscolive.network
+
+[NETAPP_DC1]
+cl-emea-noc-mcc-dc1.ciscolive.network
+
+[NETAPP_DC2]
+cl-emea-noc-mcc-dc2.ciscolive.network
+
+[SDA]
+fusion-005-mdf-a.ciscolive.network
+fusion-005-mdf-b.ciscolive.network
+
+[MDF]
+003-mdf-a.ciscolive.network
+003-mdf-b.ciscolive.network
+004-mdf-a.ciscolive.network
+004-mdf-b.ciscolive.network
+005-mdf-a.ciscolive.network
+005-mdf-b.ciscolive.network
+006-mdf-a.ciscolive.network
+006-mdf-b.ciscolive.network
+007-mdf-a.ciscolive.network
+007-mdf-b.ciscolive.network
+008-mdf-a.ciscolive.network
+008-mdf-b.ciscolive.network
+
+[CORE1]
+core1-l3c.ciscolive.network
+core1-ts.ciscolive.network
+core1-wa.ciscolive.network
+core1-wb.ciscolive.network
+
+[CORE2]
+core2-l3c.ciscolive.network
+core2-ts.ciscolive.network
+core2-wa.ciscolive.network
+core2-wb.ciscolive.network
 
 [MCC_DC1]
-10.127.253.25
-10.127.253.26
+dc1-mccsw-1.ciscolive.network
+dc1-mccsw-2.ciscolive.network
 
 [MCC_DC2]
-10.127.254.25
-10.127.254.26
+dc2-mccsw-1.ciscolive.network
+dc2-mccsw-2.ciscolive.network
 
 [UCS_DC1]
-10.127.253.42
+dc1-ucsmini.ciscolive.network
 
 [UCS_DC2]
-10.127.254.42
+dc2-ucsmini.ciscolive.network
 
 [HX_DC1]
-10.127.253.72
+dc1-hx-ucs.ciscolive.network
 
 [HX_DC2]
-10.127.254.72
+dc2-hx-ucs.ciscolive.network
 
 [MCC:children]
 MCC_DC1
@@ -37,6 +85,9 @@ tacacs_vrf="management"
 [UCS:children]
 UCS_DC1
 UCS_DC2
+
+[UCS:vars]
+snmp_priv_proto="aes"
 
 [HX:children]
 HX_DC1
@@ -58,17 +109,47 @@ vnic_templates='["hx-vm-network-a", "hx-vm-network-b"]'
 multicast_policy=""
 vnic_templates='["vnic-vlans-a", "vnic-vlans-b"]'
 
+[CORE:children]
+CORE1
+CORE2
+
+[EDGE:children]
+EDGE1
+EDGE2
+
+[NETAPP:children]
+NETAPP_DC1
+NETAPP_DC2
+
+[TS_DC:children]
+TS_DC1
+TS_DC2
+
 [vCenter]
-10.100.252.11
+cl-vcenter.ad.ciscolive.network
 
 [DC1:children]
 NXOS_DC1
 UCS_DC1
 HX_DC1
 vCenter
+TS_DC1
+MCC_DC1
+NETAPP_DC1
 
 [DC2:children]
 NXOS_DC2
 UCS_DC2
 HX_DC2
 vCenter
+TS_DC2
+MCC_DC2
+NETAPP_DC2
+
+[DC:children]
+NXOS
+UCS
+HX
+TS_DC
+NETAPP
+MCC

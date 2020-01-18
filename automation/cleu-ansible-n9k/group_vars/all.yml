@@ -5,6 +5,11 @@
 # This should always be "nxos".
 ansible_network_os: nxos
 
+# SNMP variables
+snmp_auth_proto: sha
+snmp_priv_proto: des
+snmp_user: CLEUR
+
 # Core variables
 core_hsrp_vip_v4_suffix: "254"
 core_hsrp_vip_v6_suffix: "fe"

@@ -1,0 +1,29 @@
+---
+- name: Add devices to librenms
+  hosts:
+      - DC
+      - CORE
+      - EDGE
+      - SDA
+      - MDF
+  gather_facts: false
+  connection: local
+  tasks:
+      - name: Get short hostname
+        set_fact:
+            hname: "{{ inventory_hostname | regex_replace('\\..*$') }}"
+
+      - name: See if device exists in LibreNMS
+        uri:
+            headers:
+                X-Auth-Token: "{{ librenms_auth_token }}"
+            status_code:
+                - 200
+                - 400
+            url: https://librenms.ciscolive.network/api/v0/inventory/{{ hname }}
+        register: _result
+
+      - name: Add device to LibreNMS
+        command:
+          cmd: /usr/bin/ssh -2 cl-monitoring.ciscolive.network /usr/local/www/librenms/addhost.php {{ hname }} ap v3 {{ snmp_user }} {{ snmp_auth_pass }} {{ snmp_priv_pass }} {{ snmp_auth_proto }} {{ snmp_priv_proto }}
+        when: _result.status == 400 and hname == "dc1-ethsw-2"
