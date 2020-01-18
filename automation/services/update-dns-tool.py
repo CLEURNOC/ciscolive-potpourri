@@ -25,6 +25,8 @@
 # SUCH DAMAGE.
 
 
+from __future__ import print_function
+from builtins import str
 import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
@@ -56,7 +58,7 @@ def get_devs():
             if not re.search(r"^0", dev["Hostname"]):
                 continue
             dev_dic["name"] = dev["Hostname"]
-            dev_dic["aliases"] = [unicode("{}.{}.".format(dev["Name"], DOMAIN)), unicode("{}.{}.".format(dev["AssetTag"], DOMAIN))]
+            dev_dic["aliases"] = [str("{}.{}.".format(dev["Name"], C.DOMAIN)), str("{}.{}.".format(dev["AssetTag"], C.DOMAIN))]
 
             dev_dic["ip"] = dev["IPAddress"]
 
