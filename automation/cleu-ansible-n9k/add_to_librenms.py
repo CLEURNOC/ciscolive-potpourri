@@ -30,7 +30,7 @@ def main():
         "add-to-librenms-playbook.yml",
     ]
 
-    if args.switch:
+    if args.limit:
         command += ["--limit", "{}".format(args.limit)]
 
     p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
