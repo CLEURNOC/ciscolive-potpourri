@@ -26,4 +26,4 @@
       - name: Add device to LibreNMS
         command:
           cmd: /usr/bin/ssh -2 cl-monitoring.ciscolive.network /usr/local/www/librenms/addhost.php {{ hname }} ap v3 {{ snmp_user }} {{ snmp_auth_pass }} {{ snmp_priv_pass }} {{ snmp_auth_proto }} {{ snmp_priv_proto }}
-        when: _result.status == 400 and hname == "dc1-ethsw-2"
+        when: _result.status == 400
