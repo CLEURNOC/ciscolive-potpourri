@@ -1,6 +1,6 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 #
-# Copyright (c) 2017-2019  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2020  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
 
 import sys
 import json
-from sparker import Sparker
+from sparker import Sparker, MessageType
 from subprocess import Popen, PIPE
 import re
 import shlex
@@ -34,24 +34,22 @@ import requests
 import os
 from multiprocessing import Pool
 import CLEUCreds
+from cleu.config import Config as C
 
-SPARK_TEAM = 'CL19 NOC Team'
-SPARK_ROOM = 'DHCP Scope Alarms'
+SPARK_ROOM = "DHCP Scope Alarms"
 
-THRESHOLD = '75'
-CACHE_FILE = '/home/jclarke/dhcp_scope.dat'
-STATS_FILE = '/home/jclarke/dhcp_scope_stats.dat'
-
-DHCP_SERVER = '10.100.253.9'
+THRESHOLD = "75"
+CACHE_FILE = "/home/jclarke/dhcp_scope.dat"
+STATS_FILE = "/home/jclarke/dhcp_scope_stats.dat"
 
 
 def parse_result(out):
-    matches = re.findall(r'([\w-]+=[^;]+);(?=\s|$)', out)
+    matches = re.findall(r"([\w-]+=[^;]+);(?=\s|$)", out)
     res = {}
     for m in matches:
-        if m == '':
+        if m == "":
             continue
-        k, v = m.split('=')
+        k, v = m.split("=")
         res[k] = v
     return res
 
@@ -59,21 +57,22 @@ def parse_result(out):
 def get_results(scope):
     global DHCP_SERVER
 
-    if scope != '100 Ok' and scope != '':
-        proc = Popen(shlex.split(
-            'ssh -2 root@{} /root/nrcmd.sh -r scope {} getUtilization'.format(DHCP_SERVER, scope)), stdout=PIPE, stderr=PIPE)
+    if scope != "100 Ok" and scope != "":
+        proc = Popen(
+            shlex.split("ssh -2 root@{} /root/nrcmd.sh -r scope {} getUtilization".format(C.DHCP_SERVER, scope)), stdout=PIPE, stderr=PIPE
+        )
         out, err = proc.communicate()
-        if not re.search(r'^100', out):
+        outs = out.decode("utf-8")
+        if not re.search(r"^100", outs):
             return None
-        outd = parse_result(out)
-        if 'active-dynamic' not in outd or 'total-dynamic' not in outd or 'free-dynamic' not in outd:
+        outd = parse_result(outs)
+        if "active-dynamic" not in outd or "total-dynamic" not in outd or "free-dynamic" not in outd:
             return None
 
-        util = (float(outd['active-dynamic']) /
-                float(outd['total-dynamic'])) * 100.0
-        #print('Util for {0} is {1:.2f}% utilized'.format(scope, util))
+        util = (float(outd["active-dynamic"]) / float(outd["total-dynamic"])) * 100.0
+        # print('Util for {0} is {1:.2f}% utilized'.format(scope, util))
 
-        return (scope, {'util': util, 'active-dynamic': outd['active-dynamic'], 'total-dynamic': outd['total-dynamic']})
+        return (scope, {"util": util, "active-dynamic": outd["active-dynamic"], "total-dynamic": outd["total-dynamic"]})
 
 
 def get_metrics(pool):
@@ -81,12 +80,12 @@ def get_metrics(pool):
 
     response = {}
 
-    proc = Popen(shlex.split(
-        'ssh -2 root@{} /root/nrcmd.sh -r scope listnames'.format(DHCP_SERVER)), stdout=PIPE, stderr=PIPE)
+    proc = Popen(shlex.split("ssh -2 root@{} /root/nrcmd.sh -r scope listnames".format(C.DHCP_SERVER)), stdout=PIPE, stderr=PIPE)
     out, err = proc.communicate()
-    if not re.search(r'^100', out):
+    outs = out.decode("utf-8")
+    if not re.search(r"^100", outs):
         sys.exit(0)
-    scopes = out.split('\n')
+    scopes = outs.split("\n")
 
     results = [pool.apply_async(get_results, [s]) for s in scopes]
     for res in results:
@@ -97,7 +96,7 @@ def get_metrics(pool):
     return response
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     prev_state = {}
     curr_state = {}
     stats = {}
@@ -105,7 +104,7 @@ if __name__ == '__main__':
     spark = Sparker(token=CLEUCreds.SPARK_TOKEN)
 
     if os.path.exists(CACHE_FILE):
-        fd = open(CACHE_FILE, 'r')
+        fd = open(CACHE_FILE, "r")
         prev_state = json.load(fd)
         fd.close()
 
@@ -113,22 +112,34 @@ if __name__ == '__main__':
     metrics = get_metrics(pool)
 
     for scope, stat in metrics.items():
-        stats[scope] = {'perc': stat['util']}
-        if stat['util'] >= float(THRESHOLD):
+        stats[scope] = {"perc": stat["util"]}
+        if stat["util"] >= float(THRESHOLD):
             curr_state[scope] = True
             if scope not in prev_state or (scope in prev_state and not prev_state[scope]):
                 spark.post_to_spark(
-                    SPARK_TEAM, SPARK_ROOM, '**WARNING**: Scope **{0}** is now **{1:.2f}%** utilized ({2} of {3} free addresses remain); suppressing future alerts until resolved'.format(scope, stat['util'], stat['free-dynamic'], stat['total-dynamic']))
+                    C.WEBEX_TAM,
+                    SPARK_ROOM,
+                    "Scope **{0}** is now **{1:.2f}%** utilized ({2} of {3} free addresses remain); suppressing future alerts until resolved".format(
+                        scope, stat["util"], stat["free-dynamic"], stat["total-dynamic"]
+                    ),
+                    MessageType.WARNING,
+                )
         else:
             curr_state[scope] = False
             if scope in prev_state and prev_state[scope]:
-                spark.post_to_spark(SPARK_TEAM, SPARK_ROOM, '_INFO_: Scope **{0}** is now only **{1:.2f}%** utilized ({2} free addresses out of {3})'.format(
-                    scope, stat['util'], stat['free-dynamic'], stat['total-dynamic']))
+                spark.post_to_spark(
+                    C.WEBEX_TEAM,
+                    SPARK_ROOM,
+                    "Scope **{0}** is now only **{1:.2f}%** utilized ({2} free addresses out of {3})".format(
+                        scope, stat["util"], stat["free-dynamic"], stat["total-dynamic"]
+                    ),
+                    MessageType.GOOD,
+                )
 
-    fd = open(CACHE_FILE, 'w')
+    fd = open(CACHE_FILE, "w")
     json.dump(curr_state, fd, indent=4)
     fd.close()
 
-    fd = open(STATS_FILE, 'w')
+    fd = open(STATS_FILE, "w")
     json.dump(stats, fd, indent=4)
     fd.close()
