@@ -71,15 +71,31 @@ def add_entry(url, hname, dev):
     global CNR_HEADERS
 
     try:
-        host_obj = {"addrs": {"stringItem": [dev["ip"]]}, "aliases": {"stringItem": []}, "name": hname, "zoneOrigin": C.DNS_DOMAIN}
+        rrset = [
+            "0 IN A {}".format(dev["ip"]),
+        ]
+        ptr_rrset = ["0 IN PTR {}.{}.".format(hname, C.DNS_DOMAIN)]
         for alias in dev["aliases"]:
-            host_obj["aliases"]["stringItem"].append(alias)
+            rrset.append("0 IN CNAME {}.{}.".format(alias, C.DNS_DOMAIN))
 
-        response = requests.request("PUT", url, headers=CNR_HEADERS, json=host_obj, verify=False)
-        response.raise_for_status()
+        rrset_obj = {"name": hname, "rrs": {"stringItem": rrset}, "zoneOrigin": C.DNS_DOMAIN}
+        rip = ".".join(dev["ip"].split(".")[::-1][0:3])
+        ptr_rrset_obj = {"name": rip, "rrs": {"stringItem": ptr_rrset}, "zoneOrigin": "10.in-addr.arpa."}
+
+        response = requests.request("PUT", url, headers=CNR_HEADERS, json=rrset_obj, verify=False)
         print("Added entry for {} ==> {} with aliases {}".format(hname, dev["ip"], str(dev["aliases"])))
+        response.raise_for_status()
     except Exception as e:
         sys.stderr.write("Error adding entry for {}: {}\n".format(hname, e))
+        return
+
+    try:
+        url = C.DNS_BASE + "RRSet" + "/{}".format(rip)
+        response = requests.request("PUT", url, headers=CNR_HEADERS, json=ptr_rrset_obj, verify=False)
+        response.raise_for_status()
+        print("Added PTR entry {} ==> {}".format(rip, hname))
+    except Exception as e:
+        sys.stderr.write("Error adding PTR entry for {}: {}\n".format(rip, e))
 
 
 if __name__ == "__main__":
