@@ -74,22 +74,22 @@ def add_entry(url, hname, dev):
         rrset = [
             "0 IN A {}".format(dev["ip"]),
         ]
-        ptr_rrset = ["0 IN PTR {}.{}.".format(hname, C.DNS_DOMAIN)]
         for alias in dev["aliases"]:
-            rrset.append("0 IN CNAME {}.{}.".format(alias, C.DNS_DOMAIN))
+            rrset.append("0 IN CNAME {}".format(alias))
 
         rrset_obj = {"name": hname, "rrs": {"stringItem": rrset}, "zoneOrigin": C.DNS_DOMAIN}
-        rip = ".".join(dev["ip"].split(".")[::-1][0:3])
-        ptr_rrset_obj = {"name": rip, "rrs": {"stringItem": ptr_rrset}, "zoneOrigin": "10.in-addr.arpa."}
 
         response = requests.request("PUT", url, headers=CNR_HEADERS, json=rrset_obj, verify=False)
-        print("Added entry for {} ==> {} with aliases {}".format(hname, dev["ip"], str(dev["aliases"])))
         response.raise_for_status()
+        print("Added entry for {} ==> {} with aliases {}".format(hname, dev["ip"], str(dev["aliases"])))
     except Exception as e:
         sys.stderr.write("Error adding entry for {}: {}\n".format(hname, e))
         return
 
     try:
+        ptr_rrset = ["0 IN PTR {}.{}.".format(hname, C.DNS_DOMAIN)]
+        rip = ".".join(dev["ip"].split(".")[::-1][0:3])
+        ptr_rrset_obj = {"name": rip, "rrs": {"stringItem": ptr_rrset}, "zoneOrigin": "10.in-addr.arpa."}
         url = C.DNS_BASE + "RRSet" + "/{}".format(rip)
         response = requests.request("PUT", url, headers=CNR_HEADERS, json=ptr_rrset_obj, verify=False)
         response.raise_for_status()
