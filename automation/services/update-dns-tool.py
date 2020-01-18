@@ -85,12 +85,13 @@ def add_entry(url, hname, dev):
         return
 
     for alias in dev["aliases"]:
+        aname = alias.split(".")[0]
         alias_rrset_obj = {
-            "name": hname,
+            "name": aname,
             "rrs": {"stringItem": ["0 IN CNAME {}.{}.".format(hname, C.DNS_DOMAIN)]},
             "zoneOrigin": C.DNS_DOMAIN,
         }
-        url = C.DNS_BASE + "CCMRRSet" + "/{}".format(alias)
+        url = C.DNS_BASE + "CCMRRSet" + "/{}".format(aname)
 
         try:
             response = requests.request("PUT", url, headers=CNR_HEADERS, json=alias_rrset_obj, verify=False)
