@@ -90,7 +90,7 @@ def add_entry(url, hname, dev):
             alias_rrset.append("0 IN CNAME {}".format(alias))
 
         alias_rrset_obj = {"name": hname, "rrs": {"stringItem": alias_rrset}, "zoneOrigin": C.DNS_DOMAIN}
-        response = requests.request("PUT", url, headers=CNR_HEADERS, json=rrset_obj, verify=False)
+        response = requests.request("PUT", url, headers=CNR_HEADERS, json=alias_rrset_obj, verify=False)
         response.raise_for_status()
         print("Added CNAME entries for {} with aliases {}".format(hname, str(dev["aliases"])))
     except Exception as e:
