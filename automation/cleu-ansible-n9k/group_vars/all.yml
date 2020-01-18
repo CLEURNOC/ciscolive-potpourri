@@ -2,9 +2,6 @@
 # This file holds variables relevant to all sites and devices.
 #
 
-# This should always be "nxos".
-ansible_network_os: nxos
-
 # SNMP variables
 snmp_auth_proto: sha
 snmp_priv_proto: des
