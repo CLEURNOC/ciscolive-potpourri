@@ -1,6 +1,6 @@
 ---
 - name: Configure switchport
-  hosts: Core
+  hosts: NXOS
   gather_facts: false
   connection: network_cli
   roles:

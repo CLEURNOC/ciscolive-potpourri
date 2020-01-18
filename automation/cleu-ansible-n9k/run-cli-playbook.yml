@@ -1,7 +1,7 @@
 ---
 - name: Configure switchport
   hosts:
-      - Core
+      - NXOS
       - MCC
   gather_facts: false
   connection: network_cli

@@ -1,7 +1,7 @@
 ---
 - name: Configure core switches
   hosts:
-      - Core
+      - NXOS
       - MCC
   gather_facts: false
   connection: network_cli
