@@ -84,20 +84,20 @@ def add_entry(url, hname, dev):
         sys.stderr.write("Error adding entry for {}: {}\n".format(hname, e))
         return
 
-        for alias in dev["aliases"]:
-            alias_rrset_obj = {
-                "name": hname,
-                "rrs": {"stringItem": ["0 IN CNAME {}.{}.".format(hname, C.DNS_DOMAIN)]},
-                "zoneOrigin": C.DNS_DOMAIN,
-            }
-            url = C.DNS_BASE + "CCMRRSet" + "/{}".format(alias)
+    for alias in dev["aliases"]:
+        alias_rrset_obj = {
+            "name": hname,
+            "rrs": {"stringItem": ["0 IN CNAME {}.{}.".format(hname, C.DNS_DOMAIN)]},
+            "zoneOrigin": C.DNS_DOMAIN,
+        }
+        url = C.DNS_BASE + "CCMRRSet" + "/{}".format(alias)
 
-            try:
-                response = requests.request("PUT", url, headers=CNR_HEADERS, json=alias_rrset_obj, verify=False)
-                response.raise_for_status()
-                print("Added CNAME entry {} ==> {}".format(alias, hname))
-            except Exception as e:
-                sys.stderr.write("Error adding CNAME {} for {}: {}\n".format(alias, hname, e))
+        try:
+            response = requests.request("PUT", url, headers=CNR_HEADERS, json=alias_rrset_obj, verify=False)
+            response.raise_for_status()
+            print("Added CNAME entry {} ==> {}".format(alias, hname))
+        except Exception as e:
+            sys.stderr.write("Error adding CNAME {} for {}: {}\n".format(alias, hname, e))
 
     try:
         ptr_rrset = ["0 IN PTR {}.{}.".format(hname, C.DNS_DOMAIN)]
