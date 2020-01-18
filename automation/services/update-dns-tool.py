@@ -58,7 +58,7 @@ def get_devs():
             if not re.search(r"^0", dev["Hostname"]):
                 continue
             dev_dic["name"] = dev["Hostname"]
-            dev_dic["aliases"] = [str("{}.{}.".format(dev["Name"], C.DOMAIN)), str("{}.{}.".format(dev["AssetTag"], C.DOMAIN))]
+            dev_dic["aliases"] = [str("{}.{}.".format(dev["Name"], C.DNS_DOMAIN)), str("{}.{}.".format(dev["AssetTag"], C.DNS_DOMAIN))]
 
             dev_dic["ip"] = dev["IPAddress"]
 
@@ -71,7 +71,7 @@ def add_entry(url, hname, dev):
     global CNR_HEADERS
 
     try:
-        host_obj = {"addrs": {"stringItem": [dev["ip"]]}, "aliases": {"stringItem": []}, "name": hname, "zoneOrigin": C.DOMAIN}
+        host_obj = {"addrs": {"stringItem": [dev["ip"]]}, "aliases": {"stringItem": []}, "name": hname, "zoneOrigin": C.DNS_DOMAIN}
         for alias in dev["aliases"]:
             host_obj["aliases"]["stringItem"].append(alias)
 
@@ -95,7 +95,7 @@ if __name__ == "__main__":
     for record in prev_records:
         found_record = False
         for dev in devs:
-            hname = dev["name"].replace(".{}".format(DOMAIN), "")
+            hname = dev["name"].replace(".{}".format(C.DNS_DOMAIN), "")
             if record == hname:
                 found_record = True
                 break
@@ -104,22 +104,22 @@ if __name__ == "__main__":
 
         url = C.DNS_BASE + "CCMHost" + "/{}".format(record)
         try:
-            response = requests.request("DELETE", url, headers=CNR_HEADERS, params={"zoneOrigin": DOMAIN}, verify=False)
+            response = requests.request("DELETE", url, headers=CNR_HEADERS, params={"zoneOrigin": C.DNS_DOMAIN}, verify=False)
             response.raise_for_status()
         except Exception as e:
             sys.stderr.write("Failed to delete entry for {}".format(record))
 
     records = []
     for dev in devs:
-        hname = dev["name"].replace(".{}".format(C.DOMAIN), "")
+        hname = dev["name"].replace(".{}".format(C.DNS_DOMAIN), "")
 
         records.append(hname)
         url = C.DNS_BASE + "CCMHost" + "/{}".format(hname)
-        response = requests.request("GET", url, headers=CNR_HEADERS, params={"zoneOrigin": C.DOMAIN}, verify=False)
+        response = requests.request("GET", url, headers=CNR_HEADERS, params={"zoneOrigin": C.DNS_DOMAIN}, verify=False)
         if response.status_code == 404:
             iurl = C.DNS_BASE + "CCMHost"
             response = requests.request(
-                "GET", iurl, params={"zoneOrigin": C.DOMAIN, "addrs": dev["ip"] + "$"}, headers=CNR_HEADERS, verify=False
+                "GET", iurl, params={"zoneOrigin": C.DNS_DOMAIN, "addrs": dev["ip"] + "$"}, headers=CNR_HEADERS, verify=False
             )
             cur_entry = []
             if response.status_code != 404:
@@ -136,7 +136,7 @@ if __name__ == "__main__":
 
                 durl = C.DNS_BASE + "CCMHost" + "/{}".format(cur_entry[0]["name"])
                 try:
-                    response = requests.request("DELETE", durl, params={"zoneOrigin": C.DOMAIN}, headers=CNR_HEADERS, verify=False)
+                    response = requests.request("DELETE", durl, params={"zoneOrigin": C.DNS_DOMAIN}, headers=CNR_HEADERS, verify=False)
                     response.raise_for_status()
                 except Exception as e:
                     sys.stderr.write("Failed to delete stale entry for {} ({})\n".format(cur_entry[0]["name"], dev["ip"]))
@@ -167,7 +167,7 @@ if __name__ == "__main__":
             if create_new:
                 print("Deleting entry for {}".format(hname))
                 try:
-                    response = requests.request("DELETE", url, headers=CNR_HEADERS, params={"zoneOrigin": C.DOMAIN}, verify=False)
+                    response = requests.request("DELETE", url, headers=CNR_HEADERS, params={"zoneOrigin": C.DNS_DOMAIN}, verify=False)
                     response.raise_for_status()
                 except Exception as e:
                     sys.stderr.write("Error deleting entry for {}: {}\n".format(hname, e))
