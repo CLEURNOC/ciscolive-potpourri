@@ -1,6 +1,6 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 #
-# Copyright (c) 2017-2018  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2020  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,40 +34,31 @@ import sys
 import re
 import os
 import CLEUCreds
+from cleu.config import Config as C
 
-TOOL = 'tool.ciscolive.local'
-DNS_BASE = 'https://dc1-dns.ciscolive.local:8443/web-services/rest/resource/'
-DOMAIN = 'ciscolive.local'
-CNR_HEADERS = {
-    'authorization': CLEUCreds.JCLARKE_BASIC,
-    'accept': 'application/json',
-    'content-type': 'application/json'
-}
-CACHE_FILE = 'dns_records.dat'
+CNR_HEADERS = {"authorization": CLEUCreds.JCLARKE_BASIC, "accept": "application/json", "content-type": "application/json"}
+CACHE_FILE = "dns_records.dat"
 
 
 def get_devs():
-    global DOMAIN
-
-    url = "http://{}/get/switches/json".format(TOOL)
+    url = "http://{}/get/switches/json".format(C.TOOL)
 
     devices = []
-    response = requests.request('GET', url)
+    response = requests.request("GET", url)
     code = response.status_code
     if code == 200:
         j = response.json()
 
         for dev in j:
             dev_dic = {}
-            if dev['IPAddress'] == '0.0.0.0':
+            if dev["IPAddress"] == "0.0.0.0":
                 continue
-            if not re.search(r'^0', dev['Hostname']):
+            if not re.search(r"^0", dev["Hostname"]):
                 continue
-            dev_dic['name'] = dev['Hostname']
-            dev_dic['aliases'] = [unicode('{}.{}.'.format(
-                dev['Name'], DOMAIN)), unicode('{}.{}.'.format(dev['AssetTag'], DOMAIN))]
+            dev_dic["name"] = dev["Hostname"]
+            dev_dic["aliases"] = [unicode("{}.{}.".format(dev["Name"], DOMAIN)), unicode("{}.{}.".format(dev["AssetTag"], DOMAIN))]
 
-            dev_dic['ip'] = dev['IPAddress']
+            dev_dic["ip"] = dev["IPAddress"]
 
             devices.append(dev_dic)
 
@@ -75,41 +66,26 @@ def get_devs():
 
 
 def add_entry(url, hname, dev):
-    global CNR_HEADERS, DOMAIN
+    global CNR_HEADERS
 
     try:
-        host_obj = {
-            'addrs': {
-                'stringItem': [
-                    dev['ip']
-                ]
-            },
-            'aliases': {
-                'stringItem': [
+        host_obj = {"addrs": {"stringItem": [dev["ip"]]}, "aliases": {"stringItem": []}, "name": hname, "zoneOrigin": C.DOMAIN}
+        for alias in dev["aliases"]:
+            host_obj["aliases"]["stringItem"].append(alias)
 
-                ]
-            },
-            'name': hname,
-            'zoneOrigin': DOMAIN
-        }
-        for alias in dev['aliases']:
-            host_obj['aliases']['stringItem'].append(alias)
-
-        response = requests.request(
-            'PUT', url, headers=CNR_HEADERS, json=host_obj, verify=False)
+        response = requests.request("PUT", url, headers=CNR_HEADERS, json=host_obj, verify=False)
         response.raise_for_status()
-        print('Added entry for {} ==> {} with aliases {}'.format(
-            hname, dev['ip'], str(dev['aliases'])))
+        print("Added entry for {} ==> {} with aliases {}".format(hname, dev["ip"], str(dev["aliases"])))
     except Exception as e:
-        sys.stderr.write(
-            'Error adding entry for {}: {}\n'.format(hname, e))
+        sys.stderr.write("Error adding entry for {}: {}\n".format(hname, e))
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
 
     prev_records = []
 
     if os.path.exists(CACHE_FILE):
-        fd = open(CACHE_FILE, 'r')
+        fd = open(CACHE_FILE, "r")
         prev_records = json.load(fd)
         fd.close()
 
@@ -117,96 +93,87 @@ if __name__ == '__main__':
     for record in prev_records:
         found_record = False
         for dev in devs:
-            hname = dev['name'].replace('.{}'.format(DOMAIN), '')
+            hname = dev["name"].replace(".{}".format(DOMAIN), "")
             if record == hname:
                 found_record = True
                 break
         if found_record:
             continue
 
-        url = DNS_BASE + 'CCMHost' + '/{}'.format(record)
+        url = C.DNS_BASE + "CCMHost" + "/{}".format(record)
         try:
-            response = requests.request('DELETE', url, headers=CNR_HEADERS, params={
-                                        'zoneOrigin': DOMAIN}, verify=False)
+            response = requests.request("DELETE", url, headers=CNR_HEADERS, params={"zoneOrigin": DOMAIN}, verify=False)
             response.raise_for_status()
         except Exception as e:
-            sys.stderr.write('Failed to delete entry for {}'.format(record))
+            sys.stderr.write("Failed to delete entry for {}".format(record))
 
     records = []
     for dev in devs:
-        hname = dev['name'].replace('.{}'.format(DOMAIN), '')
+        hname = dev["name"].replace(".{}".format(C.DOMAIN), "")
 
         records.append(hname)
-        url = DNS_BASE + 'CCMHost' + '/{}'.format(hname)
-        response = requests.request('GET', url, headers=CNR_HEADERS, params={
-                                    'zoneOrigin': DOMAIN}, verify=False)
+        url = C.DNS_BASE + "CCMHost" + "/{}".format(hname)
+        response = requests.request("GET", url, headers=CNR_HEADERS, params={"zoneOrigin": C.DOMAIN}, verify=False)
         if response.status_code == 404:
-            iurl = DNS_BASE + 'CCMHost'
-            response = requests.request('GET', iurl, params={'zoneOrigin': DOMAIN, 'addrs': dev[
-                                        'ip'] + '$'}, headers=CNR_HEADERS, verify=False)
+            iurl = C.DNS_BASE + "CCMHost"
+            response = requests.request(
+                "GET", iurl, params={"zoneOrigin": C.DOMAIN, "addrs": dev["ip"] + "$"}, headers=CNR_HEADERS, verify=False
+            )
             cur_entry = []
             if response.status_code != 404:
                 cur_entry = response.json()
 
             if len(cur_entry) > 0:
-                print('Found entry for {}: {}'.format(
-                    dev['ip'], response.status_code))
+                print("Found entry for {}: {}".format(dev["ip"], response.status_code))
                 cur_entry = response.json()
                 if len(cur_entry) > 1:
-                    print(
-                        'ERROR: Found multiple entries for IP {}'.format(dev['ip']))
+                    print("ERROR: Found multiple entries for IP {}".format(dev["ip"]))
                     continue
 
-                print('Found old entry for IP {} => {}'.format(
-                    dev['ip'], cur_entry[0]['name']))
+                print("Found old entry for IP {} => {}".format(dev["ip"], cur_entry[0]["name"]))
 
-                durl = DNS_BASE + 'CCMHost' + \
-                    '/{}'.format(cur_entry[0]['name'])
+                durl = C.DNS_BASE + "CCMHost" + "/{}".format(cur_entry[0]["name"])
                 try:
-                    response = requests.request('DELETE', durl, params={
-                                                'zoneOrigin': DOMAIN}, headers=CNR_HEADERS, verify=False)
+                    response = requests.request("DELETE", durl, params={"zoneOrigin": C.DOMAIN}, headers=CNR_HEADERS, verify=False)
                     response.raise_for_status()
                 except Exception as e:
-                    sys.stderr.write('Failed to delete stale entry for {} ({})\n'.format(
-                        cur_entry[0]['name'], dev['ip']))
+                    sys.stderr.write("Failed to delete stale entry for {} ({})\n".format(cur_entry[0]["name"], dev["ip"]))
                     continue
 
             add_entry(url, hname, dev)
         else:
             cur_entry = response.json()
             create_new = True
-            for addr in cur_entry['addrs']['stringItem']:
-                if addr == dev['ip']:
-                    if 'aliases' in dev and 'aliases' in cur_entry:
-                        if (len(dev['aliases']) > 0 and 'stringItem' not in cur_entry['aliases']) or (len(dev['aliases']) != len(cur_entry['aliases']['stringItem'])):
+            for addr in cur_entry["addrs"]["stringItem"]:
+                if addr == dev["ip"]:
+                    if "aliases" in dev and "aliases" in cur_entry:
+                        if (len(dev["aliases"]) > 0 and "stringItem" not in cur_entry["aliases"]) or (
+                            len(dev["aliases"]) != len(cur_entry["aliases"]["stringItem"])
+                        ):
                             break
-                        common = set(dev['aliases']) & set(
-                            cur_entry['aliases']['stringItem'])
-                        if len(common) != len(dev['aliases']):
+                        common = set(dev["aliases"]) & set(cur_entry["aliases"]["stringItem"])
+                        if len(common) != len(dev["aliases"]):
                             break
                         create_new = False
                         break
-                    elif ('aliases' in dev and 'aliases' not in cur_entry) or ('aliases' in cur_entry and 'aliases' not in dev):
+                    elif ("aliases" in dev and "aliases" not in cur_entry) or ("aliases" in cur_entry and "aliases" not in dev):
                         break
                     else:
                         create_new = False
                         break
 
             if create_new:
-                print('Deleting entry for {}'.format(hname))
+                print("Deleting entry for {}".format(hname))
                 try:
-                    response = requests.request('DELETE', url, headers=CNR_HEADERS, params={
-                                                'zoneOrigin': DOMAIN}, verify=False)
+                    response = requests.request("DELETE", url, headers=CNR_HEADERS, params={"zoneOrigin": C.DOMAIN}, verify=False)
                     response.raise_for_status()
                 except Exception as e:
-                    sys.stderr.write(
-                        'Error deleting entry for {}: {}\n'.format(hname, e))
+                    sys.stderr.write("Error deleting entry for {}: {}\n".format(hname, e))
 
                 add_entry(url, hname, dev)
             else:
-                print('Not creating a new entry for {} as it already exists'.format(
-                      dev['name']))
+                print("Not creating a new entry for {} as it already exists".format(dev["name"]))
 
-    fd = open(CACHE_FILE, 'w')
+    fd = open(CACHE_FILE, "w")
     json.dump(records, fd, indent=4)
     fd.close()
