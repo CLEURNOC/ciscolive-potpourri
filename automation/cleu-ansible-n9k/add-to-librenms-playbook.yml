@@ -23,7 +23,15 @@
             url: https://librenms.ciscolive.network/api/v0/inventory/{{ hname }}
         register: _result
 
+      - name: See if new un-added device is reachable
+        shell:
+          cmd: /sbin/ping -c 2 -q -W 1 {{ inventory_hostname }}
+          warn: no
+        register: res
+        changed_when: no
+        failed_when: no
+
       - name: Add device to LibreNMS
         command:
           cmd: /usr/bin/ssh -2 cl-monitoring.ciscolive.network /usr/local/www/librenms/addhost.php {{ hname }} ap v3 {{ snmp_user }} {{ snmp_auth_pass }} {{ snmp_priv_pass }} {{ snmp_auth_proto }} {{ snmp_priv_proto }}
-        when: _result.status == 400
+        when: _result.status == 400 and " 0.0% packet loss" not in res.stdout
