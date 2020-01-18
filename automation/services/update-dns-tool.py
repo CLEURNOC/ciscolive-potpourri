@@ -107,7 +107,7 @@ if __name__ == "__main__":
             response = requests.request("DELETE", url, headers=CNR_HEADERS, params={"zoneOrigin": C.DNS_DOMAIN}, verify=False)
             response.raise_for_status()
         except Exception as e:
-            sys.stderr.write("Failed to delete entry for {}".format(record))
+            sys.stderr.write("Failed to delete entry for {}\n".format(record))
 
     records = []
     for dev in devs:
