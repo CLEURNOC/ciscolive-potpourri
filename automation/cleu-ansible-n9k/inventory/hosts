@@ -44,6 +44,46 @@ cl-emea-noc-mcc-dc2.ciscolive.network
 fusion-005-mdf-a.ciscolive.network
 fusion-005-mdf-b.ciscolive.network
 
+[UCS_HOSTS_DC1]
+dc1-esx-01.ciscolive.network
+dc1-esx-02.ciscolive.network
+dc1-esx-03.ciscolive.network
+dc1-esx-04.ciscolive.network
+dc1-esx-05.ciscolive.network
+dc1-esx-06.ciscolive.network
+dc1-esx-07.ciscolive.network
+dc1-esx-08.ciscolive.network
+
+[UCS_HOSTS_DC2]
+dc2-esx-01.ciscolive.network
+dc2-esx-02.ciscolive.network
+dc2-esx-03.ciscolive.network
+dc2-esx-04.ciscolive.network
+dc2-esx-05.ciscolive.network
+dc2-esx-06.ciscolive.network
+dc2-esx-07.ciscolive.network
+dc2-esx-08.ciscolive.network
+
+[UCS_HOSTS:children]
+UCS_HOSTS_DC1
+UCS_HOSTS_DC2
+
+[HX_HOSTS_DC1]
+dc1-hx-esx-01.ad.ciscolive.network
+dc1-hx-esx-02.ad.ciscolive.network
+dc1-hx-esx-03.ad.ciscolive.network
+dc1-hx-esx-04.ad.ciscolive.network
+
+[HX_HOSTS_DC2]
+dc2-hx-esx-01.ad.ciscolive.network
+dc2-hx-esx-02.ad.ciscolive.network
+dc2-hx-esx-03.ad.ciscolive.network
+dc2-hx-esx-04.ad.ciscolive.network
+
+[HX_HOSTS:children]
+HX_HOSTS_DC1
+HX_HOSTS_DC2
+
 [MDF]
 003-mdf-a.ciscolive.network
 003-mdf-b.ciscolive.network
@@ -104,6 +144,9 @@ fusion-005-mdf-b.ciscolive.network
 008-x52.ciscolive.network
 008-x53.ciscolive.network
 
+[HOSTS:children]
+UCS_HOSTS
+HX_HOSTS
 
 [CORE1]
 core1-l3c.ciscolive.network
@@ -210,6 +253,8 @@ TS_DC1
 MCC_DC1
 NETAPP_DC1
 PDU_DC1
+HX_HOSTS_DC1
+UCS_HOSTS_DC1
 
 [DC2:children]
 NXOS_DC2
@@ -220,6 +265,8 @@ TS_DC2
 MCC_DC2
 NETAPP_DC2
 PDU_DC2
+HX_HOSTS_DC2
+UCS_HOSTS_DC2
 
 [DC:children]
 DC1
