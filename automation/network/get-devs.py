@@ -1,6 +1,6 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 #
-# Copyright (c) 2017-2019  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2020  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,6 +24,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+from builtins import range
 import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
@@ -39,27 +40,28 @@ import re
 from multiprocessing import Pool
 import socket
 import CLEUCreds
+from cleu.config import Config as C
 
-TOOL = 'tool.ciscolive.network'
-CACHE_FILE = '/home/jclarke/cached_devs.dat'
-PING_DEVS_FILE = '/home/jclarke/ping-devs.json'
+CACHE_FILE = "/home/jclarke/cached_devs.dat"
+PING_DEVS_FILE = "/home/jclarke/ping-devs.json"
 
-TEXT_BAD = "**DANGER! DANGER!**: Pinger detected that device %s (IP: %s)%s is no longer reachable"
-TEXT_GOOD = "_RELAX_: Pinger has detected that device %s (IP: %s)%s is now reachable again"
+MESSAGES = {
+    "BAD": {"msg": "Pinger detected that device %s (IP: %s)%s is no longer reachable", "type": MessageType.BAD},
+    "GOOD": {"msg": "Pinger has detected that device %s (IP: %s)%s is now reachable again", "type": MessageType.GOOD},
+}
 
-ROOM_NAME = 'Device Alarms'
-TEAM_NAME = 'CL19 NOC Team'
+ROOM_NAME = "Device Alarms"
 
-excluded_devices = [r'^VHS-']
+excluded_devices = [r"^VHS-"]
 
 additional_devices = []
 
 
-def check_prev(dev_dic, prev_devs, pstate='REACHABLE'):
+def check_prev(dev_dic, prev_devs, pstate="REACHABLE"):
     send_msg = False
     for pd in prev_devs:
-        if pd['name'] == dev_dic['name']:
-            if pd['reachability'] != pstate:
+        if pd["name"] == dev_dic["name"]:
+            if pd["reachability"] != pstate:
                 send_msg = True
             break
     return send_msg
@@ -67,62 +69,64 @@ def check_prev(dev_dic, prev_devs, pstate='REACHABLE'):
 
 def know_device(dev_dic, prev_devs):
     for pd in prev_devs:
-        if pd['name'] == dev_dic['name']:
+        if pd["name"] == dev_dic["name"]:
             return True
 
     return False
 
 
 def ping_device(dev):
-    global TEAM_NAME, ROOM_NAME, TEXT_BAD, TEXT_GOOD, prev_devs, spark, excluded_devices
+    global ROOM_NAME, MESSAGES, prev_devs, spark, excluded_devices
 
     dev_dic = {}
 
-    dev_dic['name'] = dev['Hostname']
-    dev_dic['ip'] = dev['IPAddress']
-    if dev_dic['ip'] == '0.0.0.0':
+    if not re.search(r"^0", dev["Hostname"]):
+        continue
+
+    dev_dic["name"] = dev["Hostname"]
+    dev_dic["ip"] = dev["IPAddress"]
+    if dev_dic["ip"] == "0.0.0.0":
         return None
     for exc in excluded_devices:
-        if re.search(exc, dev_dic['name']) or re.search(exc, dev_dic['ip']):
+        if re.search(exc, dev_dic["name"]) or re.search(exc, dev_dic["ip"]):
             return None
-    #print('Pinging {}'.format(dev_dic['name']))
-    msg_text = TEXT_BAD
+    # print('Pinging {}'.format(dev_dic['name']))
+    msg_tag = "BAD"
     send_msg = True
-    if not dev['Reachable']:
+    if not dev["Reachable"]:
         send_msg = know_device(dev_dic, prev_devs)
     for i in range(2):
-        res = call(["/usr/local/sbin/fping",
-                    "-q", "-r0", dev_dic['ip']])
-        time.sleep(.5)
+        res = call(["/usr/local/sbin/fping", "-q", "-r0", dev_dic["ip"]])
+        time.sleep(0.5)
     if res != 0:
-        dev_dic['reachability'] = 'UNREACHABLE'
-        send_msg = check_prev(dev_dic, prev_devs, 'UNREACHABLE')
+        dev_dic["reachability"] = "UNREACHABLE"
+        send_msg = check_prev(dev_dic, prev_devs, "UNREACHABLE")
     else:
-        dev_dic['reachability'] = 'REACHABLE'
-        msg_text = TEXT_GOOD
+        dev_dic["reachability"] = "REACHABLE"
+        msg_tag = "GOOD"
         send_msg = check_prev(dev_dic, prev_devs)
 
     if send_msg:
-        loc = ''
-        if 'LocationDetail' in dev:
-            loc = ' (Location: {})'.format(dev['LocationDetail'])
-        message = msg_text % (dev_dic['name'], dev_dic['ip'], loc)
-        spark.post_to_spark(TEAM_NAME, ROOM_NAME, message)
+        loc = ""
+        if "LocationDetail" in dev:
+            loc = " (Location: {})".format(dev["LocationDetail"])
+        message = MESSAGES[msg_tag]["msg"] % (dev_dic["name"], dev_dic["ip"], loc)
+        spark.post_to_spark(C.WEBEX_TEAM, ROOM_NAME, message, MESSAGES[msg_tag]["type"])
 
     return dev_dic
 
 
 def get_devs(p):
-    global TOOL, additional_devices
+    global additional_devices
 
-    url = "http://{}/get/switches/json".format(TOOL)
+    url = "http://{}/get/switches/json".format(C.TOOL)
 
     devices = []
-#    response = requests.request('GET', url)
+    #    response = requests.request('GET', url)
     code = 200
-#   code = response.status_code
+    #   code = response.status_code
     if code == 200:
-        #j = json.loads(response.text)
+        # j = json.loads(response.text)
         j = []
 
         for dev in additional_devices:
@@ -131,7 +135,7 @@ def get_devs(p):
                 ip = socket.gethostbyname(dev)
             except:
                 pass
-            j.append({'Hostname': dev, 'IPAddress': ip, 'Reachable': True})
+            j.append({"Hostname": dev, "IPAddress": ip, "Reachable": True})
 
         results = [pool.apply_async(ping_device, [d]) for d in j]
         for res in results:
@@ -142,17 +146,17 @@ def get_devs(p):
     return devices
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     prev_devs = []
     if os.path.exists(CACHE_FILE):
-        fd = open(CACHE_FILE, 'r')
+        fd = open(CACHE_FILE, "r")
         prev_devs = json.load(fd)
         fd.close()
 
     spark = Sparker(token=CLEUCreds.SPARK_TOKEN)
 
     try:
-        fd = open(PING_DEVS_FILE, 'r')
+        fd = open(PING_DEVS_FILE, "r")
         additional_devices = json.load(fd)
         fd.close()
     except:
@@ -160,6 +164,6 @@ if __name__ == '__main__':
 
     pool = Pool(20)
     devs = get_devs(pool)
-    fd = open(CACHE_FILE, 'w')
+    fd = open(CACHE_FILE, "w")
     json.dump(devs, fd, ensure_ascii=False, indent=4)
     fd.close()
