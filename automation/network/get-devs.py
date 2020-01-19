@@ -34,7 +34,7 @@ import sys
 import time
 import os
 from subprocess import call
-from sparker import Sparker
+from sparker import Sparker, MessageType
 import pprint
 import re
 from multiprocessing import Pool
