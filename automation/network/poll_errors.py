@@ -166,7 +166,6 @@ if __name__ == "__main__":
                                 C.WEBEX_TEAM,
                                 args.webex_room,
                                 "Suppressing alarms for interface **{}** ({}) on device _{}_".format(if_descr, if_alias, device),
-                                MessageType.GOOD,
                             )
             if not found_error:
                 if curr_state[device][ins]["count"] > 0:
