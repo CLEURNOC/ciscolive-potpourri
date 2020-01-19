@@ -69,8 +69,8 @@ if __name__ == "__main__":
         fd = open(ROUTER_FILE, "r")
         routers = json.load(fd)
         fd.close()
-    except:
-        pass
+    except Exception as e:
+        print("ERROR: Failed to load routers file {}: {}".format(ROUTER_FILE, e))
 
     do_push = False
 
