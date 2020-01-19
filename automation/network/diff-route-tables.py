@@ -144,11 +144,11 @@ if __name__ == "__main__":
             continue
 
         if do_push:
-            if not args.branch:
+            if not args.git_branch:
                 print("ERROR: Cannot push without a branch")
             else:
                 os.chdir(args.git_repo)
-                call("git pull origin {}".format(args.branch), shell=True)
-                call("git push origin {}".format(args.branch), shell=True)
+                call("git pull origin {}".format(args.git_branch), shell=True)
+                call("git push origin {}".format(args.git_branch), shell=True)
 
         ssh_client.close()
