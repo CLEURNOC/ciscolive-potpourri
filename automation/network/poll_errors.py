@@ -24,6 +24,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+from __future__ import print_function
 import netsnmp
 import os
 import json
@@ -125,7 +126,7 @@ if __name__ == "__main__":
         if not device in prev_state:
             continue
 
-        for ins, vard in curr_state[device].items():
+        for ins, vard in list(curr_state[device].items()):
             if not ins in prev_state[device]:
                 continue
             if not "ifDescr" in vard:
@@ -144,7 +145,7 @@ if __name__ == "__main__":
             if device in ignore_interfaces and if_descr in ignore_interfaces[device]:
                 continue
             found_error = False
-            for k, v in vard.items():
+            for k, v in list(vard.items()):
                 if k == "ifDescr" or k == "ifAlias" or k == "count" or k == "suppressed":
                     continue
                 if k in prev_state[device][ins]:
