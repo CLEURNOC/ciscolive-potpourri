@@ -47,7 +47,7 @@ ROUTER_FILE = "/home/jclarke/routers.json"
 WEBEX_ROOM = "Core Alarms"
 
 if __name__ == "__main__":
-    parser = ArgumentParser(description="Usage:")
+    parser = argparse.ArgumentParser(description="Usage:")
 
     # script arguments
     parser.add_argument("--git-repo", "-g", metavar="<GIT_REPO_PATH>", help="Optional path to a git repo to store updates")
