@@ -127,7 +127,7 @@ if __name__ == "__main__":
                         if args.git_repo:
                             if os.path.isdir(args.git_repo):
                                 try:
-                                    gfile = re.sub(r"\.curr", ".txt", os.path.basename(prev_path))
+                                    gfile = re.sub(r"\.curr", ".txt", os.path.basename(curr_path))
                                     shutil.copyfile(curr_path, args.git_repo + "/" + gfile)
                                     os.chdir(args.git_repo)
                                     call("git add {}".format(gfile), shell=True)
