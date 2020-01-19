@@ -6,6 +6,7 @@
       - EDGE
       - SDA
       - MDF
+      - IDF
       - PDU
   gather_facts: false
   connection: local
