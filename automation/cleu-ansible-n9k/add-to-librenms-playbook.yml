@@ -6,6 +6,7 @@
       - EDGE
       - SDA
       - MDF
+      - PDU
   gather_facts: false
   connection: local
   tasks:
