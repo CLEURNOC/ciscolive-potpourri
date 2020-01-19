@@ -6,6 +6,22 @@ dc1-ethsw-2.ciscolive.network core_svi_v4_suffix="250" core_svi_v6_suffix="fa" c
 dc2-ethsw-1.ciscolive.network core_svi_v4_suffix="247" core_svi_v6_suffix="f7" core_hsrp_priority="103"
 dc2-ethsw-2.ciscolive.network core_svi_v4_suffix="248" core_svi_v6_suffix="f8" core_hsrp_priority="102"
 
+[PDU_DC1]
+core1-dc-pdu1.ciscolive.network
+core1-dc-pdu2.ciscolive.network
+
+[PDU_DC2]
+core2-dc-pdu1.ciscolive.network
+core2-dc-pdu2.ciscolive.network
+
+[PDU_CORE1]
+core1-net-pdu1.ciscolive.network
+core1-net-pdu2.ciscolive.network
+
+[PDU_CORE2]
+core2-net-pdu1.ciscolive.network
+core2-net-pdu2.ciscolive.network
+
 [EDGE1]
 core1-edge.ciscolive.network
 
@@ -126,6 +142,21 @@ NETAPP_DC2
 TS_DC1
 TS_DC2
 
+[PDU_DC:children]
+PDU_DC1
+PDU_DC2
+
+[PDU_CORE:children]
+PDU_CORE1
+PDU_CORE2
+
+[PDU:children]
+PDU_DC
+PDU_CORE
+
+[PDU:vars]
+snmp_auth_proto="md5"
+
 [vCenter]
 cl-vcenter.ad.ciscolive.network
 
@@ -137,6 +168,7 @@ vCenter
 TS_DC1
 MCC_DC1
 NETAPP_DC1
+PDU_DC1
 
 [DC2:children]
 NXOS_DC2
@@ -146,11 +178,8 @@ vCenter
 TS_DC2
 MCC_DC2
 NETAPP_DC2
+PDU_DC2
 
 [DC:children]
-NXOS
-UCS
-HX
-TS_DC
-NETAPP
-MCC
+DC1
+DC2
