@@ -48,8 +48,13 @@ if __name__ == "__main__":
                 continue
 
             [hostname, ip] = row.split(",")
-            hostname = hostname.strip().upper()
+            hostname = hostname.strip()
             ip = ip.strip()
+            if re.match(r"[\d\.]+", hostname):
+                t = ip
+                ip = hostname
+                hostname = t
+            hostname = hostname.upper()
 
             hosts.append((hostname, ip))
 
