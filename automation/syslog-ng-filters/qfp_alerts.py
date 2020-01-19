@@ -1,4 +1,4 @@
-#!/usr/local/bin/python2
+#!/usr/local/bin/python3
 #
 # Copyright (c) 2017-2019  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
@@ -25,31 +25,43 @@
 # SUCH DAMAGE.
 
 import sys
-sys.path.append('/home/jclarke')
-from sparker import Sparker
+
+sys.path.append("/home/jclarke")
+from sparker import Sparker, MessageType
 import CLEUCreds
 import re
+from cleu.config import Config as C
 
-SPARK_TEAM = 'CL19 NOC Team'
-SPARK_ROOM = 'Core Alarms'
+SPARK_ROOM = "Core Alarms"
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     spark = Sparker(token=CLEUCreds.SPARK_TOKEN)
 
     while True:
-        output = ''
+        output = ""
         for line in sys.stdin.readline():
             output += line
 
-        host, msg = output.split('~')
+        host, msg = output.split("~")
 
-        m = re.search(r'MCPRP-QFP-ALERT: Slot: (\d+), QFP:(\d+), Load (\d+%) exceeds the setting threshold.(\d+%).', msg)
+        m = re.search(r"MCPRP-QFP-ALERT: Slot: (\d+), QFP:(\d+), Load (\d+%) exceeds the setting threshold.(\d+%).", msg)
         if m:
             spark.post_to_spark(
-                    SPARK_TEAM, SPARK_ROOM, '**DANGER**: Slot {}, QFP {} on device **{}** has a load of {} which exceeds the threshold of {}'.format(m.group(1), m.group(2), host, m.group(3), m.group(4)))
+                C.WEBEX_TEAM,
+                SPARK_ROOM,
+                "Slot {}, QFP {} on device **{}** has a load of {} which exceeds the threshold of {}".format(
+                    m.group(1), m.group(2), host, m.group(3), m.group(4)
+                ),
+                MessageType.BAD,
+            )
         else:
-            m = re.search(
-                r'Slot: (\d+), QFP:(\d+), Load (\d+%) recovered', msg)
+            m = re.search(r"Slot: (\d+), QFP:(\d+), Load (\d+%) recovered", msg)
             if m:
                 spark.post_to_spark(
-                        SPARK_TEAM, SPARK_ROOM, '_RELAX_: Slot {}, QFP {} on device **{}** is now recovered at load {}'.format(m.group(1), m.group(2), host, m.group(3)))
+                    C.WEBEX_TEAM,
+                    SPARK_ROOM,
+                    "_RELAX_: Slot {}, QFP {} on device **{}** is now recovered at load {}".format(
+                        m.group(1), m.group(2), host, m.group(3)
+                    ),
+                    MessageType.GOOD,
+                )

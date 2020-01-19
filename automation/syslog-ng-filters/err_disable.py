@@ -1,6 +1,6 @@
-#!/usr/local/bin/python2
+#!/usr/local/bin/python3
 #
-# Copyright (c) 2017-2019  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2020  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,36 +25,43 @@
 # SUCH DAMAGE.
 
 import sys
-sys.path.append('/home/jclarke')
-from sparker import Sparker
+
+sys.path.append("/home/jclarke")
+from sparker import Sparker, MessageType
 import CLEUCreds
 import re
+from cleu.config import Config as C
 
-SPARK_TEAM = 'CL19 NOC Team'
-SPARK_ROOM = 'Err Disable Alarms'
+SPARK_ROOM = "Err Disable Alarms"
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     spark = Sparker(token=CLEUCreds.SPARK_TOKEN)
 
     while True:
-        output = ''
+        output = ""
         for line in sys.stdin.readline():
             output += line
 
-        host, msghdr, msg = output.split('~')
-        hname = msghdr.replace(': ', '')
-        hpart = ''
-        if hname != '' and hname != 'GMT':
-            hpart = '({}) '.format(hname)
+        host, msghdr, msg = output.split("~")
+        hname = msghdr.replace(": ", "")
+        hpart = ""
+        if hname != "" and hname != "GMT" and hname != "CET":
+            hpart = "({}) ".format(hname)
 
-
-        m = re.search(r': ([^,]+), putting ([^\s]+) in err-disable state', msg)
+        m = re.search(r": ([^,]+), putting ([^\s]+) in err-disable state", msg)
         if m:
             spark.post_to_spark(
-                SPARK_TEAM, SPARK_ROOM, 'Port **{}** on **{}** **{}**has been put in an err-disable state because {}'.format(m.group(2), host, hpart, m.group(1)))
+                C.WEBEX_TEAM,
+                SPARK_ROOM,
+                "Port **{}** on **{}** **{}**has been put in an err-disable state because {}".format(m.group(2), host, hpart, m.group(1)),
+                MessageType.WARNING,
+            )
         else:
-            m = re.search(
-                r'recover from .+? err-disable state on (\S+)', msg)
+            m = re.search(r"recover from .+? err-disable state on (\S+)", msg)
             if m:
                 spark.post_to_spark(
-                    SPARK_TEAM, SPARK_ROOM, 'Port **{}** on **{}** **{}**is recovering from err-disable'.format(m.group(1), host, hpart))
+                    C.WEBEX_TEAM,
+                    SPARK_ROOM,
+                    "Port **{}** on **{}** **{}**is recovering from err-disable".format(m.group(1), host, hpart),
+                    MessageType.GOOD,
+                )
