@@ -66,9 +66,10 @@ def main():
             continue
         if not reading_hosts:
             continue
-        hlist.append(h.strip())
+        h = h.strip()
         if h == "":
             continue
+        hlist.append(h.strip())
 
     with open(args.output_file, "w") as fd:
         json.dump(hlist, fd, indent=4)
