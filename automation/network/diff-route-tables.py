@@ -146,12 +146,12 @@ if __name__ == "__main__":
             print("Failed to get routing tables from {}: {}".format(router, e))
             continue
 
-        if do_push:
-            if not args.git_branch:
-                print("ERROR: Cannot push without a branch")
-            else:
-                os.chdir(args.git_repo)
-                call("git pull origin {}".format(args.git_branch), shell=True)
-                call("git push origin {}".format(args.git_branch), shell=True)
-
         ssh_client.close()
+
+    if do_push:
+        if not args.git_branch:
+            print("ERROR: Cannot push without a branch")
+        else:
+            os.chdir(args.git_repo)
+            call("git pull origin {}".format(args.git_branch), shell=True)
+            call("git push origin {}".format(args.git_branch), shell=True)
