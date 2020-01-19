@@ -97,7 +97,7 @@ if __name__ == "__main__":
                         time.sleep(0.5)
                         i += 1
                     while chan.recv_ready():
-                        output = output + chan.recv(65535).decode("utf-8")
+                        output = output + chan.recv(131070).decode("utf-8")
                 except Exception as ie:
                     print("Failed to get {} from {}: {}".format(command, router, ie))
                     continue
