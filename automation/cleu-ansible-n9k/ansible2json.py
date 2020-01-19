@@ -59,8 +59,16 @@ def main():
     p.poll()
 
     hlist = []
+    reading_hosts = False
     for h in hosts.split("\n"):
+        if not reading_hosts and re.search(r"hosts \(\d+\):", h):
+            reading_hosts = True
+            continue
+        if not reading_hosts:
+            continue
         hlist.append(h.strip())
+        if h == "":
+            continue
 
     with open(args.output_file, "w") as fd:
         json.dump(hlist, fd, indent=4)
