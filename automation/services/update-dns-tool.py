@@ -71,11 +71,9 @@ def add_entry(url, hname, dev):
     global CNR_HEADERS
 
     try:
-        rrset = [
-            "0 IN A {}".format(dev["ip"]),
-        ]
+        rrset = [{"rdata": dev["ip"], "rrClass": "IN", "rrType": "A", "ttl": 0}]
 
-        rrset_obj = {"name": hname, "rrs": {"stringItem": rrset}, "zoneOrigin": C.DNS_DOMAIN}
+        rrset_obj = {"name": hname, "rrList": {"CCMRRItem": rrset}, "zoneOrigin": C.DNS_DOMAIN}
 
         response = requests.request("PUT", url, headers=CNR_HEADERS, json=rrset_obj, verify=False)
         response.raise_for_status()
@@ -88,7 +86,7 @@ def add_entry(url, hname, dev):
         aname = alias.split(".")[0]
         alias_rrset_obj = {
             "name": aname,
-            "rrs": {"stringItem": ["0 IN CNAME {}.{}.".format(hname, C.DNS_DOMAIN)]},
+            "rrList": {"CCMRRItem": [{"rdata": "{}.{}.".format(hname, C.DNS_DOMAIN), "rrClass": "IN", "rrType": "CNAME", "ttl": 0}]},
             "zoneOrigin": C.DNS_DOMAIN,
         }
         url = C.DNS_BASE + "CCMRRSet" + "/{}".format(aname)
@@ -101,9 +99,9 @@ def add_entry(url, hname, dev):
             sys.stderr.write("Error adding CNAME {} for {}: {}\n".format(alias, hname, e))
 
     try:
-        ptr_rrset = ["0 IN PTR {}.{}.".format(hname, C.DNS_DOMAIN)]
+        ptr_rrset = [{"rdata": "{}.{}.".format(hname, C.DNS_DOMAIN), "rrClass": "IN", "rrType": "PTR", "ttl": 0}]
         rip = ".".join(dev["ip"].split(".")[::-1][0:3])
-        ptr_rrset_obj = {"name": rip, "rrs": {"stringItem": ptr_rrset}, "zoneOrigin": "10.in-addr.arpa."}
+        ptr_rrset_obj = {"name": rip, "rrList": {"CCMRRItem": ptr_rrset}, "zoneOrigin": "10.in-addr.arpa."}
         url = C.DNS_BASE + "CCMRRSet" + "/{}".format(rip)
         response = requests.request("PUT", url, headers=CNR_HEADERS, json=ptr_rrset_obj, verify=False)
         response.raise_for_status()
