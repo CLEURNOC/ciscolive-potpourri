@@ -102,9 +102,6 @@ tacacs_vrf="management"
 UCS_DC1
 UCS_DC2
 
-[UCS:vars]
-snmp_priv_proto="aes"
-
 [HX:children]
 HX_DC1
 HX_DC2
@@ -153,9 +150,6 @@ PDU_CORE2
 [PDU:children]
 PDU_DC
 PDU_CORE
-
-[PDU:vars]
-snmp_auth_proto="md5"
 
 [vCenter]
 cl-vcenter.ad.ciscolive.network
