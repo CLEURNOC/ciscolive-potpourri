@@ -126,12 +126,15 @@ if __name__ == "__main__":
 
                         if args.git_repo:
                             if os.path.isdir(args.git_repo):
-                                gfile = re.sub(r"\.curr", ".txt", prev_path)
-                                shutil.copyfile(curr_path, args.git_repo + "/" + gfile)
-                                os.chdir(args.git_repo)
-                                call("git add {}".format(gfile), shell=True)
-                                call('git commit -m "Routing table update" {}'.format(gfile), shell=True)
-                                do_push = True
+                                try:
+                                    gfile = re.sub(r"\.curr", ".txt", os.path.basename(prev_path))
+                                    shutil.copyfile(curr_path, args.git_repo + "/" + gfile)
+                                    os.chdir(args.git_repo)
+                                    call("git add {}".format(gfile), shell=True)
+                                    call('git commit -m "Routing table update" {}'.format(gfile), shell=True)
+                                    do_push = True
+                                except Exception as ie:
+                                    print("ERROR: Failed to commit to git repo {}: {}".format(args.git_repo, ie))
                             else:
                                 print("ERROR: Git repo {} is not a directory".format(args.git_repo))
                         # print('XXX: Out = \'{}\''.format(out))
