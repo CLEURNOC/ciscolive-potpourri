@@ -206,6 +206,7 @@ if __name__ == "__main__":
                 add_entry(url, hname, dev)
             else:
                 #print("Not creating a new entry for {} as it already exists".format(dev["name"]))
+                pass
 
     fd = open(CACHE_FILE, "w")
     json.dump(records, fd, indent=4)
