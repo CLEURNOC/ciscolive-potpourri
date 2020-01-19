@@ -63,7 +63,7 @@ def main():
         hlist.append(h.strip())
 
     with open(args.output_file, "w") as fd:
-        json.dump(fd, hlist, indent=4)
+        json.dump(hlist, fd, indent=4)
 
 
 if __name__ == "__main__":
