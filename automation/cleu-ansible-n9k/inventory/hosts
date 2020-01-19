@@ -40,9 +40,22 @@ cl-emea-noc-mcc-dc1.ciscolive.network
 [NETAPP_DC2]
 cl-emea-noc-mcc-dc2.ciscolive.network
 
-[SDA]
+[SDA_CORE]
 fusion-005-mdf-a.ciscolive.network
 fusion-005-mdf-b.ciscolive.network
+005-mdf-a.ciscolive.network
+005-mdf-b.ciscolive.network
+
+[SDA_IDF]
+sda-005-idf-01.ciscolive.network
+sda-005-idf-02.ciscolive.network
+sda-005-idf-03.ciscolive.network
+sda-005-idf-04.ciscolive.network
+sda-005-idf-05.ciscolive.network
+sda-005-idf-06.ciscolive.network
+sda-005-idf-07.ciscolive.network
+sda-005-idf-08.ciscolive.network
+sda-005-idf-09.ciscolive.network
 
 [UCS_HOSTS_DC1]
 dc1-esx-01.ciscolive.network
@@ -89,8 +102,6 @@ HX_HOSTS_DC2
 003-mdf-b.ciscolive.network
 004-mdf-a.ciscolive.network
 004-mdf-b.ciscolive.network
-005-mdf-a.ciscolive.network
-005-mdf-b.ciscolive.network
 006-mdf-a.ciscolive.network
 006-mdf-b.ciscolive.network
 007-mdf-a.ciscolive.network
@@ -212,6 +223,10 @@ vnic_templates='["hx-vm-network-a", "hx-vm-network-b"]'
 [UCS:vars]
 multicast_policy=""
 vnic_templates='["vnic-vlans-a", "vnic-vlans-b"]'
+
+[SDA:children]
+SDA_CORE
+SDA_IDF
 
 [CORE:children]
 CORE1
