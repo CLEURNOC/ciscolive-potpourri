@@ -28,11 +28,13 @@ import paramiko
 import os
 from sparker import Sparker, MessageType
 import time
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, call
 import shlex
 import re
 import json
+import argparse
 import CLEUCreds
+import shutil
 from cleu.config import Config as C
 
 routers = {}
@@ -45,6 +47,20 @@ ROUTER_FILE = "/home/jclarke/routers.json"
 WEBEX_ROOM = "Core Alarms"
 
 if __name__ == "__main__":
+    parser = ArgumentParser(description="Usage:")
+
+    # script arguments
+    parser.add_argument("--git-repo", "-g", metavar="<GIT_REPO_PATH>", help="Optional path to a git repo to store updates")
+    parser.add_argument("--git-branch", "-b", metavar="<BRANCH_NAME>", help="Branch name to use to commit in git")
+    parser.add_argument(
+        "--notify",
+        "-n",
+        metavar="<ROUTER_NAME>",
+        help="Only notify on routers with a given name (can be specified more than once)",
+        action="append",
+    )
+    args = parser.parse_args()
+
     spark = Sparker(token=CLEUCreds.SPARK_TOKEN)
     ssh_client = paramiko.SSHClient()
     ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -55,6 +71,8 @@ if __name__ == "__main__":
         fd.close()
     except:
         pass
+
+    do_push = False
 
     for router, ip in routers.items():
         try:
@@ -95,15 +113,27 @@ if __name__ == "__main__":
                     rc = proc.returncode
 
                     if rc != 0:
-                        spark.post_to_spark(
-                            C.WEBEX_TEAM,
-                            WEBEX_ROOM,
-                            "Routing table diff ({}) on **{}**:\n```\n{}\n```".format(
-                                command, router, re.sub(cache_dir + "/", "", out.decode("utf-8"))
-                            ),
-                            MessageType.BAD,
-                        )
-                        time.sleep(1)
+                        if (args.notify and router in args.notify) or not args.notify:
+                            spark.post_to_spark(
+                                C.WEBEX_TEAM,
+                                WEBEX_ROOM,
+                                "Routing table diff ({}) on **{}**:\n```\n{}\n```".format(
+                                    command, router, re.sub(cache_dir + "/", "", out.decode("utf-8"))
+                                ),
+                                MessageType.BAD,
+                            )
+                            time.sleep(1)
+
+                        if args.git_repo:
+                            if os.path.isdir(args.git_repo):
+                                gfile = re.sub(r"\.curr", ".txt", prev_path)
+                                shutil.copyfile(curr_path, args.git_repo + "/" + gfile)
+                                os.chdir(args.git_repo)
+                                call("git add {}".format(gfile), shell=True)
+                                call('git commit -m "Routing table update" {}'.format(gfile), shell=True)
+                                do_push = True
+                            else:
+                                print("ERROR: Git repo {} is not a directory".format(args.git_repo))
                         # print('XXX: Out = \'{}\''.format(out))
 
                 os.rename(curr_path, prev_path)
@@ -112,5 +142,13 @@ if __name__ == "__main__":
             ssh_client.close()
             print("Failed to get routing tables from {}: {}".format(router, e))
             continue
+
+        if do_push:
+            if not args.branch:
+                print("ERROR: Cannot push without a branch")
+            else:
+                os.chdir(args.git_repo)
+                call("git pull origin {}".format(args.branch), shell=True)
+                call("git push origin {}".format(args.branch), shell=True)
 
         ssh_client.close()
