@@ -72,12 +72,11 @@ class Sparker:
                 response.raise_for_status()
                 return response
             except Exception as e:
-                if (
-                    response.status_code != 429
-                    and response.status_code != 503
-                    and response.status_code != 400
-                ) or i == Sparker.RETRIES:
+                if (response.status_code != 429 and response.status_code != 503 and response.status_code != 400) or i == Sparker.RETRIES:
                     return response
+
+                if response.status_code == 400:
+                    print("XXX: Body is {}".format(response.text))
 
                 time.sleep(backoff)
                 backoff *= 2
@@ -138,9 +137,7 @@ class Sparker:
             response = Sparker._request_with_retry("GET", url, headers=self._headers)
             response.raise_for_status()
         except Exception as e:
-            msg = "Error getting message with ID {}: {}".format(
-                mid, getattr(e, "message", repr(e))
-            )
+            msg = "Error getting message with ID {}: {}".format(mid, getattr(e, "message", repr(e)))
             if self._logit:
                 logging.error(msg)
             else:
@@ -200,13 +197,9 @@ class Sparker:
             params["teamId"] = team_id
 
         try:
-            items = Sparker._get_items_pages(
-                "GET", url, headers=self._headers, params=params
-            )
+            items = Sparker._get_items_pages("GET", url, headers=self._headers, params=params)
         except Exception as e:
-            msg = "Error retrieving room {}: {}".format(
-                room, getattr(e, "message", repr(e))
-            )
+            msg = "Error retrieving room {}: {}".format(room, getattr(e, "message", repr(e)))
             if self._logit:
                 logging.error(msg)
             else:
@@ -259,13 +252,9 @@ class Sparker:
             return None
 
         try:
-            items = Sparker._get_items_pages(
-                "GET", url, params=payload, headers=self._headers
-            )
+            items = Sparker._get_items_pages("GET", url, params=payload, headers=self._headers)
         except Exception as e:
-            msg = "Error getting resource membership: {}".format(
-                getattr(e, "message", repr(e))
-            )
+            msg = "Error getting resource membership: {}".format(getattr(e, "message", repr(e)))
             if self._logit:
                 logging.error(msg)
             else:
@@ -319,16 +308,10 @@ class Sparker:
                     payload["personEmail"] = member["personEmail"]
                     payload.pop("personId", None)
 
-                response = Sparker._request_with_retry(
-                    "POST", url, json=payload, headers=self._headers
-                )
+                response = Sparker._request_with_retry("POST", url, json=payload, headers=self._headers)
                 response.raise_for_status()
             except Exception as e:
-                msg = "Error adding member %s to %s: %s" % (
-                    member,
-                    resource,
-                    getattr(e, "message", repr(e)),
-                )
+                msg = "Error adding member %s to %s: %s" % (member, resource, getattr(e, "message", repr(e)),)
                 if self._logit:
                     logging.error(msg)
                 else:
@@ -369,9 +352,7 @@ class Sparker:
         payload = {"roomId": room_id, "markdown": mt.value + msg}
 
         try:
-            response = Sparker._request_with_retry(
-                "POST", url, json=payload, headers=self._headers
-            )
+            response = Sparker._request_with_retry("POST", url, json=payload, headers=self._headers)
             response.raise_for_status()
         except Exception as e:
             msg = "Error posting message: {}".format(getattr(e, "message", repr(e)))
@@ -383,9 +364,7 @@ class Sparker:
 
         return True
 
-    def post_to_spark_with_attach(
-        self, team, room, msg, attach, fname, ftype, mtype=MessageType.NEUTRAL
-    ):
+    def post_to_spark_with_attach(self, team, room, msg, attach, fname, ftype, mtype=MessageType.NEUTRAL):
         if not self.check_token():
             return None
 
