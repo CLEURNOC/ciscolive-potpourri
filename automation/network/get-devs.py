@@ -80,9 +80,6 @@ def ping_device(dev):
 
     dev_dic = {}
 
-    if not re.search(r"^0", dev["Hostname"]):
-        return None
-
     dev_dic["name"] = dev["Hostname"]
     dev_dic["ip"] = dev["IPAddress"]
     if dev_dic["ip"] == "0.0.0.0":
