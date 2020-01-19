@@ -30,7 +30,7 @@
         register: res
         changed_when: no
         failed_when: no
-        when: _result == 400
+        when: _result.status == 400
 
       - name: Add device to LibreNMS
         command:
