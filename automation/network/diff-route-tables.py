@@ -24,6 +24,10 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+from __future__ import print_function
+from future import standard_library
+
+standard_library.install_aliases()
 import paramiko
 import os
 from sparker import Sparker, MessageType
@@ -74,13 +78,13 @@ if __name__ == "__main__":
 
     do_push = False
 
-    for router, ip in routers.items():
+    for router, ip in list(routers.items()):
         try:
             ssh_client.connect(
                 ip, username=CLEUCreds.NET_USER, password=CLEUCreds.NET_PASS, timeout=60, allow_agent=False, look_for_keys=False,
             )
             chan = ssh_client.invoke_shell()
-            for fname, command in commands.items():
+            for fname, command in list(commands.items()):
                 output = ""
                 try:
                     chan.sendall("term length 0\n")
