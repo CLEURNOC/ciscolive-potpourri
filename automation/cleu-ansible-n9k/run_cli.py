@@ -9,9 +9,7 @@ import json
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        prog=sys.argv[0], description="Configure a switch port"
-    )
+    parser = argparse.ArgumentParser(prog=sys.argv[0], description="Configure a switch port")
     parser.add_argument(
         "--switch",
         "-s",
@@ -19,29 +17,16 @@ def main():
         help="Switch name or names (comma-separated) on which to run commands (defaults to all) ",
     )
     parser.add_argument(
-        "--commands",
-        "-c",
-        metavar="<COMMAND(s)>",
-        help="Pipe-separated list of commands to run",
+        "--commands", "-c", metavar="<COMMAND(s)>", help="Pipe-separated list of commands to run",
     )
     parser.add_argument(
-        "--parents",
-        "-p",
-        metavar="<PARENT(s)>",
-        help="Pipe-separated list of parents for all commands",
+        "--parents", "-p", metavar="<PARENT(s)>", help="Pipe-separated list of parents for all commands",
     )
     parser.add_argument(
-        "--input",
-        "-i",
-        metavar="<INPUT_FILE>",
-        help="Path to an input file with commands formated like config",
+        "--input", "-i", metavar="<INPUT_FILE>", help="Path to an input file with commands formated like config",
     )
     parser.add_argument(
-        "--username",
-        "-u",
-        metavar="<USERNAME>",
-        help="Username to use to connect to the N9Ks",
-        required=True,
+        "--username", "-u", metavar="<USERNAME>", help="Username to use to connect to the N9Ks", required=True,
     )
     args = parser.parse_args()
 
@@ -52,6 +37,9 @@ def main():
     if args.commands and args.input:
         print("ERROR: Only one of --commands or --input can be specified.")
         sys.exit(1)
+
+    plist = []
+    clist = []
 
     if args.input:
         contents = None
@@ -74,7 +62,6 @@ def main():
             sys.exit(1)
     else:
         clist = args.commands.split("|")
-        plist = []
 
         if args.parents:
             plist = args.parents.split("|")
