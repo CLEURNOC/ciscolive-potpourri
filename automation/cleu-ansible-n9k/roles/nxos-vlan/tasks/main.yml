@@ -326,6 +326,36 @@
     - nxos-vlan
     - add-dhcp-relay
 
+- name: Add RDNSS server configuration
+  nxos_config:
+      lines:
+          - ipv6 nd ra dns server {{ item }} lifetime {{ rdnss_lifetime }} sequence {{ item_idx }}
+      parents: interface Vlan{{ vlan_id }}
+  when: (delete_vlan is not defined or not delete_vlan|bool) and svi_v6_network is defined
+  with_items: "{{ dns_servers_v6 }}"
+  loop_control:
+      index_var: item_idx
+  tags:
+    - nxos
+    - vlan
+    - nxos-vlan
+    - rdnss
+
+- name: Add RDNSS search domain
+  nxos_config:
+      lines:
+          - ipv6 nd ra dns search-list {{ item }} lifetime {{ rdnss_lifetime }} sequence {{ item_idx }}
+      parents: interface Vlan{{ vlan_id }}
+  when: (delete_vlan is not defined or not delete_vlan|bool) and svi_v6_network is defined
+  with_items: "{{ search_domains }}"
+  loop_control:
+      index_var: item_idx
+  tags:
+    - nxos
+    - vlan
+    - nxos-vlan
+    - rdnss
+
 - name: Add v4 ACL
   nxos_acl_interface:
       direction: ingress

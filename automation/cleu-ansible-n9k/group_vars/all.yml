@@ -30,6 +30,13 @@ dhcp_servers:
   - 10.100.253.9
   - 10.100.254.9
 
+# DNS variables
+dns_servers_v6:
+  - "2a0f:f8c0:2:64fd::6"
+  - "2a0f:f8c0:2:64fe::6"
+search_domains:
+  - ciscolive.network
+
 # TACACS+ variables
 tacacs_group_name: ISE
 tacacs_host_timeout: "10"
