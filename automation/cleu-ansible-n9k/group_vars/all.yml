@@ -36,6 +36,7 @@ dns_servers_v6:
   - "2a0f:f8c0:2:64fe::6"
 search_domains:
   - ciscolive.network
+rdnss_lifetime: "86400"
 
 # TACACS+ variables
 tacacs_group_name: ISE
