@@ -198,6 +198,7 @@ MCC_DC2
 [MCC:vars]
 tacacs_source_interface="mgmt0"
 tacacs_vrf="management"
+ansible_network_os="nxos"
 
 [UCS:children]
 UCS_DC1
