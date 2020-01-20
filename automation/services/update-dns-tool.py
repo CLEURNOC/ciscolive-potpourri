@@ -72,7 +72,7 @@ def add_entry(url, hname, dev):
 
     try:
         rrset = [
-            "0 IN A {}".format(dev["ip"]),
+            "IN 0 A {}".format(dev["ip"]),
         ]
 
         rrset_obj = {"name": hname, "rrs": {"stringItem": rrset}, "zoneOrigin": C.DNS_DOMAIN}
@@ -88,7 +88,7 @@ def add_entry(url, hname, dev):
         aname = alias.split(".")[0]
         alias_rrset_obj = {
             "name": aname,
-            "rrs": {"stringItem": ["0 IN CNAME {}.{}.".format(hname, C.DNS_DOMAIN)]},
+            "rrs": {"stringItem": ["IN 0 CNAME {}.{}.".format(hname, C.DNS_DOMAIN)]},
             "zoneOrigin": C.DNS_DOMAIN,
         }
         url = C.DNS_BASE + "CCMRRSet" + "/{}".format(aname)
@@ -101,7 +101,7 @@ def add_entry(url, hname, dev):
             sys.stderr.write("Error adding CNAME {} for {}: {}\n".format(alias, hname, e))
 
     try:
-        ptr_rrset = ["0 IN PTR {}.{}.".format(hname, C.DNS_DOMAIN)]
+        ptr_rrset = ["IN 0 PTR {}.{}.".format(hname, C.DNS_DOMAIN)]
         rip = ".".join(dev["ip"].split(".")[::-1][0:3])
         ptr_rrset_obj = {"name": rip, "rrs": {"stringItem": ptr_rrset}, "zoneOrigin": "10.in-addr.arpa."}
         url = C.DNS_BASE + "CCMRRSet" + "/{}".format(rip)
