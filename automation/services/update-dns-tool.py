@@ -86,7 +86,7 @@ def purge_rrs(hname, dev):
         cnames.append(alias.split(".")[0])
     pname = ".".join(dev["ip"].split(".")[::-1][0:3])
 
-    ubase = C.DNS_BASE + "/CCMRRSet" + "/{}"
+    ubase = C.DNS_BASE + "CCMRRSet" + "/{}"
 
     url = ubase.format(aname)
 
@@ -240,11 +240,7 @@ if __name__ == "__main__":
 
             if create_new:
                 print("Deleting entry for {}".format(hname))
-                try:
-                    response = requests.request("DELETE", url, headers=CNR_HEADERS, params={"zoneOrigin": C.DNS_DOMAIN}, verify=False)
-                    response.raise_for_status()
-                except Exception as e:
-                    sys.stderr.write("Error deleting entry for {}: {}\n".format(hname, e))
+                purge_rrs(hname, dev)
 
                 add_entry(url, hname, dev)
             else:
