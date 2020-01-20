@@ -370,7 +370,7 @@ if __name__ == "__main__":
                 usecret = "gru"
             res = get_from_pi(user=uname)
             if res is None:
-                res = get_from_pi(user=uname + "@{}".format(AD_DOMAIN))
+                res = get_from_pi(user=uname + "@{}".format(C.AD_DOMAIN))
 
             if res is not None:
                 print_pi(spark, m.group("uname"), res, "")
@@ -463,7 +463,7 @@ if __name__ == "__main__":
                         port_info = res["relay-info"]["port"]
                         if port_info != "N/A":
                             port_info = '<a href="{}switch_name={}&port_name={}">**{}**</a>'.format(
-                                TOOL_BASE, res["relay-info"]["switch"], res["relay-info"]["port"], res["relay-info"]["port"]
+                                C.TOOL_BASE, res["relay-info"]["switch"], res["relay-info"]["port"], res["relay-info"]["port"]
                             )
 
                         spark.post_to_spark(
@@ -484,7 +484,7 @@ if __name__ == "__main__":
                         port_info = res["relay-info"]["port"]
                         if port_info != "N/A":
                             port_info = '<a href="{}switch_name={}&port_name={}">**{}**</a>'.format(
-                                TOOL_BASE, res["relay-info"]["switch"], res["relay-info"]["port"], res["relay-info"]["port"]
+                                C.TOOL_BASE, res["relay-info"]["switch"], res["relay-info"]["port"], res["relay-info"]["port"]
                             )
 
                         spark.post_to_spark(
