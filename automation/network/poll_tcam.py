@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright (c) 2017-2019  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2020  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,6 +24,8 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+from __future__ import division
+from past.utils import old_div
 import os
 import re
 import sys
@@ -44,11 +46,18 @@ CACHE_FILE = "/home/jclarke/tcam_util.json"
 spark = None
 
 
-def exec_command(chan, cmd, dev):
+def send_command(chan, command):
+    chan.sendall(command + "\n")
+    i = 0
     output = ""
-    chan.send(cmd + "\n")
-    time.sleep(1)
-    output += chan.recv(65535)
+    while i < 10:
+        if chan.recv_ready():
+            break
+        i += 1
+        time.sleep(i * 0.5)
+    while chan.recv_ready():
+        r = chan.recv(131070).decode("utf-8")
+        output = output + r
 
     return output
 
@@ -66,11 +75,11 @@ def get_results(dev, cache):
         ssh_client.connect(dev, username=CLEUCreds.NET_USER, password=CLEUCreds.NET_PASS, timeout=5, allow_agent=False, look_for_keys=False)
         chan = ssh_client.invoke_shell()
         try:
-            exec_command(chan, "term width 0", dev)
-            exec_command(chan, "term length 0", dev)
+            send_command(chan, "term width 0")
+            send_command(chan, "term length 0")
             for cmd in commands:
                 try:
-                    output = exec_command(chan, cmd, dev)
+                    output = send_command(chan, cmd)
                 except Exception as iie:
                     sys.stderr.write("Failed to get result for {} from {}: {}\n".format(cmd, dev, iie))
                     traceback.print_exc()
@@ -106,7 +115,7 @@ def get_results(dev, cache):
         used = float(m.group(1))
         m = re.search(r"(\d+)(/\d+)?", max)
         max = float(m.group(1))
-        perc = float(used / max) * 100.0
+        perc = float(old_div(used, max)) * 100.0
         # if metric == 'Directly or indirectly connected routes':
         #    perc = 76.0
         if perc >= 75.0:

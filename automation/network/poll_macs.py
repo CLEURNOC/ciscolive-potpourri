@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright (c) 2017-2019  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2020  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,6 +25,8 @@
 # SUCH DAMAGE.
 
 
+from builtins import str
+from builtins import range
 import os
 import re
 import sys
@@ -34,70 +36,60 @@ import paramiko
 import CLEUCreds
 
 
-CACHE_FILE = '/home/jclarke/mac_counts.dat'
-CACHE_FILE_TMP = CACHE_FILE + '.tmp'
+CACHE_FILE = "/home/jclarke/mac_counts.dat"
+CACHE_FILE_TMP = CACHE_FILE + ".tmp"
 
 commands = [
-  {
-    'command': 'show mac address-table count | inc Dynamic Address Count',
-    'pattern': r'Dynamic Address Count:\s+(\d+)',
-    'metric': 'totalMacs',
-    'devices': ['core1-l3c', 'core2-l3c']
-  },
-  {
-    'command': 'show mac address-table dynamic | inc Total',
-    'pattern': r'Total.*: (\d+)',
-    'metric': 'totalMacs',
-    'devicePatterns': [
-      {
-        'pattern': '10.127.0.{}',
-        'range': {
-          'min': 1,
-          'max': 60
-        }
-      }
-    ]
-  },
-  {
-    'command': 'show ip arp summary | inc IP ARP',
-    'pattern': r'(\d+) IP ARP entries',
-    'metric': 'arpEntries',
-    'devicePatterns': [
-      {
-        'pattern': '10.127.0.{}',
-        'range': {
-          'min': 1,
-          'max': 60
-        }
-      }
-    ]
-  }
+    {
+        "command": "show mac address-table count | inc Dynamic Address Count",
+        "pattern": r"Dynamic Address Count:\s+(\d+)",
+        "metric": "totalMacs",
+        "devices": ["core1-l3c", "core2-l3c"],
+    },
+    {
+        "command": "show mac address-table dynamic | inc Total",
+        "pattern": r"Total.*: (\d+)",
+        "metric": "totalMacs",
+        "devicePatterns": [{"pattern": "10.127.0.{}", "range": {"min": 1, "max": 60}}],
+    },
+    {
+        "command": "show ip arp summary | inc IP ARP",
+        "pattern": r"(\d+) IP ARP entries",
+        "metric": "arpEntries",
+        "devicePatterns": [{"pattern": "10.127.0.{}", "range": {"min": 1, "max": 60}}],
+    },
 ]
 
 
+def send_command(chan, command):
+    chan.sendall(command + "\n")
+    i = 0
+    output = ""
+    while i < 10:
+        if chan.recv_ready():
+            break
+        i += 1
+        time.sleep(i * 0.5)
+    while chan.recv_ready():
+        r = chan.recv(131070).decode("utf-8")
+        output = output + r
+
+    return output
+
+
 def get_results(ssh_client, ip, command, pattern, metric):
-    response = ''
+    response = ""
     try:
-        ssh_client.connect(ip, username=CLEUCreds.NET_USER, password=CLEUCreds.NET_PASS,
-                           timeout=5, allow_agent=False, look_for_keys=False)
+        ssh_client.connect(ip, username=CLEUCreds.NET_USER, password=CLEUCreds.NET_PASS, timeout=5, allow_agent=False, look_for_keys=False)
         chan = ssh_client.invoke_shell()
-        output = ''
+        output = ""
         try:
-            chan.sendall('term length 0\n')
-            chan.sendall('term width 0\n')
-            chan.sendall('{}\n'.format(command))
-            j = 0
-            while j < 10:
-                if chan.recv_ready():
-                    break
-                time.sleep(.5)
-                j += 1
-            while chan.recv_ready():
-                output += chan.recv(65535)
+            send_command(chan, "term length 0")
+            send_command(chan, "term width 0")
+            output = send_command(chan, command)
         except Exception as ie:
             response = '{}{{idf="{}"}}'.format(metric, ip)
-            sys.stderr.write(
-                'Failed to get MACs from {}: {}\n'.format(ip, ie))
+            sys.stderr.write("Failed to get MACs from {}: {}\n".format(ip, ie))
             return response
 
         m = re.search(pattern, output)
@@ -107,8 +99,8 @@ def get_results(ssh_client, ip, command, pattern, metric):
             response = '{}{{idf="{}"}} 0'.format(metric, ip)
     except Exception as e:
         ssh_client.close()
-        sys.stderr.write('Failed to connect to {}: {}\n'.format(ip, e))
-        return ''
+        sys.stderr.write("Failed to connect to {}: {}\n".format(ip, e))
+        return ""
 
     ssh_client.close()
 
@@ -123,26 +115,33 @@ def get_metrics():
     ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
     for command in commands:
-        if 'devices' in command:
-            for device in command['devices']:
-                response.append(get_results(ssh_client, device, command['command'], command['pattern'], command['metric']))
+        if "devices" in command:
+            for device in command["devices"]:
+                response.append(get_results(ssh_client, device, command["command"], command["pattern"], command["metric"]))
         else:
-            for pattern in command['devicePatterns']:
-                if 'range' in pattern:
-                    for i in range(pattern['range']['min'], pattern['range']['max']):
-                        response.append(get_results(ssh_client, pattern['pattern'].format(str(i)), command[
-                                        'command'], command['pattern'], command['metric']))
+            for pattern in command["devicePatterns"]:
+                if "range" in pattern:
+                    for i in range(pattern["range"]["min"], pattern["range"]["max"]):
+                        response.append(
+                            get_results(
+                                ssh_client, pattern["pattern"].format(str(i)), command["command"], command["pattern"], command["metric"]
+                            )
+                        )
                 else:
-                    for sub in pattern['subs']:
-                        response.append(get_results(ssh_client, pattern['pattern'].format(sub), command[
-                                        'command'], command['pattern'], command['metric']))
+                    for sub in pattern["subs"]:
+                        response.append(
+                            get_results(
+                                ssh_client, pattern["pattern"].format(sub), command["command"], command["pattern"], command["metric"]
+                            )
+                        )
 
     return response
 
-if __name__ == '__main__':
-    response=get_metrics()
 
-    fd=open(CACHE_FILE_TMP, 'w')
+if __name__ == "__main__":
+    response = get_metrics()
+
+    fd = open(CACHE_FILE_TMP, "w")
     json.dump(response, fd, indent=4)
     fd.close()
 
