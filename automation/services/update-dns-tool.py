@@ -68,6 +68,41 @@ def get_devs():
     return devices
 
 
+def purge_rr(name, url):
+    params = {"zoneOrigin": C.DNS_DOMAIN}
+
+    try:
+        response = requests.request("DELETE", url, headers=CNR_HEADERS, params=params, verify=False)
+        response.raise_for_status()
+        print("Purged entry for {}".format(name))
+    except Exception as e:
+        sys.stderr.write("Error purging entry for {}: {}\n".format(name, e))
+
+
+def purge_rrs(hname, dev):
+    aname = hname
+    cnames = []
+    for alias in dev["aliases"]:
+        cnames.append(alias.split(".")[0])
+    pname = ".".join(dev["ip"].split(".")[::-1][0:3])
+
+    ubase = C.DNS_BASE + "/CCMRRSet" + "/{}"
+
+    url = ubase.format(aname)
+    params = {"zoneOrigin": C.DNS_DOMAIN}
+
+    purge_rr(aname, url)
+
+    for cname in cnames:
+        url = ubase.format(cname)
+
+        purge_rr(cname, url)
+
+    url = ubase.format(pname)
+
+    purge_rr(pname, url)
+
+
 def add_entry(url, hname, dev):
     global CNR_HEADERS
 
@@ -151,6 +186,8 @@ if __name__ == "__main__":
         hname = dev["name"].replace(".{}".format(C.DNS_DOMAIN), "")
 
         records.append(hname)
+        if args.purge:
+            purge_rrs(hname, dev)
         url = C.DNS_BASE + "CCMHost" + "/{}".format(hname)
         response = requests.request("GET", url, headers=CNR_HEADERS, params={"zoneOrigin": C.DNS_DOMAIN}, verify=False)
         url = C.DNS_BASE + "CCMRRSet" + "/{}".format(hname)
@@ -184,24 +221,23 @@ if __name__ == "__main__":
         else:
             cur_entry = response.json()
             create_new = True
-            if not args.purge:
-                for addr in cur_entry["addrs"]["stringItem"]:
-                    if addr == dev["ip"]:
-                        if "aliases" in dev and "aliases" in cur_entry:
-                            if (len(dev["aliases"]) > 0 and "stringItem" not in cur_entry["aliases"]) or (
-                                len(dev["aliases"]) != len(cur_entry["aliases"]["stringItem"])
-                            ):
-                                break
-                            common = set(dev["aliases"]) & set(cur_entry["aliases"]["stringItem"])
-                            if len(common) != len(dev["aliases"]):
-                                break
-                            create_new = False
+            for addr in cur_entry["addrs"]["stringItem"]:
+                if addr == dev["ip"]:
+                    if "aliases" in dev and "aliases" in cur_entry:
+                        if (len(dev["aliases"]) > 0 and "stringItem" not in cur_entry["aliases"]) or (
+                            len(dev["aliases"]) != len(cur_entry["aliases"]["stringItem"])
+                        ):
                             break
-                        elif ("aliases" in dev and "aliases" not in cur_entry) or ("aliases" in cur_entry and "aliases" not in dev):
+                        common = set(dev["aliases"]) & set(cur_entry["aliases"]["stringItem"])
+                        if len(common) != len(dev["aliases"]):
                             break
-                        else:
-                            create_new = False
-                            break
+                        create_new = False
+                        break
+                    elif ("aliases" in dev and "aliases" not in cur_entry) or ("aliases" in cur_entry and "aliases" not in dev):
+                        break
+                    else:
+                        create_new = False
+                        break
 
             if create_new:
                 print("Deleting entry for {}".format(hname))
