@@ -88,14 +88,16 @@ if __name__ == "__main__":
                 output = ""
                 try:
                     chan.sendall("term length 0\n")
+                    time.sleep(0.5)
                     chan.sendall("term width 0\n")
+                    time.sleep(0.5)
                     chan.sendall("{}\n".format(command))
                     i = 0
                     while i < 10:
                         if chan.recv_ready():
                             break
-                        time.sleep(0.5)
                         i += 1
+                        time.sleep(i * 0.5)
                     while chan.recv_ready():
                         output = output + chan.recv(131070).decode("utf-8")
                 except Exception as ie:
