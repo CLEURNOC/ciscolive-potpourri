@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright (c) 2017-2019  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2020  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@ from flask import Flask
 from flask import Response
 import json
 import CLEUCreds
-from gevent.wsgi import WSGIServer
+from gevent.pywsgi import WSGIServer
 from cleu.config import Config as C
 
 
