@@ -68,8 +68,8 @@ def get_devs():
     return devices
 
 
-def purge_rr(name, url):
-    params = {"zoneOrigin": C.DNS_DOMAIN}
+def purge_rr(name, url, zone):
+    params = {"zoneOrigin": zone}
 
     try:
         response = requests.request("DELETE", url, headers=CNR_HEADERS, params=params, verify=False)
@@ -88,19 +88,18 @@ def purge_rrs(hname, dev):
 
     ubase = C.DNS_BASE + "/CCMRRSet" + "/{}"
 
-    url = ubase.format(aname)
-    params = {"zoneOrigin": C.DNS_DOMAIN}
+    url = ubase.format(aname, C.DNS_DOMAIN)
 
     purge_rr(aname, url)
 
     for cname in cnames:
         url = ubase.format(cname)
 
-        purge_rr(cname, url)
+        purge_rr(cname, url, C.DNS_DOMAIN)
 
     url = ubase.format(pname)
 
-    purge_rr(pname, url)
+    purge_rr(pname, url, "10.in-addr.arpa.")
 
 
 def add_entry(url, hname, dev):
