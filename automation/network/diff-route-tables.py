@@ -50,6 +50,23 @@ ROUTER_FILE = "/home/jclarke/routers.json"
 
 WEBEX_ROOM = "Core Alarms"
 
+
+def send_command(chan, command):
+    chan.sendall(command + "\n")
+    i = 0
+    output = ""
+    while i < 10:
+        if chan.recv_ready():
+            break
+        i += 1
+        time.sleep(i * 0.5)
+    while chan.recv_ready():
+        r = chan.recv(131070).decode("utf-8")
+        output = output + r
+
+    return output
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Usage:")
 
@@ -86,17 +103,10 @@ if __name__ == "__main__":
             chan = ssh_client.invoke_shell()
             for fname, command in list(commands.items()):
                 output = ""
-                pause = 0.5
                 try:
-                    chan.sendall("term length 0\n")
-                    chan.sendall("term width 0\n")
-                    chan.sendall("{}\n".format(command))
-                    while not chan.exit_status_ready():
-                        time.sleep(pause)
-                        if chan.recv_ready():
-                            output = output + chan.recv(1024).decode("utf-8")
-                    while chan.recv_ready():
-                        output = output + chan.recv(1024).decode("utf-8")
+                    send_command(chan, "term length 0")
+                    send_command(chan, "term width 0")
+                    output = send_command(chan, command)
                 except Exception as ie:
                     print("Failed to get {} from {}: {}".format(command, router, ie))
                     continue
