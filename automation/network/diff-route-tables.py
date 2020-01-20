@@ -93,7 +93,7 @@ if __name__ == "__main__":
                     chan.sendall("{}\n".format(command))
                     while not chan.exit_status_ready():
                         time.sleep(pause)
-                        if chan.recv_read():
+                        if chan.recv_ready():
                             output = output + chan.recv(1024).decode("utf-8")
                     while chan.recv_ready():
                         output = output + chan.recv(1024).decode("utf-8")
