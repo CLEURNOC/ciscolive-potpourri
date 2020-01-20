@@ -99,7 +99,7 @@ def purge_rrs(hname, dev):
 
     url = ubase.format(pname)
 
-    purge_rr(pname, url, "10.in-addr.arpa.")
+    purge_rr(pname, url, "10.in-addr.arpa")
 
 
 def add_entry(url, hname, dev):
