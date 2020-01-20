@@ -50,6 +50,8 @@ class Sparker:
 
     RETRIES = 5
 
+    MAX_MSG_LEN = 7430
+
     _headers = {"authorization": None, "content-type": "application/json"}
 
     _logit = False
@@ -349,7 +351,10 @@ class Sparker:
 
         url = self.SPARK_API + "messages"
 
-        payload = {"roomId": room_id, "markdown": mt.value + ((msg[:7430] + "...") if len(msg) > 7430 else msg)}
+        payload = {
+            "roomId": room_id,
+            "markdown": mt.value + ((msg[: Sparker.MAX_MSG_LEN] + "...") if len(msg) > Sparker.MAX_MSG_LEN else msg),
+        }
 
         try:
             response = Sparker._request_with_retry("POST", url, json=payload, headers=self._headers)
@@ -397,7 +402,7 @@ class Sparker:
 
         payload = {
             "roomId": room_id,
-            "markdown": mt.value + ((msg[:7430] + "...") if len(msg) > 7430 else msg),
+            "markdown": mt.value + ((msg[: Sparker.MAX_MSG_LEN] + "...") if len(msg) > Sparker.MAX_MSG_LEN else msg),
             "files": (fname, bio, ftype),
         }
         m = MultipartEncoder(fields=payload)
