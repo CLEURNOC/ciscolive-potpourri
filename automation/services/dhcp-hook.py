@@ -403,9 +403,13 @@ if __name__ == "__main__":
                 else:
                     try:
                         delete_reservation(m.group(2))
-                        spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, "Reservation for {} deleted successfully.".format(m.group(2)), MessageType.GOOD)
+                        spark.post_to_spark(
+                            C.WEBEX_TEAM, SPARK_ROOM, "Reservation for {} deleted successfully.".format(m.group(2)), MessageType.GOOD
+                        )
                     except Exception as e:
-                        spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, "Failed to delete reservation for {}: {}".format(m.group(2)), MessageType.BAD)
+                        spark.post_to_spark(
+                            C.WEBEX_TEAM, SPARK_ROOM, "Failed to delete reservation for {}: {}".format(m.group(2)), MessageType.BAD
+                        )
 
         m = re.search(r"(make|create|add)\s+reservation.*?([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)", txt, re.I)
         if not found_hit and m:
@@ -430,9 +434,13 @@ if __name__ == "__main__":
                             )
                         else:
                             create_reservation(m.group(2), lres["mac"])
-                            spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, "Successfully added reservation for {}.".format(m.group(2)), MessageType.GOOD)
+                            spark.post_to_spark(
+                                C.WEBEX_TEAM, SPARK_ROOM, "Successfully added reservation for {}.".format(m.group(2)), MessageType.GOOD
+                            )
                     except Exception as e:
-                        spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, "Failed to add reservation for {}: {}".format(m.group(2), e), MessageType.BAD)
+                        spark.post_to_spark(
+                            C.WEBEX_TEAM, SPARK_ROOM, "Failed to add reservation for {}: {}".format(m.group(2), e), MessageType.BAD
+                        )
 
         m = re.search(r"reservation.*?([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)", txt, re.I)
         if not found_hit and m:
@@ -670,7 +678,8 @@ if __name__ == "__main__":
             )
     except Exception as e:
         logging.error("Error in obtaining data: {}".format(traceback.format_exc()))
-        spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, "Whoops, I encountered an error:<br>\n```\n{}\n```".format(traceback.format_exc()), MessageType.BAD)
+        spark.post_to_spark(
+            C.WEBEX_TEAM, SPARK_ROOM, "Whoops, I encountered an error:<br>\n```\n{}\n```".format(traceback.format_exc()), MessageType.BAD
+        )
 
-    print('{"result":"success
-"}')
+    print('{"result":"success"}')
