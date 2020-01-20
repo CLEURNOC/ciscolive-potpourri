@@ -35,6 +35,7 @@ import json
 import sys
 import re
 import os
+import argparse
 import CLEUCreds
 from cleu.config import Config as C
 
@@ -114,6 +115,12 @@ def add_entry(url, hname, dev):
 
 if __name__ == "__main__":
 
+    parser = argparse.ArgumentParser(description="Usage:")
+
+    # script arguments
+    parser.add_argument("--purge", help="Purge previous records", action="store_true")
+    args = parser.parse_args()
+
     prev_records = []
 
     if os.path.exists(CACHE_FILE):
@@ -177,23 +184,24 @@ if __name__ == "__main__":
         else:
             cur_entry = response.json()
             create_new = True
-            for addr in cur_entry["addrs"]["stringItem"]:
-                if addr == dev["ip"]:
-                    if "aliases" in dev and "aliases" in cur_entry:
-                        if (len(dev["aliases"]) > 0 and "stringItem" not in cur_entry["aliases"]) or (
-                            len(dev["aliases"]) != len(cur_entry["aliases"]["stringItem"])
-                        ):
+            if not args.purge:
+                for addr in cur_entry["addrs"]["stringItem"]:
+                    if addr == dev["ip"]:
+                        if "aliases" in dev and "aliases" in cur_entry:
+                            if (len(dev["aliases"]) > 0 and "stringItem" not in cur_entry["aliases"]) or (
+                                len(dev["aliases"]) != len(cur_entry["aliases"]["stringItem"])
+                            ):
+                                break
+                            common = set(dev["aliases"]) & set(cur_entry["aliases"]["stringItem"])
+                            if len(common) != len(dev["aliases"]):
+                                break
+                            create_new = False
                             break
-                        common = set(dev["aliases"]) & set(cur_entry["aliases"]["stringItem"])
-                        if len(common) != len(dev["aliases"]):
+                        elif ("aliases" in dev and "aliases" not in cur_entry) or ("aliases" in cur_entry and "aliases" not in dev):
                             break
-                        create_new = False
-                        break
-                    elif ("aliases" in dev and "aliases" not in cur_entry) or ("aliases" in cur_entry and "aliases" not in dev):
-                        break
-                    else:
-                        create_new = False
-                        break
+                        else:
+                            create_new = False
+                            break
 
             if create_new:
                 print("Deleting entry for {}".format(hname))
@@ -205,7 +213,7 @@ if __name__ == "__main__":
 
                 add_entry(url, hname, dev)
             else:
-                #print("Not creating a new entry for {} as it already exists".format(dev["name"]))
+                # print("Not creating a new entry for {} as it already exists".format(dev["name"]))
                 pass
 
     fd = open(CACHE_FILE, "w")
