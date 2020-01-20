@@ -50,13 +50,13 @@ commands = [
         "command": "show mac address-table dynamic | inc Total",
         "pattern": r"Total.*: (\d+)",
         "metric": "totalMacs",
-        "devicePatterns": [{"pattern": "10.127.0.{}", "range": {"min": 1, "max": 60}}],
+        "deviceFile": "/home/jclarke/idf-devices.json",
     },
     {
         "command": "show ip arp summary | inc IP ARP",
         "pattern": r"(\d+) IP ARP entries",
         "metric": "arpEntries",
-        "devicePatterns": [{"pattern": "10.127.0.{}", "range": {"min": 1, "max": 60}}],
+        "deviceFile": "/home/jclarke/idf-devices.json",
     },
 ]
 
@@ -118,7 +118,7 @@ def get_metrics():
         if "devices" in command:
             for device in command["devices"]:
                 response.append(get_results(ssh_client, device, command["command"], command["pattern"], command["metric"]))
-        else:
+        elif "devicePatterns" in command:
             for pattern in command["devicePatterns"]:
                 if "range" in pattern:
                     for i in range(pattern["range"]["min"], pattern["range"]["max"]):
@@ -134,6 +134,10 @@ def get_metrics():
                                 ssh_client, pattern["pattern"].format(sub), command["command"], command["pattern"], command["metric"]
                             )
                         )
+        else:
+            with open(command["deviceFile"]) as fd:
+                for device in json.load(fd):
+                    response.append(get_results(ssh_client, device, command["command"], command["pattern"], command["metric"]))
 
     return response
 
