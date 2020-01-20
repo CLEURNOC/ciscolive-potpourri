@@ -46,7 +46,7 @@ def get_metrics():
     macs = json.load(fd)
     fd.close()
 
-    return Response("\n".join(macs), mimetype="text/plain")
+    return Response("\n".join(macs) + "\n", mimetype="text/plain")
 
 
 if __name__ == "__main__":
