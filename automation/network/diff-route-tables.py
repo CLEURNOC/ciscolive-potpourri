@@ -86,20 +86,17 @@ if __name__ == "__main__":
             chan = ssh_client.invoke_shell()
             for fname, command in list(commands.items()):
                 output = ""
+                pause = 0.5
                 try:
                     chan.sendall("term length 0\n")
-                    time.sleep(0.5)
                     chan.sendall("term width 0\n")
-                    time.sleep(0.5)
                     chan.sendall("{}\n".format(command))
-                    i = 0
-                    while i < 10:
-                        if chan.recv_ready():
-                            break
-                        i += 1
-                        time.sleep(i * 0.5)
+                    while not chan.exit_status_ready():
+                        time.sleep(pause)
+                        if chan.recv_read():
+                            output = output + chan.recv(1024).decode("utf-8")
                     while chan.recv_ready():
-                        output = output + chan.recv(131070).decode("utf-8")
+                        output = output + chan.recv(1024).decode("utf-8")
                 except Exception as ie:
                     print("Failed to get {} from {}: {}".format(command, router, ie))
                     continue
