@@ -88,9 +88,9 @@ def purge_rrs(hname, dev):
 
     ubase = C.DNS_BASE + "/CCMRRSet" + "/{}"
 
-    url = ubase.format(aname, C.DNS_DOMAIN)
+    url = ubase.format(aname)
 
-    purge_rr(aname, url)
+    purge_rr(aname, url, C.DNS_DOMAIN)
 
     for cname in cnames:
         url = ubase.format(cname)
