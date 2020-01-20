@@ -28,7 +28,7 @@ from flask import Flask
 from flask import Response
 import json
 import CLEUCreds
-from gevent.wsgi import WSGIServer
+from gevent.pywsgi import WSGIServer
 from cleu.config import Config as C
 
 
