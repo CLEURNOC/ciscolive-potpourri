@@ -31,21 +31,21 @@ scrape_configs:
   - job_name: 'mac_metrics'
     scrape_interval: 1m
     static_configs:
-      - targets: ['10.100.253.13:8081']
+      - targets: ['10.100.252.13:8081']
         labels:
           service_name: idf_mac_address_count
 
   - job_name: 'hx_metrics'
     scrape_interval: 1m
     static_configs:
-      - targets: ['10.100.253.13:8082']
+      - targets: ['10.100.252.13:8082']
         labels:
           service_name: hx_read_write_stats
 
   - job_name: 'dhcp_metrics'
     scrape_interval: 1m
     static_configs:
-       - targets: ['10.100.253.13:8083']
+       - targets: ['10.100.252.13:8083']
          labels:
            service_name: dhcp_server_stats
 
@@ -55,40 +55,34 @@ scrape_configs:
       module: [if_mib]
     static_configs:
       - targets:
-        - 10.128.0.1
-        - 10.128.0.2
-        - 10.128.0.5
-        - 10.128.0.6
-        - 10.128.0.7
-        - 10.128.0.9
-        - 10.128.0.10
-        - 10.127.0.61
-        - 10.127.0.62
-        - 10.127.0.101
-        - 10.127.0.102
-        - 10.127.0.103
-        - 10.127.0.104
-        - 10.127.0.105
-        - 10.127.0.106
-        - 10.127.0.107
-        - 10.127.0.108
-        - 10.127.0.109
-        - 10.127.0.110
-        - 10.127.0.111
-        - 10.127.0.112
-        - 10.127.0.113
-        - 10.127.0.114
-        - 10.127.0.115
-        - 10.127.0.116
-        - 10.127.0.242
-        - 10.127.0.243
-        - 10.127.0.244
-        - 10.127.0.252
-        - 10.127.0.253
-        - 10.127.0.247
-        - 10.127.0.248
-        - 10.127.0.249
-        - 10.127.0.250
+        - 006-mdf-a.ciscolive.network
+        - 007-mdf-a.ciscolive.network
+        - core1-wb.ciscolive.network
+        - core2-wa.ciscolive.network
+        - core1-l3c.ciscolive.network
+        - 008-mdf-a.ciscolive.network
+        - 004-mdf-a.ciscolive.network
+        - core2-wb.ciscolive.network
+        - core1-edge.ciscolive.network
+        - 006-mdf-b.ciscolive.network
+        - 008-mdf-b.ciscolive.network
+        - core1-wa.ciscolive.network
+        - core2-ts.ciscolive.network
+        - 003-mdf-b.ciscolive.network
+        - fusion-005-mdf-a.ciscolive.network
+        - fusion-005-mdf-b.ciscolive.network
+        - 005-mdf-a.ciscolive.network
+        - 005-mdf-b.ciscolive.network
+        - 004-mdf-b.ciscolive.network
+        - core1-ts.ciscolive.network
+        - core2-edge.ciscolive.network
+        - dc2-ethsw-1.ciscolive.network
+        - dc2-ethsw-2.ciscolive.network
+        - dc1-ethsw-1.ciscolive.network
+        - dc1-ethsw-2.ciscolive.network
+        - 003-mdf-a.ciscolive.network
+        - core2-l3c.ciscolive.network
+        - 007-mdf-b.ciscolive.network
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
