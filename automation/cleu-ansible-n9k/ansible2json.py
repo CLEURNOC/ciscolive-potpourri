@@ -89,8 +89,13 @@ def main():
     else:
         fd = open(args.output_file, "w")
 
+    fd.write("\n")
+
     json.dump(hlist, fd, indent=4)
-    fd.close()
+    if args.output_file == "-":
+        fd.flush()
+    else:
+        fd.close()
 
 
 if __name__ == "__main__":
