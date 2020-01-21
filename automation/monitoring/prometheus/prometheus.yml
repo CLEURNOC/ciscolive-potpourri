@@ -29,7 +29,7 @@ scrape_configs:
       - targets: ['localhost:9090']
 
   - job_name: 'mac_metrics'
-    scrape_interval: 1m
+    scrape_interval: 5m
     static_configs:
       - targets: ['10.100.252.13:8081']
         labels:
@@ -43,7 +43,7 @@ scrape_configs:
           service_name: hx_read_write_stats
 
   - job_name: 'dhcp_metrics'
-    scrape_interval: 1m
+    scrape_interval: 5m
     static_configs:
        - targets: ['10.100.252.13:8083']
          labels:
