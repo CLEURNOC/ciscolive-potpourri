@@ -1,1296 +1,745 @@
 {
   "annotations": {
-    "list": [
-      {
-        "builtIn": 1,
-        "datasource": "-- Grafana --",
-        "enable": true,
-        "hide": true,
-        "iconColor": "rgba(0, 211, 255, 1)",
-        "name": "Annotations & Alerts",
-        "type": "dashboard"
-      }
-    ]
+    "list": [{
+      "builtIn": 1,
+      "datasource": "-- Grafana --",
+      "enable": true,
+      "hide": true,
+      "iconColor": "rgba(0, 211, 255, 1)",
+      "name": "Annotations & Alerts",
+      "type": "dashboard"
+    }]
   },
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "hideControls": false,
-  "id": 1,
+  "id": 19,
   "links": [],
-  "refresh": false,
-  "rows": [
-    {
-      "collapse": false,
-      "height": 284,
-      "panels": [
-        {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": "Prometheus",
-          "fill": 1,
-          "id": 1,
-          "legend": {
-            "avg": true,
-            "current": true,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": true
-          },
-          "lines": true,
-          "linewidth": 1,
-          "links": [],
-          "nullPointMode": "null",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "span": 6,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"9\",instance=\"core1-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "hide": false,
-              "intervalFactor": 2,
-              "legendFormat": "TenGi0/1/0_IN",
-              "refId": "A"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"10\",instance=\"core1-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "TenGi0/1/1_IN",
-              "refId": "C"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"11\",instance=\"core1-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "TenGi0/1/2_IN",
-              "refId": "D"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"12\",instance=\"core1-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "TenGi0/1/3_IN",
-              "refId": "B"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"9\",instance=\"core1-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "TenGi0/1/0_OUT",
-              "refId": "E"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"10\",instance=\"core1-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "TenGi0/1/1_OUT",
-              "refId": "F"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"11\",instance=\"core1-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "TenGi0/1/2_OUT",
-              "refId": "G"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"12\",instance=\"core1-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "TenGi0/1/3_OUT",
-              "refId": "H"
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "CORE1_EDGE_Interfaces",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "bps",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": false
-            }
-          ]
+  "panels": [{
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "Prometheus",
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "hiddenSeries": false,
+      "id": 1,
+      "legend": {
+        "avg": true,
+        "current": true,
+        "hideZero": true,
+        "max": true,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [{
+          "expr": "delta(ifHCInOctets{ifDescr=~\"TenGig[^.]+\",instance=\"core1-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "format": "time_series",
+          "hide": false,
+          "intervalFactor": 2,
+          "legendFormat": "{{ifName}} : {{ifAlias}} IN",
+          "refId": "A"
         },
         {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": null,
-          "fill": 1,
-          "id": 3,
-          "legend": {
-            "avg": true,
-            "current": true,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": true
-          },
-          "lines": true,
-          "linewidth": 1,
-          "links": [],
-          "nullPointMode": "null",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "span": 6,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"9\",instance=\"core2-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "hide": false,
-              "intervalFactor": 2,
-              "legendFormat": "TE0/1/0_IN",
-              "refId": "A"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"10\",instance=\"core2-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "hide": false,
-              "intervalFactor": 2,
-              "legendFormat": "TE0/1/1_IN",
-              "refId": "C"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"11\",instance=\"core2-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "hide": false,
-              "intervalFactor": 2,
-              "legendFormat": "TE0/1/2_IN",
-              "refId": "D"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"12\",instance=\"core2-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "hide": false,
-              "intervalFactor": 2,
-              "legendFormat": "TE0/1/3_IN",
-              "refId": "E"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"9\",instance=\"core2-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "hide": false,
-              "intervalFactor": 2,
-              "legendFormat": "TE0/1/0_OUT",
-              "refId": "F"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"10\",instance=\"core2-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "TE0/1/1_OUT",
-              "refId": "B"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"11\",instance=\"core2-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "TE0/1/2_OUT",
-              "refId": "G"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"12\",instance=\"core2-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "TE0/1/3_OUT",
-              "refId": "H"
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "CORE2_EDGE_Interfaces",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "bps",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            }
-          ]
+          "expr": "delta(ifHCInOctets{ifDescr=~\"TenGig[^.]+\",instance=\"core1-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "{{ifName}} : {{ifAlias}} OUT",
+          "refId": "C"
         }
       ],
-      "repeat": null,
-      "repeatIteration": null,
-      "repeatRowId": null,
-      "showTitle": false,
-      "title": "Dashboard Row",
-      "titleSize": "h6"
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "CORE1_EDGE_Interfaces",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [{
+          "format": "bps",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": false
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
-      "collapse": false,
-      "height": 250,
-      "panels": [
-        {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": "Prometheus",
-          "fill": 1,
-          "id": 2,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 1,
-          "links": [],
-          "nullPointMode": "null",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "span": 6,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"2\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/1_IN",
-              "refId": "A"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"3\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/2_IN",
-              "refId": "B"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"4\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/3_IN",
-              "refId": "C"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"5\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/4_IN",
-              "refId": "D"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"6\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/5_IN",
-              "refId": "E"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"7\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/6_IN",
-              "refId": "F"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"8\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/7_IN",
-              "refId": "G"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"9\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/8_IN",
-              "refId": "H"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"50\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Hu1/0/49_IN",
-              "refId": "I"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"51\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Hu1/0/50_IN",
-              "refId": "J"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"52\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Hu1/0/51_IN",
-              "refId": "K"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"53\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Hu1/0/52_IN",
-              "refId": "L"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"14\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/13_IN",
-              "refId": "M"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"15\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/14_IN",
-              "refId": "N"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"16\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/15_IN",
-              "refId": "O"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"17\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/16_IN",
-              "refId": "P"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"18\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/17_IN",
-              "refId": "Q"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"19\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/18_IN",
-              "refId": "R"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"20\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/19_IN",
-              "refId": "S"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"21\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/20_IN",
-              "refId": "T"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"2\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/1_OUT",
-              "refId": "U"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"3\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/2_OUT",
-              "refId": "V"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"4\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/3_OUT",
-              "refId": "W"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"5\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/4_OUT",
-              "refId": "X"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"6\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/5_OUT",
-              "refId": "Y"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"7\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/6_OUT",
-              "refId": "Z"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"8\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/7_OUT"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"9\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/8_OUT"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"50\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Hu1/0/49_OUT"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"51\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Hu1/0/50_OUT"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"52\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Hu1/0/51_OUT"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"53\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Hu1/0/52_OUT"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"14\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/13_OUT"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"15\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/14_OUT"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"16\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/15_OUT"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"17\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/16_OUT"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"18\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/17_OUT"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"19\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/18_OUT"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"20\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/19_OUT"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"21\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/20_OUT"
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "CORE1-L3C",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "bps",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            }
-          ]
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "hiddenSeries": false,
+      "id": 3,
+      "legend": {
+        "avg": true,
+        "current": true,
+        "hideZero": true,
+        "max": true,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [{
+          "expr": "delta(ifHCInOctets{ifDescr=~\"TenGig[^.]+\",instance=\"core2-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "format": "time_series",
+          "hide": false,
+          "intervalFactor": 2,
+          "legendFormat": "{{ifName}} : {{ifAlias}} IN",
+          "refId": "A"
         },
         {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": "Prometheus",
-          "fill": 1,
-          "id": 4,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 1,
-          "links": [],
-          "nullPointMode": "null",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "span": 6,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"2\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/1_IN",
-              "refId": "A"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"3\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/2_IN",
-              "refId": "B"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"4\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/3_IN",
-              "refId": "C"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"5\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/4_IN",
-              "refId": "D"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"6\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/5_IN",
-              "refId": "E"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"7\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/6_IN",
-              "refId": "F"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"8\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/7_IN",
-              "refId": "G"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"9\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/8_IN",
-              "refId": "H"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"50\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Hu1/0/49_IN",
-              "refId": "I"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"51\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Hu1/0/50_IN",
-              "refId": "J"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"52\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Hu1/0/51_IN",
-              "refId": "K"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"53\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Hu1/0/52_IN",
-              "refId": "L"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"14\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/13_IN",
-              "refId": "M"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"15\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/14_IN",
-              "refId": "N"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"16\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/15_IN",
-              "refId": "O"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"17\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/16_IN",
-              "refId": "P"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"18\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/17_IN",
-              "refId": "Q"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"19\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/18_IN",
-              "refId": "R"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"20\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/19_IN",
-              "refId": "S"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"21\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/20_IN",
-              "refId": "T"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"2\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/1_OUT",
-              "refId": "U"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"3\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/2_OUT",
-              "refId": "V"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"4\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/3_OUT",
-              "refId": "W"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"5\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/4_OUT",
-              "refId": "X"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"6\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/5_OUT",
-              "refId": "Y"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"7\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/6_OUT",
-              "refId": "Z"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"8\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/7_OUT"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"9\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/8_OUT"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"50\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Hu1/0/49_OUT"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"51\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Hu1/0/50_OUT"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"52\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Hu1/0/51_OUT"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"53\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Hu1/0/52_OUT"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"14\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/13_OUT"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"15\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/14_OUT"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"16\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/15_OUT"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"17\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/16_OUT"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"18\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/17_OUT"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"19\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/18_OUT"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"20\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/19_OUT"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"21\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "Twe1/0/20_OUT"
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "CORE2-L3C",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "bps",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            }
-          ]
+          "expr": "delta(ifHCInOctets{ifDescr=~\"TenGig[^.]+\",instance=\"core2-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "{{ifName}} : {{ifAlias}} OUT",
+          "refId": "C"
         }
       ],
-      "repeat": null,
-      "repeatIteration": null,
-      "repeatRowId": null,
-      "showTitle": false,
-      "title": "Dashboard Row",
-      "titleSize": "h6"
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "CORE2_EDGE_Interfaces",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [{
+          "format": "bps",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
-      "collapse": false,
-      "height": 250,
-      "panels": [
-        {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": null,
-          "fill": 1,
-          "id": 5,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 1,
-          "links": [],
-          "nullPointMode": "null",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "span": 6,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"67\",instance=\"003-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "003-Te1/1/8_IN",
-              "refId": "A"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"67\",instance=\"003-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "003-Te1/1/8_OUT",
-              "refId": "B"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"67\",instance=\"004-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "004-Te1/1/8_IN",
-              "refId": "C"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"67\",instance=\"004-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "004-Te1/1/8_OUT",
-              "refId": "D"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"49\",instance=\"005-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "005-Te1/0/48_IN",
-              "refId": "E"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"49\",instance=\"005-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "005-Te1/0/48_OUT",
-              "refId": "F"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"49\",instance=\"006-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "006-Te1/0/48_IN",
-              "refId": "G"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"49\",instance=\"006-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "006-Te1/0/48_OUT",
-              "refId": "H"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"49\",instance=\"007-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "007-Te1/0/48_IN",
-              "refId": "I"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"49\",instance=\"007-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "007-Te1/0/48_OUT",
-              "refId": "J"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"49\",instance=\"008-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "008-Te1/0/48_IN",
-              "refId": "K"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"49\",instance=\"008-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "008-Te1/0/48_OUT",
-              "refId": "L"
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "00x-MDF-a UPLinks to CORE1-L3C",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "bps",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            }
-          ]
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "Prometheus",
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "hiddenSeries": false,
+      "id": 2,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [{
+          "expr": "delta(ifHCInOctets{ifDescr=~\"(Twenty|Hundred)Gig[^.]+\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "format": "time_series",
+          "hide": false,
+          "intervalFactor": 2,
+          "legendFormat": "{{ifName}} : {{ifAlias}} IN",
+          "refId": "A"
         },
         {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": null,
-          "fill": 1,
-          "id": 6,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 1,
-          "links": [],
-          "nullPointMode": "null",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "span": 6,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"67\",instance=\"003-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "003-Te1/1/8_IN",
-              "refId": "A"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"67\",instance=\"003-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "003-Te1/1/8_OUT",
-              "refId": "B"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"67\",instance=\"004-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "004-Te1/1/8_IN",
-              "refId": "C"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"67\",instance=\"004-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "004-Te1/1/8_OUT",
-              "refId": "D"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"49\",instance=\"005-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "005-Te1/0/48_IN",
-              "refId": "E"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"49\",instance=\"005-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "005-Te1/0/48_OUT",
-              "refId": "F"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"49\",instance=\"006-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "006-Te1/0/48_IN",
-              "refId": "G"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"49\",instance=\"006-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "006-Te1/0/48_OUT",
-              "refId": "H"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"49\",instance=\"007-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "007-Te1/0/48_IN",
-              "refId": "I"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"49\",instance=\"007-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "007-Te1/0/48_OUT",
-              "refId": "J"
-            },
-            {
-              "expr": "delta(ifHCInOctets{ifIndex=\"49\",instance=\"008-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "008-Te1/0/48_IN",
-              "refId": "K"
-            },
-            {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"49\",instance=\"008-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "008-Te1/0/48_OUT",
-              "refId": "L"
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "00x-MDF-b UPLinks to CORE2-L3C",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "bps",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            }
-          ]
+          "expr": "delta(ifHCInOctets{ifDescr=~\"(Twenty|Hundred)Gig[^.]+\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "{{ifName}} : {{ifAlias}} OUT",
+          "refId": "C"
         }
       ],
-      "repeat": null,
-      "repeatIteration": null,
-      "repeatRowId": null,
-      "showTitle": false,
-      "title": "Dashboard Row",
-      "titleSize": "h6"
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "CORE1-L3C",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [{
+          "format": "bps",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "Prometheus",
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "hiddenSeries": false,
+      "id": 4,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [{
+          "expr": "delta(ifHCInOctets{ifDescr=~\"(Twenty|Hundred)Gig[^.]+\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "format": "time_series",
+          "hide": false,
+          "intervalFactor": 2,
+          "legendFormat": "{{ifName}} : {{ifAlias}} IN",
+          "refId": "A"
+        },
+        {
+          "expr": "delta(ifHCInOctets{ifDescr=~\"(Twenty|Hundred)Gig[^.]+\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "{{ifName}} : {{ifAlias}} OUT",
+          "refId": "C"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "CORE2-L3C",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [{
+          "format": "bps",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 15
+      },
+      "hiddenSeries": false,
+      "id": 5,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [{
+          "expr": "delta(ifHCInOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"003-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "003-Tw1/0/48_IN",
+          "refId": "A"
+        },
+        {
+          "expr": "delta(ifHCOutOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"003-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "003-Tw1/0/48_OUT",
+          "refId": "B"
+        },
+        {
+          "expr": "delta(ifHCInOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"004-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "004-Tw1/0/48_IN",
+          "refId": "C"
+        },
+        {
+          "expr": "delta(ifHCOutOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"004-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "004-Tw1/0/48_OUT",
+          "refId": "D"
+        },
+        {
+          "expr": "delta(ifHCInOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"005-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "005-Tw1/0/48_IN",
+          "refId": "E"
+        },
+        {
+          "expr": "delta(ifHCOutOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"005-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "005-Tw1/0/48_OUT",
+          "refId": "F"
+        },
+        {
+          "expr": "delta(ifHCInOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"006-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "format": "time_series",
+          "interval": "",
+          "intervalFactor": 2,
+          "legendFormat": "006-Tw1/0/48_IN",
+          "refId": "G"
+        },
+        {
+          "expr": "delta(ifHCOutOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"006-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "006-Tw1/0/48_OUT",
+          "refId": "H"
+        },
+        {
+          "expr": "delta(ifHCInOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"007-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "format": "time_series",
+          "interval": "",
+          "intervalFactor": 2,
+          "legendFormat": "007-Tw1/0/48_IN",
+          "refId": "I"
+        },
+        {
+          "expr": "delta(ifHCOutOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"007-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "007-Tw1/0/48_OUT",
+          "refId": "J"
+        },
+        {
+          "expr": "delta(ifHCInOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"008-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "format": "time_series",
+          "interval": "",
+          "intervalFactor": 2,
+          "legendFormat": "008-Tw1/0/48_IN",
+          "refId": "K"
+        },
+        {
+          "expr": "delta(ifHCOutOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"008-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "008-Tw1/0/48_OUT",
+          "refId": "L"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "00x-MDF-a UPLinks to CORE1-L3C",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [{
+          "format": "bps",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 15
+      },
+      "hiddenSeries": false,
+      "id": 6,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [{
+          "expr": "delta(ifHCInOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"003-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "003-Tw1/0/48_IN",
+          "refId": "A"
+        },
+        {
+          "expr": "delta(ifHCOutOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"003-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "003-Tw1/0/48_OUT",
+          "refId": "B"
+        },
+        {
+          "expr": "delta(ifHCInOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"004-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "004-Tw1/0/48_IN",
+          "refId": "C"
+        },
+        {
+          "expr": "delta(ifHCOutOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"004-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "004-Tw1/0/48_OUT",
+          "refId": "D"
+        },
+        {
+          "expr": "delta(ifHCInOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"005-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "005-Tw1/0/48_IN",
+          "refId": "E"
+        },
+        {
+          "expr": "delta(ifHCOutOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"005-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "005-Tw1/0/48_OUT",
+          "refId": "F"
+        },
+        {
+          "expr": "delta(ifHCInOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"006-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "format": "time_series",
+          "interval": "",
+          "intervalFactor": 2,
+          "legendFormat": "006-Tw1/0/48_IN",
+          "refId": "G"
+        },
+        {
+          "expr": "delta(ifHCOutOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"006-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "006-Tw1/0/48_OUT",
+          "refId": "H"
+        },
+        {
+          "expr": "delta(ifHCInOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"007-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "format": "time_series",
+          "interval": "",
+          "intervalFactor": 2,
+          "legendFormat": "007-Tw1/0/48_IN",
+          "refId": "I"
+        },
+        {
+          "expr": "delta(ifHCOutOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"007-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "007-Tw1/0/48_OUT",
+          "refId": "J"
+        },
+        {
+          "expr": "delta(ifHCInOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"008-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "format": "time_series",
+          "interval": "",
+          "intervalFactor": 2,
+          "legendFormat": "008-Tw1/0/48_IN",
+          "refId": "K"
+        },
+        {
+          "expr": "delta(ifHCOutOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"008-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "008-Tw1/0/48_OUT",
+          "refId": "L"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "00x-MDF-b UPLinks to CORE2-L3C",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [{
+          "format": "bps",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     }
   ],
-  "schemaVersion": 14,
+  "refresh": false,
+  "schemaVersion": 21,
   "style": "dark",
   "tags": [],
   "templating": {
@@ -1327,5 +776,6 @@
   },
   "timezone": "",
   "title": "CLEUR20_CORE-NETWORK",
-  "version": 25
+  "uid": "bhjwb4yZz",
+  "version": 2
 }
