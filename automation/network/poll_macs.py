@@ -82,7 +82,6 @@ devices = [
     },
     {
         "file": IDF_FILE,
-        "range": {"min": 1, "max": IDF_COUNT},
         "commands": ["macIdf", "arpEntries", "ndEntries"],
     },
     {
