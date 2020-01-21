@@ -24,7 +24,6 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-
 from builtins import str
 from builtins import range
 import os
@@ -33,30 +32,68 @@ import sys
 import time
 import json
 import paramiko
+from multiprocessing import Pool
+import traceback
 import CLEUCreds
 
 
 CACHE_FILE = "/home/jclarke/mac_counts.dat"
 CACHE_FILE_TMP = CACHE_FILE + ".tmp"
+IDF_FILE = "/home/jclarke/idf-devices.json"
 
-commands = [
-    {
+commands = {
+    "macCore": {
         "command": "show mac address-table count | inc Dynamic Address Count",
         "pattern": r"Dynamic Address Count:\s+(\d+)",
         "metric": "totalMacs",
-        "devices": ["core1-l3c", "core2-l3c"],
     },
-    {
+    "macIdf": {
         "command": "show mac address-table dynamic | inc Total",
         "pattern": r"Total.*: (\d+)",
         "metric": "totalMacs",
-        "deviceFile": "/home/jclarke/idf-devices.json",
     },
-    {
+    "arpEntries": {
         "command": "show ip arp summary | inc IP ARP",
         "pattern": r"(\d+) IP ARP entries",
         "metric": "arpEntries",
-        "deviceFile": "/home/jclarke/idf-devices.json",
+    },
+    "ndEntries": {
+        "command": "show ipv6 neighbors statistics | inc Entries",
+        "pattern": r"Entries (\d+),",
+        "metric": "ndEntries",
+    },
+    "natTrans": {
+        "command": "show ip nat translations total",
+        "pattern": r"Total number of translations: (\d+)",
+        "metric": "natTranslations",
+    },
+    "qfpUtil": {
+        "command": "show platform hardware qfp active datapath utilization summary",
+        "pattern": r"Processing: Load \(pct\)\s+(\d+)",
+        "metric": "qfpUtil",
+    },
+}
+
+devices = [
+    {
+        "pattern": "CORE{}-L3C",
+        "range": {"min": 1, "max": 2},
+        "commands": ["arpEntries", "ndEntries"],
+    },
+    {
+        "file": IDF_FILE,
+        "range": {"min": 1, "max": IDF_COUNT},
+        "commands": ["macIdf", "arpEntries", "ndEntries"],
+    },
+    {
+        "pattern": "CORE{}-WA",
+        "range": {"min": 1, "max": 2},
+        "commands": ["macIdf", "arpEntries", "ndEntries"],
+    },
+    {
+        "pattern": "CORE{}-EDGE",
+        "range": {"min": 1, "max": 2},
+        "commands": ["natTrans", "qfpUtil"],
     },
 ]
 
@@ -77,73 +114,115 @@ def send_command(chan, command):
     return output
 
 
-def get_results(ssh_client, ip, command, pattern, metric):
-    response = ""
-    try:
-        ssh_client.connect(ip, username=CLEUCreds.NET_USER, password=CLEUCreds.NET_PASS, timeout=5, allow_agent=False, look_for_keys=False)
-        chan = ssh_client.invoke_shell()
-        output = ""
-        try:
-            send_command(chan, "term length 0")
-            send_command(chan, "term width 0")
-            output = send_command(chan, command)
-        except Exception as ie:
-            response = '{}{{idf="{}"}}'.format(metric, ip)
-            sys.stderr.write("Failed to get MACs from {}: {}\n".format(ip, ie))
-            return response
+def get_results(dev):
+    global commands
 
-        m = re.search(pattern, output)
-        if m:
-            response = '{}{{idf="{}"}} {}'.format(metric, ip, m.group(1))
-        else:
-            response = '{}{{idf="{}"}} 0'.format(metric, ip)
+    ssh_client = paramiko.SSHClient()
+    ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+    response = []
+    try:
+        ssh_client.connect(
+            dev["device"],
+            username=CLEUCreds.NET_USER,
+            password=CLEUCreds.NET_PASS,
+            timeout=5,
+            allow_agent=False,
+            look_for_keys=False,
+        )
+        chan = ssh_client.invoke_shell()
+        try:
+            send_command(chan, "term width 0")
+            send_command(chan, "term length 0")
+            for command in dev["commands"]:
+                cmd = commands[command]["command"]
+                pattern = commands[command]["pattern"]
+                metric = commands[command]["metric"]
+                output = ""
+
+                try:
+                    output = send_command(chan, cmd)
+                except Exception as iie:
+                    response.append("")
+                    sys.stderr.write(
+                        "Failed to get result for {} from {}: {}\n".format(
+                            cmd, dev["device"], iie
+                        )
+                    )
+                    traceback.print_exc()
+
+                m = re.search(pattern, output)
+                if m:
+                    response.append(
+                        '{}{{idf="{}"}} {}'.format(metric, dev["device"], m.group(1))
+                    )
+                else:
+                    sys.stderr.write(
+                        'Failed to find pattern "{}" in "{}"\n'.format(pattern, output)
+                    )
+                    response.append(
+                        '{}{{idf="{}"}} {}'.format(metric, dev["device"], 0)
+                    )
+        except Exception as ie:
+            for command in dev["commands"]:
+                response.append("")
+            sys.stderr.write(
+                "Failed to setup SSH on {}: {}\n".format(dev["device"], ie)
+            )
+            traceback.print_exc()
     except Exception as e:
-        ssh_client.close()
-        sys.stderr.write("Failed to connect to {}: {}\n".format(ip, e))
-        return ""
+        for command in dev["commands"]:
+            response.append("")
+        sys.stderr.write("Failed to connect to {}: {}\n".format(dev["device"], e))
 
     ssh_client.close()
 
     return response
 
 
-def get_metrics():
+def get_metrics(pool):
 
     response = []
+    targets = []
 
-    ssh_client = paramiko.SSHClient()
-    ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-
-    for command in commands:
-        if "devices" in command:
-            for device in command["devices"]:
-                response.append(get_results(ssh_client, device, command["command"], command["pattern"], command["metric"]))
-        elif "devicePatterns" in command:
-            for pattern in command["devicePatterns"]:
-                if "range" in pattern:
-                    for i in range(pattern["range"]["min"], pattern["range"]["max"]):
-                        response.append(
-                            get_results(
-                                ssh_client, pattern["pattern"].format(str(i)), command["command"], command["pattern"], command["metric"]
-                            )
-                        )
-                else:
-                    for sub in pattern["subs"]:
-                        response.append(
-                            get_results(
-                                ssh_client, pattern["pattern"].format(sub), command["command"], command["pattern"], command["metric"]
-                            )
-                        )
+    for device in devices:
+        if "list" in device:
+            for dev in device["list"]:
+                targets.append({"device": dev, "commands": device["commands"]})
+        elif "range" in device or "subs" in device:
+            if "range" in device:
+                for i in range(device["range"]["min"], device["range"]["max"] + 1):
+                    targets.append(
+                        {
+                            "device": device["pattern"].format(str(i)),
+                            "commands": device["commands"],
+                        }
+                    )
+            else:
+                for sub in device["subs"]:
+                    targets.append(
+                        {
+                            "device": device["pattern"].format(sub),
+                            "commands": device["commands"],
+                        }
+                    )
         else:
-            with open(command["deviceFile"]) as fd:
-                for device in json.load(fd):
-                    response.append(get_results(ssh_client, device, command["command"], command["pattern"], command["metric"]))
+            with open(device["file"]) as fd:
+                for dev in json.load(fd):
+                    targets.append({"device": dev, "commands": device["commands"]})
+
+    results = [pool.apply_async(get_results, [d]) for d in targets]
+    for res in results:
+        retval = res.get()
+        if retval is not None:
+            response += retval
 
     return response
 
 
 if __name__ == "__main__":
-    response = get_metrics()
+    pool = Pool(20)
+    response = get_metrics(pool)
 
     fd = open(CACHE_FILE_TMP, "w")
     json.dump(response, fd, indent=4)
