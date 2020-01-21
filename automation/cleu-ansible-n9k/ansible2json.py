@@ -35,6 +35,14 @@ import argparse
 def main():
     parser = argparse.ArgumentParser(prog=sys.argv[0], description="Convert Ansible hosts file to JSON")
     parser.add_argument("--output-file", "-o", metavar="<OUTPUT_FILE_PATH>", help="Path to the file to store the JSON", required=True)
+    parser.add_argument(
+        "--playbook",
+        "-p",
+        metavar="<PLAYBOOK_NAME>",
+        help="Name of playbook to use to generate file (default: add-to-librenms-playbook.yml)",
+        default="add-to-librenms-playbook.yml",
+    )
+    parser.add_argument("--limit", metavar="<LIMIT_STRING>", help="Optional set of hosts or groups to limit")
     args = parser.parse_args()
 
     os.environ["ANSIBLE_FORCE_COLOR"] = "True"
@@ -48,8 +56,11 @@ def main():
         "--list-hosts",
         "-e",
         "ansible_python_interpreter={}".format(sys.executable),
-        "add-to-librenms-playbook.yml",
+        args.playbook,
     ]
+
+    if args.limit:
+        command += ["--limit", args.limit]
 
     p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     hosts = ""
