@@ -58,14 +58,14 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "irate(ifHCInOctets{job='snmp_ifalias',instance=~\"10.127.0.249\",ifDescr=~'Ethernet.*'}[30s])",
+              "expr": "irate(ifHCInOctets{job='snmp',instance=~\"dc1-ethsw-1.ciscolive.network\",ifDescr=~'Ethernet.*'}[30s])",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "{{sysName}} : {{ifDescr}} ({{ifAlias}}) IN",
               "refId": "A"
             },
             {
-              "expr": "irate(ifHCOutOctets{job=\"snmp_ifalias\",instance=~'10.127.0.249',ifDescr=~'Ethernet.*'}[30s])",
+              "expr": "irate(ifHCOutOctets{job=\"snmp\",instance=~'dc1-ethsw-1.ciscolive.network',ifDescr=~'Ethernet.*'}[30s])",
               "format": "time_series",
               "instant": false,
               "intervalFactor": 2,
@@ -149,14 +149,14 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "irate(ifHCInOctets{job='snmp_ifalias',instance=~\"10.127.0.250\",ifDescr=~'Ethernet.*'}[30s])",
+              "expr": "irate(ifHCInOctets{job='snmp',instance=~\"dc1-ethsw-2.ciscolive.network\",ifDescr=~'Ethernet.*'}[30s])",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "{{sysName}} : {{ifDescr}} ({{ifAlias}}) IN",
               "refId": "A"
             },
             {
-              "expr": "irate(ifHCOutOctets{job=\"snmp_ifalias\",instance=~'10.127.0.250',ifDescr=~'Ethernet.*'}[30s])",
+              "expr": "irate(ifHCOutOctets{job=\"snmp\",instance=~'dc1-ethsw-2.ciscolive.network',ifDescr=~'Ethernet.*'}[30s])",
               "format": "time_series",
               "instant": false,
               "intervalFactor": 2,
@@ -252,14 +252,14 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "irate(ifHCInOctets{job='snmp_ifalias',instance=~\"10.127.0.247\",ifDescr=~'Ethernet.*'}[30s])",
+              "expr": "irate(ifHCInOctets{job='snmp',instance=~\"dc2-ethsw-1.ciscolive.network\",ifDescr=~'Ethernet.*'}[30s])",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "{{sysName}} : {{ifDescr}} ({{ifAlias}}) IN",
               "refId": "A"
             },
             {
-              "expr": "irate(ifHCOutOctets{job=\"snmp_ifalias\",instance=~'10.127.0.247',ifDescr=~'Ethernet.*'}[30s])",
+              "expr": "irate(ifHCOutOctets{job=\"snmp\",instance=~'dc2-ethsw-1.ciscolive.network',ifDescr=~'Ethernet.*'}[30s])",
               "format": "time_series",
               "instant": false,
               "intervalFactor": 2,
@@ -343,14 +343,14 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "irate(ifHCInOctets{job='snmp_ifalias',instance=~\"10.127.0.248\",ifDescr=~'Ethernet.*'}[30s])",
+              "expr": "irate(ifHCInOctets{job='snmp',instance=~\"dc2-ethsw-2.ciscolive.network\",ifDescr=~'Ethernet.*'}[30s])",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "{{sysName}} : {{ifDescr}} ({{ifAlias}}) IN",
               "refId": "A"
             },
             {
-              "expr": "irate(ifHCOutOctets{job=\"snmp_ifalias\",instance=~'10.127.0.248',ifDescr=~'Ethernet.*'}[30s])",
+              "expr": "irate(ifHCOutOctets{job=\"snmp\",instance=~'dc2-ethsw-2.ciscolive.network',ifDescr=~'Ethernet.*'}[30s])",
               "format": "time_series",
               "instant": false,
               "intervalFactor": 2,
@@ -417,9 +417,9 @@
       {
         "allValue": null,
         "current": {
-          "text": "10.127.0.248",
+          "text": "dc2-ethsw-2.ciscolive.network",
           "value": [
-            "10.127.0.248"
+            "dc2-ethsw-2.ciscolive.network"
           ]
         },
         "datasource": "Prometheus",
@@ -429,7 +429,7 @@
         "multi": true,
         "name": "Device",
         "options": [],
-        "query": "query_result(sum by (instance)(ifHCInOctets{job=\"snmp_ifalias\"}))",
+        "query": "query_result(sum by (instance)(ifHCInOctets{job=\"snmp\"}))",
         "refresh": 1,
         "regex": ".*instance=\"(.*?)\".*",
         "sort": 1,
@@ -452,7 +452,7 @@
         "multi": false,
         "name": "Interface",
         "options": [],
-        "query": "query_result(ifHCInOctets{job=\"snmp_ifalias\",instance=~\"$Device\"})",
+        "query": "query_result(ifHCInOctets{job=\"snmp\",instance=~\"$Device\"})",
         "refresh": 1,
         "regex": ".*ifDescr=\"(.*?)\",.*",
         "sort": 3,

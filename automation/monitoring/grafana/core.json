@@ -56,7 +56,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"9\",instance=\"10.128.0.1\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"9\",instance=\"core1-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "hide": false,
               "intervalFactor": 2,
@@ -64,49 +64,49 @@
               "refId": "A"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"10\",instance=\"10.128.0.1\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"10\",instance=\"core1-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "TenGi0/1/1_IN",
               "refId": "C"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"11\",instance=\"10.128.0.1\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"11\",instance=\"core1-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "TenGi0/1/2_IN",
               "refId": "D"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"12\",instance=\"10.128.0.1\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"12\",instance=\"core1-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "TenGi0/1/3_IN",
               "refId": "B"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"9\",instance=\"10.128.0.1\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"9\",instance=\"core1-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "TenGi0/1/0_OUT",
               "refId": "E"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"10\",instance=\"10.128.0.1\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"10\",instance=\"core1-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "TenGi0/1/1_OUT",
               "refId": "F"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"11\",instance=\"10.128.0.1\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"11\",instance=\"core1-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "TenGi0/1/2_OUT",
               "refId": "G"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"12\",instance=\"10.128.0.1\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"12\",instance=\"core1-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "TenGi0/1/3_OUT",
@@ -181,7 +181,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"9\",instance=\"10.128.0.2\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"9\",instance=\"core2-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "hide": false,
               "intervalFactor": 2,
@@ -189,7 +189,7 @@
               "refId": "A"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"10\",instance=\"10.128.0.2\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"10\",instance=\"core2-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "hide": false,
               "intervalFactor": 2,
@@ -197,7 +197,7 @@
               "refId": "C"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"11\",instance=\"10.128.0.2\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"11\",instance=\"core2-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "hide": false,
               "intervalFactor": 2,
@@ -205,7 +205,7 @@
               "refId": "D"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"12\",instance=\"10.128.0.2\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"12\",instance=\"core2-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "hide": false,
               "intervalFactor": 2,
@@ -213,7 +213,7 @@
               "refId": "E"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"9\",instance=\"10.128.0.2\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"9\",instance=\"core2-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "hide": false,
               "intervalFactor": 2,
@@ -221,21 +221,21 @@
               "refId": "F"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"10\",instance=\"10.128.0.2\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"10\",instance=\"core2-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "TE0/1/1_OUT",
               "refId": "B"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"11\",instance=\"10.128.0.2\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"11\",instance=\"core2-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "TE0/1/2_OUT",
               "refId": "G"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"12\",instance=\"10.128.0.2\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"12\",instance=\"core2-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "TE0/1/3_OUT",
@@ -322,267 +322,267 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"2\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"2\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/1_IN",
               "refId": "A"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"3\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"3\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/2_IN",
               "refId": "B"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"4\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"4\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/3_IN",
               "refId": "C"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"5\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"5\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/4_IN",
               "refId": "D"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"6\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"6\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/5_IN",
               "refId": "E"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"7\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"7\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/6_IN",
               "refId": "F"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"8\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"8\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/7_IN",
               "refId": "G"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"9\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"9\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/8_IN",
               "refId": "H"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"50\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"50\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Hu1/0/49_IN",
               "refId": "I"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"51\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"51\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Hu1/0/50_IN",
               "refId": "J"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"52\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"52\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Hu1/0/51_IN",
               "refId": "K"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"53\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"53\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Hu1/0/52_IN",
               "refId": "L"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"14\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"14\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/13_IN",
               "refId": "M"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"15\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"15\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/14_IN",
               "refId": "N"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"16\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"16\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/15_IN",
               "refId": "O"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"17\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"17\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/16_IN",
               "refId": "P"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"18\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"18\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/17_IN",
               "refId": "Q"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"19\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"19\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/18_IN",
               "refId": "R"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"20\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"20\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/19_IN",
               "refId": "S"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"21\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"21\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/20_IN",
               "refId": "T"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"2\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"2\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/1_OUT",
               "refId": "U"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"3\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"3\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/2_OUT",
               "refId": "V"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"4\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"4\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/3_OUT",
               "refId": "W"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"5\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"5\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/4_OUT",
               "refId": "X"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"6\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"6\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/5_OUT",
               "refId": "Y"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"7\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"7\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/6_OUT",
               "refId": "Z"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"8\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"8\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/7_OUT"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"9\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"9\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/8_OUT"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"50\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"50\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Hu1/0/49_OUT"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"51\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"51\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Hu1/0/50_OUT"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"52\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"52\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Hu1/0/51_OUT"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"53\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"53\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Hu1/0/52_OUT"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"14\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"14\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/13_OUT"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"15\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"15\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/14_OUT"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"16\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"16\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/15_OUT"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"17\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"17\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/16_OUT"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"18\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"18\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/17_OUT"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"19\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"19\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/18_OUT"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"20\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"20\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/19_OUT"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"21\",instance=\"10.127.0.252\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"21\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/20_OUT"
@@ -656,267 +656,267 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"2\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"2\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/1_IN",
               "refId": "A"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"3\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"3\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/2_IN",
               "refId": "B"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"4\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"4\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/3_IN",
               "refId": "C"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"5\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"5\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/4_IN",
               "refId": "D"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"6\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"6\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/5_IN",
               "refId": "E"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"7\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"7\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/6_IN",
               "refId": "F"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"8\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"8\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/7_IN",
               "refId": "G"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"9\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"9\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/8_IN",
               "refId": "H"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"50\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"50\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Hu1/0/49_IN",
               "refId": "I"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"51\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"51\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Hu1/0/50_IN",
               "refId": "J"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"52\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"52\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Hu1/0/51_IN",
               "refId": "K"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"53\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"53\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Hu1/0/52_IN",
               "refId": "L"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"14\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"14\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/13_IN",
               "refId": "M"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"15\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"15\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/14_IN",
               "refId": "N"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"16\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"16\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/15_IN",
               "refId": "O"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"17\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"17\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/16_IN",
               "refId": "P"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"18\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"18\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/17_IN",
               "refId": "Q"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"19\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"19\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/18_IN",
               "refId": "R"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"20\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"20\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/19_IN",
               "refId": "S"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"21\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"21\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/20_IN",
               "refId": "T"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"2\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"2\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/1_OUT",
               "refId": "U"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"3\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"3\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/2_OUT",
               "refId": "V"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"4\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"4\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/3_OUT",
               "refId": "W"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"5\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"5\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/4_OUT",
               "refId": "X"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"6\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"6\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/5_OUT",
               "refId": "Y"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"7\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"7\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/6_OUT",
               "refId": "Z"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"8\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"8\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/7_OUT"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"9\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"9\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/8_OUT"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"50\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"50\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Hu1/0/49_OUT"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"51\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"51\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Hu1/0/50_OUT"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"52\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"52\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Hu1/0/51_OUT"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"53\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"53\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Hu1/0/52_OUT"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"14\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"14\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/13_OUT"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"15\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"15\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/14_OUT"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"16\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"16\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/15_OUT"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"17\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"17\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/16_OUT"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"18\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"18\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/17_OUT"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"19\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"19\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/18_OUT"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"20\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"20\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/19_OUT"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"21\",instance=\"10.127.0.253\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"21\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "Twe1/0/20_OUT"
@@ -1002,49 +1002,49 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"67\",instance=\"10.127.0.101\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"67\",instance=\"003-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "003-Te1/1/8_IN",
               "refId": "A"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"67\",instance=\"10.127.0.103\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"67\",instance=\"003-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "003-Te1/1/8_OUT",
               "refId": "B"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"67\",instance=\"10.127.0.101\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"67\",instance=\"004-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "004-Te1/1/8_IN",
               "refId": "C"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"67\",instance=\"10.127.0.103\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"67\",instance=\"004-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "004-Te1/1/8_OUT",
               "refId": "D"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"49\",instance=\"10.127.0.105\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"49\",instance=\"005-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "005-Te1/0/48_IN",
               "refId": "E"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"49\",instance=\"10.127.0.105\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"49\",instance=\"005-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "005-Te1/0/48_OUT",
               "refId": "F"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"49\",instance=\"10.127.0.107\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"49\",instance=\"006-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 2,
@@ -1052,14 +1052,14 @@
               "refId": "G"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"49\",instance=\"10.127.0.107\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"49\",instance=\"006-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "006-Te1/0/48_OUT",
               "refId": "H"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"49\",instance=\"10.127.0.109\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"49\",instance=\"007-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 2,
@@ -1067,14 +1067,14 @@
               "refId": "I"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"49\",instance=\"10.127.0.109\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"49\",instance=\"007-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "007-Te1/0/48_OUT",
               "refId": "J"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"49\",instance=\"10.127.0.111\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"49\",instance=\"008-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 2,
@@ -1082,7 +1082,7 @@
               "refId": "K"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"49\",instance=\"10.127.0.111\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"49\",instance=\"008-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "008-Te1/0/48_OUT",
@@ -1157,49 +1157,49 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"67\",instance=\"10.127.0.102\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"67\",instance=\"003-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "003-Te1/1/8_IN",
               "refId": "A"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"67\",instance=\"10.127.0.102\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"67\",instance=\"003-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "003-Te1/1/8_OUT",
               "refId": "B"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"67\",instance=\"10.127.0.104\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"67\",instance=\"004-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "004-Te1/1/8_IN",
               "refId": "C"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"67\",instance=\"10.127.0.104\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"67\",instance=\"004-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "004-Te1/1/8_OUT",
               "refId": "D"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"49\",instance=\"10.127.0.106\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"49\",instance=\"005-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "005-Te1/0/48_IN",
               "refId": "E"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"49\",instance=\"10.127.0.106\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"49\",instance=\"005-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "005-Te1/0/48_OUT",
               "refId": "F"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"49\",instance=\"10.127.0.108\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"49\",instance=\"006-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 2,
@@ -1207,14 +1207,14 @@
               "refId": "G"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"49\",instance=\"10.127.0.108\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"49\",instance=\"006-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "006-Te1/0/48_OUT",
               "refId": "H"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"49\",instance=\"10.127.0.110\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"49\",instance=\"007-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 2,
@@ -1222,7 +1222,7 @@
               "refId": "I"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"49\",instance=\"10.127.0.110\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"49\",instance=\"007-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 2,
@@ -1230,7 +1230,7 @@
               "refId": "J"
             },
             {
-              "expr": "delta(ifHCInOctets{ifIndex=\"49\",instance=\"10.127.0.112\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCInOctets{ifIndex=\"49\",instance=\"008-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 2,
@@ -1238,7 +1238,7 @@
               "refId": "K"
             },
             {
-              "expr": "delta(ifHCOutOctets{ifIndex=\"49\",instance=\"10.127.0.10.112\",job=\"snmp\"}[5m])*8/300",
+              "expr": "delta(ifHCOutOctets{ifIndex=\"49\",instance=\"008-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "008-Te1/0/48_OUT",
@@ -1326,6 +1326,6 @@
     ]
   },
   "timezone": "",
-  "title": "CLEUR19_CORE-NETWORK",
+  "title": "CLEUR20_CORE-NETWORK",
   "version": 25
 }
