@@ -82,6 +82,9 @@ def main():
             continue
         hlist.append(h.strip())
 
+    if args.output_file == "-":
+        args.output_file = sys.stdout
+
     with open(args.output_file, "w") as fd:
         json.dump(hlist, fd, indent=4)
 
