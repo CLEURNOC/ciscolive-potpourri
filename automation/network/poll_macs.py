@@ -156,9 +156,9 @@ def get_results(dev):
                         '{}{{idf="{}"}} {}'.format(metric, dev["device"], m.group(1))
                     )
                 else:
-                    sys.stderr.write(
-                        'Failed to find pattern "{}" in "{}"\n'.format(pattern, output)
-                    )
+                    # sys.stderr.write(
+                    #     'Failed to find pattern "{}" in "{}"\n'.format(pattern, output)
+                    # )
                     response.append(
                         '{}{{idf="{}"}} {}'.format(metric, dev["device"], 0)
                     )
