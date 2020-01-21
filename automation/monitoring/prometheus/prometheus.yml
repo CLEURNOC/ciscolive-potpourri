@@ -52,7 +52,7 @@ scrape_configs:
   - job_name: 'snmp'
     metrics_path: /snmp
     params:
-      module: [if_mib]
+      module: [if_mib, if_mib_ifalias]
     static_configs:
       - targets:
         - 006-mdf-a.ciscolive.network
