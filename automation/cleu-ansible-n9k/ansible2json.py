@@ -30,6 +30,12 @@ import subprocess
 import os
 import json
 import argparse
+from yaml import load, dump
+
+try:
+    from yaml import CLoader as Loader, CDumper as Dumper
+except ImportError:
+    from yaml import Loader, Dumper
 
 
 def main():
@@ -41,6 +47,9 @@ def main():
         metavar="<PLAYBOOK_NAME>",
         help="Name of playbook to use to generate file (default: add-to-librenms-playbook.yml)",
         default="add-to-librenms-playbook.yml",
+    )
+    parser.add_argument(
+        "--format", "-f", metavar="<JSON|YAML>", help="Output format (default: JSON)", choices=["YAML", "JSON"], default="JSON"
     )
     parser.add_argument("--limit", metavar="<LIMIT_STRING>", help="Optional set of hosts or groups to limit")
     args = parser.parse_args()
@@ -89,7 +98,10 @@ def main():
     else:
         fd = open(args.output_file, "w")
 
-    json.dump(hlist, fd, indent=4)
+    if args.format == "JSON":
+        json.dump(hlist, fd, indent=4)
+    else:
+        dump(hlist, fd, Dumper=Dumper)
     fd.write("\n")
     if args.output_file == "-":
         fd.flush()
