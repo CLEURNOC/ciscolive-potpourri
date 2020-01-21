@@ -130,8 +130,9 @@ def get_devs(p):
             ip = dev
             try:
                 ip = socket.gethostbyname(dev)
-            except:
-                pass
+            except Exception as e:
+                spark.post_to_spark(C.WEBEX_TEAM, ROOM_NAME, "Failed to resolve {}: {}".format(dev, e), MessageType.WARNING)
+                continue
             j.append({"Hostname": dev, "IPAddress": ip, "Reachable": True})
 
         results = [pool.apply_async(ping_device, [d]) for d in j]
