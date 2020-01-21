@@ -82,11 +82,15 @@ def main():
             continue
         hlist.append(h.strip())
 
-    if args.output_file == "-":
-        args.output_file = sys.stdout
+    fd = None
 
-    with open(args.output_file, "w") as fd:
-        json.dump(hlist, fd, indent=4)
+    if args.output_file == "-":
+        fd = sys.stdout
+    else:
+        fd = open(args.output_file, "w")
+
+    json.dump(hlist, fd, indent=4)
+    fd.close()
 
 
 if __name__ == "__main__":
