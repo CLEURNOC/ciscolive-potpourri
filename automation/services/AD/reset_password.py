@@ -33,6 +33,7 @@ from flask import Flask
 import pythoncom
 import CLEUCreds
 import logging
+import logging.handlers as SYSLOG
 import socket
 from cleu.config import Config as C
 
@@ -42,7 +43,7 @@ AD_DC = "dc1-ad." + C.AD_DOMAIN
 app = Flask("CLEU Password Reset")
 
 
-def send_syslog(msg, facility=LOG_LOCAL7, severity=LOG_NOTICE, host="localhost", port=514):
+def send_syslog(msg, facility=SYSLOG.LOG_LOCAL7, severity=SYSLOG.LOG_NOTICE, host="localhost", port=514):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     data = "<%d>%s" % (severity + facility * 8, msg)
     sock.sendto(data, (host, port))
@@ -216,8 +217,8 @@ def reset_password():
 
     send_syslog(
         "PRINT-LABEL: requesting to print label for userid {}".format(session["target_username"]),
-        LOG_LOCAL1,
-        LOG_NOTICE,
+        SYSLOG.LOG_LOCAL1,
+        SYSLOG.LOG_NOTICE,
         C.TOOL,
     )
 
