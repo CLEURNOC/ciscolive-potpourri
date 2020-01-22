@@ -128,6 +128,7 @@ def check_auth(username, password):
         if dn is not None:
             session["dn"] = dn
             session["target_username"] = target_username
+            session["first_time"] = False
             return True
         else:
             try:
@@ -143,6 +144,7 @@ def check_auth(username, password):
                 if password == CLEUCreds.DEFAULT_USER_PASSWORD and int(obj.highpart) == 0 and int(obj.lowpart) == 0:
                     session["dn"] = dn
                     session["target_username"] = target_username
+                    session["first_time"] = True
                     return True
 
             except Exception as ie:
@@ -241,6 +243,12 @@ def reset_password():
   <body>
     <h1>Password Changed Successfully!</h1>"""
 
+    if session.get("first_time", False):
+        send_syslog(
+            "PRINT-LABEL: requesting to print label for userid {}".format(session["target_username"]), None, None, C.TOOL,
+        )
+        resp += "\n<h1>Please go see Dave Shen to get your barcode label.</h1>"
+
     if vpnuser and vpnuser == "true":
         resp += "\n<h1>Please disconnect your VPN and connect again with your AD credentials.</h1>"
     else:
@@ -249,10 +257,6 @@ def reset_password():
     resp += """
  </body>
 </html>"""
-
-    send_syslog(
-        "PRINT-LABEL: requesting to print label for userid {}".format(session["target_username"]), None, None, C.TOOL,
-    )
 
     return Response(resp, mimetype="text/html")
 
