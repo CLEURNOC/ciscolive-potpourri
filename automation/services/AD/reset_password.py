@@ -32,31 +32,42 @@ from flask import request, Response, session
 from flask import Flask
 import pythoncom
 import CLEUCreds
+import syslog
+import socket
 from cleu.config import Config as C
 
 
-AD_DC = 'dc1-ad.' + AD_DOMAIN
+AD_DC = "dc1-ad." + AD_DOMAIN
 
-app = Flask('CLEU Password Reset')
+app = Flask("CLEU Password Reset")
+
+
+def send_syslog(msg, facility=syslog.LOG_LOCAL7, severity=syslog.LOG_NOTICE, host="localhost", port=514):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    data = "<%d>%s" % (severity + facility * 8, msg)
+    sock.sendto(data, (host, port))
+    sock.close()
 
 
 def query_user(username, password, target_user):
     global AD_DC
 
     try:
-        adcontainer.ADContainer.from_dn(C.AD_DN_BASE, options={
-                                        'ldap_server': AD_DC, 'username': username, 'password': password})
+        adcontainer.ADContainer.from_dn(C.AD_DN_BASE, options={"ldap_server": AD_DC, "username": username, "password": password})
     except Exception as e:
         print(e)
         return None
 
     try:
-        q = adquery.ADQuery(
-            options={'ldap_server': AD_DC, 'username': username, 'password': password})
-        q.execute_query(attributes=['distinguishedName'], where_clause="sAMAccountName='{}'".format(
-            target_user), base_dn=C.AD_DN_BASE, options={'ldap_server': AD_DC, 'username': username, 'password': password})
+        q = adquery.ADQuery(options={"ldap_server": AD_DC, "username": username, "password": password})
+        q.execute_query(
+            attributes=["distinguishedName"],
+            where_clause="sAMAccountName='{}'".format(target_user),
+            base_dn=C.AD_DN_BASE,
+            options={"ldap_server": AD_DC, "username": username, "password": password},
+        )
         for row in q.get_results():
-            return row['distinguishedName']
+            return row["distinguishedName"]
     except Exception as e:
         print(e)
         return None
@@ -65,35 +76,37 @@ def query_user(username, password, target_user):
 def check_auth(username, password):
     pythoncom.CoInitialize()
 
-    if username == C.VPN_USER or username == C.VPN_USER + '@' + C.AD_DOMAIN:
+    if username == C.VPN_USER or username == C.VPN_USER + "@" + C.AD_DOMAIN:
         return False
 
-    if 'dn' in session:
+    if "dn" in session:
         return True
 
-    if not re.search(r'@{}$'.format(C.AD_DOMAIN), username):
-        username += '@{}'.format(C.AD_DOMAIN)
+    if not re.search(r"@{}$".format(C.AD_DOMAIN), username):
+        username += "@{}".format(C.AD_DOMAIN)
 
-    target_username = username.replace('@{}'.format(C.AD_DOMAIN), '')
+    target_username = username.replace("@{}".format(C.AD_DOMAIN), "")
 
     try:
         dn = query_user(username, password, target_username)
         if dn is not None:
-            session['dn'] = dn
+            session["dn"] = dn
+            session["target_username"] = target_username
             return True
         else:
             try:
                 dn = None
-                dn = query_user(CLEUCreds.AD_ADMIN,
-                                CLEUCreds.AD_PASSWORD, target_username)
+                dn = query_user(CLEUCreds.AD_ADMIN, CLEUCreds.AD_PASSWORD, target_username)
                 if dn is None:
                     return False
 
-                adu = aduser.ADUser.from_dn(dn, options={
-                                            'ldap_server': AD_DC, 'username': CLEUCreds.AD_ADMIN, 'password': CLEUCreds.AD_PASSWORD})
-                obj = adu.get_attribute('pwdLastSet', False)
+                adu = aduser.ADUser.from_dn(
+                    dn, options={"ldap_server": AD_DC, "username": CLEUCreds.AD_ADMIN, "password": CLEUCreds.AD_PASSWORD}
+                )
+                obj = adu.get_attribute("pwdLastSet", False)
                 if password == CLEUCreds.DEFAULT_USER_PASSWORD and int(obj.highpart) == 0 and int(obj.lowpart) == 0:
-                    session['dn'] = dn
+                    session["dn"] = dn
+                    session["target_username"] = target_username
                     return True
 
             except Exception as ie:
@@ -108,9 +121,10 @@ def check_auth(username, password):
 
 def authenticate():
     return Response(
-        'Failed to verify credentials for password reset.\n'
-        'You have to login with proper credentials.', 401,
-        {'WWW-Authenticate': 'Basic realm="CLEU Password Reset; !!!ENTER YOUR AD USERNAME AND PASSWORD!!!"'})
+        "Failed to verify credentials for password reset.\n" "You have to login with proper credentials.",
+        401,
+        {"WWW-Authenticate": 'Basic realm="CLEU Password Reset; !!!ENTER YOUR AD USERNAME AND PASSWORD!!!"'},
+    )
 
 
 def requires_auth(f):
@@ -120,17 +134,19 @@ def requires_auth(f):
         if not auth or not check_auth(auth.username, auth.password):
             return authenticate()
         return f(*args, **kwargs)
+
     return decorated
 
 
-@app.route('/reset-password', methods=['POST'])
+@app.route("/reset-password", methods=["POST"])
 @requires_auth
 def reset_password():
-    new_pw = request.form.get('new_pass')
-    new_pw_confirm = request.form.get('new_pass_confirm')
-    vpnuser = request.form.get('vpnuser')
-    if new_pw.strip() == '' or new_pw_confirm.strip() == '':
-        return Response('''
+    new_pw = request.form.get("new_pass")
+    new_pw_confirm = request.form.get("new_pass_confirm")
+    vpnuser = request.form.get("vpnuser")
+    if new_pw.strip() == "" or new_pw_confirm.strip() == "":
+        return Response(
+            """
 <html>
   <head>
     <title>Bad Password</title>
@@ -138,10 +154,13 @@ def reset_password():
   <body>
   <p>You must specify a new password.</p>
   </body>
-</html>''', mimetype='text/html')
+</html>""",
+            mimetype="text/html",
+        )
 
     if new_pw != new_pw_confirm:
-        return Response('''
+        return Response(
+            """
 <html>
   <head>
     <title>Bad Password</title>
@@ -149,14 +168,18 @@ def reset_password():
   <body>
     <p>Passwords did not match</p>
   </body>
-</html>''', mimetype='text/html')
+</html>""",
+            mimetype="text/html",
+        )
 
-    adu = aduser.ADUser.from_dn(session['dn'], options={
-                                'ldap_server': AD_DC, 'username': CLEUCreds.AD_ADMIN, 'password': CLEUCreds.AD_PASSWORD})
+    adu = aduser.ADUser.from_dn(
+        session["dn"], options={"ldap_server": AD_DC, "username": CLEUCreds.AD_ADMIN, "password": CLEUCreds.AD_PASSWORD}
+    )
     try:
         adu.set_password(new_pw)
     except Exception as e:
-        return Response('''
+        return Response(
+            """
 <html>
   <head>
     <title>Failed to Reset Password</title>
@@ -165,33 +188,46 @@ def reset_password():
   <h1>Password Reset Failed!</h1>
   <p>{}</p>
   </body>
-</html>'''.format(e), mimetype='text/html')
+</html>""".format(
+                e
+            ),
+            mimetype="text/html",
+        )
 
     adu.grant_password_lease()
-    del session['dn']
+    del session["dn"]
 
-    resp = '''
+    resp = """
 <html>
   <head>
     <title>Password Changed Successfully!</title>
   </head>
   <body>
-    <h1>Password Changed Successfully!</h1>'''
+    <h1>Password Changed Successfully!</h1>"""
 
-    if vpnuser and vpnuser == 'true':
-        resp += '\n<h1>Please disconnect your VPN and connect again with your AD credentials.</h1>'
+    if vpnuser and vpnuser == "true":
+        resp += "\n<h1>Please disconnect your VPN and connect again with your AD credentials.</h1>"
+    else:
+        resp += "\n<h1>Please close this browser window.</h1>"
 
-    resp += '''
+    resp += """
  </body>
-</html>'''
+</html>"""
 
-    return Response(resp, mimetype='text/html')
+    send_syslog(
+        "PRINT-LABEL: requesting to print label for userid {}".format(session["target_username"]),
+        syslog.LOG_LOCAL1,
+        syslog.LOG_NOTICE,
+        C.TOOL,
+    )
+
+    return Response(resp, mimetype="text/html")
 
 
-@app.route('/')
+@app.route("/")
 @requires_auth
 def get_main():
-    page = '''
+    page = """
 <html>
   <head>
     <title>Password Reset Form</title>
@@ -241,21 +277,19 @@ def get_main():
            <div class="form-group">
              <input type="submit" name="submit" value="Reset My Password!" class="btn btn-primary">
              <input type="reset" name="reset" value="Start Over" class="btn btn-default">
-           </div>'''
-    page += '\n<input type="hidden" name="vpnuser" value="%s"/>' % (
-        request.args.get('vpnuser'))
-    page += '''
+           </div>"""
+    page += '\n<input type="hidden" name="vpnuser" value="%s"/>' % (request.args.get("vpnuser"))
+    page += """
          </form>
        </div>
      </div>
      </div>
   </body>
-</html>'''
+</html>"""
 
-    return Response(page, mimetype='text/html')
+    return Response(page, mimetype="text/html")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.secret_key = CLEUCreds.AD_PASSWORD
-    app.run(host='10.100.252.25', port=8443,
-            threaded=True, ssl_context=('chain.pem', 'privkey.pem'))
+    app.run(host="10.100.252.25", port=8443, threaded=True, ssl_context=("chain.pem", "privkey.pem"))
