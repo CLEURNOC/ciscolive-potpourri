@@ -32,10 +32,41 @@ from flask import request, Response, session
 from flask import Flask
 import pythoncom
 import CLEUCreds
-import logging
-import logging.handlers as SYSLOG
 import socket
 from cleu.config import Config as C
+
+LOG_EMERG = 0  #  system is unusable
+LOG_ALERT = 1  #  action must be taken immediately
+LOG_CRIT = 2  #  critical conditions
+LOG_ERR = 3  #  error conditions
+LOG_WARNING = 4  #  warning conditions
+LOG_NOTICE = 5  #  normal but significant condition
+LOG_INFO = 6  #  informational
+LOG_DEBUG = 7  #  debug-level messages
+
+#  facility codes
+LOG_KERN = 0  #  kernel messages
+LOG_USER = 1  #  random user-level messages
+LOG_MAIL = 2  #  mail system
+LOG_DAEMON = 3  #  system daemons
+LOG_AUTH = 4  #  security/authorization messages
+LOG_SYSLOG = 5  #  messages generated internally by syslogd
+LOG_LPR = 6  #  line printer subsystem
+LOG_NEWS = 7  #  network news subsystem
+LOG_UUCP = 8  #  UUCP subsystem
+LOG_CRON = 9  #  clock daemon
+LOG_AUTHPRIV = 10  #  security/authorization messages (private)
+LOG_FTP = 11  #  FTP daemon
+
+#  other codes through 15 reserved for system use
+LOG_LOCAL0 = 16  #  reserved for local use
+LOG_LOCAL1 = 17  #  reserved for local use
+LOG_LOCAL2 = 18  #  reserved for local use
+LOG_LOCAL3 = 19  #  reserved for local use
+LOG_LOCAL4 = 20  #  reserved for local use
+LOG_LOCAL5 = 21  #  reserved for local use
+LOG_LOCAL6 = 22  #  reserved for local use
+LOG_LOCAL7 = 23  #  reserved for local use
 
 
 AD_DC = "dc1-ad." + C.AD_DOMAIN
@@ -43,7 +74,7 @@ AD_DC = "dc1-ad." + C.AD_DOMAIN
 app = Flask("CLEU Password Reset")
 
 
-def send_syslog(msg, facility=SYSLOG.LOG_LOCAL7, severity=SYSLOG.LOG_NOTICE, host="localhost", port=514):
+def send_syslog(msg, facility=LOG_LOCAL7, severity=LOG_NOTICE, host="localhost", port=514):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     data = "<%d>%s" % (severity + facility * 8, msg)
     sock.sendto(data, (host, port))
@@ -216,10 +247,7 @@ def reset_password():
 </html>"""
 
     send_syslog(
-        "PRINT-LABEL: requesting to print label for userid {}".format(session["target_username"]),
-        SYSLOG.LOG_LOCAL1,
-        SYSLOG.LOG_NOTICE,
-        C.TOOL,
+        "PRINT-LABEL: requesting to print label for userid {}".format(session["target_username"]), LOG_LOCAL1, LOG_NOTICE, C.TOOL,
     )
 
     return Response(resp, mimetype="text/html")
