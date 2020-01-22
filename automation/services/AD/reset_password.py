@@ -24,6 +24,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+from __future__ import print_function
 from pyad import *
 import sys
 import re
@@ -76,8 +77,11 @@ app = Flask("CLEU Password Reset")
 
 def send_syslog(msg, facility=LOG_LOCAL7, severity=LOG_NOTICE, host="localhost", port=514):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    data = "<%d>%s" % (severity + facility * 8, msg)
-    sock.sendto(data, (host, port))
+    if severity is not None and facility is not None:
+        data = "<%d>%s" % (severity + facility * 8, msg)
+    else:
+        data = msg
+    sock.sendto(bytes(data, "utf-8"), (host, port))
     sock.close()
 
 
@@ -247,7 +251,7 @@ def reset_password():
 </html>"""
 
     send_syslog(
-        "PRINT-LABEL: requesting to print label for userid {}".format(session["target_username"]), LOG_LOCAL1, LOG_NOTICE, C.TOOL,
+        "PRINT-LABEL: requesting to print label for userid {}".format(session["target_username"]), None, None, C.TOOL,
     )
 
     return Response(resp, mimetype="text/html")
