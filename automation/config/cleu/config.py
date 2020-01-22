@@ -13,6 +13,7 @@ class Config:
     MONITORING = "cl-monitoring." + DNS_DOMAIN
     DHCP_SERVER = "dc1-dhcp." + DNS_DOMAIN
     PI = "cl-pi." + DNS_DOMAIN
+    DNAC = "sdacleur20." + DNS_DOMAIN
     CMX_GW = "http://cl-freebsd.{}:8002/api/v0.1/cmx".format(DNS_DOMAIN)
     TOOL_BASE = "https://tool.{}/n/static/port.html?".format(DNS_DOMAIN)
     AD_DOMAIN = "ad." + DNS_DOMAIN
