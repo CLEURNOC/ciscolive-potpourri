@@ -329,7 +329,7 @@
 - name: Add RDNSS server configuration
   nxos_config:
       lines:
-          - ipv6 nd ra dns server {{ item }} lifetime {{ rdnss_lifetime }} sequence {{ item_idx }}
+          - ipv6 nd ra dns server {{ item }} {{ rdnss_lifetime }} sequence {{ item_idx }}
       parents: interface Vlan{{ vlan_id }}
   when: (delete_vlan is not defined or not delete_vlan|bool) and svi_v6_network is defined
   with_items: "{{ dns_servers_v6 }}"
