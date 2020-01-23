@@ -344,7 +344,7 @@
 - name: Add RDNSS search domain
   nxos_config:
       lines:
-          - ipv6 nd ra dns search-list {{ item }} lifetime {{ rdnss_lifetime }} sequence {{ item_idx }}
+          - ipv6 nd ra dns search-list {{ item }} {{ rdnss_lifetime }} sequence {{ item_idx }}
       parents: interface Vlan{{ vlan_id }}
   when: (delete_vlan is not defined or not delete_vlan|bool) and svi_v6_network is defined
   with_items: "{{ search_domains }}"
