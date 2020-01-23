@@ -24,6 +24,8 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+from builtins import str
+from builtins import range
 import json
 import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
@@ -41,40 +43,23 @@ FIRST_IP = 31
 LAST_IP = 253
 
 IDF_OVERRIDES = {
-    252: {
-        'first_ip': 160,
-        'last_ip': '250'
-    },
-    253: {
-        'first_ip': 160,
-        'last_ip': '250'
-    },
-    254: {
-        'first_ip': 160,
-        'last_ip': '250'
-    }
+    252: {"first_ip": 160, "last_ip": "250"},
+    253: {"first_ip": 160, "last_ip": "250"},
+    254: {"first_ip": 160, "last_ip": "250"},
 }
 
-SCOPE_BASE = C.DHCP_BASE + 'Scope'
+SCOPE_BASE = C.DHCP_BASE + "Scope"
 
-DHCP_TEMPLATE = {
-    "optionList": {
-        "OptionItem": []
-    }
-}
+DHCP_TEMPLATE = {"optionList": {"OptionItem": []}}
 
-HEADERS = {
-    'authorization': CLEUCreds.JCLARKE_BASIC,
-    'accept': 'application/json',
-    'content-type': 'application/json'
-}
+HEADERS = {"authorization": CLEUCreds.JCLARKE_BASIC, "accept": "application/json", "content-type": "application/json"}
 
 
 def mtoc(mask):
     return IPAddress(mask).netmask_bits()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     if len(sys.argv) != 2:
         sys.stderr.write("usage: {} INPUT_FILE\n".format(sys.argv[0]))
         sys.exit(1)
@@ -82,21 +67,21 @@ if __name__ == '__main__':
     contents = None
 
     try:
-        fd = open(sys.argv[1], 'r')
+        fd = open(sys.argv[1], "r")
         contents = fd.read()
         fd.close()
     except Exception as e:
         sys.stderr.write("Failed to open {}: {}\n".format(sys.argv[1], str(e)))
         sys.exit(1)
 
-    for row in contents.split('\n'):
+    for row in contents.split("\n"):
         row = row.strip()
-        if re.search(r'^#', row):
+        if re.search(r"^#", row):
             continue
-        if row == '':
+        if row == "":
             continue
-        [vlan, mask, name, policy] = row.split(',')
-        if vlan == '' or mask == '' or name == '' or policy == '':
+        [vlan, mask, name, policy] = row.split(",")
+        if vlan == "" or mask == "" or name == "" or policy == "":
             sys.stderr.write("Skipping malformed row '{}'\n".format(row))
             continue
 
@@ -105,75 +90,80 @@ if __name__ == '__main__':
 
         idf_set = ()
 
-        if mask == '255.255.0.0':
+        if mask == "255.255.0.0":
             start = 0
             cnt = 0
 
         for i in range(start, cnt + 1):
             idf_set += (i,)
 
-        if mask != '255.255.0.0':
+        if mask != "255.255.0.0":
             idf_set += ADDITIONAL_IDFS
 
-        if mask.startswith('10.'):
-            octets = mask.split('.')
+        if mask.startswith("10."):
+            octets = mask.split(".")
             idf_set = (octets[2],)
-            mask = '255.255.255.0'
+            mask = "255.255.255.0"
 
         for i in idf_set:
-            prefix = 'IDF-{}'.format(str(i).zfill(3))
+            prefix = "IDF-{}".format(str(i).zfill(3))
             if i == 0:
-                prefix = 'CORE'
+                prefix = "CORE"
 
-            scope = ('{}-{}'.format(prefix, name)).upper()
-            ip = '10.{}.{}.0'.format(vlan, i)
-            octets = ['10', vlan, str(i), '0']
+            scope = ("{}-{}".format(prefix, name)).upper()
+            ip = "10.{}.{}.0".format(vlan, i)
+            octets = ["10", vlan, str(i), "0"]
             roctets = list(octets)
-            roctets[3] = '254'
+            roctets[3] = "254"
 
-            url = '{}/{}'.format(SCOPE_BASE, scope)
+            url = "{}/{}".format(SCOPE_BASE, scope)
 
-            response = requests.request(
-                'GET', url, headers=HEADERS, verify=False)
+            response = requests.request("GET", url, headers=HEADERS, verify=False)
             if response.status_code != 404:
-                sys.stderr.write("Scope {} already exists: {}\n".format(
-                    scope, response.status_code))
+                sys.stderr.write("Scope {} already exists: {}\n".format(scope, response.status_code))
                 continue
 
-            template = {'optionList': {'OptionItem': []}}
-            if mask == '255.255.0.0':
-                roctets[2] = '255'
-            template['optionList']['OptionItem'].append(
-                {'number': '3', 'value': '.'.join(roctets)})
+            template = {"optionList": {"OptionItem": []}}
+            if mask == "255.255.0.0":
+                roctets[2] = "255"
+            template["optionList"]["OptionItem"].append({"number": "3", "value": ".".join(roctets)})
             first_ip = FIRST_IP
             last_ip = LAST_IP
             if i in IDF_OVERRIDES:
-                first_ip = IDF_OVERRIDES[i]['first_ip']
-                last_ip = IDF_OVERRIDES[i]['last_ip']
+                first_ip = IDF_OVERRIDES[i]["first_ip"]
+                last_ip = IDF_OVERRIDES[i]["last_ip"]
 
             sipa = list(octets)
             sipa[3] = str(first_ip)
             eipa = list(octets)
             eipa[3] = str(last_ip)
-            if mask == '255.255.0.0':
-                eipa[2] = '255'
+            if mask == "255.255.0.0":
+                eipa[2] = "255"
 
-            sip = '.'.join(sipa)
-            eip = '.'.join(eipa)
+            sip = ".".join(sipa)
+            eip = ".".join(eipa)
 
-            rlist = {'RangeItem': [{'end': eip, 'start': sip}]}
+            rlist = {"RangeItem": [{"end": eip, "start": sip}]}
             cidr = mtoc(mask)
 
-            payload = {'embeddedPolicy': template, 'name': scope, 'policy': policy,
-                       'rangeList': rlist, 'subnet': '{}/{}'.format(ip, cidr), 'tenantId': '0', 'vpnId': '0'}
+            payload = {
+                "embeddedPolicy": template,
+                "name": scope,
+                "policy": policy,
+                "rangeList": rlist,
+                "subnet": "{}/{}".format(ip, cidr),
+                "tenantId": "0",
+                "vpnId": "0",
+            }
 
             try:
-                response = requests.request('PUT', url, data=json.dumps(
-                    payload), headers=HEADERS, verify=False)
+                response = requests.request("PUT", url, data=json.dumps(payload), headers=HEADERS, verify=False)
                 response.raise_for_status()
             except Exception as e:
-                sys.stderr.write("Error adding scope {} ({}/{}) with range sip:{} eip:{}: {} ({})\n".format(
-                    scope, ip, cidr, sip, eip, response.text, str(e)))
-                sys.stderr.write("Request: {}\n".format(
-                    json.dumps(payload, indent=4)))
+                sys.stderr.write(
+                    "Error adding scope {} ({}/{}) with range sip:{} eip:{}: {} ({})\n".format(
+                        scope, ip, cidr, sip, eip, response.text, str(e)
+                    )
+                )
+                sys.stderr.write("Request: {}\n".format(json.dumps(payload, indent=4)))
                 continue
