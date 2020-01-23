@@ -1,6 +1,6 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 #
-# Copyright (c) 2017-2019  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2020  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,6 +24,8 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+from builtins import str
+from builtins import range
 import json
 import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
@@ -31,106 +33,106 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 import sys
 import CLEUCreds
+from cleu.config import Config as C
 
-DHCP_BASE = 'https://dc1-dhcp.ciscolive.network:8443/web-services/rest/resource/Scope'
-IDF_CNT = 98
+IDF_CNT = 99
+ADDITIONAL_IDFS = (252, 253, 254)
 
-HEADERS = {
-    'authorization': CLEUCreds.JCLARKE_BASIC,
-    'accept': 'application/json',
-    'content-type': 'application/json'
+IDF_OVERRIDES = {
+    252: {"first_ip": 160, "last_ip": "250"},
+    253: {"first_ip": 160, "last_ip": "250"},
+    254: {"first_ip": 160, "last_ip": "250"},
 }
 
-if __name__ == '__main__':
+SCOPE_BASE = C.DHCP_BASE + "Scope"
+
+
+HEADERS = {"authorization": CLEUCreds.JCLARKE_BASIC, "accept": "application/json", "content-type": "application/json"}
+
+if __name__ == "__main__":
     if len(sys.argv) != 4:
-        sys.stderr.write(
-            "usage: {} VLAN <IDF|CORE> START\n".format(sys.argv[0]))
+        sys.stderr.write("usage: {} VLAN <IDF|CORE> START\n".format(sys.argv[0]))
         sys.exit(1)
 
     vlan = sys.argv[1]
     type = sys.argv[2].upper()
     start = sys.argv[3]
 
-    if type != 'CORE' and type != 'IDF':
+    if type != "CORE" and type != "IDF":
         sys.stderr.write("usage: {} VLAN <IDF|CORE> START\n".format(sys.argv[0]))
         sys.exit(1)
 
+    idf_set = ()
+
     istart = 1
-    prefix = 'IDF-' + str(istart).zfill(3)
+    prefix = "IDF-" + str(istart).zfill(3)
     rs = 1
     cnt = IDF_CNT
 
-    if type == 'CORE':
-        prefix = 'CORE-'
+    if type == "CORE":
+        prefix = "CORE-"
         rs = 0
         cnt = 0
 
-    first_scope_name = '{}-{}'.format(prefix, vlan.upper())
+    first_scope_name = "{}-{}".format(prefix, vlan.upper())
 
-    url = '{}/{}'.format(DHCP_BASE, first_scope_name)
+    url = "{}/{}".format(SCOPE_BASE, first_scope_name)
 
     try:
-        response = requests.request('GET', url, headers=HEADERS, verify=False)
+        response = requests.request("GET", url, headers=HEADERS, verify=False)
         response.raise_for_status()
     except Exception as e:
-        sys.stderr.write(
-            'Failed to get first scope details for {}: {}\n'.format(first_scope_name, e))
+        sys.stderr.write("Failed to get first scope details for {}: {}\n".format(first_scope_name, e))
         sys.exit(1)
 
     first_scope = response.json()
-    end = first_scope['rangeList']['RangeItem'][0]['end'].split('.')[3]
-    subnet = '.'.join(first_scope['subnet'].split('.')[0:2])
+    end = first_scope["rangeList"]["RangeItem"][0]["end"].split(".")[3]
+    subnet = ".".join(first_scope["subnet"].split(".")[0:2])
 
-    policy = first_scope['policy']
+    policy = first_scope["policy"]
     embedded_policy = None
-    if 'embeddedPolicy' in first_scope:
-        embedded_policy = first_scope['embeddedPolicy']
+    if "embeddedPolicy" in first_scope:
+        embedded_policy = first_scope["embeddedPolicy"]
 
     for i in range(rs, cnt + 1):
-        rstart = '{}.{}.{}'.format(subnet, i, start)
+        idf_set += (i,)
+
+    if type != "CORE":
+        idf_set += ADDITIONAL_IDFS
+
+    for i in idf_set:
+        rstart = "{}.{}.{}".format(subnet, i, start)
         eoctet = i
-        if type == 'CORE':
+        if type == "CORE":
             eoctet = 255
 
-        rend = '{}.{}.{}'.format(subnet, eoctet, end)
+        if i in IDF_OVERRIDES:
+            end = IDF_OVERRIDES[i]["last_ip"]
 
-        prefix = 'IDF-' + str(i).zfill(3)
+        rend = "{}.{}.{}".format(subnet, eoctet, end)
+
+        prefix = "IDF-" + str(i).zfill(3)
 
         if embedded_policy is not None:
-            embedded_policy = {
-                'optionList': {
-                    'OptionItem': [
-                        {
-                            'number': '3',
-                            'value': '{}.{}.{}'.format(subnet, eoctet, str(254))
-                        }
-                    ]
-                }
-            }
+            embedded_policy = {"optionList": {"OptionItem": [{"number": "3", "value": "{}.{}.{}".format(subnet, eoctet, str(254))}]}}
 
-        if type == 'CORE':
-            prefix = 'CORE-'
+        if type == "CORE":
+            prefix = "CORE-"
 
-        scope_name = '{}-{}'.format(prefix, vlan.upper())
+        scope_name = "{}-{}".format(prefix, vlan.upper())
 
-        url = '{}/{}'.format(DHCP_BASE, scope_name)
+        url = "{}/{}".format(SCOPE_BASE, scope_name)
 
         try:
             # print('Changing {} to start: {}, end: {}'.format(
             #    scope_name, start, end))
 
-            payload = {
-                'rangeList': {'RangeItem': [
-                    {'start': rstart, 'end': rend}]},
-                'policy': policy
-            }
+            payload = {"rangeList": {"RangeItem": [{"start": rstart, "end": rend}]}, "policy": policy}
             if embedded_policy is not None:
-                payload['embeddedPolicy'] = embedded_policy
+                payload["embeddedPolicy"] = embedded_policy
 
-            response = requests.request(
-                'PUT', url, json=payload, headers=HEADERS, verify=False)
+            response = requests.request("PUT", url, json=payload, headers=HEADERS, verify=False)
             response.raise_for_status()
         except Exception as e:
-            sys.stderr.write(
-                'Failed to update scope details for {}: {}\n'.format(scope_name, e))
+            sys.stderr.write("Failed to update scope details for {}: {}\n".format(scope_name, e))
             continue
