@@ -15,9 +15,9 @@ class Config:
     PI = "cl-pi." + DNS_DOMAIN
     DNAC = "sdacleur20." + DNS_DOMAIN
     CMX_GW = "http://cl-freebsd.{}:8002/api/v0.1/cmx".format(DNS_DOMAIN)
-    TOOL_BASE = "https://tool.{}/n/static/port.html?".format(DNS_DOMAIN)
+    TOOL = "tool." + DNS_DOMAIN
+    TOOL_BASE = "https://{}/n/static/port.html?".format(TOOL)
     AD_DOMAIN = "ad." + DNS_DOMAIN
     AD_DN_BASE = "cn=Users" + "".join([", dc={}".format(x) for x in AD_DOMAIN.split(".")])
-    TOOL = "tool." + DNS_DOMAIN
     VCENTER = "cl-vcenter." + AD_DOMAIN
     PW_RESET_URL = "https://cl-jump-01.{}:8443".format(DNS_DOMAIN)
