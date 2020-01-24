@@ -70,19 +70,16 @@ def send_command1(chan, command):
 def send_command(chan, command):
     chan.sendall(command + "\n")
     output = ""
-    while True:
-        if chan.recv_ready():
-            r = chan.recv(65535)
-            if len(r) == 0:
-                raise EOFError("Channel was closed by remote host")
-            output += r.decode("utf-8", "ignore")
-        else:
+    i = 0
+    while i < 60:
+        r = chan.recv(65535)
+        if len(r) == 0:
+            raise EOFError("Remote host has closed the connection")
+        r = r.decode("utf-8", "ignore")
+        output += r
+        if re.search(r"[#>]$", r.strip()):
             break
-
-    # Drain any remaining buffer.
-    time.sleep(1)
-    if chan.recv_ready():
-        output += chan.recv(65535).decode("utf-8", "ignore")
+        time.sleep(1)
 
     return output
 
