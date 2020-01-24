@@ -431,7 +431,7 @@ if __name__ == "__main__":
 
     person = spark.get_person(j["data"]["personId"])
     if person is not None:
-        spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, "Hey, {}.  Working on that for you...".person["nickName"])
+        spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, "Hey, {}.  Working on that for you...".format(person["nickName"]))
     else:
         spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, "Working on that for you...")
 
