@@ -324,6 +324,7 @@ def print_dnac(spark, what, details, msg):
     ssid = ""
     loc = ""
     hinfo = ""
+    sdetails = ""
     if "healthScore" in details:
         for score in details["healthScore"]:
             if "healthType" in score:
@@ -340,6 +341,8 @@ def print_dnac(spark, what, details, msg):
         ssid = "associated to SSID **{}**".format(details["ssid"])
     if details["location"]:
         loc = "located in **{}**".format(details["location"])
+    if details["port"] and details["clientConnection"]:
+        sdetails = "connected to device **{}** on port **{}**".format(details["clientConnection"], details["port"])
 
     if ohealth is not None:
         hinfo = "with health score **{}**".format(ohealth["score"])
@@ -354,7 +357,9 @@ def print_dnac(spark, what, details, msg):
             hinfo += "]"
 
     spark.post_to_spark(
-        C.WEBEX_TEAM, SPARK_ROOM, "{} {} is a {} client {} {} {} {}".format(msg, what, details["hostType"], ssid, loc, host_info, hinfo)
+        C.WEBEX_TEAM,
+        SPARK_ROOM,
+        "{} {} is a {} client {} {} {} {} {}".format(msg, what, details["hostType"], sdetails, ssid, loc, host_info, hinfo),
     )
 
 
