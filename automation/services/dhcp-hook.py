@@ -666,10 +666,11 @@ if __name__ == "__main__":
         if not found_hit and len(m) > 0:
             found_hit = True
             for hit in m:
-                leases = check_for_mac(hit[0])
-                pires = get_from_pi(mac=hit[0])
-                cmxres = get_from_cmx(mac=re.sub(r"(\d+,)+", "", hit[0]))
-                dnacres = get_from_dnac(mac=re.sub(r"(\d+,)+", "", hit[0]))
+                hmac = normalize_mac(hit[0])
+                leases = check_for_mac(hmac)
+                pires = get_from_pi(mac=hmac)
+                cmxres = get_from_cmx(mac=re.sub(r"(\d+,)+", "", hmac))
+                dnacres = get_from_dnac(mac=re.sub(r"(\d+,)+", "", hmac))
                 if leases is not None:
                     seen_ip = {}
                     for res in leases:
