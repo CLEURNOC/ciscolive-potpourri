@@ -666,7 +666,12 @@ if __name__ == "__main__":
                 cmxres = get_from_cmx(mac=re.sub(r"(\d+,)+", "", hit[0]))
                 dnacres = get_from_dnac(mac=re.sub(r"(\d+,)+", "", hit[0]))
                 if leases is not None:
+                    seen_ip = {}
                     for res in leases:
+                        if res["ip"] in seen_ip:
+                            continue
+
+                        seen_ip[res["ip"]] = True
                         if re.search(r"available", res["state"]):
                             spark.post_to_spark(
                                 C.WEBEX_TEAM,
