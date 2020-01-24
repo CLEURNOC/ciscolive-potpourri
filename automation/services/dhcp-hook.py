@@ -281,10 +281,7 @@ def check_for_lease(ip):
 def check_for_mac(mac):
     global CNR_HEADERS
 
-    res = {}
     url = "{}/Lease".format(C.DHCP_BASE)
-
-    mac_addr = normalize_mac(mac)
 
     try:
         response = requests.request("GET", url, headers=CNR_HEADERS, verify=False, params={"clientMacAddr": mac_addr})
@@ -298,9 +295,10 @@ def check_for_mac(mac):
         return None
     leases = []
     for lease in j:
+        res = {}
         relay = parse_relay_info(lease)
         if "address" not in lease:
-            return None
+            continue
         res["ip"] = lease["address"]
         if "clientHostName" in lease:
             res["name"] = lease["clientHostName"]
