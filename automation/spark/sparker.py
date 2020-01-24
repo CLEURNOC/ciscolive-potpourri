@@ -152,7 +152,7 @@ class Sparker:
         if not self.check_token():
             return None
 
-        url = self.SPARK_API + "person" + "/" + pid
+        url = self.SPARK_API + "people" + "/" + pid
 
         try:
             response = Sparker._request_with_retry("GET", url, headers=self._headers)
