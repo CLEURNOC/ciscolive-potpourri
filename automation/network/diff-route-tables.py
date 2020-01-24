@@ -68,7 +68,8 @@ def send_command1(chan, command):
 
 
 def send_command(chan, command):
-    chan.sendall(command + "\n")
+    chan.sendall(command)
+    time.sleep(0.5)
     output = ""
     i = 0
     while i < 60:
