@@ -284,7 +284,7 @@ def check_for_mac(mac):
     url = "{}/Lease".format(C.DHCP_BASE)
 
     try:
-        response = requests.request("GET", url, headers=CNR_HEADERS, verify=False, params={"clientMacAddr": mac_addr})
+        response = requests.request("GET", url, headers=CNR_HEADERS, verify=False, params={"clientMacAddr": mac})
         response.raise_for_status()
     except Exception as e:
         logging.warning("Did not get a good response from CNR for MAC {}: {}".format(mac, e))
