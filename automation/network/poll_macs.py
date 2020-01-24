@@ -99,16 +99,18 @@ devices = [
 
 def send_command(chan, command):
     chan.sendall(command + "\n")
-    i = 0
+    time.sleep(0.5)
     output = ""
-    while i < 10:
-        if chan.recv_ready():
+    i = 0
+    while i < 60:
+        r = chan.recv(65535)
+        if len(r) == 0:
+            raise EOFError("Remote host has closed the connection")
+        r = r.decode("utf-8", "ignore")
+        output += r
+        if re.search(r"[#>]$", r.strip()):
             break
-        i += 1
-        time.sleep(i * 0.5)
-    while chan.recv_ready():
-        r = chan.recv(131070).decode("utf-8")
-        output = output + r
+        time.sleep(1)
 
     return output
 
