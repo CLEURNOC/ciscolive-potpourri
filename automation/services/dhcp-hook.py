@@ -58,7 +58,7 @@ def normalize_mac(mac):
     # Normalize all MAC addresses to colon-delimited format.
     mac_addr = "".join(l + ":" * (n % 2 == 1) for n, l in enumerate(list(re.sub(r"[:.-]", "", mac)))).strip(":")
 
-    return mac_addr
+    return mac_addr.lower()
 
 
 def get_from_cmx(**kwargs):
