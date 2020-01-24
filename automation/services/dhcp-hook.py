@@ -62,6 +62,7 @@ def normalize_mac(mac):
 
 
 def get_from_cmx(**kwargs):
+    return None
     marker = "green"
     if "user" in kwargs and kwargs["user"] == "gru":
         marker = "gru"
@@ -319,6 +320,10 @@ def check_for_mac(mac):
 def print_dnac(spark, what, details, msg):
     ohealth = None
     healths = {}
+    host_info = ""
+    ssid = ""
+    loc = ""
+    hinfo = ""
     if "healthScore" in details:
         for score in details["healthScore"]:
             if "healthType" in score:
