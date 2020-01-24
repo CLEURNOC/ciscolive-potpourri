@@ -77,17 +77,12 @@ if __name__ == "__main__":
     ssh_client = paramiko.SSHClient()
     ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
-    try:
-        fd = open(ROUTER_FILE, "r")
-        routers = json.load(fd)
-        fd.close()
-    except Exception as e:
-        print("ERROR: Failed to load routers file {}: {}".format(ROUTER_FILE, e))
+    routers = ["CORE1-EDGE", "CORE2-EDGE"]
 
-    for router, ip in list(routers.items()):
+    for router in routers.items:
         try:
             ssh_client.connect(
-                ip, username=CLEUCreds.NET_USER, password=CLEUCreds.NET_PASS, timeout=60, allow_agent=False, look_for_keys=False,
+                router, username=CLEUCreds.NET_USER, password=CLEUCreds.NET_PASS, timeout=60, allow_agent=False, look_for_keys=False,
             )
             chan = ssh_client.invoke_shell()
             try:
@@ -97,7 +92,7 @@ if __name__ == "__main__":
                 pass
             output = ""
             try:
-                output = send_command(chan, "show ip nat limit all-host | inc [0-9][[:space:]]+[1-9][0-9]+[[:space:]]*$")
+                output = send_command(chan, "show ip nat limit all-host | inc [0-9] +[1-9][0-9]+[^0-9]+$")
             except Exception as ie:
                 print("Failed to get NAT limit from {}: {}".format(router, ie))
                 continue
