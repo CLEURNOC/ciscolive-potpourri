@@ -51,7 +51,7 @@ ROUTER_FILE = "/home/jclarke/routers.json"
 WEBEX_ROOM = "Core Alarms"
 
 
-def send_command(chan, command):
+def send_command1(chan, command):
     chan.sendall(command + "\n")
     i = 0
     output = ""
@@ -63,6 +63,26 @@ def send_command(chan, command):
     while chan.recv_ready():
         r = chan.recv(131070).decode("utf-8")
         output = output + r
+
+    return output
+
+
+def send_command(chan, command):
+    chan.sendall(command + "\n")
+    output = ""
+    while True:
+        if chan.recv_ready():
+            r = chan.recv(65535)
+            if len(r) == 0:
+                raise EOFError("Channel was closed by remote host")
+            output += r.decode("utf-8", "ignore")
+        else:
+            break
+
+    # Drain any remaining buffer.
+    time.sleep(1)
+    if chan.recv_ready():
+        output += chan.recv(65535).decode("utf-8", "ignore")
 
     return output
 
@@ -101,11 +121,14 @@ if __name__ == "__main__":
                 ip, username=CLEUCreds.NET_USER, password=CLEUCreds.NET_PASS, timeout=60, allow_agent=False, look_for_keys=False,
             )
             chan = ssh_client.invoke_shell()
+            try:
+                send_command(chan, "term length 0")
+                send_command(chan, "term width 0")
+            except:
+                pass
             for fname, command in list(commands.items()):
                 output = ""
                 try:
-                    send_command(chan, "term length 0")
-                    send_command(chan, "term width 0")
                     output = send_command(chan, command)
                 except Exception as ie:
                     print("Failed to get {} from {}: {}".format(command, router, ie))
