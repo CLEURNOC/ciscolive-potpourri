@@ -348,9 +348,9 @@ def print_dnac(spark, what, details, msg):
         if len(healths) > 0:
             hinfo += " ["
             for h, hobj in healths.items():
-                hinfo += "{} health: {}".format(h, hobj["score"])
+                hinfo += "{} health: {} ".format(h, hobj["score"])
                 if hobj["reason"] != "":
-                    hinfo += "(reason: {})".format(hobj["reason"])
+                    hinfo += "(reason: {}) ".format(hobj["reason"])
             hinfo += "]"
 
     spark.post_to_spark(
