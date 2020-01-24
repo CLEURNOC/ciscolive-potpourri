@@ -94,7 +94,7 @@ def get_from_dnac(**kwargs):
     # Get timestamp with milliseconds
     epoch = int(time.time() * 1000)
 
-    turl = "https://{}/dna/system/api/vi/auth/token".format(C.DNAC)
+    turl = "https://{}/dna/system/api/v1/auth/token".format(C.DNAC)
     theaders = {"content-type": "application/json", "authorization": CLEUCreds.DNAC_BASIC}
     try:
         response = requests.request("POST", turl, headers=theaders, verify=False)
@@ -428,6 +428,12 @@ if __name__ == "__main__":
         logging.error("Did not get a message")
         print('{"result":"error"}')
         sys.exit(0)
+
+    person = spark.get_person(j["data"]["personId"])
+    if person is not None:
+        spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, "Hey, {}.  Working on that for you...".person["nickName"])
+    else:
+        spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, "Working on that for you...")
 
     txt = msg["text"]
     found_hit = False

@@ -148,6 +148,25 @@ class Sparker:
 
         return response.json()
 
+    def get_person(self, pid):
+        if not self.check_token():
+            return None
+
+        url = self.SPARK_API + "person" + "/" + pid
+
+        try:
+            response.Sparker._request_with_retry("GET", url, headers=self._headers)
+            response.raise_for_status()
+        except Exception as e:
+            msg = "Error getting person with ID {}: {}".format(pid, getattr(e, "message", repr(e)))
+            if self._logit:
+                logging.error(msg)
+            else:
+                print(msg)
+            return None
+
+        return response.json()
+
     def get_team_id(self, team):
         if not self.check_token():
             return None
