@@ -115,7 +115,10 @@ def get_from_dnac(**kwargs):
         return None
 
     j = json.loads(response.text)
-    return j["details"]
+    if "errorCode" in j["detail"]:
+        return None
+
+    return j["detail"]
 
 
 def get_from_pi(**kwargs):
