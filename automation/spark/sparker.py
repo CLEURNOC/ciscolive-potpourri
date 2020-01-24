@@ -155,7 +155,7 @@ class Sparker:
         url = self.SPARK_API + "person" + "/" + pid
 
         try:
-            response.Sparker._request_with_retry("GET", url, headers=self._headers)
+            response = Sparker._request_with_retry("GET", url, headers=self._headers)
             response.raise_for_status()
         except Exception as e:
             msg = "Error getting person with ID {}: {}".format(pid, getattr(e, "message", repr(e)))
