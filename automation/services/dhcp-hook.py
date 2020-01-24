@@ -341,17 +341,17 @@ def print_dnac(spark, what, details, msg):
     if details["location"]:
         loc = "located in **{}**".format(details["location"])
 
-        if ohealth is not None:
-            hinfo = "with health score **{}**".format(ohealth["score"])
-            if ohealth["reason"]:
-                hinfo += " (reason: _{}_)".format(ohealth["reason"])
-            if len(healths) > 0:
-                hinfo += " ["
-                for h, hobj in healths.items():
-                    hinfo += "{} health: {}".format(j, hobj["score"])
-                    if hobj["reason"] != "":
-                        hinfo += "(reason: {})".format(hobj["reason"])
-                hinfo += "]"
+    if ohealth is not None:
+        hinfo = "with health score **{}**".format(ohealth["score"])
+        if ohealth["reason"]:
+            hinfo += " (reason: _{}_)".format(ohealth["reason"])
+        if len(healths) > 0:
+            hinfo += " ["
+            for h, hobj in healths.items():
+                hinfo += "{} health: {}".format(h, hobj["score"])
+                if hobj["reason"] != "":
+                    hinfo += "(reason: {})".format(hobj["reason"])
+            hinfo += "]"
 
     spark.post_to_spark(
         C.WEBEX_TEAM, SPARK_ROOM, "{} {} is a {} client {} {} {} {}".format(msg, what, details["hostType"], ssid, loc, host_info, hinfo)
