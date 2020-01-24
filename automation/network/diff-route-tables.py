@@ -68,7 +68,7 @@ def send_command1(chan, command):
 
 
 def send_command(chan, command):
-    chan.sendall(command)
+    chan.sendall(command + "\n")
     time.sleep(0.5)
     output = ""
     i = 0
