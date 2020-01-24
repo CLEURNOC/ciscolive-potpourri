@@ -118,6 +118,8 @@ if __name__ == "__main__":
                 ip, username=CLEUCreds.NET_USER, password=CLEUCreds.NET_PASS, timeout=60, allow_agent=False, look_for_keys=False,
             )
             chan = ssh_client.invoke_shell()
+            chan.settimeout(20)
+
             try:
                 send_command(chan, "term length 0")
                 send_command(chan, "term width 0")
@@ -134,6 +136,9 @@ if __name__ == "__main__":
                 fpath = "{}/{}-{}".format(cache_dir, fname, router)
                 curr_path = fpath + ".curr"
                 prev_path = fpath + ".prev"
+                if len(output) < 600:
+                    # we got a truncated file
+                    continue
                 fd = open(curr_path, "w")
                 output = re.sub(r"\r", "", output)
                 output = re.sub(r"([\d\.]+) (\[[^\n]+)", "\\1\n          \\2", output)
