@@ -16,7 +16,7 @@ class Config:
     DNAC = "sdacleur20." + DNS_DOMAIN
     CMX_GW = "http://cl-freebsd.{}:8002/api/v0.1/cmx".format(DNS_DOMAIN)
     TOOL = "tool." + DNS_DOMAIN
-    TOOL_BASE = "https://{}/n/static/port.html?".format(TOOL)
+    TOOL_BASE = "https://{}/Port/Switchport.aspx?".format(TOOL)
     AD_DOMAIN = "ad." + DNS_DOMAIN
     AD_DN_BASE = "cn=Users" + "".join([", dc={}".format(x) for x in AD_DOMAIN.split(".")])
     VCENTER = "cl-vcenter." + AD_DOMAIN

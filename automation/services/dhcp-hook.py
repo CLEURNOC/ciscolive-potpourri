@@ -577,8 +577,11 @@ if __name__ == "__main__":
                     if re.search(r"available", res["state"]):
                         port_info = res["relay-info"]["port"]
                         if port_info != "N/A":
-                            port_info = '<a href="{}switch_name={}&port_name={}">**{}**</a>'.format(
-                                C.TOOL_BASE, res["relay-info"]["switch"], res["relay-info"]["port"], res["relay-info"]["port"]
+                            port_info = '<a href="{}switchname={}&portname={}">**{}**</a>'.format(
+                                C.TOOL_BASE,
+                                "-".join(res["relay-info"]["switch"].split("-")[:-1]),
+                                res["relay-info"]["port"],
+                                res["relay-info"]["port"],
                             )
 
                         spark.post_to_spark(
@@ -598,8 +601,11 @@ if __name__ == "__main__":
                     else:
                         port_info = res["relay-info"]["port"]
                         if port_info != "N/A":
-                            port_info = '<a href="{}switch_name={}&port_name={}">**{}**</a>'.format(
-                                C.TOOL_BASE, res["relay-info"]["switch"], res["relay-info"]["port"], res["relay-info"]["port"]
+                            port_info = '<a href="{}switchname={}&portname={}">**{}**</a>'.format(
+                                C.TOOL_BASE,
+                                "-".join(res["relay-info"]["switch"].split("-")[:-1]),
+                                res["relay-info"]["port"],
+                                res["relay-info"]["port"],
                             )
 
                         spark.post_to_spark(
