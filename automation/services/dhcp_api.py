@@ -46,7 +46,7 @@ CNR_HEADERS = {"Accept": "application/json", "Content-Type": "application/json",
 @use_kwargs({"subnet": fields.Str()}, locations=("query",))
 def get_leases_for_subnet(**kwargs):
     if not "subnet" in kwargs:
-        return Response(jsonify({"msg": "subnet parameter is required"}), mimetype="application/json", status=400)
+        return jsonify({"msg": "subnet parameter is required"}), 400
 
     url = C.DHCP_BASE + "Scope"
     response = None
@@ -58,17 +58,14 @@ def get_leases_for_subnet(**kwargs):
         status_code = 500
         if response:
             status_code = response.status_code
-        return Response(
+        return (
             jsonify({"msg": "Error getting scope for subnet {}: {}".format(kwargs["subnet"], getattr(e, "message", repr(e)))}),
-            mimetype="application/json",
-            status=status_code,
+            status_code,
         )
 
     j = response.json()
     if not "name" in j:
-        return Response(
-            jsonify({"msg": "Error getting scope for subnet {}".format(kwargs["subnet"])}), mimetype="application/json", status=500
-        )
+        return jsonify({"msg": "Error getting scope for subnet {}".format(kwargs["subnet"])}), 500
 
     url = C.DHCP_BASE + "Lease"
     subnet_re = "\\.".join(kwargs["subnet"].split(".")[:2]) + "\\..*"
@@ -82,10 +79,9 @@ def get_leases_for_subnet(**kwargs):
             status_code = 500
             if response:
                 status_code = response.status_code
-            return Response(
+            return (
                 jsonify({"msg": "Error getting leases for subnet {}: {}".format(kwargs["subnet"], getattr(e, "message", repr(e)))}),
-                mimetype="application/json",
-                status=staus_code,
+                staus_code,
             )
 
         j = response.json()
@@ -100,7 +96,7 @@ def get_leases_for_subnet(**kwargs):
         else:
             break
 
-    return Response(jsonify(result), mimetype="application/json", status=200)
+    return jsonify(result), 200
 
 
 if __name__ == "__main__":
