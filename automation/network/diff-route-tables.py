@@ -48,7 +48,7 @@ commands = {"ip_route": "show ip route", "ipv6_route": "show ipv6 route"}
 cache_dir = "/home/jclarke/routing-tables"
 ROUTER_FILE = "/home/jclarke/routers.json"
 
-WEBEX_ROOM = "Core Alarms"
+WEBEX_ROOM = "Edge Routing Diffs"
 
 
 def send_command1(chan, command):
