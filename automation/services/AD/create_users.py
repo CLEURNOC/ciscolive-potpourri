@@ -47,7 +47,7 @@ if __name__ == "__main__":
                 names = member["personDisplayName"].split(" ")
                 fullname = names[0] + " " + names[-1]
                 try:
-                    ad_user = aduser.ADUser.from_dn("cn={}, {}".format(fullname, AD_DN_BASE))
+                    ad_user = aduser.ADUser.from_dn("cn={}, {}".format(fullname, C.AD_DN_BASE))
                     if ad_user is not None:
                         sys.stderr.write("Not creating {} ({}) as they already exist.\n".format(m.group(1), fullname))
                         continue
