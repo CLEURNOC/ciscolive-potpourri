@@ -116,6 +116,9 @@ def check_auth(username, password):
     if username == C.VPN_USER or username == C.VPN_USER + "@" + C.AD_DOMAIN:
         return False
 
+    if "loggedout" in session:
+        del session["loggedout"]
+
     if "dn" in session:
         return True
 
@@ -130,8 +133,6 @@ def check_auth(username, password):
             session["dn"] = dn
             session["target_username"] = target_username
             session["first_time"] = False
-            if "loggedout" in session:
-                del session["loggedout"]
             return True
         else:
             try:
@@ -148,8 +149,6 @@ def check_auth(username, password):
                     session["dn"] = dn
                     session["target_username"] = target_username
                     session["first_time"] = True
-                    if "loggedout" in session:
-                        del session["loggedout"]
                     return True
 
             except Exception as ie:
