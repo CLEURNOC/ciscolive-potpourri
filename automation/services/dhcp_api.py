@@ -96,7 +96,7 @@ def get_leases_for_subnet(**kwargs):
                 result.append(lease)
 
         if response.headers.get("Link"):
-            links = requests.util.parse_header_links(response.headers.get("Link"))
+            links = requests.utils.parse_header_links(response.headers.get("Link"))
             for link in links:
                 if "rel" in link and link["rel"] == "next":
                     url = link["url"]
