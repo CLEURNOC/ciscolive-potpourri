@@ -108,6 +108,8 @@ HX_HOSTS_DC2
 007-mdf-b.ciscolive.network
 008-mdf-a.ciscolive.network
 008-mdf-b.ciscolive.network
+spare2-mdf-a.ciscolive.network
+spare2-mdf-b.ciscolive.network
 
 [IDF]
 003-x02.ciscolive.network
