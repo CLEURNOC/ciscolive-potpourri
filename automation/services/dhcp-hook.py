@@ -124,13 +124,18 @@ def get_from_dnac(**kwargs):
 
 def get_from_pi(**kwargs):
 
+    what = None
+
     if "user" in kwargs:
         url = 'https://{}/webacs/api/v2/data/ClientDetails.json?.full=true&userName="{}"&status=ASSOCIATED'.format(C.PI, kwargs["user"])
+        what = "user"
     elif "mac" in kwargs:
         mac_addr = normalize_mac(kwargs["mac"])
         url = 'https://{}/webacs/api/v2/data/ClientDetails.json?.full=true&macAddress="{}"&status=ASSOCIATED'.format(C.PI, mac_addr)
+        what = "mac"
     elif "ip" in kwargs:
         url = 'https://{}/webacs/api/v2/data/ClientDetails.json?.full=true&ipAddress="{}"&status=ASSOCIATED'.format(C.PI, kwargs["ip"])
+        what = "ip"
     else:
         return None
 
@@ -145,7 +150,7 @@ def get_from_pi(**kwargs):
         try:
             response = requests.request("GET", url, auth=(CLEUCreds.PI_USER, CLEUCreds.PI_PASS), headers=headers, verify=False)
         except Exception as e:
-            logging.error("Failed to get a response from PI for {}: {}".format(kwargs["user"], e))
+            logging.error("Failed to get a response from PI for {}: {}".format(kwargs[what], e))
             return None
         code = response.status_code
         if code != 200:
@@ -157,7 +162,7 @@ def get_from_pi(**kwargs):
             return None
         return j["queryResponse"]["entity"]
     else:
-        logging.error("Failed to get a response from PI for {}: {}".format(kwargs["user"], response.text))
+        logging.error("Failed to get a response from PI for {}: {}".format(kwargs[what], response.text))
 
     return None
 
