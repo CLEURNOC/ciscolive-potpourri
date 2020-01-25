@@ -116,9 +116,6 @@ def check_auth(username, password):
     if username == C.VPN_USER or username == C.VPN_USER + "@" + C.AD_DOMAIN:
         return False
 
-    if "loggedout" in session:
-        del session["loggedout"]
-
     if "dn" in session:
         return True
 
@@ -162,6 +159,8 @@ def check_auth(username, password):
 
 
 def authenticate():
+    if "loggedout" in session:
+        del session["loggedout"]
     return Response(
         "Failed to verify credentials for password reset.\n" "You have to login with proper credentials.",
         401,
@@ -173,7 +172,7 @@ def requires_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         auth = request.authorization
-        if not auth or not check_auth(auth.username, auth.password) or session.get("loggedout", False):
+        if session.get("loggedout", False) or not auth or not check_auth(auth.username, auth.password):
             return authenticate()
         return f(*args, **kwargs)
 
