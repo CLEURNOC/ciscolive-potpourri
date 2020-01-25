@@ -130,6 +130,8 @@ def check_auth(username, password):
             session["dn"] = dn
             session["target_username"] = target_username
             session["first_time"] = False
+            if "loggedout" in session:
+                del session["loggedout"]
             return True
         else:
             try:
@@ -146,6 +148,8 @@ def check_auth(username, password):
                     session["dn"] = dn
                     session["target_username"] = target_username
                     session["first_time"] = True
+                    if "loggedout" in session:
+                        del session["loggedout"]
                     return True
 
             except Exception as ie:
