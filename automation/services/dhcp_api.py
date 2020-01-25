@@ -46,7 +46,7 @@ CNR_HEADERS = {"Accept": "application/json", "Content-Type": "application/json",
 @use_kwargs({"subnet": fields.Str()}, locations=("query",))
 def get_leases_for_subnet(**kwargs):
     if not "subnet" in kwargs:
-        return Response(jsonify({"msg": "subnet parameter is required"}), mimetype="application/json", status_code=400)
+        return Response(jsonify({"msg": "subnet parameter is required"}), mimetype="application/json", status=400)
 
     url = C.DHCP_BASE + "Scope"
     response = None
