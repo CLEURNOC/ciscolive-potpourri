@@ -92,7 +92,7 @@ def create_alias(hostname, alias):
         hostname += "."
 
     if not hostname.endswith("."):
-        hostname += "." + DOMAIN + "."
+        hostname += "." + C.DNS_DOMAIN + "."
 
     rr_obj = {"name": alias, "zoneOrigin": C.DNS_DOMAIN, "rrs": {"stringItem": ["IN CNAME {}".format(hostname)]}}
 
