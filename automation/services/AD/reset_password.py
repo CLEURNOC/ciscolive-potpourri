@@ -254,6 +254,7 @@ def reset_password():
         resp += "\n<h1>Please disconnect your VPN and connect again with your AD credentials.</h1>"
     else:
         resp += "\n<h1>Please close this browser window.</h1>"
+        resp += "\n<script>setTimeout(function() { window.location = '/'; }, 60000);</script>"
 
     resp += """
  </body>
