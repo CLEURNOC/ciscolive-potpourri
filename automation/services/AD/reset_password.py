@@ -30,7 +30,7 @@ from pyad import *
 import sys
 import re
 from functools import wraps
-from flask import request, Response, session
+from flask import request, Response, session, redirect
 from flask import Flask
 import pythoncom
 import CLEUCreds
@@ -170,11 +170,18 @@ def requires_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         auth = request.authorization
-        if not auth or not check_auth(auth.username, auth.password):
+        if session.get("loggedout", False) or not auth or not check_auth(auth.username, auth.password):
             return authenticate()
         return f(*args, **kwargs)
 
     return decorated
+
+
+@app.route("/logout", methods=["GET"])
+def logout():
+    session.clear()
+    session["loggedout"] = True
+    return redirect("/", code=302)
 
 
 @app.route("/reset-password", methods=["POST"])
@@ -254,7 +261,7 @@ def reset_password():
         resp += "\n<h1>Please disconnect your VPN and connect again with your AD credentials.</h1>"
     else:
         resp += "\n<h1>Please close this browser window.</h1>"
-        resp += "\n<script>setTimeout(function() { window.location = '/'; }, 60000);</script>"
+        resp += "\n<script>setTimeout(function() { window.location = '/logout'; }, 60000);</script>"
 
     resp += """
  </body>
