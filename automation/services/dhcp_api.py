@@ -27,6 +27,9 @@
 from flask import Flask
 from flask import Response, jsonify
 import requests
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 import json
 import CLEUCreds
 from gevent.pywsgi import WSGIServer
@@ -50,6 +53,7 @@ def get_leases_for_subnet(**kwargs):
 
     url = C.DHCP_BASE + "Scope"
     response = None
+    subnet_re = "\\.".join(kwargs["subnet"].split(".")[:2]) + "\\.0"
 
     try:
         response = requests.request("GET", url, params={"subnet": kwargs["subnet"]}, headers=CNR_HEADERS, verify=False)
@@ -64,8 +68,10 @@ def get_leases_for_subnet(**kwargs):
         )
 
     j = response.json()
-    if not "name" in j:
+    if len(j) == 0 or not "name" in j[0]:
         return jsonify({"msg": "Error getting scope for subnet {}".format(kwargs["subnet"])}), 500
+
+    scope = j[0]["name"]
 
     url = C.DHCP_BASE + "Lease"
     subnet_re = "\\.".join(kwargs["subnet"].split(".")[:2]) + "\\..*"
@@ -85,7 +91,9 @@ def get_leases_for_subnet(**kwargs):
             )
 
         j = response.json()
-        result += j
+        for lease in j:
+            if lease["scopeName"] == scope:
+                result.append(lease)
 
         if response.headers.get("Link"):
             links = requests.util.parse_header_links(response.headers.get("Link"))
