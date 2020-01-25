@@ -24,6 +24,8 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+from __future__ import print_function
+from builtins import input
 import json
 import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
@@ -35,37 +37,31 @@ from netaddr import IPAddress
 import CLEUCreds
 from cleu.config import Config as C
 
-DHCP_BASE = C.DHCP_BASE + 'Reservation'
+DHCP_BASE = C.DHCP_BASE + "Reservation"
 
-HEADERS = {
-    'authorization': CLEUCreds.JCLARKE_BASIC,
-    'accept': 'application/json',
-    'content-type': 'application/json'
-}
+HEADERS = {"authorization": CLEUCreds.JCLARKE_BASIC, "accept": "application/json", "content-type": "application/json"}
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     url = DHCP_BASE
-    ans = input('Are you sure you want to clean reservations (y/N): ')
-    if not re.search(r'^[yY]', ans):
-        print('Exiting...')
+    ans = eval(input("Are you sure you want to clean reservations (y/N): "))
+    if not re.search(r"^[yY]", ans):
+        print("Exiting...")
         sys.exit(0)
     try:
-        response = requests.request('GET', url, headers=HEADERS, verify=False)
+        response = requests.request("GET", url, headers=HEADERS, verify=False)
         response.raise_for_status()
     except Exception as e:
-        sys.stderr.write('Failed to get list of reservations: {}\n'.format(e))
+        sys.stderr.write("Failed to get list of reservations: {}\n".format(e))
         sys.exit(1)
 
     reservations = response.json()
     for lease in reservations:
-        url = '{}/{}'.format(DHCP_BASE, lease['ipaddr'])
+        url = "{}/{}".format(DHCP_BASE, lease["ipaddr"])
         try:
-            response = requests.request(
-                'DELETE', url, headers=HEADERS, verify=False)
+            response = requests.request("DELETE", url, headers=HEADERS, verify=False)
             response.raise_for_status()
         except Exception as e:
-            sys.stderr.write(
-                'Error deleting reservation for {}: {}\n'.format(lease['ipaddr'], e))
+            sys.stderr.write("Error deleting reservation for {}: {}\n".format(lease["ipaddr"], e))
             continue
 
-        print('Deleted reservation for {}.'.format(lease['ipaddr']))
+        print("Deleted reservation for {}.".format(lease["ipaddr"]))

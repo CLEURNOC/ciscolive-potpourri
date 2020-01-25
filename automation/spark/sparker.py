@@ -23,6 +23,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+from builtins import object
 import requests
 from requests_toolbelt import MultipartEncoder
 from io import BytesIO
@@ -45,7 +46,7 @@ class MessageType(Enum):
     NEUTRAL = ""
 
 
-class Sparker:
+class Sparker(object):
     SPARK_API = "https://api.ciscospark.com/v1/"
 
     RETRIES = 5

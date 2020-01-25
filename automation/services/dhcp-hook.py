@@ -358,7 +358,7 @@ def print_dnac(spark, what, details, msg):
             hinfo += " (reason: _{}_)".format(ohealth["reason"])
         if len(healths) > 0:
             hinfo += " ["
-            for h, hobj in healths.items():
+            for h, hobj in list(healths.items()):
                 hinfo += "{} health: {} ".format(h, hobj["score"])
                 if hobj["reason"] != "":
                     hinfo += "(reason: {}) ".format(hobj["reason"])

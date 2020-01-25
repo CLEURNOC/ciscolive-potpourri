@@ -24,6 +24,8 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+from __future__ import print_function
+from builtins import input
 import sys
 import json
 from subprocess import Popen, PIPE
@@ -37,10 +39,10 @@ if __name__ == '__main__':
     ans = None
     if len(sys.argv) == 2:
         match = sys.argv[1]
-        ans = input(
-            'Really delete all scopes that match "{}" (y/N): '.format(match))
+        ans = eval(input(
+            'Really delete all scopes that match "{}" (y/N): '.format(match)))
     else:
-        ans = input('Really delete all scopes (y/N): ')
+        ans = eval(input('Really delete all scopes (y/N): '))
 
     if not re.search(r'^[yY]', ans):
         print('Exiting...')
