@@ -174,7 +174,7 @@ def requires_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         auth = request.authorization
-        if session.get("loggedout", False) or not auth or not check_auth(auth.username, auth.password):
+        if not auth or not check_auth(auth.username, auth.password) or session.get("loggedout", False):
             return authenticate()
         return f(*args, **kwargs)
 
