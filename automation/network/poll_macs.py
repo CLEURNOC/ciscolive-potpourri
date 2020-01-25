@@ -47,25 +47,23 @@ commands = {
         "pattern": r"Dynamic Address Count:\s+(\d+)",
         "metric": "totalMacs",
     },
-    "macIdf": {
-        "command": "show mac address-table dynamic | inc Total",
-        "pattern": r"Total.*: (\d+)",
-        "metric": "totalMacs",
-    },
-    "arpEntries": {
-        "command": "show ip arp summary | inc IP ARP",
-        "pattern": r"(\d+) IP ARP entries",
-        "metric": "arpEntries",
-    },
-    "ndEntries": {
-        "command": "show ipv6 neighbors statistics | inc Entries",
-        "pattern": r"Entries (\d+),",
-        "metric": "ndEntries",
-    },
+    "macIdf": {"command": "show mac address-table dynamic | inc Total", "pattern": r"Total.*: (\d+)", "metric": "totalMacs",},
+    "arpEntries": {"command": "show ip arp summary | inc IP ARP", "pattern": r"(\d+) IP ARP entries", "metric": "arpEntries",},
+    "ndEntries": {"command": "show ipv6 neighbors statistics | inc Entries", "pattern": r"Entries (\d+),", "metric": "ndEntries",},
     "natTrans": {
         "command": "show ip nat translations total",
         "pattern": r"Total number of translations: (\d+)",
         "metric": "natTranslations",
+    },
+    "umbrella1Trans": {
+        "command": "show platform hardware qfp active feature nat datapath limit",
+        "pattern": r"limit_type 5 limit_id 0xa64fd06.*curr_count (\d+)",
+        "metric": "umbrella1NatTrans",
+    },
+    "umbrella2Trans": {
+        "command": "show platform hardware qfp active feature nat datapath limit",
+        "pattern": r"limit_type 5 limit_id 0xa64fe06.*curr_count (\d+)",
+        "metric": "umbrella2NatTrans",
     },
     "qfpUtil": {
         "command": "show platform hardware qfp active datapath utilization summary",
@@ -75,25 +73,10 @@ commands = {
 }
 
 devices = [
-    {
-        "pattern": "CORE{}-L3C",
-        "range": {"min": 1, "max": 2},
-        "commands": ["arpEntries", "ndEntries"],
-    },
-    {
-        "file": IDF_FILE,
-        "commands": ["macIdf", "arpEntries", "ndEntries"],
-    },
-    {
-        "pattern": "CORE{}-WA",
-        "range": {"min": 1, "max": 2},
-        "commands": ["macIdf", "arpEntries", "ndEntries"],
-    },
-    {
-        "pattern": "CORE{}-EDGE",
-        "range": {"min": 1, "max": 2},
-        "commands": ["natTrans", "qfpUtil"],
-    },
+    {"pattern": "CORE{}-L3C", "range": {"min": 1, "max": 2}, "commands": ["arpEntries", "ndEntries"],},
+    {"file": IDF_FILE, "commands": ["macIdf", "arpEntries", "ndEntries"],},
+    {"pattern": "CORE{}-WA", "range": {"min": 1, "max": 2}, "commands": ["macIdf", "arpEntries", "ndEntries"],},
+    {"pattern": "CORE{}-EDGE", "range": {"min": 1, "max": 2}, "commands": ["natTrans", "qfpUtil", "umbrella1Trans", "umbrella2Trans"],},
 ]
 
 
@@ -124,12 +107,7 @@ def get_results(dev):
     response = []
     try:
         ssh_client.connect(
-            dev["device"],
-            username=CLEUCreds.NET_USER,
-            password=CLEUCreds.NET_PASS,
-            timeout=5,
-            allow_agent=False,
-            look_for_keys=False,
+            dev["device"], username=CLEUCreds.NET_USER, password=CLEUCreds.NET_PASS, timeout=5, allow_agent=False, look_for_keys=False,
         )
         chan = ssh_client.invoke_shell()
         try:
@@ -145,31 +123,21 @@ def get_results(dev):
                     output = send_command(chan, cmd)
                 except Exception as iie:
                     response.append("")
-                    sys.stderr.write(
-                        "Failed to get result for {} from {}: {}\n".format(
-                            cmd, dev["device"], iie
-                        )
-                    )
+                    sys.stderr.write("Failed to get result for {} from {}: {}\n".format(cmd, dev["device"], iie))
                     traceback.print_exc()
 
                 m = re.search(pattern, output)
                 if m:
-                    response.append(
-                        '{}{{idf="{}"}} {}'.format(metric, dev["device"], m.group(1))
-                    )
+                    response.append('{}{{idf="{}"}} {}'.format(metric, dev["device"], m.group(1)))
                 else:
                     # sys.stderr.write(
                     #     'Failed to find pattern "{}" in "{}"\n'.format(pattern, output)
                     # )
-                    response.append(
-                        '{}{{idf="{}"}} {}'.format(metric, dev["device"], 0)
-                    )
+                    response.append('{}{{idf="{}"}} {}'.format(metric, dev["device"], 0))
         except Exception as ie:
             for command in dev["commands"]:
                 response.append("")
-            sys.stderr.write(
-                "Failed to setup SSH on {}: {}\n".format(dev["device"], ie)
-            )
+            sys.stderr.write("Failed to setup SSH on {}: {}\n".format(dev["device"], ie))
             traceback.print_exc()
     except Exception as e:
         for command in dev["commands"]:
@@ -194,18 +162,12 @@ def get_metrics(pool):
             if "range" in device:
                 for i in range(device["range"]["min"], device["range"]["max"] + 1):
                     targets.append(
-                        {
-                            "device": device["pattern"].format(str(i)),
-                            "commands": device["commands"],
-                        }
+                        {"device": device["pattern"].format(str(i)), "commands": device["commands"],}
                     )
             else:
                 for sub in device["subs"]:
                     targets.append(
-                        {
-                            "device": device["pattern"].format(sub),
-                            "commands": device["commands"],
-                        }
+                        {"device": device["pattern"].format(sub), "commands": device["commands"],}
                     )
         else:
             with open(device["file"]) as fd:
