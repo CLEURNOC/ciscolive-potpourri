@@ -80,7 +80,7 @@ if __name__ == "__main__":
 
     routers = ["CORE1-EDGE", "CORE2-EDGE"]
 
-    for router in routers.items():
+    for router in routers:
         try:
             ssh_client.connect(
                 router, username=CLEUCreds.NET_USER, password=CLEUCreds.NET_PASS, timeout=60, allow_agent=False, look_for_keys=False,
