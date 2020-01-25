@@ -61,13 +61,13 @@ def get_leases_for_subnet(**kwargs):
         return Response(
             jsonify({"msg": "Error getting scope for subnet {}: {}".format(kwargs["subnet"], getattr(e, "message", repr(e)))}),
             mimetype="application/json",
-            status_code=status_code,
+            status=status_code,
         )
 
     j = response.json()
     if not "name" in j:
         return Response(
-            jsonify({"msg": "Error getting scope for subnet {}".format(kwargs["subnet"])}), mimetype="application/json", status_code=500
+            jsonify({"msg": "Error getting scope for subnet {}".format(kwargs["subnet"])}), mimetype="application/json", status=500
         )
 
     url = C.DHCP_BASE + "Lease"
@@ -85,7 +85,7 @@ def get_leases_for_subnet(**kwargs):
             return Response(
                 jsonify({"msg": "Error getting leases for subnet {}: {}".format(kwargs["subnet"], getattr(e, "message", repr(e)))}),
                 mimetype="application/json",
-                status_code=staus_code,
+                status=staus_code,
             )
 
         j = response.json()
@@ -100,7 +100,7 @@ def get_leases_for_subnet(**kwargs):
         else:
             break
 
-    return Response(jsonify(result), mimetype="application/json", status_code=200)
+    return Response(jsonify(result), mimetype="application/json", status=200)
 
 
 if __name__ == "__main__":
