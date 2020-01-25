@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright (c) 2017-2019  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2020  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,8 +24,6 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-from __future__ import print_function
-from builtins import input
 import sys
 import json
 from subprocess import Popen, PIPE
@@ -34,38 +32,37 @@ import shlex
 import os
 from cleu.config import Config as C
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     match = None
     ans = None
     if len(sys.argv) == 2:
         match = sys.argv[1]
-        ans = eval(input(
-            'Really delete all scopes that match "{}" (y/N): '.format(match)))
+        ans = input('Really delete all scopes that match "{}" (y/N): '.format(match))
     else:
-        ans = eval(input('Really delete all scopes (y/N): '))
+        ans = input("Really delete all scopes (y/N): ")
 
-    if not re.search(r'^[yY]', ans):
-        print('Exiting...')
+    if not re.search(r"^[yY]", ans):
+        print("Exiting...")
         sys.exit(0)
 
-    proc = Popen(shlex.split(
-        'ssh -2 root@{} /root/nrcmd.sh -r scope listnames'.format(DHCP_SERVER)), stdout=PIPE, stderr=PIPE)
+    proc = Popen(shlex.split("ssh -2 root@{} /root/nrcmd.sh -r scope listnames".format(C.DHCP_SERVER)), stdout=PIPE, stderr=PIPE)
     out, err = proc.communicate()
-    if not re.search(r'^100', out):
+    if not re.search(r"^100", out):
         print('Query for scopes failed: "{}"'.format(out))
         sys.exit(1)
-    scopes = out.split('\n')
+    scopes = out.split("\n")
     for scope in scopes:
-        if scope != '100 Ok' and re.search(r'^\w', scope):
+        if scope != "100 Ok" and re.search(r"^\w", scope):
             scope = scope.strip()
             delete = True
             if match is not None and not re.search(match, scope):
                 delete = False
             if delete:
-                print('Deleting scope {}'.format(scope))
-                proc = Popen(shlex.split(
-                    'ssh -2 root@{} /root/nrcmd.sh -r scope {} delete'.format(DHCP_SERVER, scope)), stdout=PIPE, stderr=PIPE)
-                if not re.search(r'^100', out):
-                    print('ERROR: Deleting scope {} failed: {}'.format(scope, out))
+                print("Deleting scope {}".format(scope))
+                proc = Popen(
+                    shlex.split("ssh -2 root@{} /root/nrcmd.sh -r scope {} delete".format(C.DHCP_SERVER, scope)), stdout=PIPE, stderr=PIPE
+                )
+                if not re.search(r"^100", out):
+                    print("ERROR: Deleting scope {} failed: {}".format(scope, out))
             else:
                 print('Skipping scope {} as it did not match "{}"'.format(scope, match))
