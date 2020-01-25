@@ -141,7 +141,12 @@ def get_from_pi(**kwargs):
     code = 401
     i = 0
     while code != 200 and i < 10:
-        response = requests.request("GET", url, auth=(CLEUCreds.PI_USER, CLEUCreds.PI_PASS), headers=headers, verify=False)
+        response = None
+        try:
+            response = requests.request("GET", url, auth=(CLEUCreds.PI_USER, CLEUCreds.PI_PASS), headers=headers, verify=False)
+        except Exception as e:
+            logging.error("Failed to get a response from PI for {}: {}".format(kwargs["user"], e))
+            return None
         code = response.status_code
         if code != 200:
             i += 1
