@@ -53,10 +53,15 @@ def get_leases_for_subnet(**kwargs):
 
     url = C.DHCP_BASE + "Scope"
     response = None
-    subnet_re = "\\.".join(kwargs["subnet"].split(".")[:2]) + "\\.0"
+    octets = kwargs["subnet"].split(".")
+    for octet, i in enumerate(octets):
+        if int(octet) == 0:
+            octets[i] = ".*"
+
+    subnet_re = "\\.".join(octets)
 
     try:
-        response = requests.request("GET", url, params={"subnet": kwargs["subnet"]}, headers=CNR_HEADERS, verify=False)
+        response = requests.request("GET", url, params={"subnet": subnet_re}, headers=CNR_HEADERS, verify=False)
         response.raise_for_status()
     except Exception as e:
         status_code = 500
@@ -68,13 +73,15 @@ def get_leases_for_subnet(**kwargs):
         )
 
     j = response.json()
-    if len(j) == 0 or not "name" in j[0]:
+    if len(j) == 0:
         return jsonify({"msg": "Error getting scope for subnet {}".format(kwargs["subnet"])}), 500
 
-    scope = j[0]["name"]
+    names = []
+
+    for scope in j:
+        names.append(scope["name"])
 
     url = C.DHCP_BASE + "Lease"
-    subnet_re = "\\.".join(kwargs["subnet"].split(".")[:2]) + "\\..*"
     result = []
 
     while True:
@@ -92,7 +99,7 @@ def get_leases_for_subnet(**kwargs):
 
         j = response.json()
         for lease in j:
-            if lease["scopeName"] == scope:
+            if lease["scopeName"] in names:
                 result.append(lease)
 
         if response.headers.get("Link"):
