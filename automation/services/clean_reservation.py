@@ -43,7 +43,7 @@ HEADERS = {"authorization": CLEUCreds.JCLARKE_BASIC, "accept": "application/json
 
 if __name__ == "__main__":
     url = DHCP_BASE
-    ans = eval(input("Are you sure you want to clean reservations (y/N): "))
+    ans = input("Are you sure you want to clean reservations (y/N): ")
     if not re.search(r"^[yY]", ans):
         print("Exiting...")
         sys.exit(0)
