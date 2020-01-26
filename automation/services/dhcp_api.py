@@ -137,6 +137,6 @@ def get_leases_for_subnet(**kwargs):
 
 if __name__ == "__main__":
     #    app.run(host='10.100.253.13', port=8081, threaded=True)
-    ssl_context = {"certfile": "cleu_chain.pem", "keyfile": "cleu_privkey.pem"}
+    ssl_context = {"certfile": "cleu_cert.pem", "keyfile": "cleu_privkey.pem"}
     http_server = WSGIServer((C.WSGI_SERVER, PORT), app, **ssl_context)
     http_server.serve_forever()
