@@ -45,6 +45,38 @@ app = Flask("DHCP Abstraction API")
 CNR_HEADERS = {"Accept": "application/json", "Content-Type": "application/json", "Authorization": CLEUCreds.JCLARKE_BASIC}
 
 
+def get_items_pages(*args, **kwargs):
+    more_pages = True
+    result = []
+    response = None
+
+    while more_pages:
+        try:
+            response = requests.request(*args, **kwargs)
+            response.raise_for_status()
+            result += response.json()
+            if "Link" in response.headers:
+                links = requests.utils.parse_header_links(response.headers["Link"])
+                found_next = False
+                for link in links:
+                    if link["rel"] == "next":
+                        args = (args[0], link["url"])
+                        kwargs.pop("params", None)
+                        found_next = True
+                        break
+
+                if found_next:
+                    continue
+
+                more_pages = False
+            else:
+                more_pages = False
+        except Exception as e:
+            return (result, response)
+
+    return (result, response)
+
+
 @app.route("/api/v1/subnetLookup")
 @use_kwargs({"subnet": fields.Str()}, locations=("query",))
 def get_leases_for_subnet(**kwargs):
@@ -61,7 +93,7 @@ def get_leases_for_subnet(**kwargs):
     subnet_re = "\\.".join(octets)
 
     try:
-        response = requests.request("GET", url, params={"subnet": subnet_re}, headers=CNR_HEADERS, verify=False)
+        (scopes, response) = get_items_pages("GET", url, params={"subnet": subnet_re}, headers=CNR_HEADERS, verify=False)
         response.raise_for_status()
     except Exception as e:
         status_code = 500
@@ -72,44 +104,30 @@ def get_leases_for_subnet(**kwargs):
             status_code,
         )
 
-    j = response.json()
-    if len(j) == 0:
+    if len(scopes) == 0:
         return jsonify({"msg": "Error getting scope for subnet {}".format(kwargs["subnet"])}), 500
 
     names = []
 
-    for scope in j:
+    for scope in scopes:
         names.append(scope["name"])
 
     url = C.DHCP_BASE + "Lease"
     result = []
 
-    while True:
-        try:
-            response = requests.request("GET", url, params={"state": "leased", "address": subnet_re}, headers=CNR_HEADERS, verify=False)
-            response.raise_for_status()
-        except Exception as e:
-            status_code = 500
-            if response:
-                status_code = response.status_code
-            return (
-                jsonify({"msg": "Error getting leases for subnet {}: {}".format(kwargs["subnet"], getattr(e, "message", repr(e)))}),
-                staus_code,
-            )
-
-        j = response.json()
-        for lease in j:
-            if lease["scopeName"] in names:
-                result.append(lease)
-
-        if response.headers.get("Link"):
-            links = requests.utils.parse_header_links(response.headers.get("Link"))
-            for link in links:
-                if "rel" in link and link["rel"] == "next":
-                    url = link["url"]
-                    break
-        else:
-            break
+    try:
+        (result, response) = get_items_pages(
+            "GET", url, params={"state": "leased", "address": subnet_re}, headers=CNR_HEADERS, verify=False
+        )
+        response.raise_for_status()
+    except Exception as e:
+        status_code = 500
+        if response:
+            status_code = response.status_code
+        return (
+            jsonify({"msg": "Error getting leases for subnet {}: {}".format(kwargs["subnet"], getattr(e, "message", repr(e)))}),
+            staus_code,
+        )
 
     return jsonify(result), 200
 
