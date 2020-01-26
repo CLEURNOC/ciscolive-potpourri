@@ -40,6 +40,7 @@ from cleu.config import Config as C
 
 
 PORT = 8084
+PAGE_LIMIT = 13
 
 app = Flask("DHCP Abstraction API")
 
@@ -47,11 +48,14 @@ CNR_HEADERS = {"Accept": "application/json", "Content-Type": "application/json",
 
 
 def get_items_pages(*args, **kwargs):
+    global PAGE_LIMIT
+
     more_pages = True
     result = []
     response = None
 
-    while more_pages:
+    cnt = 0
+    while more_pages and cnt < PAGE_LIMIT:
         try:
             response = requests.request(*args, **kwargs)
             response.raise_for_status()
@@ -67,6 +71,7 @@ def get_items_pages(*args, **kwargs):
                         break
 
                 if found_next:
+                    cnt += 1
                     continue
 
                 more_pages = False
