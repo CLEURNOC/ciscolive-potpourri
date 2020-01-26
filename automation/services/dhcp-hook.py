@@ -62,7 +62,6 @@ def normalize_mac(mac):
 
 
 def get_from_cmx(**kwargs):
-    return None
     marker = "green"
     if "user" in kwargs and kwargs["user"] == "gru":
         marker = "gru"
