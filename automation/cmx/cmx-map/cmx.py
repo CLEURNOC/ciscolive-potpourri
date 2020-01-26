@@ -19,6 +19,7 @@ from ipaddress import IPv6Address
 import os
 import traceback
 import CLEUCreds
+from cleu.config import Config as C
 
 
 from PIL import Image, ImageDraw
