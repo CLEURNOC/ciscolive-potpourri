@@ -114,7 +114,11 @@ def get_from_dnac(**kwargs):
         logging.warning("Failed to find MAC address {} in DNAC: {}".format(kwargs["mac"], getattr(e, "message", repr(e))))
         return None
 
-    j = json.loads(response.text)
+    j = response.json()
+    if "detail" not in j:
+        logging.warning("Got an unknown response from DNAC: '{}'".format(response.text))
+        return None
+
     if "errorCode" in j["detail"]:
         return None
 
