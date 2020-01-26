@@ -58,7 +58,7 @@ if __name__ == "__main__":
             spark.post_to_spark(
                 C.WEBEX_TEAM,
                 SPARK_ROOM,
-                "Port **{}** on **{}** **{}**has been put in an err-disable state because {}".format(
+                "Port {} on **{}** **{}**has been put in an err-disable state because {}".format(
                     make_tool_link(host, m.group(2)), host, hpart, m.group(1)
                 ),
                 MessageType.WARNING,
@@ -69,6 +69,6 @@ if __name__ == "__main__":
                 spark.post_to_spark(
                     C.WEBEX_TEAM,
                     SPARK_ROOM,
-                    "Port **{}** on **{}** **{}**is recovering from err-disable".format(make_tool_link(host, m.group(1)), host, hpart),
+                    "Port {} on **{}** **{}**is recovering from err-disable".format(make_tool_link(host, m.group(1)), host, hpart),
                     MessageType.GOOD,
                 )
