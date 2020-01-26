@@ -32,6 +32,7 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 import json
 import CLEUCreds
+import re
 from gevent.pywsgi import WSGIServer
 from webargs.flaskparser import use_kwargs
 from webargs import fields
@@ -108,7 +109,7 @@ def get_leases_for_subnet(**kwargs):
         )
 
     if len(scopes) == 0:
-        return jsonify({"msg": "Error getting scope for subnet {}".format(kwargs["subnet"])}), 500
+        return jsonify({"msg": "Error getting scope for subnet {}".format(kwargs["subnet"])}), 400
 
     names = []
 
