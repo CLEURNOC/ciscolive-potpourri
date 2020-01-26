@@ -54,7 +54,7 @@ for filename in markerFiles:
     # markerW, markerH = marker.size
 
 apiUri = {
-    "mac": "/api/location/v1/clients?macAddress=",
+    "mac": "/api/location/v2/clients?macAddress=",
     "ip": "/api/location/v2/clients?ipAddress=",
     "map": "/api/config/v1/maps/imagesource/",
     "ssid": "/api/location/v2/clients/?include=metadata&pageSize=1000&page=",
