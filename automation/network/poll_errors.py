@@ -59,6 +59,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--ignore-interfaces-file", "-i", metavar="<IGNORE_FILE>", help="Path to JSON file that maps devices and interfaces to ignore"
     )
+    parser.add_argument("--no-discards", help="Poll ifIn/OutDiscards (default: discards are polled)", action="store_true")
     args = parser.parse_args()
 
     devices = None
@@ -94,15 +95,24 @@ if __name__ == "__main__":
 
         swent = {}
 
-        vars = netsnmp.VarList(
-            netsnmp.Varbind("ifDescr"),
-            netsnmp.Varbind("ifInErrors"),
-            netsnmp.Varbind("ifOutErrors"),
-            netsnmp.Varbind("ifInDiscards"),
-            netsnmp.Varbind("ifOutDiscards"),
-            netsnmp.Varbind("ifAlias"),
-            netsnmp.Varbind("ifOperStatus"),
-        )
+        if not args.no_discards:
+            vars = netsnmp.VarList(
+                netsnmp.Varbind("ifDescr"),
+                netsnmp.Varbind("ifInErrors"),
+                netsnmp.Varbind("ifOutErrors"),
+                netsnmp.Varbind("ifInDiscards"),
+                netsnmp.Varbind("ifOutDiscards"),
+                netsnmp.Varbind("ifAlias"),
+                netsnmp.Varbind("ifOperStatus"),
+            )
+        else:
+            vars = netsnmp.VarList(
+                netsnmp.Varbind("ifDescr"),
+                netsnmp.Varbind("ifInErrors"),
+                netsnmp.Varbind("ifOutErrors"),
+                netsnmp.Varbind("ifAlias"),
+                netsnmp.Varbind("ifOperStatus"),
+            )
         netsnmp.snmpwalk(
             vars,
             Version=3,
