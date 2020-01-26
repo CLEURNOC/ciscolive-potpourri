@@ -169,26 +169,22 @@ def get_from_pi(**kwargs):
 def parse_relay_info(outd):
     global DEFAULT_INT_TYPE
 
-    res = {}
+    res = {"vlan": "N/A", "port": "N/A", "switch": "N/A"}
     if "relayAgentCircuitId" in outd:
         octets = outd["relayAgentCircuitId"].split(":")
-        res["vlan"] = int("".join(octets[2:4]), 16)
-        first_part = int(octets[4], 16)
-        port = str(first_part)
-        if first_part != 0:
-            port = str(first_part) + "/0"
-        res["port"] = DEFAULT_INT_TYPE + port + "/" + str(int(octets[5], 16))
-    else:
-        res["vlan"] = "N/A"
-        res["port"] = "N/A"
+        if len(octets) > 4:
+            res["vlan"] = int("".join(octets[2:4]), 16)
+            first_part = int(octets[4], 16)
+            port = str(first_part)
+            if first_part != 0:
+                port = str(first_part) + "/0"
+            res["port"] = DEFAULT_INT_TYPE + port + "/" + str(int(octets[5], 16))
 
     if "relayAgentRemoteId" in outd:
         octets = outd["relayAgentRemoteId"].split(":")
         res["switch"] = bytes.fromhex("".join(octets[2:])).decode("utf-8", "ignore")
         if not is_ascii(res["switch"]):
             res["switch"] = "N/A"
-    else:
-        res["switch"] = "N/A"
 
     return res
 
