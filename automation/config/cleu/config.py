@@ -15,7 +15,7 @@ class Config:
     PI = "cl-pi." + DNS_DOMAIN
     DNAC = "sdacleur20." + DNS_DOMAIN
     CMX_GW = "http://cl-freebsd.{}:8002/api/v0.1/cmx".format(DNS_DOMAIN)
-    CMX = "http://cl-cmx-1." + DNS_DOMAIN
+    CMX = "https://cl-cmx-1." + DNS_DOMAIN
     TOOL = "tool." + DNS_DOMAIN
     TOOL_BASE = "https://{}/Port/Switchport.aspx?".format(TOOL)
     AD_DOMAIN = "ad." + DNS_DOMAIN
