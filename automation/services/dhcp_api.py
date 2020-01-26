@@ -85,8 +85,11 @@ def get_leases_for_subnet(**kwargs):
 
     url = C.DHCP_BASE + "Scope"
     response = None
-    octets = kwargs["subnet"].split(".")
+    subnet = re.sub(r"/\d+$", "", kwargs["subnet"])
+    octets = subnet.split(".")
     for i, octet in enumerate(octets):
+        if i < 2:
+            continue
         if int(octet) == 0:
             octets[i] = ".*"
 
