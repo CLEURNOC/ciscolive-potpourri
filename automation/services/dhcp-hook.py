@@ -183,7 +183,7 @@ def parse_relay_info(outd):
     if "relayAgentRemoteId" in outd:
         octets = outd["relayAgentRemoteId"].split(":")
         res["switch"] = bytes.fromhex("".join(octets[2:])).decode("utf-8", "ignore")
-        if not is_ascii(res["switch"]):
+        if not is_ascii(res["switch"]) or res["switch"] == "":
             res["switch"] = "N/A"
 
     return res
