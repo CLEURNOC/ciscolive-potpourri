@@ -89,40 +89,43 @@ def get_from_cmx(**kwargs):
 
 
 def get_from_dnac(**kwargs):
-    curl = "https://{}/dna/intent/api/v1/client-detail".format(C.DNAC)
+    for dnac in C.DNACS:
+        curl = "https://{}/dna/intent/api/v1/client-detail".format(dnac)
 
-    # Get timestamp with milliseconds
-    epoch = int(time.time() * 1000)
+        # Get timestamp with milliseconds
+        epoch = int(time.time() * 1000)
 
-    turl = "https://{}/dna/system/api/v1/auth/token".format(C.DNAC)
-    theaders = {"content-type": "application/json", "authorization": CLEUCreds.DNAC_BASIC}
-    try:
-        response = requests.request("POST", turl, headers=theaders, verify=False)
-        response.raise_for_status()
-    except Exception as e:
-        logging.warning("Unable to get an auth token from DNAC: {}".format(getattr(e, "message", repr(e))))
-        return None
+        turl = "https://{}/dna/system/api/v1/auth/token".format(dnac)
+        theaders = {"content-type": "application/json", "authorization": CLEUCreds.JCLARKE_BASIC}
+        try:
+            response = requests.request("POST", turl, headers=theaders, verify=False)
+            response.raise_for_status()
+        except Exception as e:
+            logging.warning("Unable to get an auth token from DNAC: {}".format(getattr(e, "message", repr(e))))
+            continue
 
-    j = json.loads(response.text)
+        j = response.json()
 
-    cheaders = {"accept": "application/json", "x-auth-token": j["Token"]}
-    params = {"macAddress": kwargs["mac"], "timestamp": epoch}
-    try:
-        response = requests.request("GET", curl, params=params, headers=cheaders, verify=False)
-        response.raise_for_status()
-    except Exception as e:
-        logging.warning("Failed to find MAC address {} in DNAC: {}".format(kwargs["mac"], getattr(e, "message", repr(e))))
-        return None
+        cheaders = {"accept": "application/json", "x-auth-token": j["Token"]}
+        params = {"macAddress": kwargs["mac"], "timestamp": epoch}
+        try:
+            response = requests.request("GET", curl, params=params, headers=cheaders, verify=False)
+            response.raise_for_status()
+        except Exception as e:
+            logging.warning("Failed to find MAC address {} in DNAC: {}".format(kwargs["mac"], getattr(e, "message", repr(e))))
+            continue
 
-    j = response.json()
-    if "detail" not in j:
-        logging.warning("Got an unknown response from DNAC: '{}'".format(response.text))
-        return None
+        j = response.json()
+        if "detail" not in j:
+            logging.warning("Got an unknown response from DNAC: '{}'".format(response.text))
+            continue
 
-    if "errorCode" in j["detail"]:
-        return None
+        if "errorCode" in j["detail"]:
+            continue
 
-    return j["detail"]
+        return j["detail"]
+
+    return None
 
 
 def get_from_pi(**kwargs):
