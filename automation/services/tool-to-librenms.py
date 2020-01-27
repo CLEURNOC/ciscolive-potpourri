@@ -111,7 +111,7 @@ if __name__ == "__main__":
 
         if tdev["AssetTag"] not in list(devs.keys()) or force:
             if force:
-                print("=== Deleting device {} from Observium ({} / {}) ===".format(tdev["Hostname"], i, len(tdevs)))
+                print("=== Deleting device {} from LibreNMS ({} / {}) ===".format(tdev["Hostname"], i, len(tdevs)))
                 res = delete_device(tdev["Hostname"])
                 if res != 0:
                     print("\n\n***WARNING: Failed to remove LibreNMS device {}".format(tdev["Hostname"]))
