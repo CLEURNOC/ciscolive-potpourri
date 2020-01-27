@@ -64,7 +64,7 @@ def get_devs():
             if (
                 re.search(r".*CORE.*", dev["Hostname"], flags=re.I)
                 or re.search(r".*MDF.*", dev["Hostname"], flags=re.I)
-                or re.search(r"-[xX]\d{2}-", dev["hostname"])
+                or re.search(r"-[xX]\d{2}-", dev["Hostname"])
             ):
                 continue
 
@@ -123,7 +123,7 @@ if __name__ == "__main__":
             res = call(
                 shlex.split(
                     "ssh -2 {} /usr/local/www/librenms/addhost.php {} ap v3 CLEUR {} {} sha des".format(
-                        C.MONITORING, tdev["Hostname"], CLEUCreds.SNMP_TOOL_AUTH_PASS, CLEUCreds.SNMP_TOOL_PRIV_PASS
+                        C.MONITORING, tdev["Hostname"], CLEUCreds.SNMP_AUTH_PASS, CLEUCreds.SNMP_PRIV_PASS
                     )
                 ),
                 stdout=PIPE,
