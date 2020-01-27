@@ -68,12 +68,12 @@ commands = {
     "natPoolDefault1": {
         "command": "show ip nat statistics | begin NAT-POOL-DEFAULT-1",
         "pattern": r"total addresses (\d+), allocated (\d+)[^,]+, misses (\d+)",
-        "metrics": ["natPoolDefaultAddresses", "natPoolDefaultAllocated", "natPoolDefaultMisses"],
+        "metrics": ["natPoolDefault1Addresses", "natPoolDefault1Allocated", "natPoolDefault1Misses"],
     },
     "natPoolDefault2": {
         "command": "show ip nat statistics | begin NAT-POOL-DEFAULT-2",
         "pattern": r"total addresses (\d+), allocated (\d+)[^,]+, misses (\d+)",
-        "metrics": ["natPoolDefaultAddresses", "natPoolDefaultAllocated", "natPoolDefaultMisses"],
+        "metrics": ["natPoolDefault2Addresses", "natPoolDefault2Allocated", "natPoolDefault2Misses"],
     },
     "natPoolDns": {
         "command": "show ip nat statistics | begin NAT-POOL-DNS",
