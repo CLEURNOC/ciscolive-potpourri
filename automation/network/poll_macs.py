@@ -65,8 +65,13 @@ commands = {
         "pattern": r"limit_type 5 limit_id 0xa64fe06.*curr_count (\d+)",
         "metric": "umbrella2NatTrans",
     },
-    "natPoolDefault": {
-        "command": "show ip nat statistics | begin NAT-POOL-DEFAULT",
+    "natPoolDefault1": {
+        "command": "show ip nat statistics | begin NAT-POOL-DEFAULT-1",
+        "pattern": r"total addresses (\d+), allocated (\d+)[^,]+, misses (\d+)",
+        "metrics": ["natPoolDefaultAddresses", "natPoolDefaultAllocated", "natPoolDefaultMisses"],
+    },
+    "natPoolDefault2": {
+        "command": "show ip nat statistics | begin NAT-POOL-DEFAULT-2",
         "pattern": r"total addresses (\d+), allocated (\d+)[^,]+, misses (\d+)",
         "metrics": ["natPoolDefaultAddresses", "natPoolDefaultAllocated", "natPoolDefaultMisses"],
     },
@@ -111,7 +116,8 @@ devices = [
             "qfpUtil",
             "umbrella1Trans",
             "umbrella2Trans",
-            "natPoolDefault",
+            "natPoolDefault1",
+            "natPoolDefault2",
             "natPoolDns",
             "natPoolLabs",
             "natHealthStats",
