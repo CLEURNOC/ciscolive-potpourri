@@ -355,7 +355,7 @@ def print_dnac(spark, what, details, msg):
         sdetails = "connected to device **{}** on port **{}**".format(details["clientConnection"], details["port"])
 
     if ohealth is not None:
-        hinfo = "with health score **{}**".format(ohealth["score"])
+        hinfo = "with health score **{}/10**".format(ohealth["score"])
         if ohealth["reason"]:
             hinfo += " (reason: _{}_)".format(ohealth["reason"])
         if len(healths) > 0:
