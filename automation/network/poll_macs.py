@@ -65,6 +65,33 @@ commands = {
         "pattern": r"limit_type 5 limit_id 0xa64fe06.*curr_count (\d+)",
         "metric": "umbrella2NatTrans",
     },
+    "natPoolDefault": {
+        "command": "show ip nat statistics | begin NAT-POOL-DEFAULT",
+        "pattern": r"total addresses (\d+), allocated (\d+)[^,]+, misses (\d+)",
+        "metrics": ["natPoolDefaultAddresses", "natPoolDefaultAllocated", "natPoolDefaultMisses"],
+    },
+    "natPoolDns": {
+        "command": "show ip nat statistics | begin NAT-POOL-DNS",
+        "pattern": r"total addresses (\d+), allocated (\d+)[^,]+, misses (\d+)",
+        "metrics": ["natPoolDnsAddresses", "natPoolDnsAllocated", "natPoolDnsMisses"],
+    },
+    "natPoolLabs": {
+        "command": "show ip nat statistics | begin NAT-POOL-LABS",
+        "pattern": r"total addresses (\d+), allocated (\d+)[^,]+, misses (\d+)",
+        "metrics": ["natPoolLabsAddresses", "natPoolLabsAllocated", "natPoolLabsMisses"],
+    },
+    "natHealthStats": {
+        "command": "show ip nat statistics | begin In-to-out",
+        "pattern": r"In-to-out-drops: (\d+)\s+Out-to-in-drops: (\d+).*Pool stats drop: (\d+)\s+Mapping stats drop: (\d+).*Port block alloc fail: (\d+).*IP alias add fail: (\d+).*Limit entry add fail: (\d+)",
+        "metrics": [
+            "natHealthInOutDrops",
+            "natHealthOutInDrops",
+            "natHealthStatsDrops",
+            "natHealthPortBlockAllocFail",
+            "natHealthAliasAddFail",
+            "natHealthEntryAddFail",
+        ],
+    },
     "qfpUtil": {
         "command": "show platform hardware qfp active datapath utilization summary",
         "pattern": r"Processing: Load \(pct\)\s+(\d+)",
@@ -76,7 +103,20 @@ devices = [
     {"pattern": "CORE{}-L3C", "range": {"min": 1, "max": 2}, "commands": ["arpEntries", "ndEntries"],},
     {"file": IDF_FILE, "commands": ["macIdf", "arpEntries", "ndEntries"],},
     {"pattern": "CORE{}-WA", "range": {"min": 1, "max": 2}, "commands": ["macIdf", "arpEntries", "ndEntries"],},
-    {"pattern": "CORE{}-EDGE", "range": {"min": 1, "max": 2}, "commands": ["natTrans", "qfpUtil", "umbrella1Trans", "umbrella2Trans"],},
+    {
+        "pattern": "CORE{}-EDGE",
+        "range": {"min": 1, "max": 2},
+        "commands": [
+            "natTrans",
+            "qfpUtil",
+            "umbrella1Trans",
+            "umbrella2Trans",
+            "natPoolDefault",
+            "natPoolDns",
+            "natPoolLabs",
+            "natHealthStats",
+        ],
+    },
 ]
 
 
@@ -116,7 +156,9 @@ def get_results(dev):
             for command in dev["commands"]:
                 cmd = commands[command]["command"]
                 pattern = commands[command]["pattern"]
-                metric = commands[command]["metric"]
+                metric = None
+                if "metric" in command["command"]:
+                    metric = commands[command]["metric"]
                 output = ""
 
                 try:
@@ -128,12 +170,24 @@ def get_results(dev):
 
                 m = re.search(pattern, output)
                 if m:
-                    response.append('{}{{idf="{}"}} {}'.format(metric, dev["device"], m.group(1)))
+                    if metric:
+                        response.append('{}{{idf="{}"}} {}'.format(metric, dev["device"], m.group(1)))
+                    else:
+                        metrics = commands[command]["metrics"]
+                        i = 1
+                        for metric in metrics:
+                            response.append('{}{{idf="{}"}} {}'.format(metric, dev["device"], m.group(i)))
+                            i += 1
                 else:
                     # sys.stderr.write(
                     #     'Failed to find pattern "{}" in "{}"\n'.format(pattern, output)
                     # )
-                    response.append('{}{{idf="{}"}} {}'.format(metric, dev["device"], 0))
+                    if metric:
+                        response.append('{}{{idf="{}"}} {}'.format(metric, dev["device"], 0))
+                    else:
+                        metrics = commands[command]["metrics"]
+                        for metric in metrics:
+                            response.append('{}{{idf="{}"}} {}'.format(metric, dev["device"], 0))
         except Exception as ie:
             for command in dev["commands"]:
                 response.append("")
