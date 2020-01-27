@@ -157,7 +157,7 @@ def get_results(dev):
                 cmd = commands[command]["command"]
                 pattern = commands[command]["pattern"]
                 metric = None
-                if "metric" in command["command"]:
+                if "metric" in commands["command"]:
                     metric = commands[command]["metric"]
                 output = ""
 
