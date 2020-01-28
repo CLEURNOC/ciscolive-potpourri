@@ -33,7 +33,7 @@ import json
 import sys
 import time
 import os
-from subprocess import Popen, PIPE, call
+from subprocess import Popen, PIPE, run
 import shlex
 from sparker import Sparker
 import pprint
@@ -64,7 +64,7 @@ def get_devs():
             if (
                 re.search(r".*CORE.*", dev["Hostname"], flags=re.I)
                 or re.search(r".*MDF.*", dev["Hostname"], flags=re.I)
-                or re.search(r"-[xX]\d{2}-", dev["Hostname"])
+                or re.search(r"-x\d{2}-", dev["Hostname"], flags=re.I)
             ):
                 continue
 
@@ -75,7 +75,7 @@ def get_devs():
 
 def delete_device(dev):
 
-    res = call(shlex.split("ssh -2 {} /usr/local/www/librenms/delhost.php {}".format(C.MONITORING, dev)))
+    res = run(shlex.split("ssh -2 {} /usr/local/www/librenms/delhost.php {}".format(C.MONITORING, dev)), capture_output=True)
 
     return res
 
@@ -92,8 +92,8 @@ if __name__ == "__main__":
         fd = open(CACHE_FILE, "r")
         devs = json.load(fd)
         fd.close()
-    except:
-        pass
+    except Exception as e:
+        print("Failed to open {}: {}".format(CACHE_FILE, e))
 
     tdevs = get_devs()
 
@@ -103,34 +103,59 @@ if __name__ == "__main__":
         if tdev["AssetTag"] in list(devs.keys()) and devs[tdev["AssetTag"]] != tdev["Hostname"]:
             print("=== Deleting device {} from LibreNMS ({} / {}) ===".format(tdev["Hostname"], i, len(tdevs)))
             res = delete_device(devs[tdev["AssetTag"]])
-            if res != 0:
-                print("\n\n***WARNING: Failed to remove LibreNMS device for {}".format(devs[tdev["AssetTag"]]))
+            if res.returncode != 0:
+                print(
+                    "\n\n***WARNING: Failed to remove LibreNMS device for {}: out='{}', err='{}'".format(
+                        devs[tdev["AssetTag"]], res.stdout.decode("utf-8").strip(), res.stderr.decode("utf-8").strip()
+                    )
+                )
             print("=== DONE. ===")
             changed_devs = True
             del devs[tdev["AssetTag"]]
+            time.sleep(3)
 
         if tdev["AssetTag"] not in list(devs.keys()) or force:
             if force:
                 print("=== Deleting device {} from LibreNMS ({} / {}) ===".format(tdev["Hostname"], i, len(tdevs)))
                 res = delete_device(tdev["Hostname"])
-                if res != 0:
-                    print("\n\n***WARNING: Failed to remove LibreNMS device {}".format(tdev["Hostname"]))
+                if res.returncode != 0:
+                    print(
+                        "\n\n***WARNING: Failed to remove LibreNMS device {}: out='{}', err='{}'".format(
+                            tdev["Hostname"], res.stdout.decode("utf-8").strip(), res.stderr.decode("utf-8").strip()
+                        )
+                    )
                 print("=== DONE. ===")
+                time.sleep(3)
 
-            time.sleep(3)
+            url = "https://librenms" + C.DNS_DOMAIN + "/api/v0/inventory/" + tdev["Hostname"]
+            try:
+                response = requests.request("GET", url, headers={"X-Auth-Token": CLEUCreds.LIBRENMS_TOKEN}, verify=False)
+                response.raise_for_status()
+                devs[tdev["AssetTag"]] = tdev["Hostname"]
+                changed_devs = True
+                continue
+            except Exception as e:
+                if not response or response.status_code != 400:
+                    text = ""
+                    if response:
+                        text = response.text
+                    print("Error retrieving device status from LibreNMS: {}".format(response.text))
 
             print("=== Adding device {} to LibreNMS ({} / {}) ===".format(tdev["Hostname"], i, len(tdevs)))
-            res = call(
+            res = run(
                 shlex.split(
                     "ssh -2 {} /usr/local/www/librenms/addhost.php {} ap v3 CLEUR {} {} sha des".format(
                         C.MONITORING, tdev["Hostname"], CLEUCreds.SNMP_AUTH_PASS, CLEUCreds.SNMP_PRIV_PASS
                     )
                 ),
-                stdout=PIPE,
-                stderr=PIPE,
+                capture_output=True,
             )
-            if res != 0:
-                print("\n\n***ERROR: Failed to add {} to LibreNMS".format(tdev["Hostname"]))
+            if res.returncode != 0:
+                print(
+                    "\n\n***ERROR: Failed to add {} to LibreNMS: out='{}', err='{}'".format(
+                        tdev["Hostname"], res.stdout.decode("utf-8").strip(), res.stderr.decode("utf-8").strip()
+                    )
+                )
                 continue
             print("=== DONE. ===")
 
