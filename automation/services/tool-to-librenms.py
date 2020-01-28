@@ -127,7 +127,7 @@ if __name__ == "__main__":
                 print("=== DONE. ===")
                 time.sleep(3)
 
-            url = "https://librenms" + C.DNS_DOMAIN + "/api/v0/inventory/" + tdev["Hostname"]
+            url = "https://librenms." + C.DNS_DOMAIN + "/api/v0/inventory/" + tdev["Hostname"]
             try:
                 response = requests.request("GET", url, headers={"X-Auth-Token": CLEUCreds.LIBRENMS_TOKEN}, verify=False)
                 response.raise_for_status()
