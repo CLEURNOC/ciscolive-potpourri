@@ -286,6 +286,9 @@ def check_for_lease(ip):
     res["scope"] = lease["scopeName"]
     res["state"] = lease["state"]
     res["relay-info"] = relay
+    rsvp = check_for_reservation(ip)
+    if rsvp and rsvp["mac"] == res["mac"]:
+        res["is-reserved"] = True
 
     return res
 
@@ -308,9 +311,9 @@ def check_for_mac(mac):
     leases = []
     for lease in j:
         res = {}
-        relay = parse_relay_info(lease)
         if "address" not in lease:
             continue
+        relay = parse_relay_info(lease)
         res["ip"] = lease["address"]
         if "clientHostName" in lease:
             res["name"] = lease["clientHostName"]
@@ -321,6 +324,9 @@ def check_for_mac(mac):
         res["scope"] = lease["scopeName"]
         res["state"] = lease["state"]
         res["relay-info"] = relay
+        rsvp = check_for_reservation(res["ip"])
+        if rsvp and rsvp["mac"] == mac:
+            res["is-reserved"] = True
 
         leases.append(res)
 
@@ -586,6 +592,9 @@ if __name__ == "__main__":
                     cmxres = get_from_cmx(mac=pires[0]["clientDetailsDTO"]["macAddress"])
                     dnacres = get_from_dnac(mac=pires[0]["clientDetailsDTO"]["macAddress"])
                 if res is not None:
+                    reserved = ""
+                    if "is-reserved" in res and res["is-reserved"]:
+                        reserved = " (Client has reserved this IP)"
                     if re.search(r"available", res["state"]):
                         port_info = res["relay-info"]["port"]
                         if port_info != "N/A":
@@ -599,7 +608,7 @@ if __name__ == "__main__":
                         spark.post_to_spark(
                             C.WEBEX_TEAM,
                             SPARK_ROOM,
-                            "_{}_ is no longer leased, but _WAS_ leased by a client with name **{}** and MAC **{}** in scope **{}** (state: **{}**) and was connected to switch **{}** on port {} in VLAN **{}**.".format(
+                            "_{}_ is no longer leased, but _WAS_ leased by a client with name **{}** and MAC **{}** in scope **{}** (state: **{}**) and was connected to switch **{}** on port {} in VLAN **{}**{}.".format(
                                 hit,
                                 res["name"],
                                 res["mac"],
@@ -608,6 +617,7 @@ if __name__ == "__main__":
                                 res["relay-info"]["switch"],
                                 port_info,
                                 res["relay-info"]["vlan"],
+                                reserved,
                             ),
                         )
                     else:
@@ -623,7 +633,7 @@ if __name__ == "__main__":
                         spark.post_to_spark(
                             C.WEBEX_TEAM,
                             SPARK_ROOM,
-                            "_{}_ is leased by a client with name **{}** and MAC **{}** in scope **{}** (state: **{}**) and is connected to switch **{}** on port {} in VLAN **{}**.".format(
+                            "_{}_ is leased by a client with name **{}** and MAC **{}** in scope **{}** (state: **{}**) and is connected to switch **{}** on port {} in VLAN **{}**{}.".format(
                                 hit,
                                 res["name"],
                                 res["mac"],
@@ -632,6 +642,7 @@ if __name__ == "__main__":
                                 res["relay-info"]["switch"],
                                 port_info,
                                 res["relay-info"]["vlan"],
+                                reserved,
                             ),
                         )
                     if pires is not None:
@@ -693,12 +704,16 @@ if __name__ == "__main__":
                         if res["ip"] in seen_ip:
                             continue
 
+                        reserved = ""
+                        if "is-reserved" in res and res["is-reserved"]:
+                            reserved = " (Client has reserved this IP)"
+
                         seen_ip[res["ip"]] = True
                         if re.search(r"available", res["state"]):
                             spark.post_to_spark(
                                 C.WEBEX_TEAM,
                                 SPARK_ROOM,
-                                "Client with MAC _{}_ no longer has a lease, but _USED TO HAVE_ lease **{}** (hostname: **{}**) in scope **{}** (state: **{}**) and was connected to switch **{}** on port **{}** in VLAN **{}**.".format(
+                                "Client with MAC _{}_ no longer has a lease, but _USED TO HAVE_ lease **{}** (hostname: **{}**) in scope **{}** (state: **{}**) and was connected to switch **{}** on port **{}** in VLAN **{}**{}.".format(
                                     hit[0],
                                     res["ip"],
                                     res["name"],
@@ -707,13 +722,14 @@ if __name__ == "__main__":
                                     res["relay-info"]["switch"],
                                     res["relay-info"]["port"],
                                     res["relay-info"]["vlan"],
+                                    reserved,
                                 ),
                             )
                         else:
                             spark.post_to_spark(
                                 C.WEBEX_TEAM,
                                 SPARK_ROOM,
-                                "Client with MAC _{}_ has lease **{}** (hostname: **{}**) in scope **{}** (state: **{}**) and is connected to switch **{}** on port **{}** in VLAN **{}**.".format(
+                                "Client with MAC _{}_ has lease **{}** (hostname: **{}**) in scope **{}** (state: **{}**) and is connected to switch **{}** on port **{}** in VLAN **{}**{}.".format(
                                     hit[0],
                                     res["ip"],
                                     res["name"],
@@ -722,6 +738,7 @@ if __name__ == "__main__":
                                     res["relay-info"]["switch"],
                                     res["relay-info"]["port"],
                                     res["relay-info"]["vlan"],
+                                    reserved,
                                 ),
                             )
                             if pires is not None:
@@ -762,12 +779,15 @@ if __name__ == "__main__":
                     res = check_for_lease(ip)
                     pires = get_from_pi(ip=ip)
                     if res is not None:
+                        reserved = ""
+                        if "is-reserved" in res and res["is-reserved"]:
+                            reserved = " (Client has reserved this IP)"
                         if re.search(r"available", res["state"]):
                             found_hit = True
                             spark.post_to_spark(
                                 C.WEBEX_TEAM,
                                 SPARK_ROOM,
-                                "Client with hostname _{}_ no longer has a lease, but _USED TO HAVE_ lease **{}** (hostname: **{}**) in scope **{}** (state: **{}**) and was connected to switch **{}** on port **{}** in VLAN **{}**.".format(
+                                "Client with hostname _{}_ no longer has a lease, but _USED TO HAVE_ lease **{}** (hostname: **{}**) in scope **{}** (state: **{}**) and was connected to switch **{}** on port **{}** in VLAN **{}**{}.".format(
                                     hit,
                                     ip,
                                     res["name"],
@@ -776,6 +796,7 @@ if __name__ == "__main__":
                                     res["relay-info"]["switch"],
                                     res["relay-info"]["port"],
                                     res["relay-info"]["vlan"],
+                                    reserved,
                                 ),
                             )
                         else:
