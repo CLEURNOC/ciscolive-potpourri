@@ -170,7 +170,7 @@ class CMX(Resource):
                     abort(404, "Requested element not found")
             except Exception as inst:
                 print("Unexpected error with request= {} | error : {}".format(response.text, inst), file=sys.stderr)
-                return {"response": str(response.text), "error": str(inst)}
+                return {"response": str(response.text), "error": str(inst)}, 500
 
         return abort(404, "Missing parameter ip, ipv6 or mac. Other possible parameters are: marker (" + ", ".join(markers.keys()) + ")")
 
@@ -213,7 +213,7 @@ class CMX_SSID(Resource):
                                     "Unexpected error with page request= " + response.text + " | error : " + str(sys.exc_info()[0]),
                                     file=sys.stderr,
                                 )
-                                return {"response": str(response.text), "error": str(inst)}
+                                return {"response": str(response.text), "error": str(inst)}, 500
 
                     if args.get("floor"):
                         floor = args.get("floor")
