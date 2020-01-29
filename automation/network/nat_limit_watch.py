@@ -103,7 +103,7 @@ if __name__ == "__main__":
                 if m:
                     host = m.group(1)
                     misses = m.group(2)
-                    if (host in prev_state and prev_state[host] < int(misses)) or host not in prev_state:
+                    if host not in prev_state:
                         spark.post_to_spark(
                             C.WEBEX_TEAM,
                             SPARK_ROOM,
