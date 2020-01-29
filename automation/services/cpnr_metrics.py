@@ -45,6 +45,8 @@ COMMANDS = {"df -h /": {"pattern": r"(\d+)%", "metrics": ["diskUtilization"]}}
 
 @app.route("/metrics")
 def get_metrics():
+    global COMMANDS
+
     output = ""
     for server in C.CPNR_SERVERS:
         for command in list(COMMANDS.keys()):
@@ -61,7 +63,7 @@ def get_metrics():
 
             if m:
                 i = 1
-                for metric in COMMAND[commands]["metrics"]:
+                for metric in COMMANDS[commands]["metrics"]:
                     output += '{}{{server="{}"}} {}\n'.format(COMMANDS[command]["metric"], server, m.group(i))
 
     return Response(output, mimetype="text/plain")
