@@ -63,7 +63,7 @@ def get_metrics():
 
             if m:
                 i = 1
-                for metric in COMMANDS[commands]["metrics"]:
+                for metric in COMMANDS[command]["metrics"]:
                     output += '{}{{server="{}"}} {}\n'.format(COMMANDS[command]["metric"], server, m.group(i))
 
     return Response(output, mimetype="text/plain")
