@@ -14,6 +14,7 @@ class Config:
     DHCP_SERVER = "dc1-dhcp." + DNS_DOMAIN
     PI = "cl-pi." + DNS_DOMAIN
     DNACS = ["cl-dnac04." + DNS_DOMAIN, "sdacleur20." + DNS_DOMAIN]
+    SDA_BASE = "https://sdacleur20." + DNS_DOMAIN
     CMX_GW = "http://cl-freebsd.{}:8002/api/v0.1/cmx".format(DNS_DOMAIN)
     CMX = "https://cl-cmx-1." + DNS_DOMAIN
     TOOL = "tool." + DNS_DOMAIN
