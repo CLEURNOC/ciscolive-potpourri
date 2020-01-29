@@ -31,6 +31,7 @@ import CLEUCreds
 from gevent.pywsgi import WSGIServer
 from subprocess import run
 import shlex
+import re
 from cleu.config import Config as C
 
 
