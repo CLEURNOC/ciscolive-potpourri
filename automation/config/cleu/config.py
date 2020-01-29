@@ -22,3 +22,4 @@ class Config:
     AD_DN_BASE = "cn=Users" + "".join([", dc={}".format(x) for x in AD_DOMAIN.split(".")])
     VCENTER = "cl-vcenter." + AD_DOMAIN
     PW_RESET_URL = "https://cl-jump-01.{}:8443".format(DNS_DOMAIN)
+    CPNR_SERVERS = ["dc1-dhcp.ciscolive.network", "dc2-dhcp.ciscolive.network", "dc1-dns.ciscolive.network", "dc2-dns.ciscolive.network"]
