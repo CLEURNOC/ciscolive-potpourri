@@ -156,10 +156,10 @@ def main():
 
         i += 1
 
-    if "groups" in prev_state:
-        for group in prev_state["groups"]:
-            if group not in seen_groups:
-                spark.post_to_spark(C.WEBEX_TEAM, ROOM, prev_state["groups"][group], MessageType.GOOD)
+    if "issues" in prev_state:
+        for issue in prev_state["issues"]:
+            if issue not in seen_issues:
+                spark.post_to_spark(C.WEBEX_TEAM, ROOM, prev_state["issues"][issue], MessageType.GOOD)
 
     prev_state["start_time"] = end_time
     prev_state["groups"] = seen_issues
