@@ -162,7 +162,7 @@ def main():
                 spark.post_to_spark(C.WEBEX_TEAM, ROOM, prev_state["groups"][group], MessageType.GOOD)
 
     prev_state["start_time"] = end_time
-    prev_state["groups"] = seen_groups
+    prev_state["groups"] = seen_issues
 
     with open(CACHE_FILE, "w") as fd:
         json.dump(prev_state, fd, indent=4)
