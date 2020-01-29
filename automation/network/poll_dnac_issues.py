@@ -29,6 +29,8 @@ import re
 import sys
 import time
 import json
+import string
+import random
 import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
@@ -46,48 +48,62 @@ def get_identity_token():
     url = C.SDA_BASE + "/api/system/v1/identitymgmt/login"
 
     try:
-        response = requests.request("GET", url, cookies={"JSESSIONID": "foo"}, headers=CLEUCreds.DNAC_BASIC, verify=False)
+        response = requests.request("GET", url, headers={"Authorization": CLEUCreds.JCLARKE_BASIC}, verify=False)
         response.raise_for_status()
     except Exception as e:
         print("ERROR: Failed to login to DNAC: {}".format(getattr(e, "message", repr(e))))
         return None
 
-    return response.cookies
+    jwt = response.headers.get("Set-Cookie")
+    if jwt:
+        m = re.search(r"X-JWT-ACCESS-TOKEN=([^;]+)", jwt)
+        if m:
+            return m.group(1)
+
+    return None
 
 
 def main():
-    cookies = get_identity_token()
-    if not cookies:
+    global ROOM, CACHE_FILE
+
+    jwt = get_identity_token()
+    if not jwt:
+        print("No cookies")
         sys.exit(1)
 
-    prev_state = None
-
+    prev_state = {}
+    cookies = {
+        "X-JWT-ACCESS-TOKEN": jwt,
+        "JSESSIONID": ("".join(random.choice(string.ascii_lowercase) for i in range(16))),
+        "cisco-dna-core-shell-actionItemModal": "false",
+    }
     try:
         with open(CACHE_FILE) as fd:
             prev_state = json.load(fd)
     except Exception as e:
-        print("ERROR: Failed to read cache file: {}".format(e))
-        sys.exit(1)
+        pass
 
-    start_time = prev_state["start_time"]
+    end_time = int(time.time() * 1000)
+    if "start_time" not in prev_state:
+        start_time = end_time - 86400000
+    else:
+        start_time = prev_state["start_time"]
 
     spark = Sparker(token=CLEUCreds.SPARK_TOKEN)
 
-    end_time = int(time.time() * 1000)
-
-    url = C.SDA_BASE + "/api/assurance/v1/issues/global-category?startTime={}&endTime={}&limit=10".format(start_time, end_time)
+    url = C.SDA_BASE + "/api/assurance/v1/issue/global-category?startTime={}&endTime={}&limit=10".format(start_time, end_time)
 
     payload = {"sortBy": {"priority": "ASC"}, "issueStatus": "active", "filters": {}}
 
     i = 0
     seen_groups = {}
+    seen_issues = {}
 
     while True:
-        url += "page={}".format(i)
         try:
             response = requests.request(
                 "POST",
-                url + "page={}".format(i),
+                url + "&page={}".format(i),
                 cookies=cookies,
                 json=payload,
                 headers={"content-type": "application/json", "accept": "application/json"},
@@ -99,14 +115,18 @@ def main():
             break
 
         j = response.json()
-        if j["groupName"] in seen_groups:
-            continue
 
-        seen_groups[j["groupName"]] = True
         if "response" in j:
             for issue in j["response"]:
-                iurl = C.SDA_BASE + "/api/assurance/v1/issue/category-detail?startTime={}&endTime={}&limit=25&page=0"
-                ipayload = {"groupName": j["groupName"], "filters": {}, "issueStatus": "active"}
+                if issue["groupName"] in seen_groups:
+                    continue
+
+                seen_groups[issue["groupName"]] = True
+
+                iurl = C.SDA_BASE + "/api/assurance/v1/issue/category-detail?startTime={}&endTime={}&limit=25&page=0".format(
+                    start_time, end_time
+                )
+                ipayload = {"groupName": issue["groupName"], "filters": {}, "issueStatus": "active"}
 
                 try:
                     response = requests.request(
@@ -136,12 +156,17 @@ def main():
 
         i += 1
 
-    for group in prev_state["groups"]:
-        if group not in seen_groups:
-            spark.post_to_spark(C.WEBEX_TEAM, ROOM, prev_state["groups"][group], MessageType.GOOD)
+    if "groups" in prev_state:
+        for group in prev_state["groups"]:
+            if group not in seen_groups:
+                spark.post_to_spark(C.WEBEX_TEAM, ROOM, prev_state["groups"][group], MessageType.GOOD)
 
     prev_state["start_time"] = end_time
     prev_state["groups"] = seen_groups
 
     with open(CACHE_FILE, "w") as fd:
-        json.dump(fd, prev_state, indent=4)
+        json.dump(prev_state, fd, indent=4)
+
+
+if __name__ == "__main__":
+    main()
