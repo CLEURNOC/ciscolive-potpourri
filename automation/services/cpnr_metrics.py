@@ -35,7 +35,7 @@ from cleu.config import Config as C
 
 
 CACHE_FILE = "/home/jclarke/cpnr_metrics.dat"
-PORT = 8084
+PORT = 8085
 
 app = Flask("CPNR Stats Fetcher")
 
