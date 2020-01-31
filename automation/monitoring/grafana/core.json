@@ -1,21 +1,24 @@
 {
   "annotations": {
-    "list": [{
-      "builtIn": 1,
-      "datasource": "-- Grafana --",
-      "enable": true,
-      "hide": true,
-      "iconColor": "rgba(0, 211, 255, 1)",
-      "name": "Annotations & Alerts",
-      "type": "dashboard"
-    }]
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
   },
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
   "id": 19,
   "links": [],
-  "panels": [{
+  "panels": [
+    {
       "aliasColors": {},
       "bars": false,
       "dashLength": 10,
@@ -56,7 +59,8 @@
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
-      "targets": [{
+      "targets": [
+        {
           "expr": "delta(ifHCInOctets{ifDescr=~\"TenGig[^.]+\",instance=\"core1-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
           "format": "time_series",
           "hide": false,
@@ -65,7 +69,7 @@
           "refId": "A"
         },
         {
-          "expr": "delta(ifHCInOctets{ifDescr=~\"TenGig[^.]+\",instance=\"core1-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "expr": "delta(ifHCOutOctets{ifDescr=~\"TenGig[^.]+\",instance=\"core1-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "{{ifName}} : {{ifAlias}} OUT",
@@ -90,7 +94,8 @@
         "show": true,
         "values": []
       },
-      "yaxes": [{
+      "yaxes": [
+        {
           "format": "bps",
           "label": null,
           "logBase": 1,
@@ -153,7 +158,8 @@
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
-      "targets": [{
+      "targets": [
+        {
           "expr": "delta(ifHCInOctets{ifDescr=~\"TenGig[^.]+\",instance=\"core2-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
           "format": "time_series",
           "hide": false,
@@ -162,7 +168,7 @@
           "refId": "A"
         },
         {
-          "expr": "delta(ifHCInOctets{ifDescr=~\"TenGig[^.]+\",instance=\"core2-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "expr": "delta(ifHCOutOctets{ifDescr=~\"TenGig[^.]+\",instance=\"core2-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "{{ifName}} : {{ifAlias}} OUT",
@@ -187,7 +193,8 @@
         "show": true,
         "values": []
       },
-      "yaxes": [{
+      "yaxes": [
+        {
           "format": "bps",
           "label": null,
           "logBase": 1,
@@ -249,7 +256,8 @@
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
-      "targets": [{
+      "targets": [
+        {
           "expr": "delta(ifHCInOctets{ifDescr=~\"(Twenty|Hundred)Gig[^.]+\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
           "format": "time_series",
           "hide": false,
@@ -258,7 +266,7 @@
           "refId": "A"
         },
         {
-          "expr": "delta(ifHCInOctets{ifDescr=~\"(Twenty|Hundred)Gig[^.]+\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "expr": "delta(ifHCOutOctets{ifDescr=~\"(Twenty|Hundred)Gig[^.]+\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "{{ifName}} : {{ifAlias}} OUT",
@@ -283,7 +291,8 @@
         "show": true,
         "values": []
       },
-      "yaxes": [{
+      "yaxes": [
+        {
           "format": "bps",
           "label": null,
           "logBase": 1,
@@ -345,7 +354,8 @@
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
-      "targets": [{
+      "targets": [
+        {
           "expr": "delta(ifHCInOctets{ifDescr=~\"(Twenty|Hundred)Gig[^.]+\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
           "format": "time_series",
           "hide": false,
@@ -354,7 +364,7 @@
           "refId": "A"
         },
         {
-          "expr": "delta(ifHCInOctets{ifDescr=~\"(Twenty|Hundred)Gig[^.]+\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "expr": "delta(ifHCOutOctets{ifDescr=~\"(Twenty|Hundred)Gig[^.]+\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "{{ifName}} : {{ifAlias}} OUT",
@@ -379,7 +389,8 @@
         "show": true,
         "values": []
       },
-      "yaxes": [{
+      "yaxes": [
+        {
           "format": "bps",
           "label": null,
           "logBase": 1,
@@ -441,7 +452,8 @@
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
-      "targets": [{
+      "targets": [
+        {
           "expr": "delta(ifHCInOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"003-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
           "format": "time_series",
           "intervalFactor": 2,
@@ -547,7 +559,8 @@
         "show": true,
         "values": []
       },
-      "yaxes": [{
+      "yaxes": [
+        {
           "format": "bps",
           "label": null,
           "logBase": 1,
@@ -609,7 +622,8 @@
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
-      "targets": [{
+      "targets": [
+        {
           "expr": "delta(ifHCInOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"003-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
           "format": "time_series",
           "intervalFactor": 2,
@@ -715,7 +729,8 @@
         "show": true,
         "values": []
       },
-      "yaxes": [{
+      "yaxes": [
+        {
           "format": "bps",
           "label": null,
           "logBase": 1,
@@ -738,7 +753,7 @@
       }
     }
   ],
-  "refresh": false,
+  "refresh": "5s",
   "schemaVersion": 21,
   "style": "dark",
   "tags": [],
@@ -777,5 +792,5 @@
   "timezone": "",
   "title": "CLEUR20_CORE-NETWORK",
   "uid": "bhjwb4yZz",
-  "version": 2
+  "version": 3
 }

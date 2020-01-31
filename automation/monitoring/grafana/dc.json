@@ -15,401 +15,441 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "hideControls": false,
-  "id": 9,
+  "id": 14,
+  "iteration": 1580476986850,
   "links": [],
-  "refresh": "1m",
-  "rows": [
+  "panels": [
     {
-      "collapse": false,
-      "height": 235,
-      "panels": [
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "Prometheus",
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "hiddenSeries": false,
+      "id": 1,
+      "legend": {
+        "alignAsTable": false,
+        "avg": true,
+        "current": true,
+        "hideEmpty": true,
+        "hideZero": true,
+        "max": true,
+        "min": false,
+        "rightSide": false,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
         {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": null,
-          "fill": 1,
-          "id": 1,
-          "legend": {
-            "alignAsTable": false,
-            "avg": true,
-            "current": true,
-            "hideZero": true,
-            "max": true,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": true
-          },
-          "lines": true,
-          "linewidth": 1,
-          "links": [],
-          "nullPointMode": "null",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "span": 6,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "expr": "irate(ifHCInOctets{job='snmp',instance=~\"dc1-ethsw-1.ciscolive.network\",ifDescr=~'Ethernet.*'}[30s])",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "{{sysName}} : {{ifDescr}} ({{ifAlias}}) IN",
-              "refId": "A"
-            },
-            {
-              "expr": "irate(ifHCOutOctets{job=\"snmp\",instance=~'dc1-ethsw-1.ciscolive.network',ifDescr=~'Ethernet.*'}[30s])",
-              "format": "time_series",
-              "instant": false,
-              "intervalFactor": 2,
-              "legendFormat": "{{sysName}} : {{ifDescr}} ({{ifAlias}}) OUT",
-              "refId": "B"
-            },
-            {
-              "expr": "",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "refId": "C"
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "DC1-ETHSW-1 Interface Utilization",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "Bps",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": false
-            }
-          ]
+          "expr": "delta(ifHCInOctets{job='snmp',instance=~\"dc1-ethsw-1.ciscolive.network\",ifDescr=~'Ethernet.*'}[5m])/300",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "{{ifDescr}} ({{ifAlias}}) IN",
+          "refId": "A"
         },
         {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": null,
-          "fill": 1,
-          "id": 2,
-          "legend": {
-            "alignAsTable": false,
-            "avg": true,
-            "current": true,
-            "hideZero": true,
-            "max": true,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": true
-          },
-          "lines": true,
-          "linewidth": 1,
-          "links": [],
-          "nullPointMode": "null",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "span": 6,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "expr": "irate(ifHCInOctets{job='snmp',instance=~\"dc1-ethsw-2.ciscolive.network\",ifDescr=~'Ethernet.*'}[30s])",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "{{sysName}} : {{ifDescr}} ({{ifAlias}}) IN",
-              "refId": "A"
-            },
-            {
-              "expr": "irate(ifHCOutOctets{job=\"snmp\",instance=~'dc1-ethsw-2.ciscolive.network',ifDescr=~'Ethernet.*'}[30s])",
-              "format": "time_series",
-              "instant": false,
-              "intervalFactor": 2,
-              "legendFormat": "{{sysName}} : {{ifDescr}} ({{ifAlias}}) OUT",
-              "refId": "B"
-            },
-            {
-              "expr": "",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "refId": "C"
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "DC1-ETHSW-2 Interface Utilization",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "Bps",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": false
-            }
-          ]
+          "expr": "delta(ifHCOutOctets{job=\"snmp\",instance=~\"dc1-ethsw-1.ciscolive.network\",ifDescr=~'Ethernet.*'}[5m])/300",
+          "format": "time_series",
+          "instant": false,
+          "intervalFactor": 2,
+          "legendFormat": "{{ifDescr}} ({{ifAlias}}) OUT",
+          "refId": "B"
+        },
+        {
+          "expr": "",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "refId": "C"
         }
       ],
-      "repeat": null,
-      "repeatIteration": null,
-      "repeatRowId": null,
-      "showTitle": false,
-      "title": "Dashboard Row",
-      "titleSize": "h6"
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "DC1-ETHSW-1 Interface Utilization",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "Bps",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": false
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
-      "collapse": false,
-      "height": 250,
-      "panels": [
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "Prometheus",
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "hiddenSeries": false,
+      "id": 2,
+      "legend": {
+        "alignAsTable": false,
+        "avg": true,
+        "current": true,
+        "hideZero": true,
+        "max": true,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
         {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": null,
-          "fill": 1,
-          "id": 3,
-          "legend": {
-            "alignAsTable": false,
-            "avg": true,
-            "current": true,
-            "hideZero": true,
-            "max": true,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": true
-          },
-          "lines": true,
-          "linewidth": 1,
-          "links": [],
-          "nullPointMode": "null",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "span": 6,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "expr": "irate(ifHCInOctets{job='snmp',instance=~\"dc2-ethsw-1.ciscolive.network\",ifDescr=~'Ethernet.*'}[30s])",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "{{sysName}} : {{ifDescr}} ({{ifAlias}}) IN",
-              "refId": "A"
-            },
-            {
-              "expr": "irate(ifHCOutOctets{job=\"snmp\",instance=~'dc2-ethsw-1.ciscolive.network',ifDescr=~'Ethernet.*'}[30s])",
-              "format": "time_series",
-              "instant": false,
-              "intervalFactor": 2,
-              "legendFormat": "{{sysName}} : {{ifDescr}} ({{ifAlias}}) OUT",
-              "refId": "B"
-            },
-            {
-              "expr": "",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "refId": "C"
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "DC2-ETHSW-1 Interface Utilization",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "Bps",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": false
-            }
-          ]
+          "expr": "delta(ifHCInOctets{job='snmp',instance=~\"dc1-ethsw-2.ciscolive.network\",ifDescr=~'Ethernet.*'}[5m])/300",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "{{ifDescr}} ({{ifAlias}}) IN",
+          "refId": "A"
         },
         {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": null,
-          "fill": 1,
-          "id": 4,
-          "legend": {
-            "alignAsTable": false,
-            "avg": true,
-            "current": true,
-            "hideZero": true,
-            "max": true,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": true
-          },
-          "lines": true,
-          "linewidth": 1,
-          "links": [],
-          "nullPointMode": "null",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "span": 6,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "expr": "irate(ifHCInOctets{job='snmp',instance=~\"dc2-ethsw-2.ciscolive.network\",ifDescr=~'Ethernet.*'}[30s])",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "{{sysName}} : {{ifDescr}} ({{ifAlias}}) IN",
-              "refId": "A"
-            },
-            {
-              "expr": "irate(ifHCOutOctets{job=\"snmp\",instance=~'dc2-ethsw-2.ciscolive.network',ifDescr=~'Ethernet.*'}[30s])",
-              "format": "time_series",
-              "instant": false,
-              "intervalFactor": 2,
-              "legendFormat": "{{sysName}} : {{ifDescr}} ({{ifAlias}}) OUT",
-              "refId": "B"
-            },
-            {
-              "expr": "",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "refId": "C"
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "DC2-ETHSW-2 Interface Utilization",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "Bps",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": false
-            }
-          ]
+          "expr": "delta(ifHCOutOctets{job=\"snmp\",instance=~'dc1-ethsw-2.ciscolive.network',ifDescr=~'Ethernet.*'}[5m])/300",
+          "format": "time_series",
+          "instant": false,
+          "intervalFactor": 2,
+          "legendFormat": "{{ifDescr}} ({{ifAlias}}) OUT",
+          "refId": "B"
+        },
+        {
+          "expr": "",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "refId": "C"
         }
       ],
-      "repeat": null,
-      "repeatIteration": null,
-      "repeatRowId": null,
-      "showTitle": false,
-      "title": "Dashboard Row",
-      "titleSize": "h6"
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "DC1-ETHSW-2 Interface Utilization",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "Bps",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": false
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "Prometheus",
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 11,
+        "w": 12,
+        "x": 0,
+        "y": 10
+      },
+      "hiddenSeries": false,
+      "id": 3,
+      "legend": {
+        "alignAsTable": false,
+        "avg": true,
+        "current": true,
+        "hideEmpty": true,
+        "hideZero": true,
+        "max": true,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "delta(ifHCInOctets{job='snmp',instance=~\"dc2-ethsw-1.ciscolive.network\",ifDescr=~'Ethernet.*'}[5m])/300",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "{{ifDescr}} ({{ifAlias}}) IN",
+          "refId": "A"
+        },
+        {
+          "expr": "delta(ifHCOutOctets{job=\"snmp\",instance=~'dc2-ethsw-1.ciscolive.network',ifDescr=~'Ethernet.*'}[5m])/300",
+          "format": "time_series",
+          "instant": false,
+          "intervalFactor": 2,
+          "legendFormat": "{{ifDescr}} ({{ifAlias}}) OUT",
+          "refId": "B"
+        },
+        {
+          "expr": "",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "refId": "C"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "DC2-ETHSW-1 Interface Utilization",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "Bps",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": false
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "Prometheus",
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 11,
+        "w": 12,
+        "x": 12,
+        "y": 10
+      },
+      "hiddenSeries": false,
+      "id": 4,
+      "legend": {
+        "alignAsTable": false,
+        "avg": true,
+        "current": true,
+        "hideEmpty": true,
+        "hideZero": true,
+        "max": true,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "delta(ifHCInOctets{job=\"snmp\",instance=~\"dc2-ethsw-2.ciscolive.network\",ifDescr=~\"Ethernet.*\"}[5m])/300",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "{{ifDescr}} ({{ifAlias}}) IN",
+          "refId": "A"
+        },
+        {
+          "expr": "delta(ifHCOutOctets{job=\"snmp\",instance=~\"dc2-ethsw-2.ciscolive.network\",ifDescr=~\"Ethernet.*\"}[5m])/300",
+          "format": "time_series",
+          "instant": false,
+          "intervalFactor": 2,
+          "legendFormat": "{{ifDescr}} ({{ifAlias}}) OUT",
+          "refId": "B"
+        },
+        {
+          "expr": "",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "refId": "C"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "DC2-ETHSW-2 Interface Utilization",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "Bps",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": false
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     }
   ],
-  "schemaVersion": 14,
+  "refresh": "1m",
+  "schemaVersion": 21,
   "style": "dark",
   "tags": [],
   "templating": {
@@ -423,6 +463,7 @@
           ]
         },
         "datasource": "Prometheus",
+        "definition": "",
         "hide": 2,
         "includeAll": false,
         "label": null,
@@ -432,6 +473,7 @@
         "query": "query_result(sum by (instance)(ifHCInOctets{job=\"snmp\"}))",
         "refresh": 1,
         "regex": ".*instance=\"(.*?)\".*",
+        "skipUrlSync": false,
         "sort": 1,
         "tagValuesQuery": "",
         "tags": [],
@@ -442,10 +484,12 @@
       {
         "allValue": null,
         "current": {
+          "selected": false,
           "text": "All",
           "value": "$__all"
         },
         "datasource": "Prometheus",
+        "definition": "",
         "hide": 2,
         "includeAll": true,
         "label": null,
@@ -455,6 +499,7 @@
         "query": "query_result(ifHCInOctets{job=\"snmp\",instance=~\"$Device\"})",
         "refresh": 1,
         "regex": ".*ifDescr=\"(.*?)\",.*",
+        "skipUrlSync": false,
         "sort": 3,
         "tagValuesQuery": "",
         "tags": [],
@@ -465,7 +510,7 @@
     ]
   },
   "time": {
-    "from": "now-6h",
+    "from": "now-24h",
     "to": "now"
   },
   "timepicker": {
@@ -493,7 +538,8 @@
       "30d"
     ]
   },
-  "timezone": "utc",
-  "title": "New DC",
-  "version": 6
+  "timezone": "",
+  "title": "Data Centre Switch Port Utilization",
+  "uid": "Z8L2-VsZz",
+  "version": 17
 }

@@ -15,252 +15,384 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "hideControls": false,
-  "id": 8,
+  "id": 4,
   "links": [],
-  "refresh": "1m",
-  "rows": [
+  "panels": [
     {
-      "collapse": false,
-      "height": 562,
-      "panels": [
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "Prometheus",
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 10,
+        "w": 14,
+        "x": 0,
+        "y": 0
+      },
+      "hiddenSeries": false,
+      "id": 1,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": true,
+        "hideEmpty": true,
+        "hideZero": true,
+        "max": true,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
         {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": null,
-          "fill": 1,
-          "id": 1,
-          "legend": {
-            "avg": true,
-            "current": true,
-            "max": true,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": true
-          },
-          "lines": true,
-          "linewidth": 1,
-          "links": [],
-          "nullPointMode": "null",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "span": 6,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "expr": "activeLeases{server=\"10.100.253.9\"}",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "DC1-DHCP",
-              "refId": "A"
-            },
-            {
-              "expr": "activeLeases{server=\"10.100.253.109\"}",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "DC2-DHCP",
-              "refId": "B"
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "DHCP Active Leases",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": false
-            }
-          ]
+          "expr": "activeLeases{server=\"10.100.253.9\"}",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "DC1-DHCP",
+          "refId": "A"
         },
         {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": null,
-          "fill": 1,
-          "id": 2,
-          "legend": {
-            "avg": true,
-            "current": true,
-            "max": true,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": true
-          },
-          "lines": true,
-          "linewidth": 1,
-          "links": [],
-          "nullPointMode": "null",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "span": 6,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "expr": "irate(discovers{server=\"10.100.253.9\"}[2m])",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "DC1-DHCP Discovers",
-              "refId": "C"
-            },
-            {
-              "expr": "irate(discovers{server=\"10.100.253.109\"}[2m])",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "DC2-DHCP Discovers",
-              "refId": "D"
-            },
-            {
-              "expr": "acksPerSecond{server=\"10.100.253.9\"}",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "DC1-DHCP Acks",
-              "refId": "A"
-            },
-            {
-              "expr": "acksPerSecond{server=\"10.100.253.109\"}",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "DC2-DHCP Acks",
-              "refId": "B"
-            },
-            {
-              "expr": "irate(offers{server=\"10.100.253.9\"}[2m])",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "DC1-DHCP Offers",
-              "refId": "E"
-            },
-            {
-              "expr": "irate(offers{server=\"10.100.253.109\"}[2m])",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "DC2-DHCP Offers",
-              "refId": "F"
-            },
-            {
-              "expr": "irate(droppedTotal{server=\"10.100.253.9\"}[2m])",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "DC1-DHCP Dropped",
-              "refId": "G"
-            },
-            {
-              "expr": "irate(droppedTotal{server=\"10.100.253.109\"}[2m])",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "DC2-DHCP Dropped",
-              "refId": "H"
-            },
-            {
-              "expr": "irate(requests{server=\"10.100.253.9\"}[2m])",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "DC1-DHCP Requests",
-              "refId": "I"
-            },
-            {
-              "expr": "irate(requests{server=\"10.100.253.109\"}[2m])",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "DC2-DHCP Requests",
-              "refId": "J"
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "DHCP Transaction Rate",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "short",
-              "label": "Counts Per Second",
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": false
-            }
-          ]
+          "expr": "activeLeases{server=\"10.100.254.9\"}",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "DC2-DHCP",
+          "refId": "B"
         }
       ],
-      "repeat": null,
-      "repeatIteration": null,
-      "repeatRowId": null,
-      "showTitle": false,
-      "title": "Dashboard Row",
-      "titleSize": "h6"
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "DHCP Active Leases",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 10,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": false
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": true,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "Prometheus",
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 10,
+        "w": 10,
+        "x": 14,
+        "y": 0
+      },
+      "hiddenSeries": false,
+      "id": 2,
+      "legend": {
+        "alignAsTable": false,
+        "avg": false,
+        "current": true,
+        "hideEmpty": false,
+        "hideZero": false,
+        "max": true,
+        "min": false,
+        "show": false,
+        "total": false,
+        "values": true
+      },
+      "lines": false,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "irate(discovers{server=\"10.100.253.9\"}[30m])",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "DC1-DHCP Discovers",
+          "refId": "C"
+        },
+        {
+          "expr": "irate(discovers{server=\"10.100.254.9\"}[30m])",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "DC2-DHCP Discovers",
+          "refId": "D"
+        },
+        {
+          "expr": "acksPerSecond{server=\"10.100.253.9\"}",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "DC1-DHCP Acks",
+          "refId": "A"
+        },
+        {
+          "expr": "acksPerSecond{server=\"10.100.254.9\"}",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "DC2-DHCP Acks",
+          "refId": "B"
+        },
+        {
+          "expr": "irate(offers{server=\"10.100.253.9\"}[30m])",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "DC1-DHCP Offers",
+          "refId": "E"
+        },
+        {
+          "expr": "irate(offers{server=\"10.100.253.109\"}[30m])",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "DC2-DHCP Offers",
+          "refId": "F"
+        },
+        {
+          "expr": "irate(droppedTotal{server=\"10.100.253.9\"}[30m])",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "DC1-DHCP Dropped",
+          "refId": "G"
+        },
+        {
+          "expr": "irate(droppedTotal{server=\"10.100.254.9\"}[30m])",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "DC2-DHCP Dropped",
+          "refId": "H"
+        },
+        {
+          "expr": "irate(requests{server=\"10.100.253.9\"}[30m])",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "DC1-DHCP Requests",
+          "refId": "I"
+        },
+        {
+          "expr": "irate(requests{server=\"10.100.254.9\"}[30m])",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "DC2-DHCP Requests",
+          "refId": "J"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "DHCP Transaction Rate",
+      "tooltip": {
+        "shared": false,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "series",
+        "name": null,
+        "show": true,
+        "values": [
+          "current"
+        ]
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": "Counts Per Second",
+          "logBase": 1,
+          "max": null,
+          "min": "0",
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": false
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "fill": 0,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 10
+      },
+      "hiddenSeries": false,
+      "id": 4,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": true,
+        "hideEmpty": true,
+        "hideZero": true,
+        "max": true,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "diskUtilization{server=\"dc1-dhcp.ciscolive.network\"}",
+          "legendFormat": "DC1-DHCP",
+          "refId": "A"
+        },
+        {
+          "expr": "diskUtilization{server=\"dc2-dhcp.ciscolive.network\"}",
+          "legendFormat": "DC2-DHCP",
+          "refId": "B"
+        },
+        {
+          "expr": "diskUtilization{server=\"dc1-dns.ciscolive.network\"}",
+          "legendFormat": "DC1-DNS",
+          "refId": "C"
+        },
+        {
+          "expr": "diskUtilization{server=\"dc2-dhcp.ciscolive.network\"}",
+          "legendFormat": "DC2-DNS",
+          "refId": "D"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "CPNR Disk Utilization",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "percent",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": false
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     }
   ],
-  "schemaVersion": 14,
+  "refresh": "5m",
+  "schemaVersion": 21,
   "style": "dark",
   "tags": [],
   "templating": {
     "list": []
   },
   "time": {
-    "from": "2019-01-28T05:00:00.000Z",
+    "from": "now-1h",
     "to": "now"
   },
   "timepicker": {
@@ -290,5 +422,6 @@
   },
   "timezone": "",
   "title": "DHCP Stats",
-  "version": 10
+  "uid": "t8YkNMyZk",
+  "version": 18
 }

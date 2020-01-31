@@ -1,0 +1,1649 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "id": 22,
+  "links": [],
+  "panels": [
+    {
+      "datasource": "Prometheus",
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "id": 15,
+      "options": {
+        "fieldOptions": {
+          "calcs": [
+            "last"
+          ],
+          "defaults": {
+            "mappings": [],
+            "max": 65535,
+            "min": 0,
+            "thresholds": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "#EAB839",
+                "value": 45000
+              },
+              {
+                "color": "red",
+                "value": 60000
+              }
+            ],
+            "unit": "none"
+          },
+          "override": {},
+          "values": false
+        },
+        "orientation": "auto",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "pluginVersion": "6.5.2",
+      "targets": [
+        {
+          "expr": "umbrella1NatTrans{idf=\"CORE1-EDGE\"}",
+          "instant": true,
+          "legendFormat": "DC1-UMBRELLA",
+          "refId": "A"
+        },
+        {
+          "expr": "umbrella2NatTrans{idf=\"CORE1-EDGE\"}",
+          "instant": true,
+          "legendFormat": "DC2-UMBRELLA",
+          "refId": "B"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "CORE1-EDGE DNS NAT Translations",
+      "type": "gauge"
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 6,
+        "y": 0
+      },
+      "hiddenSeries": false,
+      "id": 10,
+      "legend": {
+        "avg": false,
+        "current": true,
+        "max": true,
+        "min": true,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "qfpUtil{idf=\"CORE1-EDGE\"}",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "CORE1-EDGE QFP Utilization",
+          "refId": "A"
+        },
+        {
+          "expr": "qfpUtil{idf=\"CORE2-EDGE\"}",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "CORE2-EDGE QFP Utilization",
+          "refId": "B"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Edge QFP Utilization",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "percent",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": false
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 8,
+        "w": 10,
+        "x": 14,
+        "y": 0
+      },
+      "hiddenSeries": false,
+      "id": 11,
+      "legend": {
+        "avg": false,
+        "current": true,
+        "max": true,
+        "min": true,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "natTranslations{idf=\"CORE1-EDGE\"}",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "CORE1-EDGE NAT Translations",
+          "refId": "A"
+        },
+        {
+          "expr": "natTranslations{idf=\"CORE2-EDGE\"}",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "CORE2-EDGE NAT Tranlsations",
+          "refId": "B"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Edge NAT Translations",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": false
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 0,
+        "y": 8
+      },
+      "hiddenSeries": false,
+      "id": 5,
+      "legend": {
+        "avg": true,
+        "current": true,
+        "hideZero": true,
+        "max": true,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "totalMacs{idf=\"CORE1-WA\"}",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "CORE1-WA",
+          "refId": "A"
+        },
+        {
+          "expr": "totalMacs{idf=\"CORE2-WA\"}",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "CORE2-WA",
+          "refId": "B"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "WA MAC Counts",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": false
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 8,
+        "y": 8
+      },
+      "hiddenSeries": false,
+      "id": 6,
+      "legend": {
+        "avg": true,
+        "current": true,
+        "hideZero": true,
+        "max": true,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "arpEntries{idf=\"CORE1-WA\"}",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "CORE1-WA",
+          "refId": "A"
+        },
+        {
+          "expr": "arpEntries{idf=\"CORE2-WA\"}",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "CORE2-WA",
+          "refId": "B"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "WA ARP Entries",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": false
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "Prometheus",
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 16,
+        "y": 8
+      },
+      "hiddenSeries": false,
+      "id": 7,
+      "legend": {
+        "avg": true,
+        "current": true,
+        "hideZero": true,
+        "max": true,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "ndEntries{idf=\"CORE1-WA\"}",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "CORE1-WA",
+          "refId": "A"
+        },
+        {
+          "expr": "ndEntries{idf=\"CORE2-WA\"}",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "CORE2-WA",
+          "refId": "B"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "WA ND Entries",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": false
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "Prometheus",
+      "fill": 0,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 0,
+        "y": 15
+      },
+      "hiddenSeries": false,
+      "id": 13,
+      "legend": {
+        "avg": true,
+        "current": true,
+        "hideZero": true,
+        "max": true,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "totalMacs{idf=\"008-x42.ciscolive.network\"}",
+          "legendFormat": "008-X42",
+          "refId": "1"
+        },
+        {
+          "expr": "totalMacs{idf=\"007-x11.ciscolive.network\"}",
+          "legendFormat": "007-X11",
+          "refId": "2"
+        },
+        {
+          "expr": "totalMacs{idf=\"007-x13.ciscolive.network\"}",
+          "legendFormat": "007-X13",
+          "refId": "3"
+        },
+        {
+          "expr": "totalMacs{idf=\"008-x49.ciscolive.network\"}",
+          "legendFormat": "008-X49",
+          "refId": "4"
+        },
+        {
+          "expr": "totalMacs{idf=\"008-x53.ciscolive.network\"}",
+          "legendFormat": "008-X53",
+          "refId": "5"
+        },
+        {
+          "expr": "totalMacs{idf=\"003-x33.ciscolive.network\"}",
+          "legendFormat": "003-X33",
+          "refId": "6"
+        },
+        {
+          "expr": "totalMacs{idf=\"008-x36.ciscolive.network\"}",
+          "legendFormat": "008-X36",
+          "refId": "7"
+        },
+        {
+          "expr": "totalMacs{idf=\"008-x37.ciscolive.network\"}",
+          "legendFormat": "008-X37",
+          "refId": "8"
+        },
+        {
+          "expr": "totalMacs{idf=\"006-x23.ciscolive.network\"}",
+          "legendFormat": "006-X23",
+          "refId": "9"
+        },
+        {
+          "expr": "totalMacs{idf=\"008-x52.ciscolive.network\"}",
+          "legendFormat": "008-X52",
+          "refId": "10"
+        },
+        {
+          "expr": "totalMacs{idf=\"003-x02.ciscolive.network\"}",
+          "legendFormat": "003-X02",
+          "refId": "11"
+        },
+        {
+          "expr": "totalMacs{idf=\"003-x55.ciscolive.network\"}",
+          "legendFormat": "003-X55",
+          "refId": "12"
+        },
+        {
+          "expr": "totalMacs{idf=\"007-x09.ciscolive.network\"}",
+          "legendFormat": "007-X09",
+          "refId": "13"
+        },
+        {
+          "expr": "totalMacs{idf=\"006-x20.ciscolive.network\"}",
+          "legendFormat": "006-X20",
+          "refId": "14"
+        },
+        {
+          "expr": "totalMacs{idf=\"008-x39.ciscolive.network\"}",
+          "legendFormat": "008-X39",
+          "refId": "15"
+        },
+        {
+          "expr": "totalMacs{idf=\"008-x41.ciscolive.network\"}",
+          "legendFormat": "008-X41",
+          "refId": "16"
+        },
+        {
+          "expr": "totalMacs{idf=\"003-x54.ciscolive.network\"}",
+          "legendFormat": "003-X54",
+          "refId": "17"
+        },
+        {
+          "expr": "totalMacs{idf=\"004-x07.ciscolive.network\"}",
+          "legendFormat": "004-X07",
+          "refId": "18"
+        },
+        {
+          "expr": "totalMacs{idf=\"006-x22.ciscolive.network\"}",
+          "legendFormat": "006-X22",
+          "refId": "19"
+        },
+        {
+          "expr": "totalMacs{idf=\"006-x27.ciscolive.network\"}",
+          "legendFormat": "006-X27",
+          "refId": "20"
+        },
+        {
+          "expr": "totalMacs{idf=\"008-x47.ciscolive.network\"}",
+          "legendFormat": "008-X47",
+          "refId": "21"
+        },
+        {
+          "expr": "totalMacs{idf=\"006-x19.ciscolive.network\"}",
+          "legendFormat": "006-X19",
+          "refId": "22"
+        },
+        {
+          "expr": "totalMacs{idf=\"008-x46.ciscolive.network\"}",
+          "legendFormat": "008-X46",
+          "refId": "23"
+        },
+        {
+          "expr": "totalMacs{idf=\"008-x38.ciscolive.network\"}",
+          "legendFormat": "008-X38",
+          "refId": "24"
+        },
+        {
+          "expr": "totalMacs{idf=\"008-x40.ciscolive.network\"}",
+          "legendFormat": "008-X40",
+          "refId": "25"
+        },
+        {
+          "expr": "totalMacs{idf=\"008-x43.ciscolive.network\"}",
+          "legendFormat": "008-X43",
+          "refId": "26"
+        },
+        {
+          "expr": "totalMacs{idf=\"007-x15.ciscolive.network\"}",
+          "legendFormat": "007-X15",
+          "refId": "27"
+        },
+        {
+          "expr": "totalMacs{idf=\"006-x18.ciscolive.network\"}",
+          "legendFormat": "006-X18",
+          "refId": "28"
+        },
+        {
+          "expr": "totalMacs{idf=\"006-x29.ciscolive.network\"}",
+          "legendFormat": "006-X29",
+          "refId": "29"
+        },
+        {
+          "expr": "totalMacs{idf=\"006-x24.ciscolive.network\"}",
+          "legendFormat": "006-X24",
+          "refId": "30"
+        },
+        {
+          "expr": "totalMacs{idf=\"007-x12.ciscolive.network\"}",
+          "legendFormat": "007-X12",
+          "refId": "31"
+        },
+        {
+          "expr": "totalMacs{idf=\"008-x45.ciscolive.network\"}",
+          "legendFormat": "008-X45",
+          "refId": "32"
+        },
+        {
+          "expr": "totalMacs{idf=\"006-x28.ciscolive.network\"}",
+          "legendFormat": "006-X28",
+          "refId": "33"
+        },
+        {
+          "expr": "totalMacs{idf=\"007-x16.ciscolive.network\"}",
+          "legendFormat": "007-X16",
+          "refId": "34"
+        },
+        {
+          "expr": "totalMacs{idf=\"006-x25.ciscolive.network\"}",
+          "legendFormat": "006-X25",
+          "refId": "35"
+        },
+        {
+          "expr": "totalMacs{idf=\"006-x30.ciscolive.network\"}",
+          "legendFormat": "006-X30",
+          "refId": "36"
+        },
+        {
+          "expr": "totalMacs{idf=\"007-x10.ciscolive.network\"}",
+          "legendFormat": "007-X10",
+          "refId": "37"
+        },
+        {
+          "expr": "totalMacs{idf=\"008-x44.ciscolive.network\"}",
+          "legendFormat": "008-X44",
+          "refId": "38"
+        },
+        {
+          "expr": "totalMacs{idf=\"003-x35.ciscolive.network\"}",
+          "legendFormat": "003-X35",
+          "refId": "39"
+        },
+        {
+          "expr": "totalMacs{idf=\"006-x21.ciscolive.network\"}",
+          "legendFormat": "006-X21",
+          "refId": "40"
+        },
+        {
+          "expr": "totalMacs{idf=\"006-x26.ciscolive.network\"}",
+          "legendFormat": "006-X26",
+          "refId": "41"
+        },
+        {
+          "expr": "totalMacs{idf=\"006-x31.ciscolive.network\"}",
+          "legendFormat": "006-X31",
+          "refId": "42"
+        },
+        {
+          "expr": "totalMacs{idf=\"007-x14.ciscolive.network\"}",
+          "legendFormat": "007-X14",
+          "refId": "43"
+        },
+        {
+          "expr": "totalMacs{idf=\"003-x17.ciscolive.network\"}",
+          "legendFormat": "003-X17",
+          "refId": "44"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "IDF MAC Counts",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": "Dynamic MAC Addresses",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "fill": 0,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 8,
+        "y": 15
+      },
+      "hiddenSeries": false,
+      "id": 2,
+      "legend": {
+        "avg": true,
+        "current": true,
+        "hideZero": true,
+        "max": true,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "arpEntries{idf=\"008-x42.ciscolive.network\"}",
+          "legendFormat": "008-X42",
+          "refId": "1"
+        },
+        {
+          "expr": "arpEntries{idf=\"007-x11.ciscolive.network\"}",
+          "legendFormat": "007-X11",
+          "refId": "2"
+        },
+        {
+          "expr": "arpEntries{idf=\"007-x13.ciscolive.network\"}",
+          "legendFormat": "007-X13",
+          "refId": "3"
+        },
+        {
+          "expr": "arpEntries{idf=\"008-x49.ciscolive.network\"}",
+          "legendFormat": "008-X49",
+          "refId": "4"
+        },
+        {
+          "expr": "arpEntries{idf=\"008-x53.ciscolive.network\"}",
+          "legendFormat": "008-X53",
+          "refId": "5"
+        },
+        {
+          "expr": "arpEntries{idf=\"003-x33.ciscolive.network\"}",
+          "legendFormat": "003-X33",
+          "refId": "6"
+        },
+        {
+          "expr": "arpEntries{idf=\"008-x36.ciscolive.network\"}",
+          "legendFormat": "008-X36",
+          "refId": "7"
+        },
+        {
+          "expr": "arpEntries{idf=\"008-x37.ciscolive.network\"}",
+          "legendFormat": "008-X37",
+          "refId": "8"
+        },
+        {
+          "expr": "arpEntries{idf=\"006-x23.ciscolive.network\"}",
+          "legendFormat": "006-X23",
+          "refId": "9"
+        },
+        {
+          "expr": "arpEntries{idf=\"008-x52.ciscolive.network\"}",
+          "legendFormat": "008-X52",
+          "refId": "10"
+        },
+        {
+          "expr": "arpEntries{idf=\"003-x02.ciscolive.network\"}",
+          "legendFormat": "003-X02",
+          "refId": "11"
+        },
+        {
+          "expr": "arpEntries{idf=\"003-x55.ciscolive.network\"}",
+          "legendFormat": "003-X55",
+          "refId": "12"
+        },
+        {
+          "expr": "arpEntries{idf=\"007-x09.ciscolive.network\"}",
+          "legendFormat": "007-X09",
+          "refId": "13"
+        },
+        {
+          "expr": "arpEntries{idf=\"006-x20.ciscolive.network\"}",
+          "legendFormat": "006-X20",
+          "refId": "14"
+        },
+        {
+          "expr": "arpEntries{idf=\"008-x39.ciscolive.network\"}",
+          "legendFormat": "008-X39",
+          "refId": "15"
+        },
+        {
+          "expr": "arpEntries{idf=\"008-x41.ciscolive.network\"}",
+          "legendFormat": "008-X41",
+          "refId": "16"
+        },
+        {
+          "expr": "arpEntries{idf=\"003-x54.ciscolive.network\"}",
+          "legendFormat": "003-X54",
+          "refId": "17"
+        },
+        {
+          "expr": "arpEntries{idf=\"004-x07.ciscolive.network\"}",
+          "legendFormat": "004-X07",
+          "refId": "18"
+        },
+        {
+          "expr": "arpEntries{idf=\"006-x22.ciscolive.network\"}",
+          "legendFormat": "006-X22",
+          "refId": "19"
+        },
+        {
+          "expr": "arpEntries{idf=\"006-x27.ciscolive.network\"}",
+          "legendFormat": "006-X27",
+          "refId": "20"
+        },
+        {
+          "expr": "arpEntries{idf=\"008-x47.ciscolive.network\"}",
+          "legendFormat": "008-X47",
+          "refId": "21"
+        },
+        {
+          "expr": "arpEntries{idf=\"006-x19.ciscolive.network\"}",
+          "legendFormat": "006-X19",
+          "refId": "22"
+        },
+        {
+          "expr": "arpEntries{idf=\"008-x46.ciscolive.network\"}",
+          "legendFormat": "008-X46",
+          "refId": "23"
+        },
+        {
+          "expr": "arpEntries{idf=\"008-x38.ciscolive.network\"}",
+          "legendFormat": "008-X38",
+          "refId": "24"
+        },
+        {
+          "expr": "arpEntries{idf=\"008-x40.ciscolive.network\"}",
+          "legendFormat": "008-X40",
+          "refId": "25"
+        },
+        {
+          "expr": "arpEntries{idf=\"008-x43.ciscolive.network\"}",
+          "legendFormat": "008-X43",
+          "refId": "26"
+        },
+        {
+          "expr": "arpEntries{idf=\"007-x15.ciscolive.network\"}",
+          "legendFormat": "007-X15",
+          "refId": "27"
+        },
+        {
+          "expr": "arpEntries{idf=\"006-x18.ciscolive.network\"}",
+          "legendFormat": "006-X18",
+          "refId": "28"
+        },
+        {
+          "expr": "arpEntries{idf=\"006-x29.ciscolive.network\"}",
+          "legendFormat": "006-X29",
+          "refId": "29"
+        },
+        {
+          "expr": "arpEntries{idf=\"006-x24.ciscolive.network\"}",
+          "legendFormat": "006-X24",
+          "refId": "30"
+        },
+        {
+          "expr": "arpEntries{idf=\"007-x12.ciscolive.network\"}",
+          "legendFormat": "007-X12",
+          "refId": "31"
+        },
+        {
+          "expr": "arpEntries{idf=\"008-x45.ciscolive.network\"}",
+          "legendFormat": "008-X45",
+          "refId": "32"
+        },
+        {
+          "expr": "arpEntries{idf=\"006-x28.ciscolive.network\"}",
+          "legendFormat": "006-X28",
+          "refId": "33"
+        },
+        {
+          "expr": "arpEntries{idf=\"007-x16.ciscolive.network\"}",
+          "legendFormat": "007-X16",
+          "refId": "34"
+        },
+        {
+          "expr": "arpEntries{idf=\"006-x25.ciscolive.network\"}",
+          "legendFormat": "006-X25",
+          "refId": "35"
+        },
+        {
+          "expr": "arpEntries{idf=\"006-x30.ciscolive.network\"}",
+          "legendFormat": "006-X30",
+          "refId": "36"
+        },
+        {
+          "expr": "arpEntries{idf=\"007-x10.ciscolive.network\"}",
+          "legendFormat": "007-X10",
+          "refId": "37"
+        },
+        {
+          "expr": "arpEntries{idf=\"008-x44.ciscolive.network\"}",
+          "legendFormat": "008-X44",
+          "refId": "38"
+        },
+        {
+          "expr": "arpEntries{idf=\"003-x35.ciscolive.network\"}",
+          "legendFormat": "003-X35",
+          "refId": "39"
+        },
+        {
+          "expr": "arpEntries{idf=\"006-x21.ciscolive.network\"}",
+          "legendFormat": "006-X21",
+          "refId": "40"
+        },
+        {
+          "expr": "arpEntries{idf=\"006-x26.ciscolive.network\"}",
+          "legendFormat": "006-X26",
+          "refId": "41"
+        },
+        {
+          "expr": "arpEntries{idf=\"006-x31.ciscolive.network\"}",
+          "legendFormat": "006-X31",
+          "refId": "42"
+        },
+        {
+          "expr": "arpEntries{idf=\"007-x14.ciscolive.network\"}",
+          "legendFormat": "007-X14",
+          "refId": "43"
+        },
+        {
+          "expr": "arpEntries{idf=\"003-x17.ciscolive.network\"}",
+          "legendFormat": "003-X17",
+          "refId": "44"
+        },
+        {
+          "expr": "",
+          "legendFormat": "CORE1-L3C",
+          "refId": "A"
+        },
+        {
+          "expr": "",
+          "refId": "B"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "IDF ARP Entries",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": "0",
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": false
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "Prometheus",
+      "fill": 0,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 16,
+        "y": 15
+      },
+      "hiddenSeries": false,
+      "id": 9,
+      "legend": {
+        "avg": true,
+        "current": true,
+        "hideZero": true,
+        "max": true,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "ndEntries{idf=\"008-x42.ciscolive.network\"}",
+          "legendFormat": "008-X42",
+          "refId": "1"
+        },
+        {
+          "expr": "ndEntries{idf=\"007-x11.ciscolive.network\"}",
+          "legendFormat": "007-X11",
+          "refId": "2"
+        },
+        {
+          "expr": "ndEntries{idf=\"007-x13.ciscolive.network\"}",
+          "legendFormat": "007-X13",
+          "refId": "3"
+        },
+        {
+          "expr": "ndEntries{idf=\"008-x49.ciscolive.network\"}",
+          "legendFormat": "008-X49",
+          "refId": "4"
+        },
+        {
+          "expr": "ndEntries{idf=\"008-x53.ciscolive.network\"}",
+          "legendFormat": "008-X53",
+          "refId": "5"
+        },
+        {
+          "expr": "ndEntries{idf=\"003-x33.ciscolive.network\"}",
+          "legendFormat": "003-X33",
+          "refId": "6"
+        },
+        {
+          "expr": "ndEntries{idf=\"008-x36.ciscolive.network\"}",
+          "legendFormat": "008-X36",
+          "refId": "7"
+        },
+        {
+          "expr": "ndEntries{idf=\"008-x37.ciscolive.network\"}",
+          "legendFormat": "008-X37",
+          "refId": "8"
+        },
+        {
+          "expr": "ndEntries{idf=\"006-x23.ciscolive.network\"}",
+          "legendFormat": "006-X23",
+          "refId": "9"
+        },
+        {
+          "expr": "ndEntries{idf=\"008-x52.ciscolive.network\"}",
+          "legendFormat": "008-X52",
+          "refId": "10"
+        },
+        {
+          "expr": "ndEntries{idf=\"003-x02.ciscolive.network\"}",
+          "legendFormat": "003-X02",
+          "refId": "11"
+        },
+        {
+          "expr": "ndEntries{idf=\"003-x55.ciscolive.network\"}",
+          "legendFormat": "003-X55",
+          "refId": "12"
+        },
+        {
+          "expr": "ndEntries{idf=\"007-x09.ciscolive.network\"}",
+          "legendFormat": "007-X09",
+          "refId": "13"
+        },
+        {
+          "expr": "ndEntries{idf=\"006-x20.ciscolive.network\"}",
+          "legendFormat": "006-X20",
+          "refId": "14"
+        },
+        {
+          "expr": "ndEntries{idf=\"008-x39.ciscolive.network\"}",
+          "legendFormat": "008-X39",
+          "refId": "15"
+        },
+        {
+          "expr": "ndEntries{idf=\"008-x41.ciscolive.network\"}",
+          "legendFormat": "008-X41",
+          "refId": "16"
+        },
+        {
+          "expr": "ndEntries{idf=\"003-x54.ciscolive.network\"}",
+          "legendFormat": "003-X54",
+          "refId": "17"
+        },
+        {
+          "expr": "ndEntries{idf=\"004-x07.ciscolive.network\"}",
+          "legendFormat": "004-X07",
+          "refId": "18"
+        },
+        {
+          "expr": "ndEntries{idf=\"006-x22.ciscolive.network\"}",
+          "legendFormat": "006-X22",
+          "refId": "19"
+        },
+        {
+          "expr": "ndEntries{idf=\"006-x27.ciscolive.network\"}",
+          "legendFormat": "006-X27",
+          "refId": "20"
+        },
+        {
+          "expr": "ndEntries{idf=\"008-x47.ciscolive.network\"}",
+          "legendFormat": "008-X47",
+          "refId": "21"
+        },
+        {
+          "expr": "ndEntries{idf=\"006-x19.ciscolive.network\"}",
+          "legendFormat": "006-X19",
+          "refId": "22"
+        },
+        {
+          "expr": "ndEntries{idf=\"008-x46.ciscolive.network\"}",
+          "legendFormat": "008-X46",
+          "refId": "23"
+        },
+        {
+          "expr": "ndEntries{idf=\"008-x38.ciscolive.network\"}",
+          "legendFormat": "008-X38",
+          "refId": "24"
+        },
+        {
+          "expr": "ndEntries{idf=\"008-x40.ciscolive.network\"}",
+          "legendFormat": "008-X40",
+          "refId": "25"
+        },
+        {
+          "expr": "ndEntries{idf=\"008-x43.ciscolive.network\"}",
+          "legendFormat": "008-X43",
+          "refId": "26"
+        },
+        {
+          "expr": "ndEntries{idf=\"007-x15.ciscolive.network\"}",
+          "legendFormat": "007-X15",
+          "refId": "27"
+        },
+        {
+          "expr": "ndEntries{idf=\"006-x18.ciscolive.network\"}",
+          "legendFormat": "006-X18",
+          "refId": "28"
+        },
+        {
+          "expr": "ndEntries{idf=\"006-x29.ciscolive.network\"}",
+          "legendFormat": "006-X29",
+          "refId": "29"
+        },
+        {
+          "expr": "ndEntries{idf=\"006-x24.ciscolive.network\"}",
+          "legendFormat": "006-X24",
+          "refId": "30"
+        },
+        {
+          "expr": "ndEntries{idf=\"007-x12.ciscolive.network\"}",
+          "legendFormat": "007-X12",
+          "refId": "31"
+        },
+        {
+          "expr": "ndEntries{idf=\"008-x45.ciscolive.network\"}",
+          "legendFormat": "008-X45",
+          "refId": "32"
+        },
+        {
+          "expr": "ndEntries{idf=\"006-x28.ciscolive.network\"}",
+          "legendFormat": "006-X28",
+          "refId": "33"
+        },
+        {
+          "expr": "ndEntries{idf=\"007-x16.ciscolive.network\"}",
+          "legendFormat": "007-X16",
+          "refId": "34"
+        },
+        {
+          "expr": "ndEntries{idf=\"006-x25.ciscolive.network\"}",
+          "legendFormat": "006-X25",
+          "refId": "35"
+        },
+        {
+          "expr": "ndEntries{idf=\"006-x30.ciscolive.network\"}",
+          "legendFormat": "006-X30",
+          "refId": "36"
+        },
+        {
+          "expr": "ndEntries{idf=\"007-x10.ciscolive.network\"}",
+          "legendFormat": "007-X10",
+          "refId": "37"
+        },
+        {
+          "expr": "ndEntries{idf=\"008-x44.ciscolive.network\"}",
+          "legendFormat": "008-X44",
+          "refId": "38"
+        },
+        {
+          "expr": "ndEntries{idf=\"003-x35.ciscolive.network\"}",
+          "legendFormat": "003-X35",
+          "refId": "39"
+        },
+        {
+          "expr": "ndEntries{idf=\"006-x21.ciscolive.network\"}",
+          "legendFormat": "006-X21",
+          "refId": "40"
+        },
+        {
+          "expr": "ndEntries{idf=\"006-x26.ciscolive.network\"}",
+          "legendFormat": "006-X26",
+          "refId": "41"
+        },
+        {
+          "expr": "ndEntries{idf=\"006-x31.ciscolive.network\"}",
+          "legendFormat": "006-X31",
+          "refId": "42"
+        },
+        {
+          "expr": "ndEntries{idf=\"007-x14.ciscolive.network\"}",
+          "legendFormat": "007-X14",
+          "refId": "43"
+        },
+        {
+          "expr": "ndEntries{idf=\"003-x17.ciscolive.network\"}",
+          "legendFormat": "003-X17",
+          "refId": "44"
+        },
+        {
+          "expr": "",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "CORE1-L3C",
+          "refId": "A"
+        },
+        {
+          "expr": "",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "refId": "B"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "IDF ND Entries",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": false
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "Prometheus",
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 22
+      },
+      "hiddenSeries": false,
+      "id": 17,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "hideEmpty": true,
+        "hideZero": true,
+        "max": true,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "umbrella1NatTrans{idf=\"CORE1-EDGE\"}",
+          "legendFormat": "CORE1-EDGE: DC1-UMBRELLA",
+          "refId": "A"
+        },
+        {
+          "expr": "umbrella2NatTrans{idf=\"CORE1-EDGE\"}",
+          "legendFormat": "CORE1-EDGE: DC2-UMBRELLA",
+          "refId": "B"
+        },
+        {
+          "expr": "umbrella1NatTrans{idf=\"CORE2-EDGE\"}",
+          "legendFormat": "CORE2-EDGE: DC1-UMBRELLA",
+          "refId": "C"
+        },
+        {
+          "expr": "umbrella2NatTrans{idf=\"CORE2-EDGE\"}",
+          "legendFormat": "CORE2-EDGE: DC2-UMBRELLA",
+          "refId": "D"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "UMBRELLA NAT Translations",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "none",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": false
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    }
+  ],
+  "refresh": "15m",
+  "schemaVersion": 21,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ]
+  },
+  "timezone": "",
+  "title": "Internal MAC, ARP, ND, NAT, QFP Counts",
+  "uid": "XV4FTGsZi",
+  "version": 4
+}
