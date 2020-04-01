@@ -323,12 +323,19 @@ class Sparker(object):
 
         for member in mem_list:
             try:
-                if "personId" in member:
-                    payload["personId"] = member["personId"]
-                    payload.pop("personEmail", None)
+                if isinstance(member, dict):
+                    if "personId" in member:
+                        payload["personId"] = member["personId"]
+                        payload.pop("personEmail", None)
+                    else:
+                        payload["personEmail"] = member["personEmail"]
+                        payload.pop("personId", None)
                 else:
-                    payload["personEmail"] = member["personEmail"]
-                    payload.pop("personId", None)
+                    if member != "":
+                        payload["personEmail"] = member
+                        payload.pop("personId", None)
+                    else:
+                        continue
 
                 response = Sparker._request_with_retry("POST", url, json=payload, headers=self._headers)
                 response.raise_for_status()

@@ -39,6 +39,7 @@ def main():
     parser.add_argument("-D", "--dest-team", type=str, help="Name of the destination Team of the Room")
     parser.add_argument("-d", "--dest-room", type=str, help="Name of the destination Room")
     parser.add_argument("-t", "--token", type=str, help="Webex Teams Token", required=True)
+    parser.add_argument("-f", "--source-file", type=str, help="Path to file containing list of emails")
     args = parser.parse_args()
 
     spark = Sparker(token=args.token)
@@ -50,14 +51,19 @@ def main():
     elif args.source_room:
         resource = args.source_room
         type = ResourceType.ROOM
-    else:
+    elif not args.source_file:
         print("ERROR: Either a source Room or source Team must be specified")
         sys.exit(1)
 
-    members = spark.get_members(resource, type)
-    if not members:
-        print("ERROR: Failed to get members")
-        sys.exit(1)
+    if not args.source_file:
+        members = spark.get_members(resource, type)
+        if not members:
+            print("ERROR: Failed to get members")
+            sys.exit(1)
+    else:
+        with open(args.source_file, "rb") as fd:
+            contents = fd.read().decode("utf-8")
+            members = [x.strip() for x in contents.split("\n")]
 
     if args.dest_team:
         resource = args.dest_team
