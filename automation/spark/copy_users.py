@@ -52,7 +52,7 @@ def main():
         resource = args.source_room
         type = ResourceType.ROOM
     elif not args.source_file:
-        print("ERROR: Either a source Room or source Team must be specified")
+        print("ERROR: Either a source Room, source Team, or source file must be specified")
         sys.exit(1)
 
     if not args.source_file:
