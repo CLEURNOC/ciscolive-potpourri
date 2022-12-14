@@ -507,8 +507,6 @@ def main():
 
         if args.tenant and tenant.name.lower() != lower_tenant:
             continue
-        elif args.tenant:
-            lower_site = str(tenant.group.parent).lower()
 
         primary_domain = C.DNS_DOMAIN
 
