@@ -484,7 +484,7 @@ def parse_args() -> object:
 def main():
     global EDNS_HASH, ECDNS_HASH
 
-    os.environ["NETBOX_SERVER"] = C.NETBOX_SERVER
+    os.environ["NETBOX_ADDRESS"] = C.NETBOX_SERVER
     os.environ["NETBOX_API_TOKEN"] = CLEUCreds.NETBOX_API_TOKEN
     os.environ["CPNR_USERNAME"] = CLEUCreds.CPNR_USERNAME
     os.environ["CPNR_PASSWORD"] = CLEUCreds.CPNR_PASSWORD
