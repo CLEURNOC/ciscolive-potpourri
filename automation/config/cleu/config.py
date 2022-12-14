@@ -1,6 +1,6 @@
 class Config:
-    WEBEX_TEAM = "CLEUR 20 NOC"
-    CISCOLIVE_YEAR = "2020"
+    WEBEX_TEAM = "CLEUR 23 NOC"
+    CISCOLIVE_YEAR = "2023"
     DNS_DOMAIN = "ciscolive.network"
     SMTP_SERVER = "10.100.252.13"
     VPN_SERVER = "cl-production.ciscolive.eu"
