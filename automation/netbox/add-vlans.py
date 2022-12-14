@@ -59,7 +59,11 @@ def main():
 
     enb = ElementalNetbox(None, None, ignore_tls=True)
 
-    vlans = get_vlan_list(args.file)
+    try:
+        vlans = get_vlan_list(args.file)
+    except Exception as e:
+        print(f"Failed to load VLAN list: {e}.")
+        exit(1)
 
     for vlan in vlans:
         if vlan["site"] != "":
