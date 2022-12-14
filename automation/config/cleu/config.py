@@ -7,6 +7,8 @@ class Config:
     VPN_SERVER_IP = "64.103.25.43"
     VPN_USER = "vpn"
     WSGI_SERVER = "10.100.252.13"
+    DNS_SERVER = f"10.100.253.21"
+    CDNS_SERVERS = ["10.100.253.9", "10.100.254.9"]
 
     DNS_BASE = "https://dc1-dns.{}:8443/web-services/rest/resource/".format(DNS_DOMAIN)
     DHCP_BASE = "https://dc1-dhcp.{}:8443/web-services/rest/resource/".format(DNS_DOMAIN)
