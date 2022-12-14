@@ -98,7 +98,7 @@ def launch_parallel_task(
     return result
 
 
-def restart_dns_servers(edns: ElementalDns, ecdnses: ElementalCdns) -> None:
+def restart_dns_servers(edns: ElementalDns, cdnses: list) -> None:
     """Restart all affected DNS servers.
 
     Args:
@@ -115,7 +115,8 @@ def restart_dns_servers(edns: ElementalDns, ecdnses: ElementalCdns) -> None:
     logger.info(f"🏁 Reloaded server {edns.base_url}")
 
     # Restart each applicable CDNS server.
-    for ecdns in ecdnses:
+    for cdns in cdnses:
+        ecdns = ElementalCdns(url=f"https://{cdns}:8443/")
         ecdns.reload_server()
         logger.info(f"🏁 Reloaded CDNS server {ecdns.base_url}")
 
