@@ -9,7 +9,7 @@ class Config:
     WSGI_SERVER = "10.100.252.13"
     DNS_SERVER = f"10.100.253.21"
     CDNS_SERVERS = ["10.100.253.9", "10.100.254.9"]
-    NETBOX_SERVER = "10.100.252.19"
+    NETBOX_SERVER = "http://10.100.252.19"
 
     DNS_BASE = "https://dc1-dns.{}:8443/web-services/rest/resource/".format(DNS_DOMAIN)
     DHCP_BASE = "https://dc1-dhcp.{}:8443/web-services/rest/resource/".format(DNS_DOMAIN)
