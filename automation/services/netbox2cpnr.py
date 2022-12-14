@@ -419,7 +419,7 @@ def add_record(record: Union[ARecord, CNAMERecord, PTRRecord], primary_domain: s
         rrs.rrList["CCMRRItem"].append({"rdata": txt_record, "rrClass": "IN", "rrType": "TXT"})
         rrs.save()
         logger.info(f"🎨 Successfully created TXT meta-record for host {record.hostname} in domain {primary_domain}")
-        EDNS_MODIFIED[edns] = True
+        EDNS_MODIFIED = True
     elif isinstance(record, CNAMERecord):
         curr_edns = edns
         cpnr_record["name"] = record.alias
