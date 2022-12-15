@@ -91,7 +91,7 @@ if __name__ == "__main__":
             if i == 0:
                 scope_prefix = "CORE"
 
-            scope = (f"{scope_prefix}-{prefix.vlan.name}").upper()
+            scope = (f"{scope_prefix}-{prefix.vlan.name.replace(' ', '-')}").upper()
             ip = f"10.{prefix.vlan.vid}.{i}.0"
             octets = ["10", str(prefix.vlan.vid), str(i), "0"]
             roctets = list(octets)
