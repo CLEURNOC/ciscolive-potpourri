@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 #
-# Copyright (c) 2017-2019  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2022  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,12 +27,15 @@
 from builtins import str
 from builtins import range
 import json
+from elemental_utils import ElementalNetbox
+import ipaddress
 import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 import sys
 import re
+import os
 from netaddr import IPAddress
 import CLEUCreds
 from cleu.config import Config as C
@@ -41,6 +44,8 @@ IDF_CNT = 99
 ADDITIONAL_IDFS = (252, 253, 254)
 FIRST_IP = 31
 LAST_IP = 253
+
+NB_TENANT = "Attendees"
 
 IDF_OVERRIDES = {
     252: {"first_ip": 160, "last_ip": "250"},
@@ -60,59 +65,40 @@ def mtoc(mask):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        sys.stderr.write("usage: {} INPUT_FILE\n".format(sys.argv[0]))
-        sys.exit(1)
+    os.environ["NETBOX_ADDRESS"] = C.NETBOX_SERVER
+    os.environ["NETBOX_API_TOKEN"] = CLEUCreds.NETBOX_API_TOKEN
 
-    contents = None
+    enb = ElementalNetbox()
 
-    try:
-        fd = open(sys.argv[1], "r")
-        contents = fd.read()
-        fd.close()
-    except Exception as e:
-        sys.stderr.write("Failed to open {}: {}\n".format(sys.argv[1], str(e)))
-        sys.exit(1)
+    tenant = list(enb.tenancy.tenants.filter(tenant_name=NB_TENANT))[0]
+    prefixes = list(enb.ipam.prefixes.filter(tenant_id=tenant.id))
 
-    for row in contents.split("\n"):
-        row = row.strip()
-        if re.search(r"^#", row):
-            continue
-        if row == "":
-            continue
-        [vlan, mask, name, policy] = row.split(",")
-        if vlan == "" or mask == "" or name == "" or policy == "":
-            sys.stderr.write("Skipping malformed row '{}'\n".format(row))
-            continue
+    for prefix in prefixes:
+        prefix_obj = ipaddress.ip_network(prefix.prefix)
 
         start = 1
         cnt = IDF_CNT
 
         idf_set = ()
 
-        if mask == "255.255.0.0":
+        if str(prefix_obj.netmask) == "255.255.0.0":
             start = 0
             cnt = 0
 
         for i in range(start, cnt + 1):
             idf_set += (i,)
 
-        if mask != "255.255.0.0":
+        if str(prefix_obj.netmask) != "255.255.0.0":
             idf_set += ADDITIONAL_IDFS
 
-        if mask.startswith("10."):
-            octets = mask.split(".")
-            idf_set = (octets[2],)
-            mask = "255.255.255.0"
-
         for i in idf_set:
-            prefix = "IDF-{}".format(str(i).zfill(3))
+            scope_prefix = f"IDF-{str(i).zfill(3)}"
             if i == 0:
-                prefix = "CORE"
+                scope_prefix = "CORE"
 
-            scope = ("{}-{}".format(prefix, name)).upper()
-            ip = "10.{}.{}.0".format(vlan, i)
-            octets = ["10", vlan, str(i), "0"]
+            scope = (f"{scope_prefix}-{prefix.vlan.name}").upper()
+            ip = f"10.{prefix.vlan.id}.{i}.0"
+            octets = ["10", prefix.vlan.id, str(i), "0"]
             roctets = list(octets)
             roctets[3] = "254"
 
@@ -120,11 +106,11 @@ if __name__ == "__main__":
 
             response = requests.request("GET", url, headers=HEADERS, verify=False)
             if response.status_code != 404:
-                sys.stderr.write("Scope {} already exists: {}\n".format(scope, response.status_code))
+                sys.stderr.write(f"Scope {scope} already exists: {response.status_code}\n")
                 continue
 
             template = {"optionList": {"OptionItem": []}}
-            if mask == "255.255.0.0":
+            if str(prefix_obj.netmask) == "255.255.0.0":
                 roctets[2] = "255"
             template["optionList"]["OptionItem"].append({"number": "3", "value": ".".join(roctets)})
             first_ip = FIRST_IP
@@ -137,33 +123,29 @@ if __name__ == "__main__":
             sipa[3] = str(first_ip)
             eipa = list(octets)
             eipa[3] = str(last_ip)
-            if mask == "255.255.0.0":
+            if str(prefix_obj.netmask) == "255.255.0.0":
                 eipa[2] = "255"
 
             sip = ".".join(sipa)
             eip = ".".join(eipa)
 
             rlist = {"RangeItem": [{"end": eip, "start": sip}]}
-            cidr = mtoc(mask)
+            cidr = mtoc(str(prefix_obj.netmask))
 
             payload = {
                 "embeddedPolicy": template,
                 "name": scope,
-                "policy": policy,
+                "policy": prefix.role,
                 "rangeList": rlist,
-                "subnet": "{}/{}".format(ip, cidr),
+                "subnet": f"{ip}/{cidr}",
                 "tenantId": "0",
                 "vpnId": "0",
             }
 
+            response = requests.request("PUT", url, data=json.dumps(payload), headers=HEADERS, verify=False)
             try:
-                response = requests.request("PUT", url, data=json.dumps(payload), headers=HEADERS, verify=False)
                 response.raise_for_status()
             except Exception as e:
-                sys.stderr.write(
-                    "Error adding scope {} ({}/{}) with range sip:{} eip:{}: {} ({})\n".format(
-                        scope, ip, cidr, sip, eip, response.text, str(e)
-                    )
-                )
-                sys.stderr.write("Request: {}\n".format(json.dumps(payload, indent=4)))
+                sys.stderr.write(f"Error adding scope {scope} ({ip}/{cidr}) with range sip:{sip} eip:{eip}: {response.text} ({e})\n")
+                sys.stderr.write(f"Request: {json.dumps(payload, indent=4)}\n")
                 continue
