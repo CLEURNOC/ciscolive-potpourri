@@ -46,7 +46,7 @@ if __name__ == "__main__":
 
     proc = Popen(shlex.split(f"ssh -2 root@{C.DHCP_SERVER} /root/nrcmd.sh -r scope listnames"), stdout=PIPE, stderr=PIPE)
     out, err = proc.communicate()
-    if not re.search(r"^100", out):
+    if not re.search(r"^100", out.decode("utf-8")):
         print('Query for scopes failed: "{}"'.format(out))
         sys.exit(1)
     scopes = out.split("\n")
@@ -59,7 +59,7 @@ if __name__ == "__main__":
             if delete:
                 print("Deleting scope {}".format(scope))
                 proc = Popen(shlex.split(f"ssh -2 root@{C.DHCP_SERVER} /root/nrcmd.sh -r scope {scope} delete"), stdout=PIPE, stderr=PIPE)
-                if not re.search(r"^100", out):
-                    print(f"ERROR: Deleting scope {scope} failed: {out}")
+                if not re.search(r"^100", out.decode("utf-8")):
+                    print(f"ERROR: Deleting scope {scope} failed: {out.decode('utf-8')}")
             else:
                 print(f'Skipping scope {scope} as it did not match "{match}"')
