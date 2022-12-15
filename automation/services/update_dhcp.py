@@ -57,7 +57,7 @@ SCOPE_BASE = C.DHCP_BASE + "Scope"
 
 DHCP_TEMPLATE = {"optionList": {"OptionItem": []}}
 
-HEADERS = {"authorization": CLEUCreds.JCLARKE_BASIC, "accept": "application/json", "content-type": "application/json"}
+HEADERS = {"accept": "application/json", "content-type": "application/json"}
 
 
 def mtoc(mask):
@@ -104,7 +104,7 @@ if __name__ == "__main__":
 
             url = "{}/{}".format(SCOPE_BASE, scope)
 
-            response = requests.request("GET", url, headers=HEADERS, verify=False)
+            response = requests.request("GET", url, auth=(CLEUCreds.CPNR_USERNAME, CLEUCreds.CPNR_PASSWORD), headers=HEADERS, verify=False)
             if response.status_code != 404:
                 sys.stderr.write(f"Scope {scope} already exists: {response.status_code}\n")
                 continue
@@ -142,7 +142,9 @@ if __name__ == "__main__":
                 "vpnId": "0",
             }
 
-            response = requests.request("PUT", url, data=json.dumps(payload), headers=HEADERS, verify=False)
+            response = requests.request(
+                "PUT", url, data=json.dumps(payload), auth=(CLEUCreds.CPNR_USERNAME, CLEUCreds.CPNR_PASSWORD), headers=HEADERS, verify=False
+            )
             try:
                 response.raise_for_status()
             except Exception as e:
