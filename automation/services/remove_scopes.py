@@ -58,7 +58,9 @@ if __name__ == "__main__":
                 delete = False
             if delete:
                 print(f"Deleting scope {scope}")
-                proc = Popen(shlex.split(f"ssh -2 root@{C.DHCP_SERVER} /root/nrcmd.sh -r scope '{scope}' delete"), stdout=PIPE, stderr=PIPE)
+                proc = Popen(
+                    shlex.split(f"ssh -2 root@{C.DHCP_SERVER} /root/nrcmd.sh -r scope '\\\"{scope}\\\"' delete"), stdout=PIPE, stderr=PIPE
+                )
                 out, err = proc.communicate()
                 if not re.search(r"^100", out.decode("utf-8")):
                     print(f"ERROR: Deleting scope {scope} failed: {out.decode('utf-8')}")
