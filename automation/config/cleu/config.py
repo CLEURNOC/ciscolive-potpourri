@@ -9,7 +9,7 @@ class Config:
     WSGI_SERVER = "10.100.252.13"
     DNS_SERVER = f"10.100.253.21"
     CDNS_SERVERS = ["10.100.253.9", "10.100.254.9"]
-    NETBOX_SERVER = "http://10.100.252.19"
+    NETBOX_SERVER = "http://10.100.252.19:8000"
 
     DNS_BASE = "https://dc1-dns.{}:8443/web-services/rest/resource/".format(DNS_DOMAIN)
     DHCP_BASE = "https://dc1-dhcp.{}:8443/web-services/rest/resource/".format(DNS_DOMAIN)
@@ -24,6 +24,6 @@ class Config:
     TOOL_BASE = "https://{}/Port/Switchport.aspx?".format(TOOL)
     AD_DOMAIN = "ad." + DNS_DOMAIN
     AD_DN_BASE = "cn=Users" + "".join([", dc={}".format(x) for x in AD_DOMAIN.split(".")])
-    VCENTER = "cl-vcenter." + AD_DOMAIN
+    VCENTER = "cl-vcenter." + DNS_DOMAIN
     PW_RESET_URL = "https://cl-jump-01.{}:8443".format(DNS_DOMAIN)
     CPNR_SERVERS = ["dc1-dhcp." + DNS_DOMAIN, "dc2-dhcp." + DNS_DOMAIN, "dc1-dns." + DNS_DOMAIN, "dc2-dns." + DNS_DOMAIN]
