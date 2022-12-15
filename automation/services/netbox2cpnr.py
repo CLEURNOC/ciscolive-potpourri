@@ -129,9 +129,13 @@ def get_dns_name(ip: IpAddresses) -> str:
         if atype == "virtualization.vminterface":
             if aobj.virtual_machine.primary_ip4 == ip:
                 dns_name = aobj.virtual_machine.name.lower()
+            elif ip.dns_name and ip.dns_name != "":
+                dns_name = ip.dns_name.strip().lower()
         elif atype == "dcim.interface":
             if aobj.device.primary_ip4 == ip:
                 dns_name = aobj.device.name.lower()
+            elif ip.dns_name and ip.dns_name != "":
+                dns_name = ip.dns_name.strip().lower()
     elif ip.dns_name and ip.dns_name != "":
         dns_name = ip.dns_name.strip().lower()
 
