@@ -130,7 +130,7 @@ if __name__ == "__main__":
             payload = {
                 "embeddedPolicy": template,
                 "name": scope,
-                "policy": prefix.role,
+                "policy": prefix.role.name,
                 "rangeList": rlist,
                 "subnet": f"{ip}/{cidr}",
                 "tenantId": "0",
@@ -138,7 +138,7 @@ if __name__ == "__main__":
             }
 
             response = requests.request(
-                "PUT", url, data=json.dumps(payload), auth=(CLEUCreds.CPNR_USERNAME, CLEUCreds.CPNR_PASSWORD), headers=HEADERS, verify=False
+                "PUT", url, json=payload, auth=(CLEUCreds.CPNR_USERNAME, CLEUCreds.CPNR_PASSWORD), headers=HEADERS, verify=False
             )
             try:
                 response.raise_for_status()
