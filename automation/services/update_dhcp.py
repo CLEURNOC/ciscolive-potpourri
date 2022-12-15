@@ -92,12 +92,12 @@ if __name__ == "__main__":
                 scope_prefix = "CORE"
 
             scope = (f"{scope_prefix}-{prefix.vlan.name}").upper()
-            ip = f"10.{prefix.vlan.id}.{i}.0"
-            octets = ["10", str(prefix.vlan.id), str(i), "0"]
+            ip = f"10.{prefix.vlan.vid}.{i}.0"
+            octets = ["10", str(prefix.vlan.vid), str(i), "0"]
             roctets = list(octets)
             roctets[3] = "254"
 
-            url = "{}/{}".format(SCOPE_BASE, scope)
+            url = f"{SCOPE_BASE}/{scope}"
 
             response = requests.request("GET", url, auth=(CLEUCreds.CPNR_USERNAME, CLEUCreds.CPNR_PASSWORD), headers=HEADERS, verify=False)
             if response.status_code != 404:

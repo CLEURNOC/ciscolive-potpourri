@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 #
-# Copyright (c) 2017-2020  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2022  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,6 @@ import json
 from subprocess import Popen, PIPE
 import re
 import shlex
-import os
 from cleu.config import Config as C
 
 if __name__ == "__main__":
@@ -37,7 +36,7 @@ if __name__ == "__main__":
     ans = None
     if len(sys.argv) == 2:
         match = sys.argv[1]
-        ans = input('Really delete all scopes that match "{}" (y/N): '.format(match))
+        ans = input(f'Really delete all scopes that match "{match}" (y/N): ')
     else:
         ans = input("Really delete all scopes (y/N): ")
 
@@ -45,7 +44,7 @@ if __name__ == "__main__":
         print("Exiting...")
         sys.exit(0)
 
-    proc = Popen(shlex.split("ssh -2 root@{} /root/nrcmd.sh -r scope listnames".format(C.DHCP_SERVER)), stdout=PIPE, stderr=PIPE)
+    proc = Popen(shlex.split(f"ssh -2 root@{C.DHCP_SERVER} /root/nrcmd.sh -r scope listnames"), stdout=PIPE, stderr=PIPE)
     out, err = proc.communicate()
     if not re.search(r"^100", out):
         print('Query for scopes failed: "{}"'.format(out))
@@ -59,10 +58,8 @@ if __name__ == "__main__":
                 delete = False
             if delete:
                 print("Deleting scope {}".format(scope))
-                proc = Popen(
-                    shlex.split("ssh -2 root@{} /root/nrcmd.sh -r scope {} delete".format(C.DHCP_SERVER, scope)), stdout=PIPE, stderr=PIPE
-                )
+                proc = Popen(shlex.split(f"ssh -2 root@{C.DHCP_SERVER} /root/nrcmd.sh -r scope {scope} delete"), stdout=PIPE, stderr=PIPE)
                 if not re.search(r"^100", out):
-                    print("ERROR: Deleting scope {} failed: {}".format(scope, out))
+                    print(f"ERROR: Deleting scope {scope} failed: {out}")
             else:
-                print('Skipping scope {} as it did not match "{}"'.format(scope, match))
+                print(f'Skipping scope {scope} as it did not match "{match}"')
