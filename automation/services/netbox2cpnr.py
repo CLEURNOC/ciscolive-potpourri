@@ -224,11 +224,11 @@ def check_record(ip: IpAddresses, primary_domain: str, edns: ElementalDns, enb: 
         wip_records.lock.release()
 
     # Process any CNAMEs that may exist for this record.
-    check_cnames(ip=ip, dns_name=dns_name, primary_domain=primary_domain, a_record=a_record, enb=enb, wip_records=wip_records)
+    check_cnames(ip=ip, dns_name=dns_name, primary_domain=primary_domain, a_record=a_record, edns=edns, wip_records=wip_records)
 
 
 def check_cnames(
-    ip: IpAddresses, dns_name: str, primary_domain: str, a_record: ARecord, enb: ElementalNetbox, wip_records: DnsRecords
+    ip: IpAddresses, dns_name: str, primary_domain: str, a_record: ARecord, edns: ElementalDns, wip_records: DnsRecords
 ) -> None:
     """Determine CNAME records to create/delete.
 
@@ -264,7 +264,7 @@ def check_cnames(
             alias = cname.split(".")[0]
             cname_record = CNAMERecord(alias, current_domain, a_record, alias)
 
-            current_cname_record = get_cname_record(alias, current_domain, enb)
+            current_cname_record = get_cname_record(alias, current_domain, edns)
 
             wip_records.lock.acquire()
 
