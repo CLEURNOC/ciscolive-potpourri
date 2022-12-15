@@ -49,7 +49,7 @@ if __name__ == "__main__":
     if not re.search(r"^100", out.decode("utf-8")):
         print('Query for scopes failed: "{}"'.format(out))
         sys.exit(1)
-    scopes = out.split("\n")
+    scopes = out.decode("utf-8").split("\n")
     for scope in scopes:
         if scope != "100 Ok" and re.search(r"^\w", scope):
             scope = scope.strip()
