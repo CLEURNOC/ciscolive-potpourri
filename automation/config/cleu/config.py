@@ -11,6 +11,9 @@ class Config:
     CDNS_SERVERS = ["10.100.253.9", "10.100.254.9"]
     NETBOX_SERVER = "http://10.100.252.19:8000"
 
+    PRIMARY_DNS = "dc1-dns"
+    SECONDARY_DNS = "dc2-dns"
+
     DNS_BASE = "https://dc1-dns.{}:8443/web-services/rest/resource/".format(DNS_DOMAIN)
     DHCP_BASE = "https://dc1-dhcp.{}:8443/web-services/rest/resource/".format(DNS_DOMAIN)
     MONITORING = "cl-monitoring." + DNS_DOMAIN
