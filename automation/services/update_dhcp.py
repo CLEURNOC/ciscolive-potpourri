@@ -36,7 +36,6 @@ requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 import sys
 import re
 import os
-from netaddr import IPAddress
 import CLEUCreds
 from cleu.config import Config as C
 
@@ -58,10 +57,6 @@ SCOPE_BASE = C.DHCP_BASE + "Scope"
 DHCP_TEMPLATE = {"optionList": {"OptionItem": []}}
 
 HEADERS = {"accept": "application/json", "content-type": "application/json"}
-
-
-def mtoc(mask):
-    return IPAddress(mask).netmask_bits()
 
 
 if __name__ == "__main__":
@@ -130,7 +125,7 @@ if __name__ == "__main__":
             eip = ".".join(eipa)
 
             rlist = {"RangeItem": [{"end": eip, "start": sip}]}
-            cidr = mtoc(str(prefix_obj.netmask))
+            cidr = prefix_obj.prefixlen
 
             payload = {
                 "embeddedPolicy": template,
