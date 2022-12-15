@@ -7,7 +7,7 @@ class Config:
     VPN_SERVER_IP = "64.103.25.43"
     VPN_USER = "vpn"
     WSGI_SERVER = "10.100.252.13"
-    DNS_SERVER = f"10.100.253.21"
+    DNS_SERVER = "10.100.253.21"
     CDNS_SERVERS = ["10.100.253.9", "10.100.254.9"]
     NETBOX_SERVER = "http://10.100.252.19:8000"
 
