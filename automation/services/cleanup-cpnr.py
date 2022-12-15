@@ -287,7 +287,7 @@ def main():
         if args.tenant and tenant.name.lower() != lower_tenant:
             continue
 
-        primary_domain = C.DNS_DOMAIN
+        primary_domain = C.DNS_DOMAIN + "."
 
         edns = ElementalDns(url=f"https://{C.DNS_SERVER}:8443/")
         ecdnses = C.CDNS_SERVERS
