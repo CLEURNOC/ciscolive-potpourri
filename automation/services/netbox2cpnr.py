@@ -132,6 +132,8 @@ def get_dns_name(ip: IpAddresses) -> str:
         elif atype == "dcim.interface":
             if aobj.device.primary_ip4 == ip:
                 dns_name = aobj.device.name.lower()
+    elif ip.dns_name and ip.dns_name != "":
+        dns_name = ip.dns_name.strip().lower()
 
     return dns_name
 
