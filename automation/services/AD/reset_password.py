@@ -255,7 +255,10 @@ def reset_password():
 
     if session.get("first_time", False):
         send_syslog(
-            "PRINT-LABEL: requesting to print label for userid {}".format(session["target_username"]), None, None, C.TOOL,
+            "PRINT-LABEL: requesting to print label for userid {}".format(session["target_username"]),
+            None,
+            None,
+            C.TOOL,
         )
         resp += "\n<h1>Please go see Dave Shen to get your barcode label.</h1>"
 
