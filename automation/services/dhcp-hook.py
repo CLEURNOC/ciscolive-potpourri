@@ -43,11 +43,12 @@ from cleu.config import Config as C
 
 AT_MACADDR = 9
 
-CNR_HEADERS = {"Accept": "application/json", "Authorization": CLEUCreds.JCLARKE_BASIC}
+CNR_HEADERS = {"Accept": "application/json"}
+CNR_AUTH = (CLEUCreds.CPNR_USERNAME, CLEUCreds.CPNR_PASSWORD)
 
 DEFAULT_INT_TYPE = "GigabitEthernet"
 
-ALLOWED_TO_DELETE = ["jclarke@cisco.com", "ksekula@cisco.com", "anjesani@cisco.com"]
+ALLOWED_TO_DELETE = ["jclarke@cisco.com", "josterfe@cisco.com", "anjesani@cisco.com"]
 
 
 def is_ascii(s):
@@ -67,7 +68,7 @@ def get_from_cmx(**kwargs):
         marker = "gru"
 
     if "ip" in kwargs:
-        url = "{}?ip={}&marker={}&size=1440".format(CMX_GW, kwargs["ip"], marker)
+        url = "{}?ip={}&marker={}&size=1440".format(C.CMX_GW, kwargs["ip"], marker)
     elif "mac" in kwargs:
         url = "{}?mac={}&marker={}&size=1440".format(C.CMX_GW, kwargs["mac"], marker)
     else:
@@ -197,13 +198,13 @@ def parse_relay_info(outd):
 
 
 def check_for_reservation(ip):
-    global CNR_HEADERS
+    global CNR_HEADERS, CNR_AUTH
 
     res = {}
 
     url = "{}/Reservation/{}".format(C.DHCP_BASE, ip)
     try:
-        response = requests.request("GET", url, headers=CNR_HEADERS, verify=False)
+        response = requests.request("GET", url, auth=CNR_AUTH, headers=CNR_HEADERS, verify=False)
         response.raise_for_status()
     except Exception as e:
         logging.warning("Did not get a good response from CNR for reservation {}: {}".format(ip, e))
@@ -216,7 +217,7 @@ def check_for_reservation(ip):
 
 
 def check_for_reservation_by_mac(mac):
-    global CNR_HEADERS
+    global CNR_HEADERS, CNR_AUTH
 
     res = {}
 
@@ -224,7 +225,7 @@ def check_for_reservation_by_mac(mac):
 
     url = "{}/Reservation".format(C.DHCP_BASE)
     try:
-        response = requests.request("GET", url, headers=CNR_HEADERS, params={"lookupKey": mac_addr}, verify=False)
+        response = requests.request("GET", url, auth=CNR_AUTH, headers=CNR_HEADERS, params={"lookupKey": mac_addr}, verify=False)
         response.raise_for_status()
     except Exception as e:
         logging.warning("Did not get a good response from CNR for reservation {}: {}".format(ip, e))
@@ -240,31 +241,31 @@ def check_for_reservation_by_mac(mac):
 
 
 def create_reservation(ip, mac):
-    global CNR_HEADERS, AT_MACADDR
+    global CNR_HEADERS, CNR_AUTH, AT_MACADDR
 
     mac_addr = normalize_mac(mac)
 
     url = "{}/Reservation".format(C.DHCP_BASE)
     payload = {"ipaddr": ip, "lookupKey": "01:06:" + mac_addr, "lookupKeyType": AT_MACADDR}
-    response = requests.request("POST", url, headers=CNR_HEADERS, json=payload, verify=False)
+    response = requests.request("POST", url, auth=CNR_AUTH, headers=CNR_HEADERS, json=payload, verify=False)
     response.raise_for_status()
 
 
 def delete_reservation(ip):
-    global DHCP_BASE, CNR_HEADERS
+    global CNR_HEADERS, CNR_AUTH
 
     url = "{}/Reservation/{}".format(C.DHCP_BASE, ip)
-    response = requests.request("DELETE", url, headers=CNR_HEADERS, verify=False)
+    response = requests.request("DELETE", url, auth=CNR_AUTH, headers=CNR_HEADERS, verify=False)
     response.raise_for_status()
 
 
 def check_for_lease(ip):
-    global CNR_HEADERS
+    global CNR_HEADERS, CNR_AUTH
 
     res = {}
     url = "{}/Lease/{}".format(C.DHCP_BASE, ip)
     try:
-        response = requests.request("GET", url, headers=CNR_HEADERS, verify=False)
+        response = requests.request("GET", url, auth=CNR_AUTH, headers=CNR_HEADERS, verify=False)
         response.raise_for_status()
     except Exception as e:
         logging.warning("Did not get a good response from CNR for IP {}: {}".format(ip, e))
@@ -294,12 +295,12 @@ def check_for_lease(ip):
 
 
 def check_for_mac(mac):
-    global CNR_HEADERS
+    global CNR_HEADERS, CNR_AUTH
 
     url = "{}/Lease".format(C.DHCP_BASE)
 
     try:
-        response = requests.request("GET", url, headers=CNR_HEADERS, verify=False, params={"clientMacAddr": mac})
+        response = requests.request("GET", url, auth=CNR_AUTH, headers=CNR_HEADERS, verify=False, params={"clientMacAddr": mac})
         response.raise_for_status()
     except Exception as e:
         logging.warning("Did not get a good response from CNR for MAC {}: {}".format(mac, e))
