@@ -26,7 +26,6 @@
 
 
 from __future__ import print_function
-from builtins import str
 import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
@@ -39,12 +38,13 @@ import argparse
 import CLEUCreds
 from cleu.config import Config as C
 
-CNR_HEADERS = {"authorization": CLEUCreds.JCLARKE_BASIC, "accept": "application/json", "content-type": "application/json"}
+CNR_HEADERS = {"accept": "application/json", "content-type": "application/json"}
+CNR_AUTH = (CLEUCreds.CPNR_USERNAME, CLEUCreds.CPNR_PASSWORD)
 CACHE_FILE = "dns_records.dat"
 
 
 def get_devs():
-    url = "http://{}/get/switches/json".format(C.TOOL)
+    url = f"http://{C.TOOL}/get/switches/json"
 
     devices = []
     response = requests.request("GET", url)
@@ -56,10 +56,12 @@ def get_devs():
             dev_dic = {}
             if dev["IPAddress"] == "0.0.0.0":
                 continue
+            # Do not add MDF switches
+            # TODO Validate what this be now that the tool is managing other things.
             if not re.search(r"^0", dev["Hostname"]):
                 continue
             dev_dic["name"] = dev["Hostname"]
-            dev_dic["aliases"] = [str("{}.{}.".format(dev["Name"], C.DNS_DOMAIN)), str("{}.{}.".format(dev["AssetTag"], C.DNS_DOMAIN))]
+            dev_dic["aliases"] = [f"{dev['Name']}.{C.DNS_DOMAIN}.", f"{dev['AssetTag']}.{C.DNS_DOMAIN}."]
 
             dev_dic["ip"] = dev["IPAddress"]
 
@@ -74,9 +76,9 @@ def purge_rr(name, url, zone):
     try:
         response = requests.request("DELETE", url, headers=CNR_HEADERS, params=params, verify=False)
         response.raise_for_status()
-        print("Purged entry for {}".format(name))
+        print(f"INFO: Purged entry for {name}")
     except Exception as e:
-        sys.stderr.write("Error purging entry for {}: {}\n".format(name, e))
+        sys.stderr.write(f"INFO: Failed to purge entry for {name}: {e}\n")
 
 
 def purge_rrs(hname, dev):
@@ -103,48 +105,48 @@ def purge_rrs(hname, dev):
 
 
 def add_entry(url, hname, dev):
-    global CNR_HEADERS
+    global CNR_HEADERS, CNR_AUTH
 
     try:
         rrset = [
-            "IN 0 A {}".format(dev["ip"]),
+            f"IN 0 A {dev['ip']}",
         ]
 
         rrset_obj = {"name": hname, "rrs": {"stringItem": rrset}, "zoneOrigin": C.DNS_DOMAIN}
 
-        response = requests.request("PUT", url, headers=CNR_HEADERS, json=rrset_obj, verify=False)
+        response = requests.request("PUT", url, auth=CNR_AUTH, headers=CNR_HEADERS, json=rrset_obj, verify=False)
         response.raise_for_status()
-        print("Added entry for {} ==> {}".format(hname, dev["ip"]))
+        print(f"INFO: Added entry for {hname} ==> {dev['ip']}")
     except Exception as e:
-        sys.stderr.write("Error adding entry for {}: {}\n".format(hname, e))
+        sys.stderr.write(f"ERROR: Failed to add entry for {hname}: {e}\n")
         return
 
     for alias in dev["aliases"]:
         aname = alias.split(".")[0]
         alias_rrset_obj = {
             "name": aname,
-            "rrs": {"stringItem": ["IN 0 CNAME {}.{}.".format(hname, C.DNS_DOMAIN)]},
+            "rrs": {"stringItem": [f"IN 0 CNAME {hname}.{C.DNS_DOMAIN}."]},
             "zoneOrigin": C.DNS_DOMAIN,
         }
-        url = C.DNS_BASE + "CCMRRSet" + "/{}".format(aname)
+        url = C.DNS_BASE + "CCMRRSet" + f"/{hname}"
 
         try:
-            response = requests.request("PUT", url, headers=CNR_HEADERS, json=alias_rrset_obj, verify=False)
+            response = requests.request("PUT", url, auth=CNR_AUTH, headers=CNR_HEADERS, json=alias_rrset_obj, verify=False)
             response.raise_for_status()
-            print("Added CNAME entry {} ==> {}".format(alias, hname))
+            print(f"Added CNAME entry {alias} ==> {hname}")
         except Exception as e:
-            sys.stderr.write("Error adding CNAME {} for {}: {}\n".format(alias, hname, e))
+            sys.stderr.write(f"ERROR: Failed to add CNAME {alias} for {hname}: {e}\n")
 
     try:
-        ptr_rrset = ["IN 0 PTR {}.{}.".format(hname, C.DNS_DOMAIN)]
+        ptr_rrset = [f"IN 0 PTR {hname}.{C.DNS_DOMAIN}."]
         rip = ".".join(dev["ip"].split(".")[::-1][0:3])
         ptr_rrset_obj = {"name": rip, "rrs": {"stringItem": ptr_rrset}, "zoneOrigin": "10.in-addr.arpa."}
         url = C.DNS_BASE + "CCMRRSet" + "/{}".format(rip)
-        response = requests.request("PUT", url, headers=CNR_HEADERS, json=ptr_rrset_obj, verify=False)
+        response = requests.request("PUT", url, auth=CNR_AUTH, headers=CNR_HEADERS, json=ptr_rrset_obj, verify=False)
         response.raise_for_status()
-        print("Added PTR entry {} ==> {}".format(rip, hname))
+        print(f"INFO: Added PTR entry {rip} ==> {hname}")
     except Exception as e:
-        sys.stderr.write("Error adding PTR entry for {}: {}\n".format(rip, e))
+        sys.stderr.write(f"ERROR: Failed to add PTR entry for {rip}: {e}\n")
 
 
 if __name__ == "__main__":
@@ -158,42 +160,43 @@ if __name__ == "__main__":
     prev_records = []
 
     if os.path.exists(CACHE_FILE):
-        fd = open(CACHE_FILE, "r")
-        prev_records = json.load(fd)
-        fd.close()
+        with open(CACHE_FILE) as fd:
+            prev_records = json.load(fd)
 
     devs = get_devs()
     for record in prev_records:
         found_record = False
         for dev in devs:
-            hname = dev["name"].replace(".{}".format(C.DNS_DOMAIN), "")
+            hname = dev["name"].replace(f".{C.DNS_DOMAIN}", "")
             if record == hname:
                 found_record = True
                 break
         if found_record:
             continue
 
-        url = C.DNS_BASE + "CCMHost" + "/{}".format(record)
+        url = C.DNS_BASE + "CCMHost" + f"/{record}"
         try:
-            response = requests.request("DELETE", url, headers=CNR_HEADERS, params={"zoneOrigin": C.DNS_DOMAIN}, verify=False)
+            response = requests.request(
+                "DELETE", url, auth=CNR_AUTH, headers=CNR_HEADERS, params={"zoneOrigin": C.DNS_DOMAIN}, verify=False
+            )
             response.raise_for_status()
         except Exception as e:
-            sys.stderr.write("Failed to delete entry for {}\n".format(record))
+            sys.stderr.write(f"WARNING: Failed to delete entry for {record}\n")
 
     records = []
     for dev in devs:
-        hname = dev["name"].replace(".{}".format(C.DNS_DOMAIN), "")
+        hname = dev["name"].replace(f".{C.DNS_DOMAIN}", "")
 
         records.append(hname)
         if args.purge:
             purge_rrs(hname, dev)
-        url = C.DNS_BASE + "CCMHost" + "/{}".format(hname)
-        response = requests.request("GET", url, headers=CNR_HEADERS, params={"zoneOrigin": C.DNS_DOMAIN}, verify=False)
-        url = C.DNS_BASE + "CCMRRSet" + "/{}".format(hname)
+        url = C.DNS_BASE + "CCMHost" + f"/{hname}"
+        response = requests.request("GET", url, auth=CNR_AUTH, headers=CNR_HEADERS, params={"zoneOrigin": C.DNS_DOMAIN}, verify=False)
+        url = C.DNS_BASE + "CCMRRSet" + f"/{hname}"
         if response.status_code == 404:
             iurl = C.DNS_BASE + "CCMHost"
             response = requests.request(
-                "GET", iurl, params={"zoneOrigin": C.DNS_DOMAIN, "addrs": dev["ip"] + "$"}, headers=CNR_HEADERS, verify=False
+                "GET", iurl, params={"zoneOrigin": C.DNS_DOMAIN, "addrs": dev["ip"] + "$"}, auth=CNR_AUTH, headers=CNR_HEADERS, verify=False
             )
             cur_entry = []
             if response.status_code != 404:
@@ -203,17 +206,19 @@ if __name__ == "__main__":
                 print("Found entry for {}: {}".format(dev["ip"], response.status_code))
                 cur_entry = response.json()
                 if len(cur_entry) > 1:
-                    print("ERROR: Found multiple entries for IP {}".format(dev["ip"]))
+                    print(f"ERROR: Found multiple entries for IP {dev['ip']}")
                     continue
 
-                print("Found old entry for IP {} => {}".format(dev["ip"], cur_entry[0]["name"]))
+                print(f"INFO: Found old entry for IP {dev['ip']} => {cur_entry[0]['name']}")
 
-                durl = C.DNS_BASE + "CCMHost" + "/{}".format(cur_entry[0]["name"])
+                durl = C.DNS_BASE + "CCMHost" + f"/{cur_entry[0]['name']}"
                 try:
-                    response = requests.request("DELETE", durl, params={"zoneOrigin": C.DNS_DOMAIN}, headers=CNR_HEADERS, verify=False)
+                    response = requests.request(
+                        "DELETE", durl, params={"zoneOrigin": C.DNS_DOMAIN}, auth=CNR_AUTH, headers=CNR_HEADERS, verify=False
+                    )
                     response.raise_for_status()
                 except Exception as e:
-                    sys.stderr.write("Failed to delete stale entry for {} ({})\n".format(cur_entry[0]["name"], dev["ip"]))
+                    sys.stderr.write(f"ERROR: Failed to delete stale entry for {cur_entry[0]['hname']} ({dev['ip']})\n")
                     continue
 
             add_entry(url, hname, dev)
@@ -239,7 +244,7 @@ if __name__ == "__main__":
                         break
 
             if create_new:
-                print("Deleting entry for {}".format(hname))
+                print(f"INFO: Deleting entry for {hname}")
                 purge_rrs(hname, dev)
 
                 add_entry(url, hname, dev)
@@ -248,5 +253,5 @@ if __name__ == "__main__":
                 pass
 
     fd = open(CACHE_FILE, "w")
-    json.dump(records, fd, indent=4)
-    fd.close()
+    with open(CACHE_FILE, "w") as fd:
+        json.dump(records, fd, indent=4)
