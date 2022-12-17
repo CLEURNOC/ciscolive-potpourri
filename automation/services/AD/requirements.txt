@@ -1,0 +1,15 @@
+certifi==2019.11.28
+chardet==3.0.4
+Click==7.0
+Flask==1.1.1
+future==0.18.2
+idna==2.8
+itsdangerous==1.1.0
+Jinja2==2.10.3
+MarkupSafe==1.1.1
+pyad==0.6.0
+pywin32==227
+requests==2.22.0
+requests-toolbelt==0.9.1
+urllib3==1.25.7
+Werkzeug==0.16.0
