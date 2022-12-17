@@ -27,7 +27,6 @@
 from __future__ import print_function
 from builtins import bytes
 from pyad import *
-import sys
 import re
 from functools import wraps
 from flask import request, Response, session, redirect
