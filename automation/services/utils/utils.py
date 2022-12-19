@@ -153,7 +153,10 @@ def parse_txt_record(txt_record: str) -> dict:
 
     key_vals = txt_record.split(" ")
     for key_val in key_vals:
-        (key, value) = key_val.split("=")
-        result[key] = value
+        if "=" in key_val:
+            (key, value) = key_val.split("=")
+            result[key] = value
+        else:
+            result[key_val] = None
 
     return result

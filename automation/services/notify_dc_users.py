@@ -7,6 +7,7 @@ import os
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
+from elemental_utils import ElementalDns, ElementalNetbox
 import smtplib
 from email.message import EmailMessage
 import sys
@@ -16,7 +17,7 @@ import CLEUCreds
 from cleu.config import Config as C
 
 FROM = "Joe Clarke <jclarke@cisco.com>"
-CC = "Kris Sekula <ksekula@cisco.com>, Anthony Jesani <anjesani@cisco.com>"
+CC = "Anthony Jesani <anjesani@cisco.com>, Jara Osterfeld <josterfe@cisco.com>"
 
 JUMP_HOSTS = ["10.100.252.26", "10.100.252.27", "10.100.252.28", "10.100.252.29"]
 
@@ -27,7 +28,7 @@ DEFAULT_CLUSTER = "FlexPod"
 HX_DCs = {"HyperFlex-DC1": 1, "HyperFlex-DC2": 1}
 
 IP4_SUBNET = "10.100."
-IP6_PREFIX = "2a05:f8c0:2:"
+IP6_PREFIX = "2a11:d940:2:"
 
 NETWORK_MAP = {
     "CROSS DC VMs": {
@@ -99,7 +100,7 @@ SHEET_VLAN = 13
 
 def main():
     if len(sys.argv) != 2:
-        print("usage: {} ROW_RANGE".format(sys.argv[0]))
+        print(f"usage: {sys.argv[0]} ROW_RANGE")
         sys.exit(1)
 
     if not os.path.exists("gs_token.pickle"):
@@ -144,11 +145,11 @@ def main():
             vlan = row[SHEET_VLAN].strip()
             ip = row[SHEET_IP].strip()
         except Exception as e:
-            print("WARNING: Failed to process malformed row {}: {}".format(i, e))
+            print(f"WARNING: Failed to process malformed row {i}: {e}")
             continue
 
         if name == "" or ip == "" or dc == "":
-            print("WARNING: Ignorning malformed row {}".format(i))
+            print(f"WARNING: Ignoring malformed row {r}")
             continue
 
         for owner in owners:
@@ -174,38 +175,28 @@ def main():
         username = m.group(1)
 
         body = "Please find the CLEU Data Centre Access details below\r\n\r\n"
-        body += "Before you can access the Data Centre from remote, AnyConnect to {} and login with {} / {}\r\n".format(
-            VPN_SERVER, CLEUCreds.VPN_USER, CLEUCreds.VPN_PASS
-        )
-        body += "Once connected, your browser should redirect you to the password change tool.  If not go to {} and login with {} and password {}\r\n".format(
-            PW_RESET_URL, username, CLEUCreds.DEFAULT_USER_PASSWORD
-        )
+        body += f"Before you can access the Data Centre from remote, AnyConnect to {VPN_SERVER} and login with {CLEUCreds.VPN_USER} / {CLEUCreds.VPN_PASS}\r\n"
+        body += f"Once connected, your browser should redirect you to the password change tool.  If not go to {PW_RESET_URL} and login with {username} and password {CLEUCreds.DEFAULT_USER_PASSWORD}\r\n"
         body += "Reset your password.  You must use a complex password that contains lower and uppercase letters, numbers, or a special character.\r\n"
-        body += "After resetting your password, drop the VPN and reconnect to {} with {} and the new password you just set.\r\n\r\n".format(
-            VPN_SERVER, username
-        )
+        body += "After resetting your password, drop the VPN and reconnect to {VPN_SERVER} with {username} and the new password you just set.\r\n\r\n"
         body += "You can use any of the following Windows Jump Hosts to access the data centre using RDP:\r\n\r\n"
 
         for js in JUMP_HOSTS:
-            body += "{}\r\n".format(js)
+            body += f"{js}\r\n"
 
         body += "\r\nIf a Jump Host is full, try the next one.\r\n\r\n"
-        body += "Your login is {} (or {}@{} on Windows).  Your password is the same you used for the VPN.\r\n\r\n".format(
-            username, username, AD_DOMAIN
-        )
+        body += f"Your login is {username} (or {username}@{AD_DOMAIN} on Windows).  Your password is the same you used for the VPN.\r\n\r\n"
         body += "The network details for your VM(s) are:\r\n\r\n"
-        body += "DNS1          : {}\r\n".format(DNS1)
-        body += "DNS2          : {}\r\n".format(DNS2)
-        body += "NTP1          : {}\r\n".format(NTP1)
-        body += "NTP2          : {}\r\n".format(NTP2)
-        body += "DNS DOMAIN    : {}\r\n".format(DOMAIN)
-        body += "SMTP          : {}\r\n".format(SMTP_SERVER)
-        body += "AD DOMAIN     : {}\r\n".format(AD_DOMAIN)
-        body += "Syslog/NetFlow: {}\r\n\r\n".format(SYSLOG)
+        body += f"DNS1          : {DNS1}\r\n"
+        body += f"DNS2          : {DNS2}\r\n"
+        body += f"NTP1          : {NTP1}\r\n"
+        body += f"NTP2          : {NTP2}\r\n"
+        body += f"DNS DOMAIN    : {DOMAIN}\r\n"
+        body += f"SMTP          : {SMTP_SERVER}\r\n"
+        body += f"AD DOMAIN     : {AD_DOMAIN}\r\n"
+        body += f"Syslog/NetFlow: {SYSLOG}\r\n\r\n"
 
-        body += "vCenter is {}.  You MUST use the web client.  Your AD credentials above will work there.  VMs that don't require an OVA have been pre-created, but require installation and configuration.  If you use an OVA, you will need to deploy it yourself.\r\n\r\n".format(
-            VCENTER
-        )
+        body += f"vCenter is {VCENTER}.  You MUST use the web client.  Your AD credentials above will work there.  VMs that don't require an OVA have been pre-created, but require installation and configuration.  If you use an OVA, you will need to deploy it yourself.\r\n\r\n"
 
         body += "Your VM details are as follows.  DNS records have been pre-created for the VM name (i.e., hostname) below:\r\n\r\n"
         created = {}
@@ -234,11 +225,11 @@ def main():
                     break
 
             if not is_ova and ostype is None:
-                print("WARNING: Did not find OS type for {}".format(vm["os"]))
+                print(f"WARNING: Did not find OS type for {vm['os']}")
                 continue
 
             if not is_ova and vm["vlan"] != "" and vm["name"] not in created:
-                print("===Adding VM for {}===".format(vm["name"]))
+                print(f"===Adding VM for {vm['name']}===")
                 mem = vm["mem"] * 1024
                 scsi = "lsilogic"
 
@@ -251,27 +242,27 @@ def main():
                     "-i",
                     "inventory/hosts",
                     "-e",
-                    "vmware_cluster='{}'".format(cluster),
+                    f"vmware_cluster='{cluster}'",
                     "-e",
-                    "vmware_datacenter='{}'".format(DATACENTER),
+                    f"vmware_datacenter='{DATACENTER}'",
                     "-e",
-                    "guest_id={}".format(ostype),
+                    f"guest_id={ostype}",
                     "-e",
-                    "guest_name={}".format(vm["name"]),
+                    f"guest_name={vm['name']}",
                     "-e",
-                    "guest_size={}".format(vm["disk"]),
+                    f"guest_size={vm['disk']}",
                     "-e",
-                    "guest_mem={}".format(mem),
+                    f"guest_mem={mem}",
                     "-e",
-                    "guest_cpu={}".format(vm["cpu"]),
+                    f"guest_cpu={vm['cpu']}",
                     "-e",
-                    "guest_datastore={}".format(DC_MAP[vm["dc"]]),
+                    f"guest_datastore={DC_MAP[vm['dc']]}",
                     "-e",
-                    "guest_network='{}'".format(vm["vlan"]),
+                    f"guest_network='{vm['vlan']}'",
                     "-e",
-                    "guest_scsi={}".format(scsi),
+                    f"guest_scsi={scsi}",
                     "-e",
-                    "ansible_python_interpreter={}".format(sys.executable),
+                    f"ansible_python_interpreter={sys.executable}",
                     "add-vm-playbook.yml",
                 ]
 
@@ -284,13 +275,13 @@ def main():
                 rc = p.returncode
 
                 if rc != 0:
-                    print("\n\n***ERROR: Failed to add VM {}\n{}!".format(vm["name"], output))
+                    print(f"\n\n***ERROR: Failed to add VM {vm['name']}\n{output}!")
                     continue
 
                 print("===DONE===")
 
             if vm["name"] not in created:
-                print("===Adding DNS record for {} ==> {}===".format(vm["name"], vm["ip"]))
+                print(f"===Adding DNS record for {vm['name']} ==> {vm['ip']}===")
 
                 os.chdir(UPDATE_DNS_PATH)
                 command = ["{}/update_dns.py".format(UPDATE_DNS_PATH), "--ip", vm["ip"], "--host", vm["name"]]
@@ -326,11 +317,11 @@ def main():
             )
             created[vm["name"]] = True
 
-        body += "Let us know via Webex Teams if you need any other details.\r\n\r\n"
+        body += "Let us know via Webex if you need any other details.\r\n\r\n"
 
-        body += "Joe, Kris and Anthony\r\n\r\n"
+        body += "Joe, Anthony, and Jara\r\n\r\n"
 
-        subject = "Cisco Live Europe {} Data Centre Access Info".format(CISCOLIVE_YEAR)
+        subject = f"Cisco Live Europe {CISCOLIVE_YEAR} Data Centre Access Info"
 
         smtp = smtplib.SMTP(SMTP_SERVER)
         msg = EmailMessage()
