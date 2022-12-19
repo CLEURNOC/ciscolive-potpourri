@@ -102,7 +102,7 @@ def check_record(
     # Get the RRSet for the host.
     host_rr = None
     for rr in rrs:
-        if rr.name == host.name:
+        if rr.name.lower() == host.name.lower():
             host_rr = rr
             break
 
@@ -138,7 +138,7 @@ def check_record(
             else:
                 nb_obj = enb.virtualization.virtual_machines.get(int(txt_obj["id"]))
 
-            if not nb_obj or nb_obj.name != host.name:
+            if not nb_obj or nb_obj.name.lower() != host.name.lower():
                 wip_records.deletes.append(host_rr)
                 wip_records.deletes.extend(get_ptr_rrs(host.addrs["stringItem"], edns))
 
