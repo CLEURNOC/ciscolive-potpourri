@@ -131,6 +131,16 @@ def check_record(
             wip_records.deletes.append(host_rr)
             # Also remove the PTR record
             wip_records.deletes.extend(get_ptr_rrs(host.addrs["stringItem"], edns))
+        elif txt_obj["type"] == "device" or txt_obj["type"] == "vm":
+            nb_obj = None
+            if txt_obj["type"] == "device":
+                nb_obj = enb.dcim.devices.get(int(txt_obj["id"]))
+            else:
+                nb_obj = enb.virtualization.virtual_machines.get(int(txt_obj["id"]))
+
+            if not nb_obj or nb_obj.name != host.name:
+                wip_records.deletes.append(host_rr)
+                wip_records.deletes.extend(get_ptr_rrs(host.addrs["stringItem"], edns))
 
     wip_records.lock.release()
 
