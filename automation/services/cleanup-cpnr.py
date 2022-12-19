@@ -138,7 +138,7 @@ def check_record(
             else:
                 nb_obj = enb.virtualization.virtual_machines.get(int(txt_obj["id"]))
 
-            if not nb_obj or nb_obj.name.lower() != host.name.lower():
+            if not nb_obj or nb_obj.name.lower() != rr.name.lower():
                 wip_records.deletes.append(host_rr)
                 wip_records.deletes.extend(get_ptr_rrs(host.addrs["stringItem"], edns))
 
