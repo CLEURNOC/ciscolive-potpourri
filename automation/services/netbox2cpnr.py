@@ -109,6 +109,8 @@ def get_txt_record(ip: IpAddresses) -> str:
         )
     elif atype == "dcim.interface":
         result += f"url={ip.assigned_object.device.serialize()['url']} type=device id={ip.assigned_object.device.id} ip_id={ip.id}"
+    else:
+        result += f"ip_id={ip.id} type=ip"
 
     return f'"{result}"'
 
