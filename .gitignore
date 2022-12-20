@@ -3,3 +3,4 @@
 **/*.swp
 **/test-playbook.yml
 .vscode
+gs_token.pickle
