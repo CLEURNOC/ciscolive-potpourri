@@ -3,7 +3,7 @@ class Config:
     CISCOLIVE_YEAR = "2023"
     DNS_DOMAIN = "ciscolive.network"
     SMTP_SERVER = "10.100.252.13"
-    VPN_SERVER_IP = "64.103.25.34"
+    VPN_SERVER_IP = "45.157.175.35"
     VPN_USER = "vpn"
     WSGI_SERVER = "10.100.252.13"
     DNS_SERVER = "10.100.253.21"
