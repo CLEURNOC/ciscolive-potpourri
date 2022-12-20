@@ -7,7 +7,7 @@ import os
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
-from elemental_utils import ElementalDns, ElementalNetbox
+from elemental_utils import ElementalNetbox
 from pynetbox.models.ipam import IpAddresses
 import smtplib
 from email.message import EmailMessage
@@ -165,7 +165,6 @@ def main():
         sys.exit(1)
 
     enb = ElementalNetbox()
-    edns = ElementalDns(url=f"https://{C.DNS_SERVER}:8443/")
 
     (rstart, _) = sys.argv[1].split(":")
 
@@ -355,18 +354,6 @@ def main():
 
                 if rc != 0:
                     print(f"\n\n***ERROR: Failed to add VM {vm['name']}\n{output}!")
-                    vm["vm_obj"].delete()
-                    continue
-
-                print("===DONE===")
-
-            if vm["name"] not in created:
-                print(f"===Adding DNS record for {vm['name']} ==> {vm['ip']}===")
-
-                try:
-                    edns.host.add(name=vm["name"], zoneOrigin=C.DNS_DOMAIN + ".", addrs={"stringItem": [vm["ip"]]})
-                except Exception as e:
-                    print(f"\n\n***ERROR: Failed to create DNS record for {vm['name']}: {e}")
                     vm["vm_obj"].delete()
                     continue
 
