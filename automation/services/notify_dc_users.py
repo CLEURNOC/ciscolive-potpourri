@@ -403,4 +403,6 @@ if __name__ == "__main__":
     os.environ["NETBOX_API_TOKEN"] = CLEUCreds.NETBOX_API_TOKEN
     os.environ["CPNR_USERNAME"] = CLEUCreds.CPNR_USERNAME
     os.environ["CPNR_PASSWORD"] = CLEUCreds.CPNR_PASSWORD
+    os.environ["VMWARE_USER"] = CLEUCreds.VMWARE_USER
+    os.environ["VMWARE_PASSWORD"] = CLEUCreds.VMWARE_PASSWORD
     main()
