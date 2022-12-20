@@ -124,7 +124,7 @@ def get_next_ip(enb: ElementalNetbox, prefix: str) -> IpAddresses:
 
     for addr in available_ips:
         ip_obj = ipaddress.ip_address(addr.address.split("/")[0])
-        if int(ip_obj.packed(-1)) > FIRST_IP:
+        if int(ip_obj.packed[-1]) > FIRST_IP:
             return addr
 
     return None
