@@ -132,6 +132,8 @@ def check_record(
             # Also remove the PTR record
             wip_records.deletes.extend(get_ptr_rrs(host.addrs["stringItem"], edns))
         elif txt_obj["type"] == "device" or txt_obj["type"] == "vm":
+            # The IP object exists, so check the assigned object to make sure it hasn't been
+            # renamed.
             nb_obj = None
             if txt_obj["type"] == "device":
                 nb_obj = enb.dcim.devices.get(int(txt_obj["id"]))
