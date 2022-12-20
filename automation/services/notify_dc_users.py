@@ -230,9 +230,10 @@ def main():
             continue
 
         platform_obj = enb.dcim.platforms.get(name=vm["platform"])
+        cluster_obj = enb.virtualization.clusters.get(name=vm["dc"])
 
         vm_obj = enb.virtualization.virtual_machines.create(
-            name=name.lower(), platform=platform_obj.id, vcpus=vm["cpu"], disk=vm["disk"], memory=vm["mem"]
+            name=name.lower(), platform=platform_obj.id, vcpus=vm["cpu"], disk=vm["disk"], memory=vm["mem"], cluster=cluster_obj.id
         )
         vm["vm_obj"] = vm_obj
 
