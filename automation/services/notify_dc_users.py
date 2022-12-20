@@ -192,7 +192,7 @@ def main():
             ova_bool = True
 
         ostype = None
-        platform = None
+        platform = "other"
 
         for ostypes in OSTYPE_LIST:
             if re.search(ostypes[0], vm["os"]):
