@@ -91,7 +91,6 @@ SYSLOG = SMTP_SERVER
 ISO_DS = "dc1_datastore_1"
 ISO_DS_HX1 = "DC1-HX-DS-01"
 ISO_DS_HX2 = "DC2-HX-DS-01"
-VPN_SERVER = C.VPN_SERVER
 VPN_SERVER_IP = C.VPN_SERVER_IP
 ANSIBLE_PATH = "/home/jclarke/src/git/ciscolive/automation/cleu-ansible-n9k"
 DATACENTER = "CiscoLive"
