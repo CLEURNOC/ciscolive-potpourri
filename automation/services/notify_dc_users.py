@@ -105,13 +105,14 @@ SPREADSHEET_ID = "15sC26okPX1lHzMFDJFnoujDKLNclh4NQhBPmV175slY"
 SHEET_HOSTNAME = 0
 SHEET_OS = 1
 SHEET_OVA = 2
-SHEET_CONTACT = 4
-SHEET_CPU = 5
-SHEET_RAM = 6
-SHEET_DISK = 7
-SHEET_NICS = 8
-SHEET_DC = 11
-SHEET_VLAN = 12
+SHEET_CONTACT = 5
+SHEET_CPU = 6
+SHEET_RAM = 7
+SHEET_DISK = 8
+SHEET_NICS = 9
+SHEET_CLUSTER = 12
+SHEET_DC = 13
+SHEET_VLAN = 14
 
 FIRST_IP = 30
 
@@ -182,6 +183,7 @@ def main():
             mem = int(row[SHEET_RAM].strip()) * 1024
             disk = int(row[SHEET_DISK].strip())
             dc = row[SHEET_DC].strip()
+            cluster = row[SHEET_CLUSTER].strip()
             vlan = row[SHEET_VLAN].strip()
         except Exception as e:
             print(f"WARNING: Failed to process malformed row {i}: {e}")
@@ -219,6 +221,7 @@ def main():
             "cpu": cpu,
             "disk": disk,
             "vlan": vlan,
+            "cluster": cluster,
             "dc": dc,
         }
 
@@ -235,7 +238,7 @@ def main():
             continue
 
         platform_obj = enb.dcim.platforms.get(name=vm["platform"])
-        cluster_obj = enb.virtualization.clusters.get(name=vm["dc"])
+        cluster_obj = enb.virtualization.clusters.get(name=vm["cluster"])
 
         vm_obj = enb.virtualization.virtual_machines.create(
             name=name.lower(), platform=platform_obj.id, vcpus=vm["cpu"], disk=vm["disk"], memory=vm["mem"], cluster=cluster_obj.id
