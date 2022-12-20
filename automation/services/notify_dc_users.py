@@ -98,6 +98,9 @@ DATACENTER = "CiscoLive"
 CISCOLIVE_YEAR = C.CISCOLIVE_YEAR
 PW_RESET_URL = C.PW_RESET_URL
 
+TENANT_NAME = "Infrastructure"
+VRF_NAME = "default"
+
 SPREADSHEET_ID = "15sC26okPX1lHzMFDJFnoujDKLNclh4NQhBPmV175slY"
 SHEET_HOSTNAME = 0
 SHEET_OS = 1
@@ -117,7 +120,7 @@ def get_next_ip(enb: ElementalNetbox, prefix: str) -> IpAddresses:
     """
     Get the next available IP for a prefix.
     """
-    global FIRST_IP
+    global FIRST_IP, TENANT_NAME, VRF_NAME
 
     prefix_obj = enb.ipam.prefixes.get(prefix=prefix)
     available_ips = prefix_obj.available_ips.list()
@@ -125,7 +128,9 @@ def get_next_ip(enb: ElementalNetbox, prefix: str) -> IpAddresses:
     for addr in available_ips:
         ip_obj = ipaddress.ip_address(addr.address.split("/")[0])
         if int(ip_obj.packed[-1]) > FIRST_IP:
-            return addr
+            tenant = enb.tenancy.tenants.get(name=TENANT_NAME)
+            vrf = enb.ipam.vrfs.get(name=VRF_NAME)
+            return enb.ipam.ip_addresses.create(address=addr.address, tenant=tenant.id, vrf=vrf.id)
 
     return None
 
