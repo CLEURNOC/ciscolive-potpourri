@@ -270,10 +270,10 @@ def main():
         username = m.group(1)
 
         body = "Please find the CLEU Data Centre Access details below\r\n\r\n"
-        body += f"Before you can access the Data Centre from remote, AnyConnect to {VPN_SERVER} and login with {CLEUCreds.VPN_USER} / {CLEUCreds.VPN_PASS}\r\n"
+        body += f"Before you can access the Data Centre from remote, AnyConnect to {VPN_SERVER_IP} and login with {CLEUCreds.VPN_USER} / {CLEUCreds.VPN_PASS}\r\n"
         body += f"Once connected, your browser should redirect you to the password change tool.  If not go to {PW_RESET_URL} and login with {username} and password {CLEUCreds.DEFAULT_USER_PASSWORD}\r\n"
         body += "Reset your password.  You must use a complex password that contains lower and uppercase letters, numbers, or a special character.\r\n"
-        body += f"After resetting your password, drop the VPN and reconnect to {VPN_SERVER} with {username} and the new password you just set.\r\n\r\n"
+        body += f"After resetting your password, drop the VPN and reconnect to {VPN_SERVER_IP} with {username} and the new password you just set.\r\n\r\n"
         body += "You can use any of the following Windows Jump Hosts to access the data centre using RDP:\r\n\r\n"
 
         for js in JUMP_HOSTS:
