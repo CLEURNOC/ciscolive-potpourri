@@ -260,7 +260,7 @@ PDU_DC
 PDU_CORE
 
 [vCenter]
-cl-vcenter.ad.ciscolive.network
+cl-vcenter.ciscolive.network
 
 [DC1:children]
 NXOS_DC1
