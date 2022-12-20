@@ -186,6 +186,24 @@ def main():
             print(f"WARNING: Ignoring malformed row {i}")
             continue
 
+        ova_bool = False
+
+        if is_ova.lower() == "true" or is_ova.lower() == "yes":
+            ova_bool = True
+
+        ostype = None
+        platform = "other"
+
+        for ostypes in OSTYPE_LIST:
+            if re.search(ostypes[0], opsys):
+                ostype = ostypes[1]
+                platform = ostypes[2]
+                break
+
+        if not ova_bool and ostype is None:
+            print(f"WARNING: Did not find OS type for {vm['os']} on row {i}")
+            continue
+
         vm = {
             "name": name.upper(),
             "os": opsys,
@@ -198,24 +216,6 @@ def main():
             "vlan": vlan,
             "dc": dc,
         }
-
-        ova_bool = False
-
-        if is_ova.lower() == "true" or is_ova.lower() == "yes":
-            ova_bool = True
-
-        ostype = None
-        platform = "other"
-
-        for ostypes in OSTYPE_LIST:
-            if re.search(ostypes[0], vm["os"]):
-                ostype = ostypes[1]
-                platform = ostypes[2]
-                break
-
-        if not ova_bool and ostype is None:
-            print(f"WARNING: Did not find OS type for {vm['os']} on row {i}")
-            continue
 
         ip_obj = get_next_ip(enb, NETWORK_MAP[vm["vlan"]]["subnet"])
         if not ip_obj:
