@@ -229,8 +229,10 @@ def main():
             print(f"WARNING: Duplicate VM name {name} in NetBox for row {i}.")
             continue
 
+        platform_obj = enb.dcim.platforms.get(name=vm["platform"])
+
         vm_obj = enb.virtualization.virtual_machines.create(
-            name=name.lower(), platform=vm["platform"], vcpus=vm["cpu"], disk=vm["disk"], memory=vm["mem"]
+            name=name.lower(), platform=platform_obj.id, vcpus=vm["cpu"], disk=vm["disk"], memory=vm["mem"]
         )
         vm["vm_obj"] = vm_obj
 
