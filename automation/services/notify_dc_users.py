@@ -8,11 +8,13 @@ from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from elemental_utils import ElementalDns, ElementalNetbox
+from pynetbox.models.ipam import IpAddresses
 import smtplib
 from email.message import EmailMessage
 import sys
 import re
 import subprocess
+import ipaddress
 import CLEUCreds
 from cleu.config import Config as C
 
@@ -31,19 +33,19 @@ IP4_SUBNET = "10.100."
 IP6_PREFIX = "2a11:d940:2:"
 
 NETWORK_MAP = {
-    "CROSS DC VMs": {
+    "Stretched_VMs": {
         "subnet": "{}252.0/24".format(IP4_SUBNET),
         "gw": "{}252.254".format(IP4_SUBNET),
         "prefix": "{}64fc::".format(IP6_PREFIX),
         "gw6": "{}64fc::fe".format(IP6_PREFIX),
     },
-    "DC1 ONLY VMs": {
+    "VMs-DC1": {
         "subnet": "{}253.0/24".format(IP4_SUBNET),
         "gw": "{}253.254".format(IP4_SUBNET),
         "prefix": "{}64fd::".format(IP6_PREFIX),
         "gw6": "{}64fd::fe".format(IP6_PREFIX),
     },
-    "DC2 ONLY VMs": {
+    "VMs-DC2": {
         "subnet": "{}254.0/24".format(IP4_SUBNET),
         "gw": "{}254.254".format(IP4_SUBNET),
         "prefix": "{}64fe::".format(IP6_PREFIX),
@@ -52,17 +54,30 @@ NETWORK_MAP = {
 }
 
 OSTYPE_LIST = [
-    (r"(?i)ubuntu", "ubuntu64Guest"),
-    (r"(?i)windows 10", "windows9_64Guest"),
-    (r"(?i)windows 2012", "windows8Server64Guest"),
-    (r"(?i)windows 201(6|9)", "windows9Server64Guest"),
-    (r"(?i)debian 8", "debian8_64Guest"),
-    (r"(?i)debian", "debian9_64Guest"),
-    (r"(?i)centos 7", "centos7_64Guest"),
-    (r"(?i)centos", "centos8_64Guest"),
-    (r"(?i)red hat", "rhel7_64Guest"),
-    (r"(?i)linux", "other3xLinux64Guest"),
+    (r"(?i)ubuntu ?22.04", "ubuntu64Guest", "ubuntu22.04"),
+    (r"(?i)ubuntu", "ubuntu64Guest", "linux"),
+    (r"(?i)windows 10", "windows9_64Guest", "windows"),
+    (r"(?i)windows 2012", "windows8Server64Guest", "windows"),
+    (r"(?i)windows ?2019", "windows9Server64Guest", "windows2019"),
+    (r"(?i)windows 201(6|9)", "windows9Server64Guest", "windows"),
+    (r"(?i)debian 8", "debian8_64Guest", "linux"),
+    (r"(?i)debian", "debian9_64Guest", "linux"),
+    (r"(?i)centos 7", "centos7_64Guest", "linux"),
+    (r"(?i)centos", "centos8_64Guest", "linux"),
+    (r"(?i)red hat", "rhel7_64Guest", "linux"),
+    (r"(?i)linux", "other3xLinux64Guest", "linux"),
+    (r"(?i)freebsd ?13.1", "freebsd12_64Guest", "freebsd13.1"),
+    (r"(?i)freebsd", "freebsd12_64Guest", "other"),
 ]
+
+INTERFACE_MAP = {
+    "freebsd13.1": "vmx0",
+    "linux": "eth0",
+    "ubuntu22.04": "eth0",
+    "windows": "Ethernet 1",
+    "windows2019": "Ethernet 1",
+    "other": "Ethernet 1",
+}
 
 DNS1 = "10.100.253.6"
 DNS2 = "10.100.254.6"
@@ -79,7 +94,6 @@ ISO_DS_HX2 = "DC2-HX-DS-01"
 VPN_SERVER = C.VPN_SERVER
 VPN_SERVER_IP = C.VPN_SERVER_IP
 ANSIBLE_PATH = "/home/jclarke/src/git/ciscolive/automation/cleu-ansible-n9k"
-UPDATE_DNS_PATH = "/home/jclarke"
 DATACENTER = "CiscoLive"
 CISCOLIVE_YEAR = C.CISCOLIVE_YEAR
 PW_RESET_URL = C.PW_RESET_URL
@@ -94,8 +108,26 @@ SHEET_RAM = 6
 SHEET_DISK = 7
 SHEET_NICS = 8
 SHEET_DC = 11
-SHEET_IP = 12
-SHEET_VLAN = 13
+SHEET_VLAN = 12
+
+FIRST_IP = 30
+
+
+def get_next_ip(enb: ElementalNetbox, prefix: str) -> IpAddresses:
+    """
+    Get the next available IP for a prefix.
+    """
+    global FIRST_IP
+
+    prefix_obj = enb.ipam.prefixes.get(prefix=prefix)
+    available_ips = prefix_obj.available_ips.list()
+
+    for addr in available_ips:
+        ip_obj = ipaddress.ip_address(addr.address.split("/")[0])
+        if int(ip_obj.packed(-1)) > FIRST_IP:
+            return addr
+
+    return None
 
 
 def main():
@@ -126,7 +158,10 @@ def main():
         print("ERROR: Did not read anything from Google Sheets!")
         sys.exit(1)
 
-    (rstart, rend) = sys.argv[1].split(":")
+    enb = ElementalNetbox()
+    edns = ElementalDns(url=f"https://{C.DNS_SERVER}:8443/")
+
+    (rstart, _) = sys.argv[1].split(":")
 
     i = int(rstart) - 1
     users = {}
@@ -139,36 +174,86 @@ def main():
             opsys = row[SHEET_OS].strip()
             is_ova = row[SHEET_OVA].strip()
             cpu = int(row[SHEET_CPU].strip())
-            mem = int(row[SHEET_RAM].strip())
+            mem = int(row[SHEET_RAM].strip()) * 1024
             disk = int(row[SHEET_DISK].strip())
             dc = row[SHEET_DC].strip()
             vlan = row[SHEET_VLAN].strip()
-            ip = row[SHEET_IP].strip()
         except Exception as e:
             print(f"WARNING: Failed to process malformed row {i}: {e}")
             continue
 
-        if name == "" or ip == "" or dc == "":
-            print(f"WARNING: Ignoring malformed row {r}")
+        if name == "" or vlan == "" or dc == "":
+            print(f"WARNING: Ignoring malformed row {i}")
             continue
+
+        ova_bool = False
+
+        if is_ova.lower() == "true" or is_ova.lower() == "yes":
+            ova_bool = True
+
+        ostype = None
+        platform = None
+
+        for ostypes in OSTYPE_LIST:
+            if re.search(ostypes[0], vm["os"]):
+                ostype = ostypes[1]
+                platform = ostypes[2]
+                break
+
+        if not ova_bool and ostype is None:
+            print(f"WARNING: Did not find OS type for {vm['os']} on row {i}")
+            continue
+
+        vm = {
+            "name": name.upper(),
+            "os": opsys,
+            "ostype": ostype,
+            "platform": platform,
+            "mem": mem,
+            "is_ova": ova_bool,
+            "cpu": cpu,
+            "disk": disk,
+            "vlan": vlan,
+            "dc": dc,
+        }
+
+        ip_obj = get_next_ip(enb, NETWORK_MAP[vm["vlan"]]["subnet"])
+        if not ip_obj:
+            print(f"WARNING: No free IP addresses for {name} in subnet {NETWORK_MAP[vm['vlan']]}.")
+            continue
+
+        vm["ip"] = ip_obj.address.split("/")[0]
+
+        vm_obj = enb.virtualization.virtual_machines.filter(name=name.lower())
+        if vm_obj and len(vm_obj) > 0:
+            print(f"WARNING: Duplicate VM name {name} in NetBox for row {i}.")
+            continue
+
+        vm_obj = enb.virtualization.virtual_machines.create(
+            name=name.lower(), platform=vm["platform"], vcpus=vm["cpu"], disk=vm["disk"], memory=vm["mem"]
+        )
+        vm["vm_obj"] = vm_obj
+
+        vm_intf = enb.virtualization.interfaces.create(virtual_machine=vm_obj.id, name=INTERFACE_MAP[vm["platform"]])
+
+        ip_obj.assigned_object_id = vm_intf.id
+        ip_obj.assigned_object_type = "virtualization.vminterface"
+        ip_obj.save()
+
+        vm_obj.primary_ip4 = ip_obj.id
+
+        contacts = []
 
         for owner in owners:
             owner = owner.strip()
             if owner not in users:
                 users[owner] = []
 
-            vm = {
-                "name": name.upper(),
-                "os": opsys,
-                "mem": mem,
-                "is_ova": is_ova,
-                "cpu": cpu,
-                "disk": disk,
-                "vlan": vlan,
-                "ip": ip,
-                "dc": dc,
-            }
             users[owner].append(vm)
+            contacts.append(owner)
+
+        vm_obj.custom_fields["Contact"] = ",".join(contacts)
+        vm_obj.save()
 
     for user, vms in users.items():
         m = re.search(r"<?(\S+)@", user)
@@ -178,7 +263,7 @@ def main():
         body += f"Before you can access the Data Centre from remote, AnyConnect to {VPN_SERVER} and login with {CLEUCreds.VPN_USER} / {CLEUCreds.VPN_PASS}\r\n"
         body += f"Once connected, your browser should redirect you to the password change tool.  If not go to {PW_RESET_URL} and login with {username} and password {CLEUCreds.DEFAULT_USER_PASSWORD}\r\n"
         body += "Reset your password.  You must use a complex password that contains lower and uppercase letters, numbers, or a special character.\r\n"
-        body += "After resetting your password, drop the VPN and reconnect to {VPN_SERVER} with {username} and the new password you just set.\r\n\r\n"
+        body += f"After resetting your password, drop the VPN and reconnect to {VPN_SERVER} with {username} and the new password you just set.\r\n\r\n"
         body += "You can use any of the following Windows Jump Hosts to access the data centre using RDP:\r\n\r\n"
 
         for js in JUMP_HOSTS:
@@ -212,28 +297,11 @@ def main():
 
                 cluster = vm["dc"]
 
-            is_ova = False
-
-            if vm["is_ova"].lower() == "true" or vm["is_ova"].lower() == "yes":
-                is_ova = True
-
-            ostype = None
-
-            for ostypes in OSTYPE_LIST:
-                if re.search(ostypes[0], vm["os"]):
-                    ostype = ostypes[1]
-                    break
-
-            if not is_ova and ostype is None:
-                print(f"WARNING: Did not find OS type for {vm['os']}")
-                continue
-
-            if not is_ova and vm["vlan"] != "" and vm["name"] not in created:
+            if not vm["is_ova"] and vm["vlan"] != "" and vm["name"] not in created:
                 print(f"===Adding VM for {vm['name']}===")
-                mem = vm["mem"] * 1024
                 scsi = "lsilogic"
 
-                if re.search(r"^win", ostype):
+                if re.search(r"^win", vm["ostype"]):
                     scsi = "lsilogicsas"
 
                 os.chdir(ANSIBLE_PATH)
@@ -246,13 +314,13 @@ def main():
                     "-e",
                     f"vmware_datacenter='{DATACENTER}'",
                     "-e",
-                    f"guest_id={ostype}",
+                    f"guest_id={vm['ostype']}",
                     "-e",
                     f"guest_name={vm['name']}",
                     "-e",
                     f"guest_size={vm['disk']}",
                     "-e",
-                    f"guest_mem={mem}",
+                    f"guest_mem={vm['mem']}",
                     "-e",
                     f"guest_cpu={vm['cpu']}",
                     "-e",
@@ -276,6 +344,7 @@ def main():
 
                 if rc != 0:
                     print(f"\n\n***ERROR: Failed to add VM {vm['name']}\n{output}!")
+                    vm["vm_obj"].delete()
                     continue
 
                 print("===DONE===")
@@ -283,18 +352,11 @@ def main():
             if vm["name"] not in created:
                 print(f"===Adding DNS record for {vm['name']} ==> {vm['ip']}===")
 
-                os.chdir(UPDATE_DNS_PATH)
-                command = ["{}/update_dns.py".format(UPDATE_DNS_PATH), "--ip", vm["ip"], "--host", vm["name"]]
-
-                p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-                output = ""
-                for c in iter(lambda: p.stdout.read(1), b""):
-                    output += c.decode("utf-8")
-                p.wait()
-                rc = p.returncode
-
-                if rc != 0:
-                    print("\n\n***ERROR: Failed to add DNS record!\n{}".format(output))
+                try:
+                    edns.host.add(name=vm["name"], zoneOrigin=C.DNS_DOMAIN + ".", addrs={"stringItem": [vm["ip"]]})
+                except Exception as e:
+                    print(f"\n\n***ERROR: Failed to create DNS record for {vm['name']}: {e}")
+                    vm["vm_obj"].delete()
                     continue
 
                 print("===DONE===")
@@ -337,4 +399,8 @@ def main():
 
 
 if __name__ == "__main__":
+    os.environ["NETBOX_ADDRESS"] = C.NETBOX_SERVER
+    os.environ["NETBOX_API_TOKEN"] = CLEUCreds.NETBOX_API_TOKEN
+    os.environ["CPNR_USERNAME"] = CLEUCreds.CPNR_USERNAME
+    os.environ["CPNR_PASSWORD"] = CLEUCreds.CPNR_PASSWORD
     main()
