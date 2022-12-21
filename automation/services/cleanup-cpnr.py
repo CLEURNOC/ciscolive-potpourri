@@ -39,7 +39,7 @@ logger = logging.getLogger(__name__)
 
 
 # Bool to indicate whether or not DNS was modified.
-EDNS_MODIFIED = True
+EDNS_MODIFIED = False
 
 
 @dataclass
