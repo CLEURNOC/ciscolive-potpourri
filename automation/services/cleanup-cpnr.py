@@ -20,6 +20,7 @@ from colorama import Fore, Style
 from dataclasses import dataclass, field
 from threading import Lock
 import os
+import re
 from typing import List
 import CLEUCreds
 from cleu.config import Config as C
@@ -112,7 +113,10 @@ def check_record(
 
     found_txt = None
     for rr in host_rr.rrList["CCMRRItem"]:
-        if rr["rrType"] == "TXT" and (rr["rdata"].startswith('"v=_netbox') or rr["rdata"].startswith('"v=_static')):
+        # The re.search is to support DDNS entries.
+        if rr["rrType"] == "TXT" and (
+            rr["rdata"].startswith('"v=_netbox') or rr["rdata"].startswith('"v=_static') or re.search(r'^["0-9:]+$', rr["rdata"])
+        ):
             found_txt = rr["rdata"]
             break
 
