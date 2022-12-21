@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+# NOTE: This script is now obsolete with the new netbox2cpnr.py that syncs from NetBox.
+
 import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
