@@ -5,8 +5,6 @@ import pickle
 import os.path
 import os
 from googleapiclient.discovery import build
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request
 from elemental_utils import ElementalNetbox
 from pynetbox.models.ipam import IpAddresses
 import smtplib
@@ -15,8 +13,8 @@ import sys
 import re
 import subprocess
 import ipaddress
-import CLEUCreds
-from cleu.config import Config as C
+import CLEUCreds # noqa
+from cleu.config import Config as C # noqa
 
 FROM = "Joe Clarke <jclarke@cisco.com>"
 CC = "Anthony Jesani <anjesani@cisco.com>, Jara Osterfeld <josterfe@cisco.com>"
