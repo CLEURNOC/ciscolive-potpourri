@@ -187,6 +187,7 @@ def main():
 
         ostype = None
         platform = "other"
+        mgmt_intf = "Ethernet 1"
 
         for ostypes in OSTYPE_LIST:
             if re.search(ostypes[0], opsys):
