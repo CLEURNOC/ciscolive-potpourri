@@ -52,30 +52,21 @@ NETWORK_MAP = {
 }
 
 OSTYPE_LIST = [
-    (r"(?i)ubuntu ?22.04", "ubuntu64Guest", "ubuntu22.04"),
-    (r"(?i)ubuntu", "ubuntu64Guest", "linux"),
-    (r"(?i)windows 1[01]", "windows9_64Guest", "windows"),
-    (r"(?i)windows 2012", "windows8Server64Guest", "windows"),
-    (r"(?i)windows ?2019", "windows9Server64Guest", "windows2019"),
-    (r"(?i)windows 201(6|9)", "windows9Server64Guest", "windows"),
-    (r"(?i)debian 8", "debian8_64Guest", "linux"),
-    (r"(?i)debian", "debian9_64Guest", "linux"),
-    (r"(?i)centos 7", "centos7_64Guest", "linux"),
-    (r"(?i)centos", "centos8_64Guest", "linux"),
-    (r"(?i)red hat", "rhel7_64Guest", "linux"),
-    (r"(?i)linux", "other3xLinux64Guest", "linux"),
-    (r"(?i)freebsd ?13.1", "freebsd12_64Guest", "freebsd13.1"),
-    (r"(?i)freebsd", "freebsd12_64Guest", "other"),
+    (r"(?i)ubuntu ?22.04", "ubuntu64Guest", "ubuntu22.04", "eth0"),
+    (r"(?i)ubuntu", "ubuntu64Guest", "linux", "eth0"),
+    (r"(?i)windows 1[01]", "windows9_64Guest", "windows", "Ethernet 1"),
+    (r"(?i)windows 2012", "windows8Server64Guest", "windows", "Ethernet 1"),
+    (r"(?i)windows ?2019", "windows9Server64Guest", "windows2019", "Ethernet 1"),
+    (r"(?i)windows 201(6|9)", "windows9Server64Guest", "windows", "Ethernet 1"),
+    (r"(?i)debian 8", "debian8_64Guest", "linux", "eth0"),
+    (r"(?i)debian", "debian9_64Guest", "linux", "eth0"),
+    (r"(?i)centos 7", "centos7_64Guest", "linux", "eth0"),
+    (r"(?i)centos", "centos8_64Guest", "linux", "eth0"),
+    (r"(?i)red hat", "rhel7_64Guest", "linux", "eth0"),
+    (r"(?i)linux", "other3xLinux64Guest", "linux", "eth0"),
+    (r"(?i)freebsd ?13.1", "freebsd12_64Guest", "freebsd13.1", "vmx0"),
+    (r"(?i)freebsd", "freebsd12_64Guest", "other", "vmx0"),
 ]
-
-INTERFACE_MAP = {
-    "freebsd13.1": "vmx0",
-    "linux": "eth0",
-    "ubuntu22.04": "eth0",
-    "windows": "Ethernet 1",
-    "windows2019": "Ethernet 1",
-    "other": "Ethernet 1",
-}
 
 DNS1 = "10.100.253.6"
 DNS2 = "10.100.254.6"
@@ -201,6 +192,7 @@ def main():
             if re.search(ostypes[0], opsys):
                 ostype = ostypes[1]
                 platform = ostypes[2]
+                mgmt_intf = ostypes[3]
                 break
 
         if not ova_bool and ostype is None:
@@ -214,6 +206,7 @@ def main():
             "platform": platform,
             "mem": mem,
             "is_ova": ova_bool,
+            "mgmt_intf": mgmt_intf,
             "cpu": cpu,
             "disk": disk,
             "vlan": vlan,
@@ -241,7 +234,7 @@ def main():
         )
         vm["vm_obj"] = vm_obj
 
-        vm_intf = enb.virtualization.interfaces.create(virtual_machine=vm_obj.id, name=INTERFACE_MAP[vm["platform"]])
+        vm_intf = enb.virtualization.interfaces.create(virtual_machine=vm_obj.id, name=mgmt_intf)
 
         ip_obj.assigned_object_id = vm_intf.id
         ip_obj.assigned_object_type = "virtualization.vminterface"
@@ -252,7 +245,7 @@ def main():
         contacts = []
 
         for owner in owners:
-            owner = owner.strip()
+            owner = owner.strip().lower()
             if owner not in users:
                 users[owner] = []
 
