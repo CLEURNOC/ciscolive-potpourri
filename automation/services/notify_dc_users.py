@@ -13,8 +13,8 @@ import sys
 import re
 import subprocess
 import ipaddress
-import CLEUCreds # noqa
-from cleu.config import Config as C # noqa
+import CLEUCreds # type: ignore
+from cleu.config import Config as C # type: ignore
 
 FROM = "Joe Clarke <jclarke@cisco.com>"
 CC = "Anthony Jesani <anjesani@cisco.com>, Jara Osterfeld <josterfe@cisco.com>"
@@ -54,7 +54,7 @@ NETWORK_MAP = {
 OSTYPE_LIST = [
     (r"(?i)ubuntu ?22.04", "ubuntu64Guest", "ubuntu22.04"),
     (r"(?i)ubuntu", "ubuntu64Guest", "linux"),
-    (r"(?i)windows 10", "windows9_64Guest", "windows"),
+    (r"(?i)windows 1[01]", "windows9_64Guest", "windows"),
     (r"(?i)windows 2012", "windows8Server64Guest", "windows"),
     (r"(?i)windows ?2019", "windows9Server64Guest", "windows2019"),
     (r"(?i)windows 201(6|9)", "windows9Server64Guest", "windows"),
