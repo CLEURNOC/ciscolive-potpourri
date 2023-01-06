@@ -13,8 +13,8 @@ import sys
 import re
 import subprocess
 import ipaddress
-import CLEUCreds # type: ignore
-from cleu.config import Config as C # type: ignore
+import CLEUCreds  # type: ignore
+from cleu.config import Config as C  # type: ignore
 
 FROM = "Joe Clarke <jclarke@cisco.com>"
 CC = "Anthony Jesani <anjesani@cisco.com>, Jara Osterfeld <josterfe@cisco.com>"
@@ -256,6 +256,8 @@ def main():
         vm_obj.custom_fields["Contact"] = ",".join(contacts)
         vm_obj.save()
 
+    created = {}
+
     for user, vms in users.items():
         m = re.search(r"<?(\S+)@", user)
         username = m.group(1)
@@ -285,7 +287,6 @@ def main():
         body += f"vCenter is {VCENTER}.  You MUST use the web client.  Your AD credentials above will work there.  VMs that don't require an OVA have been pre-created, but require installation and configuration.  If you use an OVA, you will need to deploy it yourself.\r\n\r\n"
 
         body += "Your VM details are as follows.  DNS records have been pre-created for the VM name (i.e., hostname) below:\r\n\r\n"
-        created = {}
         for vm in vms:
             iso_ds = ISO_DS
             cluster = DEFAULT_CLUSTER
