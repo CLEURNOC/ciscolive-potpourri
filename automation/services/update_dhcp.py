@@ -34,7 +34,6 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 import sys
-import re
 import os
 import CLEUCreds  # type: ignore
 from cleu.config import Config as C  # type: ignore
