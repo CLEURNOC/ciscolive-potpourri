@@ -25,11 +25,10 @@
 # SUCH DAMAGE.
 
 import sys
-import json
 from subprocess import Popen, PIPE
 import re
 import shlex
-from cleu.config import Config as C
+from cleu.config import Config as C  # type: ignore
 
 if __name__ == "__main__":
     match = None
@@ -51,8 +50,8 @@ if __name__ == "__main__":
         sys.exit(1)
     scopes = out.decode("utf-8").split("\n")
     for scope in scopes:
+        scope = scope.strip()
         if scope != "100 Ok" and re.search(r"^\w", scope):
-            scope = scope.strip()
             delete = True
             if match and not re.search(match, scope):
                 delete = False
