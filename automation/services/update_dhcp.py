@@ -36,8 +36,8 @@ requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 import sys
 import re
 import os
-import CLEUCreds
-from cleu.config import Config as C
+import CLEUCreds  # type: ignore
+from cleu.config import Config as C  # type: ignore
 
 IDF_CNT = 99
 ADDITIONAL_IDFS = (252, 253, 254)

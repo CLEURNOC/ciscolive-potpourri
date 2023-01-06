@@ -39,8 +39,8 @@ from sparker import Sparker
 import pprint
 import re
 import socket
-import CLEUCreds
-from cleu.config import Config as C
+import CLEUCreds  # type: ignore
+from cleu.config import Config as C  # type: ignore
 
 CACHE_FILE = "/home/jclarke/monitored_devs.json"
 

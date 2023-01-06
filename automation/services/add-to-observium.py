@@ -24,25 +24,27 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+# NOTE: This script is now obsolete.  We no longer use Observium.
+
 import sys
 import json
 from subprocess import Popen, PIPE
 import shlex
 import CLEUCreds
 
-MONITORING = 'cl-monitoring.ciscolive.network'
+MONITORING = "cl-monitoring.ciscolive.network"
 # TODO: Move these to a central config file.
-DEV_FILE = '/home/jclarke/ping-devs.json'
+DEV_FILE = "/home/jclarke/ping-devs.json"
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print('usage: {} <DEV> [<DEV> [...]]'.format(sys.argv[0]))
+        print("usage: {} <DEV> [<DEV> [...]]".format(sys.argv[0]))
         sys.exit(1)
 
     devs = []
     changed_devs = False
     try:
-        fd = open(DEV_FILE, 'r')
+        fd = open(DEV_FILE, "r")
         devs = json.load(fd)
         fd.close()
     except:
@@ -53,15 +55,22 @@ if __name__ == '__main__':
             devs.append(dev)
             changed_devs = True
 
-            print('=== Adding device {} to Observium ==='.format(dev))
-            proc = Popen(shlex.split(
-                'ssh -2 {} /usr/local/www/observium/add_device.php {} ap v3 CLEUR {} {} sha des'.format(MONITORING, dev, CLEUCreds.SNMP_AUTH_PASS, CLEUCreds.SNMP_PRIV_PASS)), stdout=PIPE, stderr=PIPE)
+            print("=== Adding device {} to Observium ===".format(dev))
+            proc = Popen(
+                shlex.split(
+                    "ssh -2 {} /usr/local/www/observium/add_device.php {} ap v3 CLEUR {} {} sha des".format(
+                        MONITORING, dev, CLEUCreds.SNMP_AUTH_PASS, CLEUCreds.SNMP_PRIV_PASS
+                    )
+                ),
+                stdout=PIPE,
+                stderr=PIPE,
+            )
             out, err = proc.communicate()
             print(out)
             print(err)
-            print('=== DONE. ===')
+            print("=== DONE. ===")
 
     if changed_devs:
-        fd = open(DEV_FILE, 'w')
+        fd = open(DEV_FILE, "w")
         json.dump(devs, fd)
         fd.close()

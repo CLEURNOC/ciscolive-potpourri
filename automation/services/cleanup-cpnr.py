@@ -22,8 +22,8 @@ from threading import Lock
 import os
 import re
 from typing import List
-import CLEUCreds
-from cleu.config import Config as C
+import CLEUCreds  # type: ignore
+from cleu.config import Config as C  # type: ignore
 
 # import ipaddress
 import logging.config

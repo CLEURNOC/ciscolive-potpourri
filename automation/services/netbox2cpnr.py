@@ -15,8 +15,8 @@ from utils import (
 
 from pynetbox.core.response import Record
 from pynetbox.models.ipam import IpAddresses
-import CLEUCreds
-from cleu.config import Config as C
+import CLEUCreds # type: ignore
+from cleu.config import Config as C # type: ignore
 
 # from pynetbox.models.virtualization import VirtualMachines
 from colorama import Fore, Style
