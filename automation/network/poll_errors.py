@@ -25,14 +25,14 @@
 # SUCH DAMAGE.
 
 from __future__ import print_function
-import netsnmp
+import netsnmp  # type: ignore
 import os
 import json
 import argparse
 import sys
-from sparker import Sparker, MessageType
-import CLEUCreds
-from cleu.config import Config as C
+from sparker import Sparker, MessageType  # type: ignore
+import CLEUCreds  # type: ignore
+from cleu.config import Config as C  # type: ignore
 
 CACHE_FILE = "/home/jclarke/errors_cache"
 THRESHOLD = 1
@@ -50,10 +50,18 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(prog=sys.argv[0], description="Poll errors from network devices")
     parser.add_argument(
-        "--name", "-n", metavar="<NAME>", help="Name of the poller", required=True,
+        "--name",
+        "-n",
+        metavar="<NAME>",
+        help="Name of the poller",
+        required=True,
     )
     parser.add_argument(
-        "--device-file", "-f", metavar="<DEVICE_FILE>", help="Path to the JSON file containing the devices to poll", required=True,
+        "--device-file",
+        "-f",
+        metavar="<DEVICE_FILE>",
+        help="Path to the JSON file containing the devices to poll",
+        required=True,
     )
     parser.add_argument("--webex-room", "-r", metavar="<ROOM_NAME>", help="Name of Webex room to send alerts to", required=True)
     parser.add_argument(
@@ -87,9 +95,8 @@ if __name__ == "__main__":
     cache_file = CACHE_FILE + "_" + args.name + ".dat"
 
     if os.path.exists(cache_file):
-        fd = open(cache_file, "r")
-        prev_state = json.load(fd)
-        fd.close()
+        with open(cache_file, "r") as fd:
+            prev_state = json.load(fd)
 
     for device in devices:
 
@@ -121,7 +128,7 @@ if __name__ == "__main__":
             SecName="CLEUR",
             AuthProto="SHA",
             AuthPass=CLEUCreds.SNMP_AUTH_PASS,
-            PrivProto="DES",
+            PrivProto="AES",
             PrivPass=CLEUCreds.SNMP_PRIV_PASS,
         )
         for var in vars:
@@ -194,6 +201,5 @@ if __name__ == "__main__":
             else:
                 curr_state[device][ins]["count"] += 1
 
-    fd = open(cache_file, "w")
-    json.dump(curr_state, fd, indent=4)
-    fd.close()
+    with open(cache_file, "w") as fd:
+        json.dump(curr_state, fd, indent=4)
