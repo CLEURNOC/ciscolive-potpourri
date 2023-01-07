@@ -5,7 +5,7 @@ from elemental_utils import cpnr
 from typing import List
 import concurrent.futures
 import logging
-from cleu.config import Config as C
+from cleu.config import Config as C  # type: ignore
 
 
 def normalize_cnames(cnames: List[str], domain: str) -> List[str]:
