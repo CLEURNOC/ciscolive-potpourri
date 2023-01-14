@@ -24,6 +24,8 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+# NOTE: This should move to an update NetBox script, which will then trigger DNS updates.
+
 
 from __future__ import print_function
 import requests
