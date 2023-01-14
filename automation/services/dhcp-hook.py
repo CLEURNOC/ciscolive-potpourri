@@ -28,18 +28,18 @@ from __future__ import print_function
 from builtins import str
 import sys
 import json
-from sparker import Sparker, MessageType
+from sparker import Sparker, MessageType  # type: ignore
 import re
 import requests
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
+from requests.packages.urllib3.exceptions import InsecureRequestWarning  # type: ignore
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 import time
 import traceback
 import socket
 import logging
-import CLEUCreds
-from cleu.config import Config as C
+import CLEUCreds  # type: ignore
+from cleu.config import Config as C  # type: ignore
 
 AT_MACADDR = 9
 
@@ -62,6 +62,7 @@ def normalize_mac(mac):
     return mac_addr.lower()
 
 
+# TODO: We don't use CMX anymore.  This needs to work with DNS Spaces?
 def get_from_cmx(**kwargs):
     marker = "green"
     if "user" in kwargs and kwargs["user"] == "gru":
@@ -129,6 +130,7 @@ def get_from_dnac(**kwargs):
     return None
 
 
+# TODO: We don't use PI anymore.  Remove this in favor of DNAC.
 def get_from_pi(**kwargs):
 
     what = None
@@ -303,7 +305,7 @@ def check_for_mac(mac):
         response = requests.request("GET", url, auth=CNR_AUTH, headers=CNR_HEADERS, verify=False, params={"clientMacAddr": mac})
         response.raise_for_status()
     except Exception as e:
-        logging.warning("Did not get a good response from CNR for MAC {}: {}".format(mac, e))
+        logging.warning("Did not get a good response from CPNR for MAC {}: {}".format(mac, e))
         return None
 
     j = response.json()
