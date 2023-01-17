@@ -30,7 +30,7 @@ import json
 from elemental_utils import ElementalNetbox
 import ipaddress
 import requests
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
+from requests.packages.urllib3.exceptions import InsecureRequestWarning  # type: ignore
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 import sys
