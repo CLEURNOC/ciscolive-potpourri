@@ -13,6 +13,7 @@ import sys
 import re
 import subprocess
 import ipaddress
+import random
 import CLEUCreds  # type: ignore
 from cleu.config import Config as C  # type: ignore
 
@@ -21,7 +22,12 @@ CC = "Anthony Jesani <anjesani@cisco.com>, Jara Osterfeld <josterfe@cisco.com>"
 
 JUMP_HOSTS = ["10.100.252.26", "10.100.252.27", "10.100.252.28", "10.100.252.29"]
 
-DC_MAP = {"DC1": "dc1_datastore_1", "DC2": "dc2_datastore_1", "HyperFlex-DC1": "DC1-HX-DS-01", "HyperFlex-DC2": "DC2-HX-DS-01"}
+DC_MAP = {
+    "DC1": ["dc1_datastore_1", "dc1_datastore_2"],
+    "DC2": ["dc2_datastore_1", "dc2_datastore_2"],
+    "HyperFlex-DC1": ["DC1-HX-DS-01", "DC1-HX-DS-02"],
+    "HyperFlex-DC2": ["DC2-HX-DS-01", "DC2-HX-DS-02"],
+}
 
 DEFAULT_CLUSTER = "FlexPod"
 
@@ -29,25 +35,27 @@ HX_DCs = {"HyperFlex-DC1": 1, "HyperFlex-DC2": 1}
 
 IP4_SUBNET = "10.100."
 IP6_PREFIX = "2a11:d940:2:"
+STRETCHED_OCTET = 252
+GW_OCTET = 254
 
 NETWORK_MAP = {
     "Stretched_VMs": {
-        "subnet": "{}252.0/24".format(IP4_SUBNET),
-        "gw": "{}252.254".format(IP4_SUBNET),
-        "prefix": "{}64fc::".format(IP6_PREFIX),
-        "gw6": "{}64fc::fe".format(IP6_PREFIX),
+        "subnet": "{}{}.0/24".format(IP4_SUBNET, STRETCHED_OCTET),
+        "gw": "{}{}.{}".format(IP4_SUBNET, STRETCHED_OCTET, GW_OCTET),
+        "prefix": "{}64{}::".format(IP6_PREFIX, format(int(STRETCHED_OCTET), "x")),
+        "gw6": "{}64{}::{}".format(IP6_PREFIX, format(int(STRETCHED_OCTET), "x"), format(int(GW_OCTET), "x")),
     },
     "VMs-DC1": {
         "subnet": "{}253.0/24".format(IP4_SUBNET),
-        "gw": "{}253.254".format(IP4_SUBNET),
+        "gw": "{}253.{}".format(IP4_SUBNET, GW_OCTET),
         "prefix": "{}64fd::".format(IP6_PREFIX),
-        "gw6": "{}64fd::fe".format(IP6_PREFIX),
+        "gw6": "{}64fd::{}".format(IP6_PREFIX, format(int(GW_OCTET), "x")),
     },
     "VMs-DC2": {
         "subnet": "{}254.0/24".format(IP4_SUBNET),
-        "gw": "{}254.254".format(IP4_SUBNET),
+        "gw": "{}254.{}".format(IP4_SUBNET, GW_OCTET),
         "prefix": "{}64fe::".format(IP6_PREFIX),
-        "gw6": "{}64fe::fe".format(IP6_PREFIX),
+        "gw6": "{}64fe::{}".format(IP6_PREFIX, format(int(GW_OCTET), "x")),
     },
 }
 
@@ -125,6 +133,8 @@ def get_next_ip(enb: ElementalNetbox, prefix: str) -> IpAddresses:
 
 
 def main():
+    global NETWORK_MAP
+
     if len(sys.argv) != 2:
         print(f"usage: {sys.argv[0]} ROW_RANGE")
         sys.exit(1)
@@ -215,6 +225,20 @@ def main():
             "dc": dc,
         }
 
+        if vm["vlan"] not in NETWORK_MAP:
+            # This is an Attendee VLAN that has been added to the DC.
+            nb_vlan = enb.ipam.vlans.get(name=vm["vlan"], tenant=TENANT_NAME.lower())
+            if not nb_vlan:
+                print(f"WARNING: Invalid VLAN {vm['vlan']} for {name}.")
+                continue
+
+            NETWORK_MAP[vm["vlan"]] = {
+                "subnet": f"10.{nb_vlan.vid}.{STRETCHED_OCTET}.0/24",
+                "gw": f"10.{nb_vlan.vid}.{STRETCHED_OCTET}.{GW_OCTET}",
+                "prefix": f"{IP6_PREFIX}{format(int(nb_vlan.vid), 'x')}{format(int(STRETCHED_OCTET), 'x')}::/64",
+                "gw6": f"{IP6_PREFIX}{format(int(nb_vlan.vid), 'x')}{format(int(STRETCHED_OCTET), 'x')}::{format(int(GW_OCTET), 'x')}",
+            }
+
         ip_obj = get_next_ip(enb, NETWORK_MAP[vm["vlan"]]["subnet"])
         if not ip_obj:
             print(f"WARNING: No free IP addresses for {name} in subnet {NETWORK_MAP[vm['vlan']]}.")
@@ -288,15 +312,11 @@ def main():
 
         body += "Your VM details are as follows.  DNS records have been pre-created for the VM name (i.e., hostname) below:\r\n\r\n"
         for vm in vms:
-            iso_ds = ISO_DS
+            datastore = DC_MAP[vm["dc"]][random.randint(0, 1)]
+            iso_ds = datastore
             cluster = DEFAULT_CLUSTER
 
             if vm["dc"] in HX_DCs:
-                if vm["dc"].endswith("2"):
-                    iso_ds = ISO_DS_HX2
-                else:
-                    iso_ds = ISO_DS_HX1
-
                 cluster = vm["dc"]
 
             if not vm["is_ova"] and vm["vlan"] != "" and vm["name"] not in created:
@@ -326,7 +346,7 @@ def main():
                     "-e",
                     f"guest_cpu={vm['cpu']}",
                     "-e",
-                    f"guest_datastore={DC_MAP[vm['dc']]}",
+                    f"guest_datastore={datastore}",
                     "-e",
                     f"guest_network='{vm['vlan']}'",
                     "-e",
@@ -350,6 +370,7 @@ def main():
                     continue
 
                 print("===DONE===")
+                created[vm["name"]] = True
 
             octets = vm["ip"].split(".")
 
@@ -363,11 +384,10 @@ def main():
                 NETWORK_MAP[vm["vlan"]]["gw"],
                 NETWORK_MAP[vm["vlan"]]["prefix"],
                 NETWORK_MAP[vm["vlan"]]["gw6"],
-                DC_MAP[vm["dc"]],
+                datastore,
                 cluster,
                 iso_ds,
             )
-            created[vm["name"]] = True
 
         body += "Let us know via Webex if you need any other details.\r\n\r\n"
 
