@@ -235,7 +235,7 @@ def main():
             NETWORK_MAP[vm["vlan"]] = {
                 "subnet": f"10.{nb_vlan.vid}.{STRETCHED_OCTET}.0/24",
                 "gw": f"10.{nb_vlan.vid}.{STRETCHED_OCTET}.{GW_OCTET}",
-                "prefix": f"{IP6_PREFIX}{format(int(nb_vlan.vid), 'x')}{format(int(STRETCHED_OCTET), 'x')}::/64",
+                "prefix": f"{IP6_PREFIX}{format(int(nb_vlan.vid), 'x')}{format(int(STRETCHED_OCTET), 'x')}::",
                 "gw6": f"{IP6_PREFIX}{format(int(nb_vlan.vid), 'x')}{format(int(STRETCHED_OCTET), 'x')}::{format(int(GW_OCTET), 'x')}",
             }
 
