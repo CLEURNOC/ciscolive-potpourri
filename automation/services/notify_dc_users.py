@@ -312,7 +312,7 @@ def main():
 
         body += "Your VM details are as follows.  DNS records have been pre-created for the VM name (i.e., hostname) below:\r\n\r\n"
         for vm in vms:
-            datastore = DC_MAP[vm["dc"]][random.randint(0, 1)]
+            datastore = DC_MAP[vm["dc"]][random.randint(0, len(DC_MAP[vm["dc"]]))]
             iso_ds = datastore
             cluster = DEFAULT_CLUSTER
 
