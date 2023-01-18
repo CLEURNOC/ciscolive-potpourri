@@ -320,6 +320,7 @@ def main():
                 cluster = vm["dc"]
 
             if not vm["is_ova"] and vm["vlan"] != "" and vm["name"] not in created:
+                created[vm["name"]] = False
                 print(f"===Adding VM for {vm['name']}===")
                 scsi = "lsilogic"
 
