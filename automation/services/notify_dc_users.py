@@ -106,6 +106,7 @@ SHEET_CPU = 6
 SHEET_RAM = 7
 SHEET_DISK = 8
 SHEET_NICS = 9
+SHEET_COMMENTS = 11
 SHEET_CLUSTER = 12
 SHEET_DC = 13
 SHEET_VLAN = 14
@@ -182,6 +183,7 @@ def main():
             dc = row[SHEET_DC].strip()
             cluster = row[SHEET_CLUSTER].strip()
             vlan = row[SHEET_VLAN].strip()
+            comments = row[SHEET_COMMENTS].strip()
         except Exception as e:
             print(f"WARNING: Failed to process malformed row {i}: {e}")
             continue
@@ -278,6 +280,7 @@ def main():
             contacts.append(owner)
 
         vm_obj.custom_fields["Contact"] = ",".join(contacts)
+        vm_obj.custom_fields["Notes"] = comments
         vm_obj.save()
 
     created = {}
