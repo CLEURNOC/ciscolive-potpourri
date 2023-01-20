@@ -280,6 +280,7 @@ def main():
             users[owner].append(vm)
             contacts.append(owner)
 
+        # TODO: Switch to using the official Contacts and Comments fields.
         vm_obj.custom_fields["Contact"] = ",".join(contacts)
         vm_obj.custom_fields["Notes"] = comments
         vm_obj.save()
