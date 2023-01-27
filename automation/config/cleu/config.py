@@ -13,8 +13,8 @@ class Config:
     PRIMARY_DNS = "dc1-dns"
     SECONDARY_DNS = "dc2-dns"
 
-    DNS_BASE = "https://dc1-dns.{}:8443/web-services/rest/resource/".format(DNS_DOMAIN)
-    DHCP_BASE = "https://dc1-dhcp.{}:8443/web-services/rest/resource/".format(DNS_DOMAIN)
+    DNS_BASE = "https://dc1-dns.{}:8443/web-services/rest/resource".format(DNS_DOMAIN)
+    DHCP_BASE = "https://dc1-dhcp.{}:8443/web-services/rest/resource".format(DNS_DOMAIN)
     MONITORING = "cl-monitoring." + DNS_DOMAIN
     DHCP_SERVER = "dc1-dhcp." + DNS_DOMAIN
     PI = "cl-pi." + DNS_DOMAIN

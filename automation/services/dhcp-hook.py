@@ -1,4 +1,4 @@
-#!/usr/local/bin/python3
+#!/usr/bin/env python
 #
 # Copyright (c) 2017-2023  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
