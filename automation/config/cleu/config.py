@@ -8,7 +8,7 @@ class Config:
     WSGI_SERVER = "10.100.252.13"
     DNS_SERVER = "10.100.253.21"
     CDNS_SERVERS = ["10.100.253.9", "10.100.254.9"]
-    NETBOX_SERVER = "http://10.100.252.19:8000"
+    NETBOX_SERVER = "https://cl-netbox.ciscolive.network"
 
     PRIMARY_DNS = "dc1-dns"
     SECONDARY_DNS = "dc2-dns"
