@@ -64,30 +64,31 @@ def normalize_mac(mac):
 
 # TODO: We don't use CMX anymore.  This needs to work with DNS Spaces?
 def get_from_cmx(**kwargs):
-    marker = "green"
-    if "user" in kwargs and kwargs["user"] == "gru":
-        marker = "gru"
+    # marker = "green"
+    # if "user" in kwargs and kwargs["user"] == "gru":
+    #     marker = "gru"
 
-    if "ip" in kwargs:
-        url = "{}?ip={}&marker={}&size=1440".format(C.CMX_GW, kwargs["ip"], marker)
-    elif "mac" in kwargs:
-        url = "{}?mac={}&marker={}&size=1440".format(C.CMX_GW, kwargs["mac"], marker)
-    else:
-        return None
+    # if "ip" in kwargs:
+    #     url = "{}?ip={}&marker={}&size=1440".format(C.CMX_GW, kwargs["ip"], marker)
+    # elif "mac" in kwargs:
+    #     url = "{}?mac={}&marker={}&size=1440".format(C.CMX_GW, kwargs["mac"], marker)
+    # else:
+    #     return None
 
-    headers = {"Accept": "image/jpeg, application/json"}
+    # headers = {"Accept": "image/jpeg, application/json"}
 
-    try:
-        response = requests.request("GET", url, headers=headers, stream=True)
-        response.raise_for_status()
-    except Exception:
-        logging.error("Encountered error getting data from cmx: {}".format(traceback.format_exc()))
-        return None
+    # try:
+    #     response = requests.request("GET", url, headers=headers, stream=True)
+    #     response.raise_for_status()
+    # except Exception:
+    #     logging.error("Encountered error getting data from cmx: {}".format(traceback.format_exc()))
+    #     return None
 
-    if response.headers.get("content-type") == "application/json":
-        return None
+    # if response.headers.get("content-type") == "application/json":
+    #     return None
 
-    return response.raw.data
+    # return response.raw.data
+    return None
 
 
 def get_from_dnac(**kwargs):
@@ -133,45 +134,45 @@ def get_from_dnac(**kwargs):
 # TODO: We don't use PI anymore.  Remove this in favor of DNAC.
 def get_from_pi(**kwargs):
 
-    what = None
+    # what = None
 
-    if "user" in kwargs:
-        url = 'https://{}/webacs/api/v2/data/ClientDetails.json?.full=true&userName="{}"&status=ASSOCIATED'.format(C.PI, kwargs["user"])
-        what = "user"
-    elif "mac" in kwargs:
-        mac_addr = normalize_mac(kwargs["mac"])
-        url = 'https://{}/webacs/api/v2/data/ClientDetails.json?.full=true&macAddress="{}"&status=ASSOCIATED'.format(C.PI, mac_addr)
-        what = "mac"
-    elif "ip" in kwargs:
-        url = 'https://{}/webacs/api/v2/data/ClientDetails.json?.full=true&ipAddress="{}"&status=ASSOCIATED'.format(C.PI, kwargs["ip"])
-        what = "ip"
-    else:
-        return None
+    # if "user" in kwargs:
+    #     url = 'https://{}/webacs/api/v2/data/ClientDetails.json?.full=true&userName="{}"&status=ASSOCIATED'.format(C.PI, kwargs["user"])
+    #     what = "user"
+    # elif "mac" in kwargs:
+    #     mac_addr = normalize_mac(kwargs["mac"])
+    #     url = 'https://{}/webacs/api/v2/data/ClientDetails.json?.full=true&macAddress="{}"&status=ASSOCIATED'.format(C.PI, mac_addr)
+    #     what = "mac"
+    # elif "ip" in kwargs:
+    #     url = 'https://{}/webacs/api/v2/data/ClientDetails.json?.full=true&ipAddress="{}"&status=ASSOCIATED'.format(C.PI, kwargs["ip"])
+    #     what = "ip"
+    # else:
+    #     return None
 
-    headers = {"Connection": "close"}
+    # headers = {"Connection": "close"}
 
-    done = False
-    first = 0
-    code = 401
-    i = 0
-    while code != 200 and i < 10:
-        response = None
-        try:
-            response = requests.request("GET", url, auth=(CLEUCreds.PI_USER, CLEUCreds.PI_PASS), headers=headers, verify=False)
-        except Exception as e:
-            logging.error("Failed to get a response from PI for {}: {}".format(kwargs[what], e))
-            return None
-        code = response.status_code
-        if code != 200:
-            i += 1
-            time.sleep(3)
-    if code == 200:
-        j = json.loads(response.text)
-        if j["queryResponse"]["@count"] == 0:
-            return None
-        return j["queryResponse"]["entity"]
-    else:
-        logging.error("Failed to get a response from PI for {}: {}".format(kwargs[what], response.text))
+    # done = False
+    # first = 0
+    # code = 401
+    # i = 0
+    # while code != 200 and i < 10:
+    #     response = None
+    #     try:
+    #         response = requests.request("GET", url, auth=(CLEUCreds.PI_USER, CLEUCreds.PI_PASS), headers=headers, verify=False)
+    #     except Exception as e:
+    #         logging.error("Failed to get a response from PI for {}: {}".format(kwargs[what], e))
+    #         return None
+    #     code = response.status_code
+    #     if code != 200:
+    #         i += 1
+    #         time.sleep(3)
+    # if code == 200:
+    #     j = json.loads(response.text)
+    #     if j["queryResponse"]["@count"] == 0:
+    #         return None
+    #     return j["queryResponse"]["entity"]
+    # else:
+    #     logging.error("Failed to get a response from PI for {}: {}".format(kwargs[what], response.text))
 
     return None
 
