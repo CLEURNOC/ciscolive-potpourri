@@ -515,7 +515,7 @@ if __name__ == "__main__":
             else:
                 spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, "Sorry, I can't find {}.".format(m.group("uname")))
 
-        m = re.search(r"(remove|delete)\s+reservation.*?([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)", txt, re.I)
+        m = re.search(r"(remove|delete)\s+(the\s+)?reservation.*?([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)", txt, re.I)
         if not m:
             m = re.search(r"(unreserve).*?([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)", txt, re.I)
 
@@ -538,7 +538,7 @@ if __name__ == "__main__":
                             C.WEBEX_TEAM, SPARK_ROOM, "Failed to delete reservation for {}: {}".format(m.group(2)), MessageType.BAD
                         )
 
-        m = re.search(r"(make|create|add)\s+reservation.*?([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)", txt, re.I)
+        m = re.search(r"(make|create|add)\s+(a\s+)?reservation.*?([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)", txt, re.I)
         if not found_hit and m:
             found_hit = True
             res = check_for_reservation(m.group(2))
