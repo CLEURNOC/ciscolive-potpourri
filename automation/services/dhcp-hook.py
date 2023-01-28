@@ -526,16 +526,16 @@ if __name__ == "__main__":
             else:
                 res = check_for_reservation(m.group(3))
                 if res is None:
-                    spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, "I didn't find a reservation for {}.".format(m.group(2)))
+                    spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, "I didn't find a reservation for {}.".format(m.group(3)))
                 else:
                     try:
-                        delete_reservation(m.group(2))
+                        delete_reservation(m.group(3))
                         spark.post_to_spark(
-                            C.WEBEX_TEAM, SPARK_ROOM, "Reservation for {} deleted successfully.".format(m.group(2)), MessageType.GOOD
+                            C.WEBEX_TEAM, SPARK_ROOM, "Reservation for {} deleted successfully.".format(m.group(3)), MessageType.GOOD
                         )
                     except Exception as e:
                         spark.post_to_spark(
-                            C.WEBEX_TEAM, SPARK_ROOM, "Failed to delete reservation for {}: {}".format(m.group(2)), MessageType.BAD
+                            C.WEBEX_TEAM, SPARK_ROOM, "Failed to delete reservation for {}: {}".format(m.group(3)), MessageType.BAD
                         )
 
         m = re.search(r"(make|create|add)\s+(a\s+)?reservation.*?([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)", txt, re.I)
@@ -544,12 +544,12 @@ if __name__ == "__main__":
             res = check_for_reservation(m.group(3))
             if res is not None:
                 spark.post_to_spark(
-                    C.WEBEX_TEAM, SPARK_ROOM, "_{}_ is already reserved by a client with MAC **{}**".format(m.group(2), res["mac"])
+                    C.WEBEX_TEAM, SPARK_ROOM, "_{}_ is already reserved by a client with MAC **{}**".format(m.group(3), res["mac"])
                 )
             else:
-                lres = check_for_lease(m.group(2))
+                lres = check_for_lease(m.group(3))
                 if lres is None:
-                    spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, "Did not find an existing lease for {}".format(m.group(2)))
+                    spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, "Did not find an existing lease for {}".format(m.group(3)))
                 else:
                     try:
                         rres = check_for_reservation_by_mac(lres["mac"])
@@ -560,13 +560,13 @@ if __name__ == "__main__":
                                 "_{}_ already has a reservation for {} in scope {}.".format(lres["mac"], rres["ip"], lres["scope"]),
                             )
                         else:
-                            create_reservation(m.group(2), lres["mac"])
+                            create_reservation(m.group(3), lres["mac"])
                             spark.post_to_spark(
-                                C.WEBEX_TEAM, SPARK_ROOM, "Successfully added reservation for {}.".format(m.group(2)), MessageType.GOOD
+                                C.WEBEX_TEAM, SPARK_ROOM, "Successfully added reservation for {}.".format(m.group(3)), MessageType.GOOD
                             )
                     except Exception as e:
                         spark.post_to_spark(
-                            C.WEBEX_TEAM, SPARK_ROOM, "Failed to add reservation for {}: {}".format(m.group(2), e), MessageType.BAD
+                            C.WEBEX_TEAM, SPARK_ROOM, "Failed to add reservation for {}: {}".format(m.group(3), e), MessageType.BAD
                         )
 
         m = re.search(r"reservation.*?([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)", txt, re.I)
