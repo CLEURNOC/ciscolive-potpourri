@@ -18,7 +18,9 @@ class Config:
     MONITORING = "cl-monitoring." + DNS_DOMAIN
     DHCP_SERVER = "dc1-dhcp." + DNS_DOMAIN
     #PI = "cl-pi." + DNS_DOMAIN
-    DNACS = [f"dnac-0{x}.{DNS_DOMAIN}" for x in range(1, 5)]
+    def DNACS(dom, dnacs = [f"dnac-0{x}" for x in range(1, 5)]):
+        return [f"{d}.{dom}" for d in dnacs]
+    DNACS = DNACS(DNS_DOMAIN)
     #SDA_BASE = "https://sdacleur20." + DNS_DOMAIN
     #CMX_GW = "http://cl-freebsd.{}:8002/api/v0.1/cmx".format(DNS_DOMAIN)
     #CMX = "https://cl-cmx-1." + DNS_DOMAIN
