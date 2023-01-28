@@ -45,6 +45,7 @@ AT_MACADDR = 9
 
 CNR_HEADERS = {"Accept": "application/json"}
 BASIC_AUTH = (CLEUCreds.CPNR_USERNAME, CLEUCreds.CPNR_PASSWORD)
+REST_TIMEOUT = 10
 
 DEFAULT_INT_TYPE = "GigabitEthernet"
 
@@ -101,7 +102,7 @@ def get_from_dnac(**kwargs):
         turl = "https://{}/dna/system/api/v1/auth/token".format(dnac)
         theaders = {"content-type": "application/json"}
         try:
-            response = requests.request("POST", turl, headers=theaders, auth=BASIC_AUTH, verify=False)
+            response = requests.request("POST", turl, headers=theaders, auth=BASIC_AUTH, verify=False, timeout=REST_TIMEOUT)
             response.raise_for_status()
         except Exception as e:
             logging.warning("Unable to get an auth token from DNAC: {}".format(getattr(e, "message", repr(e))))
@@ -112,7 +113,7 @@ def get_from_dnac(**kwargs):
         cheaders = {"accept": "application/json", "x-auth-token": j["Token"]}
         params = {"macAddress": kwargs["mac"], "timestamp": epoch}
         try:
-            response = requests.request("GET", curl, params=params, headers=cheaders, verify=False)
+            response = requests.request("GET", curl, params=params, headers=cheaders, verify=False, timeout=REST_TIMEOUT)
             response.raise_for_status()
         except Exception as e:
             logging.warning("Failed to find MAC address {} in DNAC: {}".format(kwargs["mac"], getattr(e, "message", repr(e))))
@@ -207,7 +208,7 @@ def check_for_reservation(ip):
 
     url = "{}/Reservation/{}".format(C.DHCP_BASE, ip)
     try:
-        response = requests.request("GET", url, auth=BASIC_AUTH, headers=CNR_HEADERS, verify=False)
+        response = requests.request("GET", url, auth=BASIC_AUTH, headers=CNR_HEADERS, verify=False, timeout=REST_TIMEOUT)
         response.raise_for_status()
     except Exception as e:
         logging.warning("Did not get a good response from CNR for reservation {}: {}".format(ip, e))
@@ -228,7 +229,7 @@ def check_for_reservation_by_mac(mac):
 
     url = "{}/Reservation".format(C.DHCP_BASE)
     try:
-        response = requests.request("GET", url, auth=BASIC_AUTH, headers=CNR_HEADERS, params={"lookupKey": mac_addr}, verify=False)
+        response = requests.request("GET", url, auth=BASIC_AUTH, headers=CNR_HEADERS, params={"lookupKey": mac_addr}, verify=False, timeout=REST_TIMEOUT)
         response.raise_for_status()
     except Exception as e:
         logging.warning("Did not get a good response from CNR for reservation {}: {}".format(ip, e))
@@ -250,7 +251,7 @@ def create_reservation(ip, mac):
 
     url = "{}/Reservation".format(C.DHCP_BASE)
     payload = {"ipaddr": ip, "lookupKey": "01:06:" + mac_addr, "lookupKeyType": AT_MACADDR}
-    response = requests.request("POST", url, auth=BASIC_AUTH, headers=CNR_HEADERS, json=payload, verify=False)
+    response = requests.request("POST", url, auth=BASIC_AUTH, headers=CNR_HEADERS, json=payload, verify=False, timeout=REST_TIMEOUT)
     response.raise_for_status()
 
 
@@ -258,7 +259,7 @@ def delete_reservation(ip):
     global CNR_HEADERS, BASIC_AUTH
 
     url = "{}/Reservation/{}".format(C.DHCP_BASE, ip)
-    response = requests.request("DELETE", url, auth=BASIC_AUTH, headers=CNR_HEADERS, verify=False)
+    response = requests.request("DELETE", url, auth=BASIC_AUTH, headers=CNR_HEADERS, verify=False, timeout=REST_TIMEOUT)
     response.raise_for_status()
 
 
@@ -268,7 +269,7 @@ def check_for_lease(ip):
     res = {}
     url = "{}/Lease/{}".format(C.DHCP_BASE, ip)
     try:
-        response = requests.request("GET", url, auth=BASIC_AUTH, headers=CNR_HEADERS, verify=False)
+        response = requests.request("GET", url, auth=BASIC_AUTH, headers=CNR_HEADERS, verify=False, timeout=REST_TIMEOUT)
         response.raise_for_status()
     except Exception as e:
         logging.warning("Did not get a good response from CNR for IP {}: {}".format(ip, e))
@@ -303,7 +304,7 @@ def check_for_mac(mac):
     url = "{}/Lease".format(C.DHCP_BASE)
 
     try:
-        response = requests.request("GET", url, auth=BASIC_AUTH, headers=CNR_HEADERS, verify=False, params={"clientMacAddr": mac})
+        response = requests.request("GET", url, auth=BASIC_AUTH, headers=CNR_HEADERS, verify=False, params={"clientMacAddr": mac}, timeout=REST_TIMEOUT)
         response.raise_for_status()
     except Exception as e:
         logging.warning("Did not get a good response from CPNR for MAC {}: {}".format(mac, e))
