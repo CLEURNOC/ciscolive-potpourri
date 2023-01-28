@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 #
-# Copyright (c) 2017-2020  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2023  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,25 +24,28 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-# NOTE: This should move to an update NetBox script, which will then trigger DNS updates.
-
 
 from __future__ import print_function
 import requests
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
+from requests.packages.urllib3.exceptions import InsecureRequestWarning  # type: ignore
 
-requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)  # type: ignore
 import json
 import sys
 import re
 import os
 import argparse
-import CLEUCreds
-from cleu.config import Config as C
+import CLEUCreds  # type: ignore
+from cleu.config import Config as C  # type: ignore
 
-CNR_HEADERS = {"accept": "application/json", "content-type": "application/json"}
-CNR_AUTH = (CLEUCreds.CPNR_USERNAME, CLEUCreds.CPNR_PASSWORD)
 CACHE_FILE = "dns_records.dat"
+SKU_MAP = {
+    "WS-C3560CX-12PD-S": None,
+    "C9300-48U": "C9300-48P",
+    "C9300-48P": None,
+    "C9300-24U": "C9300-24P",
+    "C9300-24P": None,
+}
 
 
 def get_devs():
@@ -58,10 +61,11 @@ def get_devs():
             dev_dic = {}
             if dev["IPAddress"] == "0.0.0.0":
                 continue
-            # Do not add MDF switches
-            # TODO Validate what this be now that the tool is managing other things.
-            if not re.search(r"^0", dev["Hostname"]):
+
+            # Do not add MDF switches (or APs)
+            if not re.search(r"^[0-9A-Za-z]{3}-", dev["Hostname"]):
                 continue
+
             dev_dic["name"] = dev["Hostname"]
             dev_dic["aliases"] = [f"{dev['Name']}.{C.DNS_DOMAIN}.", f"{dev['AssetTag']}.{C.DNS_DOMAIN}."]
 
