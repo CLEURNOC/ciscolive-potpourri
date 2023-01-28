@@ -517,14 +517,14 @@ if __name__ == "__main__":
 
         m = re.search(r"(remove|delete)\s+(the\s+)?reservation.*?([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)", txt, re.I)
         if not m:
-            m = re.search(r"(unreserve).*?([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)", txt, re.I)
+            m = re.search(r"(unreserve)(.*?)([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)", txt, re.I)
 
         if not found_hit and m:
             found_hit = True
             if message_from not in ALLOWED_TO_DELETE:
                 spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, "I'm sorry, {}.  I can't do that for you.".format(message_from))
             else:
-                res = check_for_reservation(m.group(2))
+                res = check_for_reservation(m.group(3))
                 if res is None:
                     spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, "I didn't find a reservation for {}.".format(m.group(2)))
                 else:
@@ -541,7 +541,7 @@ if __name__ == "__main__":
         m = re.search(r"(make|create|add)\s+(a\s+)?reservation.*?([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)", txt, re.I)
         if not found_hit and m:
             found_hit = True
-            res = check_for_reservation(m.group(2))
+            res = check_for_reservation(m.group(3))
             if res is not None:
                 spark.post_to_spark(
                     C.WEBEX_TEAM, SPARK_ROOM, "_{}_ is already reserved by a client with MAC **{}**".format(m.group(2), res["mac"])
