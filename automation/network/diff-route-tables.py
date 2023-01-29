@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 #
-# Copyright (c) 2017-2019  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2023  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,21 +25,19 @@
 # SUCH DAMAGE.
 
 from __future__ import print_function
-from future import standard_library
 
-standard_library.install_aliases()
 import paramiko
 import os
-from sparker import Sparker, MessageType
+from sparker import Sparker, MessageType  # type: ignore
 import time
 from subprocess import Popen, PIPE, call
 import shlex
 import re
 import json
 import argparse
-import CLEUCreds
+import CLEUCreds  # type: ignore
 import shutil
-from cleu.config import Config as C
+from cleu.config import Config as C  # type: ignore
 
 routers = {}
 
@@ -116,7 +114,12 @@ if __name__ == "__main__":
     for router, ip in list(routers.items()):
         try:
             ssh_client.connect(
-                ip, username=CLEUCreds.NET_USER, password=CLEUCreds.NET_PASS, timeout=60, allow_agent=False, look_for_keys=False,
+                ip,
+                username=CLEUCreds.NET_USER,
+                password=CLEUCreds.NET_PASS,
+                timeout=60,
+                allow_agent=False,
+                look_for_keys=False,
             )
             chan = ssh_client.invoke_shell()
             chan.settimeout(20)
@@ -131,23 +134,27 @@ if __name__ == "__main__":
                 try:
                     output = send_command(chan, command)
                 except Exception as ie:
-                    print("Failed to get {} from {}: {}".format(command, router, ie))
+                    print(f"Failed to get {command} from {router}: {ie}")
                     continue
 
-                fpath = "{}/{}-{}".format(cache_dir, fname, router)
+                fpath = f"{cache_dir}/{fname}-{router}"
                 curr_path = fpath + ".curr"
                 prev_path = fpath + ".prev"
                 if len(output) < 600:
                     # we got a truncated file
                     continue
-                fd = open(curr_path, "w")
-                output = re.sub(r"\r", "", output)
-                output = re.sub(r"([\d\.]+) (\[[^\n]+)", "\\1\n          \\2", output)
-                fd.write(re.sub(r"(via [\d\.]+), [^,\n]+([,\n])", "\\1\\2", output))
-                fd.close()
+
+                with open(curr_path, "w") as fd:
+                    output = re.sub(r"\r", "", output)
+                    output = re.sub(r"([\d\.]+) (\[[^\n]+)", "\\1\n          \\2", output)
+                    fd.write(re.sub(r"(via [\d\.]+), [^,\n]+([,\n])", "\\1\\2", output))
 
                 if os.path.exists(prev_path):
-                    proc = Popen(shlex.split("/usr/bin/diff -b -B -w -u {} {}".format(prev_path, curr_path)), stdout=PIPE, stderr=PIPE,)
+                    proc = Popen(
+                        shlex.split("/usr/bin/diff -b -B -w -u {} {}".format(prev_path, curr_path)),
+                        stdout=PIPE,
+                        stderr=PIPE,
+                    )
                     out, err = proc.communicate()
                     rc = proc.returncode
 
