@@ -116,7 +116,7 @@ def delete_netbox_device(enb: ElementalNetbox, dname: str) -> None:
 def add_netbox_device(enb: ElementalNetbox, dev: dict) -> None:
     role_obj = enb.dcim.device_roles.get(name=dev["role"])
     type_obj = enb.dcim.device_types.get(part_number=dev["type"])
-    tenant_obj = enb.dcim.tenants.get(name=TENANT_NAME)
+    tenant_obj = enb.tenancy.tenants.get(name=TENANT_NAME)
     site_obj = enb.dcim.sites.get(name=dev["site"])
     vrf_obj = enb.ipam.vrfs.get(name=VRF_NAME)
 
