@@ -49,16 +49,21 @@ SKU_MAP = {
     "WS-C3750X-24P-S": "WS-C3750X-24P-S",
     "WS-C3750X-48P-S": "WS-C3750X-48P-S",
 }
+TYPE_OBJ_MAP = {}
 
 INTF_MAP = {"IDF": "loopback0", "Access": "Vlan127"}
 INTF_CIDR_MAP = {"IDF": 32, "Access": 24}
 
 SITE_MAP = {"IDF": "IDF Closet", "Access": "Conference Space"}
+SITE_OBJ_MAP = {}
 
 ROLE_MAP = {"IDF": "L3 Access Switch", "Access": "L2 Access Switch"}
+ROLE_OBJ_MAP = {}
 
 VRF_NAME = "default"
+VRF_OBJ = None
 TENANT_NAME = "Infrastructure"
+TENANT_OBJ = None
 
 
 def get_devs():
@@ -116,12 +121,28 @@ def delete_netbox_device(enb: ElementalNetbox, dname: str) -> None:
         sys.stderr.write(f"WARNING: Failed to delete NetBox device for {dname}\n")
 
 
+def populate_objects(enb: ElementalNetbox) -> None:
+    global ROLE_OBJ_MAP, SITE_OBJ_MAP, TYPE_OBJ_MAP, TENANT_OBJ, VRF_OBJ
+
+    for _, val in ROLE_MAP.items():
+        ROLE_OBJ_MAP[val] = enb.dcim.device_roles.get(name=val)
+
+    for _, val in SITE_MAP.items():
+        SITE_OBJ_MAP[val] = enb.dcim.sites.get(name=val)
+
+    for _, val in SKU_MAP.items():
+        TYPE_OBJ_MAP[val] = enb.dcim.device_types.get(part_number=val)
+
+    TENANT_OBJ = enb.tenancy.tenants.get(name=TENANT_NAME)
+    VRF_OBJ = enb.ipam.vrfs.get(name=VRF_NAME)
+
+
 def add_netbox_device(enb: ElementalNetbox, dev: dict) -> None:
-    role_obj = enb.dcim.device_roles.get(name=dev["role"])
-    type_obj = enb.dcim.device_types.get(part_number=dev["type"])
-    tenant_obj = enb.tenancy.tenants.get(name=TENANT_NAME)
-    site_obj = enb.dcim.sites.get(name=dev["site"])
-    vrf_obj = enb.ipam.vrfs.get(name=VRF_NAME)
+    role_obj = ROLE_OBJ_MAP[dev["role"]]
+    type_obj = TYPE_OBJ_MAP[dev["type"]]
+    tenant_obj = TENANT_OBJ
+    site_obj = SITE_OBJ_MAP[dev["site"]]
+    vrf_obj = VRF_OBJ
 
     if not role_obj:
         sys.stderr.write(f"ERROR: Invalid role for {dev['name']}: {dev['role']}\n")
@@ -179,6 +200,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     enb = ElementalNetbox()
+    populate_objects(enb)
 
     prev_records = []
 
