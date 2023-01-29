@@ -95,7 +95,7 @@ def get_devs():
                 dev_dic["site"] = SITE_MAP["Access"]
 
             dev_dic["name"] = dev["Hostname"]
-            dev_dic["aliases"] = [f"{dev['Name']}.{C.DNS_DOMAIN}.", f"{dev['AssetTag']}.{C.DNS_DOMAIN}."]
+            dev_dic["aliases"] = [f"{dev['Name']}", f"{dev['AssetTag']}"]
 
             dev_dic["ip"] = dev["IPAddress"]
 
