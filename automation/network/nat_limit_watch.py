@@ -25,21 +25,15 @@
 # SUCH DAMAGE.
 
 from __future__ import print_function
-from future import standard_library
 
-standard_library.install_aliases()
 import paramiko
 import os
-from sparker import Sparker, MessageType
+from sparker import Sparker, MessageType  # type: ignore
 import time
-from subprocess import Popen, PIPE, call
-import shlex
 import re
 import json
-import argparse
-import CLEUCreds
-import shutil
-from cleu.config import Config as C
+import CLEUCreds  # type: ignore
+from cleu.config import Config as C  # type: ignore
 
 SPARK_ROOM = "Core Alarms"
 
@@ -83,7 +77,12 @@ if __name__ == "__main__":
     for router in routers:
         try:
             ssh_client.connect(
-                router, username=CLEUCreds.NET_USER, password=CLEUCreds.NET_PASS, timeout=60, allow_agent=False, look_for_keys=False,
+                router,
+                username=CLEUCreds.NET_USER,
+                password=CLEUCreds.NET_PASS,
+                timeout=60,
+                allow_agent=False,
+                look_for_keys=False,
             )
             chan = ssh_client.invoke_shell()
             try:
@@ -95,7 +94,7 @@ if __name__ == "__main__":
             try:
                 output = send_command(chan, "show ip nat limit all-host | inc [0-9] +[1-9][0-9]+[^0-9]+$")
             except Exception as ie:
-                print("Failed to get NAT limit from {}: {}".format(router, ie))
+                print(f"Failed to get NAT limit from {router}: {ie}")
                 continue
 
             for line in output.split("\n"):
@@ -120,11 +119,10 @@ if __name__ == "__main__":
                     )
         except Exception as e:
             ssh_client.close()
-            print("Failed to get NAT limits from {}: {}".format(router, e))
+            print(f"Failed to get NAT limits from {router}: {e}")
             continue
 
         ssh_client.close()
 
-    fd = open(CACHE_FILE, "w")
-    json.dump(curr_state, fd, indent=4)
-    fd.close()
+    with open(CACHE_FILE, "w") as fd:
+        json.dump(curr_state, fd, indent=4)
