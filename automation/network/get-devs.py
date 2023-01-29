@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 #
 # Copyright (c) 2017-2020  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
@@ -26,21 +26,19 @@
 
 from builtins import range
 import requests
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
+from requests.packages.urllib3.exceptions import InsecureRequestWarning  # type: ignore
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 import json
-import sys
 import time
 import os
 from subprocess import call
-from sparker import Sparker, MessageType
-import pprint
+from sparker import Sparker, MessageType  # type: ignore
 import re
 from multiprocessing import Pool
 import socket
-import CLEUCreds
-from cleu.config import Config as C
+import CLEUCreds  # type: ignore
+from cleu.config import Config as C  # type: ignore
 
 CACHE_FILE = "/home/jclarke/cached_devs.dat"
 PING_DEVS_FILE = "/home/jclarke/ping-devs.json"
@@ -92,7 +90,7 @@ def ping_device(dev):
     send_msg = True
     if not dev["Reachable"]:
         send_msg = know_device(dev_dic, prev_devs)
-    for i in range(2):
+    for _ in range(2):
         res = call(["/usr/local/sbin/fping", "-q", "-r0", dev_dic["ip"]])
         time.sleep(0.5)
     if res != 0:
@@ -135,7 +133,7 @@ def get_devs(p):
                 continue
             j.append({"Hostname": dev, "IPAddress": ip, "Reachable": True})
 
-        results = [pool.apply_async(ping_device, [d]) for d in j]
+        results = [p.apply_async(ping_device, [d]) for d in j]
         for res in results:
             retval = res.get()
             if retval is not None:
@@ -147,21 +145,18 @@ def get_devs(p):
 if __name__ == "__main__":
     prev_devs = []
     if os.path.exists(CACHE_FILE):
-        fd = open(CACHE_FILE, "r")
-        prev_devs = json.load(fd)
-        fd.close()
+        with open(CACHE_FILE, "r") as fd:
+            prev_devs = json.load(fd)
 
     spark = Sparker(token=CLEUCreds.SPARK_TOKEN)
 
     try:
-        fd = open(PING_DEVS_FILE, "r")
-        additional_devices = json.load(fd)
-        fd.close()
+        with open(PING_DEVS_FILE, "r") as fd:
+            additional_devices = json.load(fd)
     except:
         pass
 
     pool = Pool(20)
     devs = get_devs(pool)
-    fd = open(CACHE_FILE, "w")
-    json.dump(devs, fd, ensure_ascii=False, indent=4)
-    fd.close()
+    with open(CACHE_FILE, "w") as fd:
+        json.dump(devs, fd, ensure_ascii=False, indent=4)
