@@ -92,6 +92,9 @@ def ping_device(dev):
         send_msg = know_device(dev_dic, prev_devs)
     for _ in range(2):
         res = call(["/usr/local/sbin/fping", "-q", "-r0", dev_dic["ip"]])
+        if res == 0:
+            break
+
         time.sleep(0.5)
     if res != 0:
         dev_dic["reachability"] = "UNREACHABLE"
