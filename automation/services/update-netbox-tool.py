@@ -108,6 +108,9 @@ def delete_netbox_device(enb: ElementalNetbox, dname: str) -> None:
     try:
         dev_obj = enb.dcim.devices.get(name=dname)
         if dev_obj:
+            if dev_obj.primary_ip4:
+                dev_obj.primary_ip4.delete()
+
             dev_obj.delete()
     except Exception as e:
         sys.stderr.write(f"WARNING: Failed to delete NetBox device for {dname}\n")
