@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 #
 # Copyright (c) 2017-2020  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
@@ -65,9 +65,8 @@ if __name__ == "__main__":
     spark = Sparker(token=CLEUCreds.SPARK_TOKEN)
 
     if os.path.exists(CACHE_FILE):
-        fd = open(CACHE_FILE, "r")
-        prev_state = json.load(fd)
-        fd.close()
+        with open(CACHE_FILE, "r") as fd:
+            prev_state = json.load(fd)
 
     ssh_client = paramiko.SSHClient()
     ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
