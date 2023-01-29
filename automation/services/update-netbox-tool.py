@@ -39,7 +39,7 @@ import argparse
 import CLEUCreds  # type: ignore
 from cleu.config import Config as C  # type: ignore
 
-CACHE_FILE = "dns_records.dat"
+CACHE_FILE = "netbox_tool_cache.json"
 SKU_MAP = {
     "WS-C3560CX-12PD-S": "WS-C3560CX-12PD-S",
     "C9300-48U": "C9300-48P",
