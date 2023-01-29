@@ -135,7 +135,7 @@ def add_netbox_device(enb: ElementalNetbox, dev: dict) -> None:
         sys.stderr.write(f"ERROR: Failed to create IP entry for {dev['ip']}\n")
         return
 
-    dev_intf = enb.dcim.interfaces.get(device=dev_obj.id, name=dev["intf"])
+    dev_intf = enb.dcim.interfaces.get(device=dev_obj.name, name=dev["intf"])
     if not dev_intf:
         dev_obj.delete()
         ip_obj.delete()
