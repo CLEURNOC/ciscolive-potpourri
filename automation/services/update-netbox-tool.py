@@ -123,6 +123,18 @@ def add_netbox_device(enb: ElementalNetbox, dev: dict) -> None:
     site_obj = enb.dcim.sites.get(name=dev["site"])
     vrf_obj = enb.ipam.vrfs.get(name=VRF_NAME)
 
+    if not role_obj:
+        sys.stderr.write(f"ERROR: Invalid role for {dev['name']}: {dev['role']}\n")
+        return
+
+    if not type_obj:
+        sys.stderr.write(f"ERROR: Invalid type for {dev['name']}: {dev['type']}\n")
+        return
+
+    if not site_obj:
+        sys.stderr.write(f"ERROR: Invalid site for {dev['name']}: {dev['site']}\n")
+        return
+
     dev_obj = enb.dcim.devices.create(
         name=dev["name"], device_role=role_obj.id, device_type=type_obj.id, site=site_obj.id, tenant=tenant_obj.id
     )
