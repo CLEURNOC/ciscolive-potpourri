@@ -15,8 +15,8 @@ from utils import (
 
 from pynetbox.core.response import Record
 from pynetbox.models.ipam import IpAddresses
-import CLEUCreds # type: ignore
-from cleu.config import Config as C # type: ignore
+import CLEUCreds  # type: ignore
+from cleu.config import Config as C  # type: ignore
 
 # from pynetbox.models.virtualization import VirtualMachines
 from colorama import Fore, Style
@@ -397,7 +397,20 @@ def delete_record(cpnr_record: Tuple, primary_domain: str, edns: ElementalDns) -
                 # If it's already gone, don't complain.
                 raise
         else:
-            logger.info(f"🧼 Successfully deleted record {name}.{domain}")
+            logger.info(f"🧼 Successfully deleted record set for {name}.{domain}")
+            EDNS_MODIFIED = True
+
+    host = edns.host.get(name, zoneOrigin=domain)
+    if host:
+        try:
+            host.delete()
+        except RequestError as e:
+            if e.req.status_code != 404:
+                # We may end up deleting the same record twice.
+                # If it's already gone, don't complain.
+                raise
+        else:
+            logger.info(f"🧼 Successfully deleted host for {name}.{domain}")
             EDNS_MODIFIED = True
 
 
