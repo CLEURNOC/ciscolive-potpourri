@@ -132,7 +132,7 @@ if __name__ == "__main__":
                     text = ""
                     if response:
                         text = response.text
-                    print("Error retrieving device status from LibreNMS: {}".format(response.text))
+                    print(f"Error retrieving device status for {tdev['Hostname']} from LibreNMS: {response.text}")
 
             print("=== Adding device {} to LibreNMS ({} / {}) ===".format(tdev["Hostname"], i, len(tdevs)))
             res = run(
