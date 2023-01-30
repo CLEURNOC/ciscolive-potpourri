@@ -59,7 +59,11 @@ def get_devs():
                 continue
             if not re.search(r"^[0-9A-Za-z]{3}-", dev["Hostname"]):
                 continue
-            if re.search(r".*CORE.*", dev["Hostname"], flags=re.I) or re.search(r".*MER[124]-dist.*", dev["Hostname"], flags=re.I):
+            if (
+                re.search(r".*CORE.*", dev["Hostname"], flags=re.I)
+                or re.search(r"^WLC", dev["Hostname"], flags=re.I)
+                or re.search(r".*MER[124]-dist.*", dev["Hostname"], flags=re.I)
+            ):
                 continue
 
             devs.append(dev)
