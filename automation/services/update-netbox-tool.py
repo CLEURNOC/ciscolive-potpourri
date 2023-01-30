@@ -249,7 +249,7 @@ if __name__ == "__main__":
             cur_entry = dev_obj
             create_new = True
             ip_obj = dev_obj.primary_ip4
-            if ip_obj:
+            if ip_obj and ip_obj.address == f"{dev['ip']}/{dev['cidr']}":
                 cnames = ip_obj.custom_fields["CNAMEs"]
                 if not cnames:
                     cnames = ""
