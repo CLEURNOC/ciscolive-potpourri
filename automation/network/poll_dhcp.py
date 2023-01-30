@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 #
-# Copyright (c) 2017-2019  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2023  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,37 +25,37 @@
 # SUCH DAMAGE.
 
 import os
-import re
-import sys
-import time
 import json
 import requests
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
+from requests.packages.urllib3.exceptions import InsecureRequestWarning  # type: ignore
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
-import CLEUCreds
+import CLEUCreds  # type: ignore
+from cleu.config import Config as C  # type: ignore
 
-DHCP_SERVERS = ["10.100.253.9", "10.100.254.9"]
 CACHE_FILE = "/home/jclarke/dhcp_metrics.dat"
 CACHE_FILE_TMP = CACHE_FILE + ".tmp"
 
-CNR_HEADERS = {"Authorization": CLEUCreds.JCLARKE_BASIC, "Accept": "application/json"}
+CNR_HEADERS = {"Accept": "application/json"}
+CNR_AUTH = (CLEUCreds.CPNR_USERNAME, CLEUCreds.CPNR_PASSWORD)
 
 
 def get_metrics():
-    global DHCP_SERVERS, CNR_HEADERS
+    global CNR_HEADERS, CNR_AUTH
 
     res = []
 
-    for server in DHCP_SERVERS:
+    for server in C.CDNS_SERVERS:
         url = "https://{}:8443/web-services/rest/stats/DHCPServer".format(server)
 
         try:
-            response = requests.request("GET", url, params={"nrClass": "DHCPServerActivityStats"}, headers=CNR_HEADERS, verify=False)
+            response = requests.request(
+                "GET", url, params={"nrClass": "DHCPServerActivityStats"}, auth=CNR_AUTH, headers=CNR_HEADERS, verify=False
+            )
             response.raise_for_status()
         except Exception as e:
-            print("Failed to get stats {}".format(e))
+            print(f"Failed to get stats {e}")
             continue
 
         j = response.json()
@@ -69,8 +69,7 @@ def get_metrics():
 if __name__ == "__main__":
     response = get_metrics()
 
-    fd = open(CACHE_FILE_TMP, "w")
-    json.dump(response, fd, indent=4)
-    fd.close()
+    with open(CACHE_FILE_TMP, "w") as fd:
+        json.dump(response, fd, indent=4)
 
     os.rename(CACHE_FILE_TMP, CACHE_FILE)
