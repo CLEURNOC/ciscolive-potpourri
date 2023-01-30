@@ -1,6 +1,6 @@
-#!/usr/local/bin/python3
+#!/usr/local/bin/python
 #
-# Copyright (c) 2017-2020  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2023  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,19 +26,17 @@
 
 from __future__ import print_function
 import requests
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
+from requests.packages.urllib3.exceptions import InsecureRequestWarning  # type: ignore
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 import json
 import sys
 import time
 import os
-from subprocess import Popen, PIPE, run
+from subprocess import PIPE, run
 import shlex
-from sparker import Sparker
-import pprint
+from sparker import Sparker  # type: ignore
 import re
-import socket
 import CLEUCreds  # type: ignore
 from cleu.config import Config as C  # type: ignore
 
@@ -59,13 +57,9 @@ def get_devs():
         for dev in j:
             if dev["IPAddress"] == "0.0.0.0" or not dev["Reachable"]:
                 continue
-            if not re.search(r"^0", dev["Hostname"]):
+            if not re.search(r"^[0-9A-Za-z]{3}-", dev["Hostname"]):
                 continue
-            if (
-                re.search(r".*CORE.*", dev["Hostname"], flags=re.I)
-                or re.search(r".*MDF.*", dev["Hostname"], flags=re.I)
-                or re.search(r"-x\d{2}-", dev["Hostname"], flags=re.I)
-            ):
+            if re.search(r".*CORE.*", dev["Hostname"], flags=re.I) or re.search(r".*MER[124]-dist.*", dev["Hostname"], flags=re.I):
                 continue
 
             devs.append(dev)
@@ -89,11 +83,10 @@ if __name__ == "__main__":
         if sys.argv[1] == "-f":
             force = True
     try:
-        fd = open(CACHE_FILE, "r")
-        devs = json.load(fd)
-        fd.close()
+        with open(CACHE_FILE, "r") as fd:
+            devs = json.load(fd)
     except Exception as e:
-        print("Failed to open {}: {}".format(CACHE_FILE, e))
+        print(f"Failed to open {CACHE_FILE}: {e}")
 
     tdevs = get_devs()
 
@@ -144,7 +137,7 @@ if __name__ == "__main__":
             print("=== Adding device {} to LibreNMS ({} / {}) ===".format(tdev["Hostname"], i, len(tdevs)))
             res = run(
                 shlex.split(
-                    "ssh -2 {} /usr/local/www/librenms/addhost.php {} ap v3 CLEUR {} {} sha des".format(
+                    "ssh -2 {} /usr/local/www/librenms/addhost.php {} ap v3 CLEUR {} {} sha aes".format(
                         C.MONITORING, tdev["Hostname"], CLEUCreds.SNMP_AUTH_PASS, CLEUCreds.SNMP_PRIV_PASS
                     )
                 ),
@@ -163,6 +156,5 @@ if __name__ == "__main__":
             devs[tdev["AssetTag"]] = tdev["Hostname"]
 
     if changed_devs:
-        fd = open(CACHE_FILE, "w")
-        json.dump(devs, fd)
-        fd.close()
+        with open(CACHE_FILE, "w") as fd:
+            json.dump(devs, fd)
