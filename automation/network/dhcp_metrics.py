@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 #
-# Copyright (c) 2017-2020  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2023  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,9 +27,9 @@
 from flask import Flask
 from flask import Response
 import json
-import CLEUCreds
+import CLEUCreds  # type: ignore
 from gevent.pywsgi import WSGIServer
-from cleu.config import Config as C
+from cleu.config import Config as C  # type: ignore
 
 
 CACHE_FILE = "/home/jclarke/dhcp_metrics.dat"

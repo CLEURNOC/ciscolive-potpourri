@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 #
-# Copyright (c) 2017-2020  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2023  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,15 +26,14 @@
 
 import sys
 import json
-from sparker import Sparker, MessageType
+from sparker import Sparker, MessageType  # type: ignore
 from subprocess import Popen, PIPE
 import re
 import shlex
-import requests
 import os
 from multiprocessing import Pool
-import CLEUCreds
-from cleu.config import Config as C
+import CLEUCreds  # type: ignore
+from cleu.config import Config as C  # type: ignore
 
 SPARK_ROOM = "DHCP Scope Alarms"
 
@@ -81,7 +80,7 @@ def get_metrics(pool):
     response = {}
 
     proc = Popen(shlex.split("ssh -2 root@{} /root/nrcmd.sh -r scope listnames".format(C.DHCP_SERVER)), stdout=PIPE, stderr=PIPE)
-    out, err = proc.communicate()
+    out, _ = proc.communicate()
     outs = out.decode("utf-8")
     if not re.search(r"^100", outs):
         sys.exit(0)
