@@ -109,11 +109,14 @@ def get_from_dnac(**kwargs):
             continue
 
         j = response.json()
+        if "Token" not in j:
+            logging.warning(f"Failed to get a Token element from DNAC {dnac}: {response.text}")
+            continue
 
         cheaders = {"accept": "application/json", "x-auth-token": j["Token"]}
         params = {"macAddress": kwargs["mac"], "timestamp": epoch}
         try:
-            response = requests.request("GET", curl, params=params, headers=cheaders, verify=False, timeout=REST_TIMEOUT)
+            response = requests.request("GET", curl, params=params, headers=cheaders, verify=False)
             response.raise_for_status()
         except Exception as e:
             logging.warning("Failed to find MAC address {} in DNAC: {}".format(kwargs["mac"], getattr(e, "message", repr(e))))
@@ -229,7 +232,9 @@ def check_for_reservation_by_mac(mac):
 
     url = "{}/Reservation".format(C.DHCP_BASE)
     try:
-        response = requests.request("GET", url, auth=BASIC_AUTH, headers=CNR_HEADERS, params={"lookupKey": mac_addr}, verify=False, timeout=REST_TIMEOUT)
+        response = requests.request(
+            "GET", url, auth=BASIC_AUTH, headers=CNR_HEADERS, params={"lookupKey": mac_addr}, verify=False, timeout=REST_TIMEOUT
+        )
         response.raise_for_status()
     except Exception as e:
         logging.warning("Did not get a good response from CNR for reservation {}: {}".format(ip, e))
@@ -304,7 +309,9 @@ def check_for_mac(mac):
     url = "{}/Lease".format(C.DHCP_BASE)
 
     try:
-        response = requests.request("GET", url, auth=BASIC_AUTH, headers=CNR_HEADERS, verify=False, params={"clientMacAddr": mac}, timeout=REST_TIMEOUT)
+        response = requests.request(
+            "GET", url, auth=BASIC_AUTH, headers=CNR_HEADERS, verify=False, params={"clientMacAddr": mac}, timeout=REST_TIMEOUT
+        )
         response.raise_for_status()
     except Exception as e:
         logging.warning("Did not get a good response from CPNR for MAC {}: {}".format(mac, e))
