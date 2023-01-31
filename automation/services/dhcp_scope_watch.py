@@ -60,10 +60,12 @@ def get_results(scope):
         proc = Popen(
             shlex.split("ssh -2 root@{} /root/nrcmd.sh -r scope {} getUtilization".format(C.DHCP_SERVER, scope)), stdout=PIPE, stderr=PIPE
         )
-        out, err = proc.communicate()
+        out, _ = proc.communicate()
         outs = out.decode("utf-8")
         if not re.search(r"^100", outs):
+            sys.stderr.write(f"Error getting scope utilization for {scope}: {outs}")
             return None
+
         outd = parse_result(outs)
         if "active-dynamic" not in outd or "total-dynamic" not in outd or "free-dynamic" not in outd:
             return None
@@ -83,7 +85,9 @@ def get_metrics(pool):
     out, _ = proc.communicate()
     outs = out.decode("utf-8")
     if not re.search(r"^100", outs):
+        sys.stderr.write(f"Error getting scopes: {outs}")
         sys.exit(0)
+
     scopes = outs.split("\n")
 
     results = [pool.apply_async(get_results, [s]) for s in scopes]
@@ -135,10 +139,8 @@ if __name__ == "__main__":
                     MessageType.GOOD,
                 )
 
-    fd = open(CACHE_FILE, "w")
-    json.dump(curr_state, fd, indent=4)
-    fd.close()
+    with open(CACHE_FILE, "w") as fd:
+        json.dump(curr_state, fd, indent=4)
 
-    fd = open(STATS_FILE, "w")
-    json.dump(stats, fd, indent=4)
-    fd.close()
+    with open(STATS_FILE, "w") as fd:
+        json.dump(stats, fd, indent=4)
