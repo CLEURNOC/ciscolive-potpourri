@@ -384,10 +384,14 @@ def print_dnac(spark, what, details, msg):
                     hinfo += "(reason: {}) ".format(hobj["reason"])
             hinfo += "]"
 
+    htype = ""
+    if "hostType" in details:
+        htype = details["hostType"]
+
     spark.post_to_spark(
         C.WEBEX_TEAM,
         SPARK_ROOM,
-        "{} {} is a {} client {} {} {} {} {}".format(msg, what, details["hostType"], sdetails, ssid, loc, host_info, hinfo),
+        "{} {} is a {} client {} {} {} {} {}".format(msg, what, htype, sdetails, ssid, loc, host_info, hinfo),
     )
 
 
