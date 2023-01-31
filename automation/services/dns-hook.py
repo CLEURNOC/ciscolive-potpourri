@@ -1,6 +1,6 @@
-#!/usr/local/bin/python3
+#!/usr/bin/env python
 #
-# Copyright (c) 2017-2020  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2023  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,30 +27,28 @@
 from __future__ import print_function
 import sys
 import json
-from sparker import Sparker, MessageType
+from sparker import Sparker, MessageType  # type: ignore
 import re
 import requests
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
+from requests.packages.urllib3.exceptions import InsecureRequestWarning  # type: ignore
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-import time
 import traceback
-import socket
 import logging
-import CLEUCreds
-from cleu.config import Config as C
+import CLEUCreds  # type: ignore
+from cleu.config import Config as C  # type: ignore
 
-CNR_HEADERS = {"Accept": "application/json", "Content-Type": "application/json", "Authorization": CLEUCreds.JCLARKE_BASIC}
+CNR_HEADERS = {"Accept": "application/json", "Content-Type": "application/json"}
+CNR_AUTH = (CLEUCreds.CPNR_USERNAME, CLEUCreds.CPNR_PASSWORD)
 
 ALLOWED_TO_CREATE = [
     "jclarke@cisco.com",
-    "ksekula@cisco.com",
+    "anjesani@cisco.com",
     "ayourtch@cisco.com",
     "rkamerma@cisco.com",
-    "thulsdau@cisco.com",
     "lhercot@cisco.com",
     "pweijden@cisco.com",
-    "udiedric@cisco.com",
+    "josterfe@cisco.com",
 ]
 
 spark = Sparker(token=CLEUCreds.SPARK_TOKEN, logit=True)
@@ -59,11 +57,11 @@ SPARK_ROOM = "DNS Queries"
 
 
 def check_for_alias(alias):
-    global CNR_HEADERS
+    global CNR_HEADERS, CNR_AUTH
 
     url = C.DNS_BASE + "CCMRRSet" + "/{}".format(alias)
 
-    response = requests.request("GET", url, params={"zoneOrigin": C.DNS_DOMAIN}, headers=CNR_HEADERS, verify=False)
+    response = requests.request("GET", url, params={"zoneOrigin": C.DNS_DOMAIN}, auth=CNR_AUTH, headers=CNR_HEADERS, verify=False)
     if response.status_code == 404:
         return None
 
@@ -84,7 +82,7 @@ def check_for_alias(alias):
 
 
 def create_alias(hostname, alias):
-    global CNR_HEADERS
+    global CNR_HEADERS, CNR_AUTH
 
     url = C.DNS_BASE + "CCMRRSet" + "/{}".format(alias)
 
@@ -96,16 +94,16 @@ def create_alias(hostname, alias):
 
     rr_obj = {"name": alias, "zoneOrigin": C.DNS_DOMAIN, "rrs": {"stringItem": ["IN CNAME {}".format(hostname)]}}
 
-    response = requests.request("PUT", url, headers=CNR_HEADERS, json=rr_obj, verify=False)
+    response = requests.request("PUT", url, headers=CNR_HEADERS, auth=CNR_AUTH, json=rr_obj, verify=False)
     response.raise_for_status()
 
 
 def delete_alias(alias):
-    global CNR_HEADERS
+    global CNR_HEADERS, CNR_AUTH
 
     url = C.DNS_BASE + "CCMRRSet" + "/{}".format(alias)
 
-    response = requests.request("DELETE", url, params={"zoneOrigin": C.DNS_DOMAIN}, headers=CNR_HEADERS, verify=False)
+    response = requests.request("DELETE", url, params={"zoneOrigin": C.DNS_DOMAIN}, auth=CNR_AUTH, headers=CNR_HEADERS, verify=False)
     response.raise_for_status()
 
 
@@ -113,17 +111,20 @@ def delete_record(hostname):
     global CNR_HEADERS
 
     url = C.DNS_BASE + "CCMHost" + "/{}".format(hostname)
+    rrurl = C.DNS_BASE + "CCMRRSet" + "/{}".format(hostname)
 
     response = requests.request("DELETE", url, params={"zoneOrigin": C.DNS_DOMAIN}, headers=CNR_HEADERS, verify=False)
     response.raise_for_status()
 
+    response = requests.request("DELETE", rrurl, params={"zoneOrigin": C.DNS_DOMAIN}, headers=CNR_HEADERS, verify=False)
+
 
 def check_for_record(hostname):
-    global CNR_HEADERS
+    global CNR_HEADERS, CNR_AUTH
 
     url = C.DNS_BASE + "CCMHost" + "/{}".format(hostname)
 
-    response = requests.request("GET", url, params={"zoneOrigin": C.DNS_DOMAIN}, headers=CNR_HEADERS, verify=False)
+    response = requests.request("GET", url, params={"zoneOrigin": C.DNS_DOMAIN}, auth=CNR_AUTH, headers=CNR_HEADERS, verify=False)
     if response.status_code == 404:
         return None
 
@@ -135,8 +136,8 @@ def check_for_record(hostname):
     return res
 
 
-def create_record(hostname, ip, aliases):
-    global CNR_HEADERS
+def create_record(hostname, ip, aliases, message_from):
+    global CNR_HEADERS, CNR_AUTH
 
     url = C.DNS_BASE + "CCMHost" + "/{}".format(hostname)
     host_obj = {"addrs": {"stringItem": [ip]}, "name": hostname, "zoneOrigin": C.DNS_DOMAIN}
@@ -148,7 +149,13 @@ def create_record(hostname, ip, aliases):
         alist = [x + "." + C.DNS_DOMAIN + "." if not x.endswith(".") else x for x in alist]
         host_obj["aliases"] = {"stringItem": alist}
 
-    response = requests.request("PUT", url, headers=CNR_HEADERS, json=host_obj, verify=False)
+    response = requests.request("PUT", url, headers=CNR_HEADERS, auth=CNR_AUTH, json=host_obj, verify=False)
+    response.raise_for_status()
+
+    rr_obj = {"name": hostname, "zoneOrigin": C.DNS_DOMAIN, "rrs": {"stringItem": [f'IN TXT "v=_static created by: {message_from}']}}
+    rrurl = C.DNS_BASE + "CCMRRSet" + "/{}".format(hostname)
+
+    response = requests.request("PUT", rrurl, headers=CNR_HEADERS, auth=CNR_AUTH, json=rr_obj, verify=False)
     response.raise_for_status()
 
 
@@ -264,7 +271,7 @@ if __name__ == "__main__":
                 else:
                     hostname = re.sub(r"\.{}".format(C.DNS_DOMAIN), "", m.group(2))
                     try:
-                        create_record(m.group(2), m.group(3), m.group(8))
+                        create_record(m.group(2), m.group(3), m.group(8), message_from)
                         spark.post_to_spark(
                             C.WEBEX_TEAM, SPARK_ROOM, "Successfully created record for {}.".format(m.group(2)), MessageType.GOOD
                         )
