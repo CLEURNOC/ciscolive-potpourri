@@ -59,12 +59,16 @@ def get_results(scope):
     scope = scope.strip()
 
     if scope != "100 Ok" and scope != "":
-        proc = Popen(
-            shlex.split("ssh -2 root@{} /root/nrcmd.sh -r scope {} getUtilization".format(C.DHCP_SERVER, scope)), stdout=PIPE, stderr=PIPE
-        )
-        out, err = proc.communicate()
-        outs = out.decode("utf-8")
-        errs = err.decode("utf-8")
+        for _ in range(2):
+            proc = Popen(
+                shlex.split(f"ssh -2 root@{C.DHCP_SERVER} /root/nrcmd.sh -r scope {scope} getUtilization"), stdout=PIPE, stderr=PIPE
+            )
+            out, err = proc.communicate()
+            outs = out.decode("utf-8")
+            errs = err.decode("utf-8")
+            if re.search(r"^100", outs):
+                break
+
         if not re.search(r"^100", outs):
             sys.stderr.write(f"Error getting scope utilization for {scope}: {outs} {errs}\n")
             return None
