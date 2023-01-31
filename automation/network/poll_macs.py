@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 #
-# Copyright (c) 2017-2020  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2023  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@ import json
 import paramiko
 from multiprocessing import Pool
 import traceback
-import CLEUCreds
+import CLEUCreds  # type: ignore
 
 
 CACHE_FILE = "/home/jclarke/mac_counts.dat"
@@ -47,9 +47,21 @@ commands = {
         "pattern": r"Dynamic Address Count:\s+(\d+)",
         "metric": "totalMacs",
     },
-    "macIdf": {"command": "show mac address-table dynamic | inc Total", "pattern": r"Total.*: (\d+)", "metric": "totalMacs",},
-    "arpEntries": {"command": "show ip arp summary | inc IP ARP", "pattern": r"(\d+) IP ARP entries", "metric": "arpEntries",},
-    "ndEntries": {"command": "show ipv6 neighbors statistics | inc Entries", "pattern": r"Entries (\d+),", "metric": "ndEntries",},
+    "macIdf": {
+        "command": "show mac address-table dynamic | inc Total",
+        "pattern": r"Total.*: (\d+)",
+        "metric": "totalMacs",
+    },
+    "arpEntries": {
+        "command": "show ip arp summary | inc IP ARP",
+        "pattern": r"(\d+) IP ARP entries",
+        "metric": "arpEntries",
+    },
+    "ndEntries": {
+        "command": "show ipv6 neighbors statistics | inc Entries",
+        "pattern": r"Entries (\d+),",
+        "metric": "ndEntries",
+    },
     "natTrans": {
         "command": "show ip nat translations total",
         "pattern": r"Total number of translations: (\d+)",
@@ -105,9 +117,20 @@ commands = {
 }
 
 devices = [
-    {"pattern": "CORE{}-L3C", "range": {"min": 1, "max": 2}, "commands": ["arpEntries", "ndEntries"],},
-    {"file": IDF_FILE, "commands": ["macIdf", "arpEntries", "ndEntries"],},
-    {"pattern": "CORE{}-WA", "range": {"min": 1, "max": 2}, "commands": ["macIdf", "arpEntries", "ndEntries"],},
+    {
+        "pattern": "CORE{}-CORE",
+        "range": {"min": 1, "max": 2},
+        "commands": ["arpEntries", "ndEntries"],
+    },
+    {
+        "file": IDF_FILE,
+        "commands": ["macIdf", "arpEntries", "ndEntries"],
+    },
+    {
+        "pattern": "CORE{}-WA",
+        "range": {"min": 1, "max": 2},
+        "commands": ["macIdf", "arpEntries", "ndEntries"],
+    },
     {
         "pattern": "CORE{}-EDGE",
         "range": {"min": 1, "max": 2},
@@ -153,7 +176,12 @@ def get_results(dev):
     response = []
     try:
         ssh_client.connect(
-            dev["device"], username=CLEUCreds.NET_USER, password=CLEUCreds.NET_PASS, timeout=5, allow_agent=False, look_for_keys=False,
+            dev["device"],
+            username=CLEUCreds.NET_USER,
+            password=CLEUCreds.NET_PASS,
+            timeout=5,
+            allow_agent=False,
+            look_for_keys=False,
         )
         chan = ssh_client.invoke_shell()
         try:
@@ -222,12 +250,18 @@ def get_metrics(pool):
             if "range" in device:
                 for i in range(device["range"]["min"], device["range"]["max"] + 1):
                     targets.append(
-                        {"device": device["pattern"].format(str(i)), "commands": device["commands"],}
+                        {
+                            "device": device["pattern"].format(str(i)),
+                            "commands": device["commands"],
+                        }
                     )
             else:
                 for sub in device["subs"]:
                     targets.append(
-                        {"device": device["pattern"].format(sub), "commands": device["commands"],}
+                        {
+                            "device": device["pattern"].format(sub),
+                            "commands": device["commands"],
+                        }
                     )
         else:
             with open(device["file"]) as fd:
