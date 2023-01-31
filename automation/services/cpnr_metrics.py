@@ -26,7 +26,6 @@
 
 from flask import Flask
 from flask import Response
-import json
 import CLEUCreds  # type: ignore
 from gevent.pywsgi import WSGIServer
 from subprocess import run
