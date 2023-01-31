@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2017-2019  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2023  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,9 +27,9 @@
 from flask import Flask
 from flask import Response
 import json
-import CLEUCreds
+import CLEUCreds  # type: ignore
 from gevent.pywsgi import WSGIServer
-from cleu.config import Config as C
+from cleu.config import Config as C  # type: ignore
 
 
 CACHE_FILE = "/home/jclarke/mac_counts.dat"
@@ -43,9 +43,8 @@ app = Flask("MAC Address Count Fetcher")
 def get_metrics():
     global CACHE_FILE
 
-    fd = open(CACHE_FILE, "r")
-    macs = json.load(fd)
-    fd.close()
+    with open(CACHE_FILE, "r") as fd:
+        macs = json.load(fd)
 
     return Response("\n".join(macs) + "\n", mimetype="text/plain")
 
