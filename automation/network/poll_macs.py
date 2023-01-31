@@ -281,8 +281,7 @@ if __name__ == "__main__":
     pool = Pool(20)
     response = get_metrics(pool)
 
-    fd = open(CACHE_FILE_TMP, "w")
-    json.dump(response, fd, indent=4)
-    fd.close()
+    with open(CACHE_FILE_TMP, "w") as fd:
+        json.dump(response, fd, indent=4)
 
     os.rename(CACHE_FILE_TMP, CACHE_FILE)
