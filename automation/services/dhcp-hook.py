@@ -127,7 +127,7 @@ def get_from_dnac(**kwargs):
             logging.warning("Got an unknown response from DNAC: '{}'".format(response.text))
             continue
 
-        if "errorCode" in j["detail"]:
+        if "errorCode" in j["detail"] or len(j["detail"].keys()) == 0:
             continue
 
         return j["detail"]
