@@ -233,7 +233,7 @@ def main():
 
         if vm["vlan"] not in NETWORK_MAP:
             # This is an Attendee VLAN that has been added to the DC.
-            if vm["vlan"] is VLAN_MAP:
+            if vm["vlan"] in VLAN_MAP:
                 nbvlan = VLAN_MAP[vm["vlan"]]
             else:
                 nbvlan = vm["vlan"]
