@@ -32,6 +32,7 @@ import re
 import shlex
 import os
 from multiprocessing import Pool
+import time
 import CLEUCreds  # type: ignore
 from cleu.config import Config as C  # type: ignore
 
@@ -68,6 +69,8 @@ def get_results(scope):
             errs = err.decode("utf-8")
             if re.search(r"^100", outs):
                 break
+
+            time.sleep(1)
 
         if not re.search(r"^100", outs):
             sys.stderr.write(f"Error getting scope utilization for {scope}: {outs} {errs}\n")
