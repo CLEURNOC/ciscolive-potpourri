@@ -97,6 +97,11 @@ commands = {
         "pattern": r"total addresses (\d+), allocated (\d+)[^,]+, misses (\d+)",
         "metrics": ["natPoolLabsAddresses", "natPoolLabsAllocated", "natPoolLabsMisses"],
     },
+    "natPoolWLC": {
+        "command": "show ip nat statistics | begin NAT-ACL-WLC",
+        "pattern": r"total addresses (\d+), allocated (\d+)[^,]+, misses (\d+)",
+        "metrics": ["natPoolWLCAddresses", "natPoolWLCAllocated", "natPoolWLCMisses"],
+    },
     "natHealthStats": {
         "command": "show ip nat statistics | begin In-to-out",
         "pattern": r"In-to-out-drops: (\d+)\s+Out-to-in-drops: (\d+).*Pool stats drop: (\d+)\s+Mapping stats drop: (\d+).*Port block alloc fail: (\d+).*IP alias add fail: (\d+).*Limit entry add fail: (\d+)",
