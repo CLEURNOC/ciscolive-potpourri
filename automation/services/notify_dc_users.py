@@ -38,6 +38,9 @@ IP6_PREFIX = "2a11:d940:2:"
 STRETCHED_OCTET = 252
 GW_OCTET = 254
 
+# Map VMware VLAN names to NetBox names
+VLAN_MAP = {"CISCO_LABS": "Cisco-Labs", "SESSION_RECORDING": "Session-Recording", "WIRED_DEFAULT": "Wired-Default"}
+
 NETWORK_MAP = {
     "Stretched_VMs": {
         "subnet": "{}{}.0/24".format(IP4_SUBNET, STRETCHED_OCTET),
@@ -230,9 +233,14 @@ def main():
 
         if vm["vlan"] not in NETWORK_MAP:
             # This is an Attendee VLAN that has been added to the DC.
-            nb_vlan = enb.ipam.vlans.get(name=vm["vlan"], tenant=TENANT_NAME.lower())
+            if vm["vlan"] is VLAN_MAP:
+                nbvlan = VLAN_MAP[vm["vlan"]]
+            else:
+                nbvlan = vm["vlan"]
+
+            nb_vlan = enb.ipam.vlans.get(name=nbvlan, tenant=TENANT_NAME.lower())
             if not nb_vlan:
-                print(f"WARNING: Invalid VLAN {vm['vlan']} for {name}.")
+                print(f"WARNING: Invalid VLAN {nbvlan} for {name}.")
                 continue
 
             NETWORK_MAP[vm["vlan"]] = {
