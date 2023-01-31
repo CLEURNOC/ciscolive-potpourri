@@ -59,7 +59,7 @@ SPARK_ROOM = "DNS Queries"
 def check_for_alias(alias):
     global CNR_HEADERS, CNR_AUTH
 
-    url = C.DNS_BASE + "CCMRRSet" + "/{}".format(alias)
+    url = C.DNS_BASE + "/CCMRRSet" + "/{}".format(alias)
 
     response = requests.request("GET", url, params={"zoneOrigin": C.DNS_DOMAIN}, auth=CNR_AUTH, headers=CNR_HEADERS, verify=False)
     if response.status_code == 404:
@@ -84,7 +84,7 @@ def check_for_alias(alias):
 def create_alias(hostname, alias):
     global CNR_HEADERS, CNR_AUTH
 
-    url = C.DNS_BASE + "CCMRRSet" + "/{}".format(alias)
+    url = C.DNS_BASE + "/CCMRRSet" + "/{}".format(alias)
 
     if re.search(r"\.", hostname) and not hostname.endswith("."):
         hostname += "."
@@ -101,7 +101,7 @@ def create_alias(hostname, alias):
 def delete_alias(alias):
     global CNR_HEADERS, CNR_AUTH
 
-    url = C.DNS_BASE + "CCMRRSet" + "/{}".format(alias)
+    url = C.DNS_BASE + "/CCMRRSet" + "/{}".format(alias)
 
     response = requests.request("DELETE", url, params={"zoneOrigin": C.DNS_DOMAIN}, auth=CNR_AUTH, headers=CNR_HEADERS, verify=False)
     response.raise_for_status()
@@ -110,8 +110,8 @@ def delete_alias(alias):
 def delete_record(hostname):
     global CNR_HEADERS
 
-    url = C.DNS_BASE + "CCMHost" + "/{}".format(hostname)
-    rrurl = C.DNS_BASE + "CCMRRSet" + "/{}".format(hostname)
+    url = C.DNS_BASE + "/CCMHost" + "/{}".format(hostname)
+    rrurl = C.DNS_BASE + "/CCMRRSet" + "/{}".format(hostname)
 
     response = requests.request("DELETE", url, params={"zoneOrigin": C.DNS_DOMAIN}, headers=CNR_HEADERS, verify=False)
     response.raise_for_status()
@@ -122,7 +122,7 @@ def delete_record(hostname):
 def check_for_record(hostname):
     global CNR_HEADERS, CNR_AUTH
 
-    url = C.DNS_BASE + "CCMHost" + "/{}".format(hostname)
+    url = C.DNS_BASE + "/CCMHost" + "/{}".format(hostname)
 
     response = requests.request("GET", url, params={"zoneOrigin": C.DNS_DOMAIN}, auth=CNR_AUTH, headers=CNR_HEADERS, verify=False)
     if response.status_code == 404:
@@ -139,7 +139,7 @@ def check_for_record(hostname):
 def create_record(hostname, ip, aliases, message_from):
     global CNR_HEADERS, CNR_AUTH
 
-    url = C.DNS_BASE + "CCMHost" + "/{}".format(hostname)
+    url = C.DNS_BASE + "/CCMHost" + "/{}".format(hostname)
     host_obj = {"addrs": {"stringItem": [ip]}, "name": hostname, "zoneOrigin": C.DNS_DOMAIN}
 
     if aliases is not None:
@@ -153,7 +153,7 @@ def create_record(hostname, ip, aliases, message_from):
     response.raise_for_status()
 
     rr_obj = {"name": hostname, "zoneOrigin": C.DNS_DOMAIN, "rrs": {"stringItem": [f'IN TXT "v=_static created by: {message_from}']}}
-    rrurl = C.DNS_BASE + "CCMRRSet" + "/{}".format(hostname)
+    rrurl = C.DNS_BASE + "/CCMRRSet" + "/{}".format(hostname)
 
     response = requests.request("PUT", rrurl, headers=CNR_HEADERS, auth=CNR_AUTH, json=rr_obj, verify=False)
     response.raise_for_status()
