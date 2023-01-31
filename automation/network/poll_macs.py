@@ -102,6 +102,16 @@ commands = {
         "pattern": r"total addresses (\d+), allocated (\d+)[^,]+, misses (\d+)",
         "metrics": ["natPoolWLCAddresses", "natPoolWLCAllocated", "natPoolWLCMisses"],
     },
+    "natGatewayStatsIn": {
+        "command": "show platform hardware qfp active feature nat datapath gatein activity",
+        "pattern": r"Hits ([^,]+), Miss ([^,]+), Aged ([^ ]+) Added ([^ ]+) Active ([0-9]+)",
+        "metrics": ["natGateInHits", "natGateInMisses", "natGateInAged", "natGateInAdded", "natGateInActive"],
+    },
+    "natGatewayStatsOut": {
+        "command": "show platform hardware qfp active feature nat datapath gateout activity",
+        "pattern": r"Hits ([^,]+), Miss ([^,]+), Aged ([^ ]+) Added ([^ ]+) Active ([0-9]+)",
+        "metrics": ["natGateOutHits", "natGateOutMisses", "natGateOutAged", "natGateOutAdded", "natGateOutActive"],
+    },
     "natHealthStats": {
         "command": "show ip nat statistics | begin In-to-out",
         "pattern": r"In-to-out-drops: (\d+)\s+Out-to-in-drops: (\d+).*Pool stats drop: (\d+)\s+Mapping stats drop: (\d+).*Port block alloc fail: (\d+).*IP alias add fail: (\d+).*Limit entry add fail: (\d+)",
@@ -148,7 +158,10 @@ devices = [
             "natPoolDefault2",
             "natPoolDns",
             "natPoolLabs",
+            "natPoolWLC",
             "natHealthStats",
+            "natGatewayStatsIn",
+            "natGatewayStatsOut",
         ],
     },
 ]
