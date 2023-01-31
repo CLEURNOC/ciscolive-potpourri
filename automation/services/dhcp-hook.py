@@ -363,13 +363,13 @@ def print_dnac(spark, what, details, msg):
                 else:
                     healths[score["healthType"]] = {"score": score["score"], "reason": score["reason"]}
 
-    if details["hostOs"]:
+    if "hostOs" in details and details["hostOs"]:
         host_info = "running **{}**".format(details["hostOs"])
-    if details["ssid"]:
+    if "ssid" in details and details["ssid"]:
         ssid = "associated to SSID **{}**".format(details["ssid"])
-    if details["location"]:
+    if "location" in details and details["location"]:
         loc = "located in **{}**".format(details["location"])
-    if details["port"] and details["clientConnection"]:
+    if "port" in details and details["port"] and "clientConnection" in details and details["clientConnection"]:
         sdetails = "connected to device **{}** on port **{}**".format(details["clientConnection"], details["port"])
 
     if ohealth is not None:
