@@ -56,6 +56,8 @@ def parse_result(out):
 def get_results(scope):
     global DHCP_SERVER
 
+    scope = scope.strip()
+
     if scope != "100 Ok" and scope != "":
         proc = Popen(
             shlex.split("ssh -2 root@{} /root/nrcmd.sh -r scope {} getUtilization".format(C.DHCP_SERVER, scope)), stdout=PIPE, stderr=PIPE
@@ -63,7 +65,7 @@ def get_results(scope):
         out, _ = proc.communicate()
         outs = out.decode("utf-8")
         if not re.search(r"^100", outs):
-            sys.stderr.write(f"Error getting scope utilization for {scope}: {outs}")
+            sys.stderr.write(f"Error getting scope utilization for {scope}: {outs}\n")
             return None
 
         outd = parse_result(outs)
@@ -85,7 +87,7 @@ def get_metrics(pool):
     out, _ = proc.communicate()
     outs = out.decode("utf-8")
     if not re.search(r"^100", outs):
-        sys.stderr.write(f"Error getting scopes: {outs}")
+        sys.stderr.write(f"Error getting scopes: {outs}\n")
         sys.exit(0)
 
     scopes = outs.split("\n")
