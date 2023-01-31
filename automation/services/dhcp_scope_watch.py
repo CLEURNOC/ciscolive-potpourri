@@ -90,7 +90,7 @@ def get_metrics(pool):
 
     scopes = outs.split("\n")
 
-    results = [pool.apply_async(get_results, [s]) for s in scopes]
+    results = [pool.apply_async(get_results, [s]) for s in scopes[1:]]
     for res in results:
         retval = res.get()
         if retval is not None:
@@ -107,9 +107,8 @@ if __name__ == "__main__":
     spark = Sparker(token=CLEUCreds.SPARK_TOKEN)
 
     if os.path.exists(CACHE_FILE):
-        fd = open(CACHE_FILE, "r")
-        prev_state = json.load(fd)
-        fd.close()
+        with open(CACHE_FILE, "r") as fd:
+            prev_state = json.load(fd)
 
     pool = Pool(20)
     metrics = get_metrics(pool)
