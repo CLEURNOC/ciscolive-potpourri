@@ -406,11 +406,11 @@ def print_dnac(spark, what, dna_obj, msg):
         hinfo = f"with health score **{dna_obj['health']}/10**"
         if dna_obj["reason"]:
             hinfo += f" (reason: _{dna_obj['reason']}_)"
-        hinfo += "["
+        hinfo += " ["
         for h in ("onboard", "connect"):
             if dna_obj[h]:
-                hinfo += f"{h.upper()} health: {dna_obj[h]}"
-        hinfo += "]"
+                hinfo += f"{h.upper()} health: {dna_obj[h]} "
+        hinfo = hinfo.rstrip() + "]"
 
     if dna_obj["ostype"]:
         host_info = f"running **{dna_obj['ostype']}**"
