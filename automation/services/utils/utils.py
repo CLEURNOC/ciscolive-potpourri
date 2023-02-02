@@ -106,11 +106,12 @@ def restart_dns_servers(edns: ElementalDns, cdnses: list) -> None:
         :ecdns ElementalCdns: ElementalCdns object to restart
     """
     logger = logging.getLogger(__name__)
-    try:
-        edns.sync_ha_pair(instance="DNSHA", add_params={"mode": "exact", "direction": "fromMain"})
-    except Exception:
-        # This can fail when we don't yet have an HA pair.
-        pass
+    # A sync is not required here
+    # try:
+    #     edns.sync_ha_pair(instance="DNSHA", add_params={"mode": "exact", "direction": "fromMain"})
+    # except Exception:
+    #     # This can fail when we don't yet have an HA pair.
+    #     pass
     edns.reload_server()
     logger.info(f"🏁 Reloaded server {edns.base_url}")
 
