@@ -235,6 +235,9 @@ def get_user_from_dnac(**kwargs):
             logging.warning("Got an unknown response from DNAC: '{}'".format(response.text))
             continue
 
+        if len(j[0]["userDetails"].keys()) == 0:
+            continue
+
         detail = j[0]["userDetails"]
 
         if "hostType" in detail:
