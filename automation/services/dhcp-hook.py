@@ -93,11 +93,24 @@ def get_from_cmx(**kwargs):
 
 
 def get_from_dnac(**kwargs):
+    dna_obj = {
+        "ostype": None,
+        "type": None,
+        "location": None,
+        "ap": None,
+        "ssid": None,
+        "health": None,
+        "onboard": None,
+        "connect": None,
+        "reason": None,
+        "band": None,
+    }
+
     for dnac in C.DNACS:
         curl = "https://{}/dna/intent/api/v1/client-detail".format(dnac)
 
         # Get timestamp with milliseconds
-        epoch = int(time.time() * 1000)
+        # epoch = int(time.time() * 1000)
 
         turl = "https://{}/dna/system/api/v1/auth/token".format(dnac)
         theaders = {"content-type": "application/json"}
@@ -114,7 +127,8 @@ def get_from_dnac(**kwargs):
             continue
 
         cheaders = {"accept": "application/json", "x-auth-token": j["Token"]}
-        params = {"macAddress": kwargs["mac"], "timestamp": epoch}
+        # params = {"macAddress": kwargs["mac"], "timestamp": epoch}
+        params = {"macAddress": kwargs["mac"]}
         try:
             response = requests.request("GET", curl, params=params, headers=cheaders, verify=False)
             response.raise_for_status()
@@ -130,7 +144,43 @@ def get_from_dnac(**kwargs):
         if "errorCode" in j["detail"] or len(j["detail"].keys()) == 0:
             continue
 
-        return j["detail"]
+        detail = j["detail"]
+
+        if "hostType" in detail:
+            dna_obj["type"] = detail["hostType"]
+
+        if "userId" in detail:
+            dna_obj["user"] = detail["userId"]
+
+        if "hostOs" in detail and detail["hostOs"]:
+            dna_obj["ostype"] = detail["hostOs"]
+        elif "subType" in detail:
+            dna_obj["ostype"] = detail["subType"]
+
+        if "healthScore" in detail:
+            for hscore in detail["healthScore"]:
+                if hscore["healthType"] == "OVERALL":
+                    dna_obj["health"] = hscore["score"]
+                    if hscore["reason"] != "":
+                        dna_obj["reason"] = hscore["reason"]
+                elif hscore["healthType"] == "ONBOARDED":
+                    dna_obj["onboard"] = hscore["score"]
+                elif hscore["healthType"] == "CONNECTED":
+                    dna_obj["connect"] = hscore["score"]
+
+        if "ssid" in detail:
+            dna_obj["ssid"] = detail["ssid"]
+
+        if "location" in detail:
+            dna_obj["location"] = detail["location"]
+
+        if "clientConnection" in detail:
+            dna_obj["ap"] = detail["clientConnection"]
+
+        if "connectionInfo" in j and "band" in j["connectionInfo"]:
+            dna_obj["band"] = j["connectionInfo"]["band"]
+
+        return dna_obj
 
     return None
 
@@ -345,53 +395,42 @@ def check_for_mac(mac):
     return leases
 
 
-def print_dnac(spark, what, details, msg):
+def print_dnac(spark, what, dna_obj, msg):
     ohealth = None
-    healths = {}
     host_info = ""
     ssid = ""
     loc = ""
     hinfo = ""
     sdetails = ""
-    if "healthScore" in details:
-        for score in details["healthScore"]:
-            if "healthType" in score:
-                if score["healthType"] == "OVERALL":
-                    ohealth = {}
-                    ohealth["score"] = score["score"]
-                    ohealth["reason"] = score["reason"]
-                else:
-                    healths[score["healthType"]] = {"score": score["score"], "reason": score["reason"]}
 
-    if "hostOs" in details and details["hostOs"]:
-        host_info = "running **{}**".format(details["hostOs"])
-    if "ssid" in details and details["ssid"]:
-        ssid = "associated to SSID **{}**".format(details["ssid"])
-    if "location" in details and details["location"]:
-        loc = "located in **{}**".format(details["location"])
-    if "port" in details and details["port"] and "clientConnection" in details and details["clientConnection"]:
-        sdetails = "connected to device **{}** on port **{}**".format(details["clientConnection"], details["port"])
+    if dna_obj["health"]:
+        hinfo = f"with health score **{dna_obj['health']}/10**"
+        if dna_obj["reason"]:
+            hinfo += f" (reason: _{dna_obj['reason']}_)"
+        hinfo += "["
+        for h in ("onboard", "connect"):
+            if dna_obj[h]:
+                hinfo += f"{h.upper()} health: {dna_obj[j]}"
+        hinfo += "]"
 
-    if ohealth is not None:
-        hinfo = "with health score **{}/10**".format(ohealth["score"])
-        if ohealth["reason"]:
-            hinfo += " (reason: _{}_)".format(ohealth["reason"])
-        if len(healths) > 0:
-            hinfo += " ["
-            for h, hobj in list(healths.items()):
-                hinfo += "{} health: {} ".format(h, hobj["score"])
-                if hobj["reason"] != "":
-                    hinfo += "(reason: {}) ".format(hobj["reason"])
-            hinfo += "]"
+    if dna_obj["ostype"]:
+        host_info = f"running **{dna_obj['ostype']}**"
+    if dna_obj["ssid"]:
+        ssid = f"associated to SSID **{dna_obj['ssid']}**"
+    if dna_obj["location"]:
+        loc = f"located in **{dna_obj['location']}**"
+    if dna_obj["ap"]:
+        sdetails = f"associated to AP **{dna_obj['ap']}**"
 
-    htype = ""
-    if "hostType" in details:
-        htype = details["hostType"]
+        if dna_obj["band"]:
+            sdetails += f" at **{dna_obj['band']} GHz**"
+
+    dna_msg = f"{what} is a {dna_obj['type']} client {sdetails} {ssid} {loc} {host_info} {hinfo}"
 
     spark.post_to_spark(
         C.WEBEX_TEAM,
         SPARK_ROOM,
-        "{} {} is a {} client {} {} {} {} {}".format(msg, what, htype, sdetails, ssid, loc, host_info, hinfo),
+        dna_msg,
     )
 
 
