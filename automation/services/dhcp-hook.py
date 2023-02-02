@@ -221,13 +221,13 @@ def get_user_from_dnac(**kwargs):
             "accept": "application/json",
             "x-auth-token": j["Token"],
             "entity_type": "network_user_id",
-            "entity_value": kwargs["uname"],
+            "entity_value": kwargs["user"],
         }
         try:
             response = requests.request("GET", curl, headers=cheaders, verify=False)
             response.raise_for_status()
         except Exception as e:
-            logging.warning("Failed to find user {} in DNAC: {}".format(kwargs["uname"], getattr(e, "message", repr(e))))
+            logging.warning("Failed to find user {} in DNAC: {}".format(kwargs["user"], getattr(e, "message", repr(e))))
             continue
 
         j = response.json()
