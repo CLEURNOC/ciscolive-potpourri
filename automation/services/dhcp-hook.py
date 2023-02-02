@@ -396,7 +396,6 @@ def check_for_mac(mac):
 
 
 def print_dnac(spark, what, dna_obj, msg):
-    ohealth = None
     host_info = ""
     ssid = ""
     loc = ""
@@ -410,7 +409,7 @@ def print_dnac(spark, what, dna_obj, msg):
         hinfo += "["
         for h in ("onboard", "connect"):
             if dna_obj[h]:
-                hinfo += f"{h.upper()} health: {dna_obj[j]}"
+                hinfo += f"{h.upper()} health: {dna_obj[h]}"
         hinfo += "]"
 
     if dna_obj["ostype"]:
@@ -425,7 +424,7 @@ def print_dnac(spark, what, dna_obj, msg):
         if dna_obj["band"]:
             sdetails += f" at **{dna_obj['band']} GHz**"
 
-    dna_msg = f"{what} is a {dna_obj['type']} client {sdetails} {ssid} {loc} {host_info} {hinfo}"
+    dna_msg = f"{msg} {what} is a {dna_obj['type']} client {sdetails} {ssid} {loc} {host_info} {hinfo}"
 
     spark.post_to_spark(
         C.WEBEX_TEAM,
