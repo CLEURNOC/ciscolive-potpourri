@@ -185,6 +185,99 @@ def get_from_dnac(**kwargs):
     return None
 
 
+def get_user_from_dnac(**kwargs):
+    dna_obj = {
+        "ostype": None,
+        "type": None,
+        "location": None,
+        "ap": None,
+        "ssid": None,
+        "health": None,
+        "onboard": None,
+        "connect": None,
+        "reason": None,
+        "band": None,
+        "mac": None,
+    }
+
+    for dnac in C.DNACS:
+        curl = "https://{}/dna/intent/api/v1/client-enrichment-details".format(dnac)
+
+        turl = "https://{}/dna/system/api/v1/auth/token".format(dnac)
+        theaders = {"content-type": "application/json"}
+        try:
+            response = requests.request("POST", turl, headers=theaders, auth=BASIC_AUTH, verify=False, timeout=REST_TIMEOUT)
+            response.raise_for_status()
+        except Exception as e:
+            logging.warning("Unable to get an auth token from DNAC: {}".format(getattr(e, "message", repr(e))))
+            continue
+
+        j = response.json()
+        if "Token" not in j:
+            logging.warning(f"Failed to get a Token element from DNAC {dnac}: {response.text}")
+            continue
+
+        cheaders = {
+            "accept": "application/json",
+            "x-auth-token": j["Token"],
+            "entity_type": "network_user_id",
+            "entity_value": kwargs["uname"],
+        }
+        try:
+            response = requests.request("GET", curl, headers=cheaders, verify=False)
+            response.raise_for_status()
+        except Exception as e:
+            logging.warning("Failed to find user {} in DNAC: {}".format(kwargs["uname"], getattr(e, "message", repr(e))))
+            continue
+
+        j = response.json()
+        if len(j) == 0 or "userDetails" not in j[0]:
+            logging.warning("Got an unknown response from DNAC: '{}'".format(response.text))
+            continue
+
+        detail = j[0]["userDetails"]
+
+        if "hostType" in detail:
+            dna_obj["type"] = detail["hostType"]
+
+        if "userId" in detail:
+            dna_obj["user"] = detail["userId"]
+
+        dna_obj["mac"] = detail["hostMac"]
+
+        if "hostOs" in detail and detail["hostOs"]:
+            dna_obj["ostype"] = detail["hostOs"]
+        elif "subType" in detail:
+            dna_obj["ostype"] = detail["subType"]
+
+        if "healthScore" in detail:
+            for hscore in detail["healthScore"]:
+                if hscore["healthType"] == "OVERALL":
+                    dna_obj["health"] = hscore["score"]
+                    if hscore["reason"] != "":
+                        dna_obj["reason"] = hscore["reason"]
+                elif hscore["healthType"] == "ONBOARDED":
+                    dna_obj["onboard"] = hscore["score"]
+                elif hscore["healthType"] == "CONNECTED":
+                    dna_obj["connect"] = hscore["score"]
+
+        if "ssid" in detail:
+            dna_obj["ssid"] = detail["ssid"]
+
+        if "location" in detail:
+            dna_obj["location"] = detail["location"]
+
+        if "clientConnection" in detail:
+            dna_obj["ap"] = detail["clientConnection"]
+
+        if "frequency" in detail:
+            dna_obj["band"] = detail["frequency"]
+
+        return dna_obj
+
+    return None
+
+
 # TODO: We don't use PI anymore.  Remove this in favor of DNAC.
 def get_from_pi(**kwargs):
 
@@ -419,7 +512,7 @@ def print_dnac(spark, what, dna_obj, msg):
     if dna_obj["location"]:
         loc = f"located in **{dna_obj['location']}**"
     if dna_obj["ap"]:
-        sdetails = f"associated to AP **{dna_obj['ap']}**"
+        sdetails = f"connected to AP **{dna_obj['ap']}**"
 
         if dna_obj["band"]:
             sdetails += f" at **{dna_obj['band']} GHz**"
@@ -541,26 +634,75 @@ if __name__ == "__main__":
             if re.search(r"gru", m.group("uname"), re.I):
                 uname = "rkamerma"
                 usecret = "gru"
-            res = get_from_pi(user=uname)
+            res = get_user_from_dnac(user=uname)
             if res is None:
-                res = get_from_pi(user=uname + "@{}".format(C.AD_DOMAIN))
+                res = get_user_from_dnac(user=uname + "@{}".format(C.AD_DOMAIN))
 
             if res is not None:
-                print_pi(spark, m.group("uname"), res, "")
-                for ent in res:
-                    dnacres = get_from_dnac(mac=ent["clientDetailsDTO"]["macAddress"].lower())
-                    if dnacres is not None:
-                        print_dnac(spark, m.group("uname"), dnacres, "")
-                    cmxres = get_from_cmx(mac=ent["clientDetailsDTO"]["macAddress"].lower(), user=usecret)
-                    if cmxres is not None:
-                        spark.post_to_spark_with_attach(
-                            C.WEBEX_TEAM,
-                            SPARK_ROOM,
-                            "{}'s location from CMX".format(m.group("uname")),
-                            cmxres,
-                            "{}_location.jpg".format(m.group("uname")),
-                            "image/jpeg",
-                        )
+                print_dnac(spark, uname, res, "")
+                hmac = normalize_mac(res["mac"])
+                leases = check_for_mac(hmac)
+                if leases is not None:
+                    seen_ip = {}
+                    for lres in leases:
+                        if lres["ip"] in seen_ip:
+                            continue
+
+                        reserved = ""
+                        if "is-reserved" in lres and lres["is-reserved"]:
+                            reserved = " (Client has reserved this IP)"
+
+                        seen_ip[lres["ip"]] = True
+                        if re.search(r"available", lres["state"]):
+                            port_info = lres["relay-info"]["port"]
+                            if port_info != "N/A":
+                                port_info = '<a href="{}switchname={}&portname={}">**{}**</a>'.format(
+                                    C.TOOL_BASE,
+                                    "-".join(lres["relay-info"]["switch"].split("-")[:-1]),
+                                    lres["relay-info"]["port"],
+                                    lres["relay-info"]["port"],
+                                )
+                            spark.post_to_spark(
+                                C.WEBEX_TEAM,
+                                SPARK_ROOM,
+                                "User {} has MAC _{}_ and no longer has a lease, but _USED TO HAVE_ lease **{}** (hostname: **{}**) in scope **{}** (state: **{}**) and was connected to switch **{}** on port {} in VLAN **{}**{}.".format(
+                                    uname,
+                                    res["mac"],
+                                    lres["ip"],
+                                    lres["name"],
+                                    lres["scope"],
+                                    lres["state"],
+                                    lres["relay-info"]["switch"],
+                                    port_info,
+                                    lres["relay-info"]["vlan"],
+                                    reserved,
+                                ),
+                            )
+                        else:
+                            port_info = lres["relay-info"]["port"]
+                            if port_info != "N/A":
+                                port_info = '<a href="{}switchname={}&portname={}">**{}**</a>'.format(
+                                    C.TOOL_BASE,
+                                    "-".join(lres["relay-info"]["switch"].split("-")[:-1]),
+                                    lres["relay-info"]["port"],
+                                    lres["relay-info"]["port"],
+                                )
+                            spark.post_to_spark(
+                                C.WEBEX_TEAM,
+                                SPARK_ROOM,
+                                "User {} with MAC _{}_ has lease **{}** (hostname: **{}**) in scope **{}** (state: **{}**) and is connected to switch **{}** on port {} in VLAN **{}**{}.".format(
+                                    uname,
+                                    res["mac"],
+                                    lres["ip"],
+                                    lres["name"],
+                                    lres["scope"],
+                                    lres["state"],
+                                    lres["relay-info"]["switch"],
+                                    port_info,
+                                    lres["relay-info"]["vlan"],
+                                    reserved,
+                                ),
+                            )
             else:
                 spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, "Sorry, I can't find {}.".format(m.group("uname")))
 
@@ -764,33 +906,49 @@ if __name__ == "__main__":
 
                         seen_ip[res["ip"]] = True
                         if re.search(r"available", res["state"]):
+                            port_info = res["relay-info"]["port"]
+                            if port_info != "N/A":
+                                port_info = '<a href="{}switchname={}&portname={}">**{}**</a>'.format(
+                                    C.TOOL_BASE,
+                                    "-".join(res["relay-info"]["switch"].split("-")[:-1]),
+                                    res["relay-info"]["port"],
+                                    res["relay-info"]["port"],
+                                )
                             spark.post_to_spark(
                                 C.WEBEX_TEAM,
                                 SPARK_ROOM,
-                                "Client with MAC _{}_ no longer has a lease, but _USED TO HAVE_ lease **{}** (hostname: **{}**) in scope **{}** (state: **{}**) and was connected to switch **{}** on port **{}** in VLAN **{}**{}.".format(
+                                "Client with MAC _{}_ no longer has a lease, but _USED TO HAVE_ lease **{}** (hostname: **{}**) in scope **{}** (state: **{}**) and was connected to switch **{}** on port {} in VLAN **{}**{}.".format(
                                     hit[0],
                                     res["ip"],
                                     res["name"],
                                     res["scope"],
                                     res["state"],
                                     res["relay-info"]["switch"],
-                                    res["relay-info"]["port"],
+                                    port_info,
                                     res["relay-info"]["vlan"],
                                     reserved,
                                 ),
                             )
                         else:
+                            port_info = res["relay-info"]["port"]
+                            if port_info != "N/A":
+                                port_info = '<a href="{}switchname={}&portname={}">**{}**</a>'.format(
+                                    C.TOOL_BASE,
+                                    "-".join(res["relay-info"]["switch"].split("-")[:-1]),
+                                    res["relay-info"]["port"],
+                                    res["relay-info"]["port"],
+                                )
                             spark.post_to_spark(
                                 C.WEBEX_TEAM,
                                 SPARK_ROOM,
-                                "Client with MAC _{}_ has lease **{}** (hostname: **{}**) in scope **{}** (state: **{}**) and is connected to switch **{}** on port **{}** in VLAN **{}**{}.".format(
+                                "Client with MAC _{}_ has lease **{}** (hostname: **{}**) in scope **{}** (state: **{}**) and is connected to switch **{}** on port {} in VLAN **{}**{}.".format(
                                     hit[0],
                                     res["ip"],
                                     res["name"],
                                     res["scope"],
                                     res["state"],
                                     res["relay-info"]["switch"],
-                                    res["relay-info"]["port"],
+                                    port_info,
                                     res["relay-info"]["vlan"],
                                     reserved,
                                 ),
