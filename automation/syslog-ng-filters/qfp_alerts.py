@@ -1,6 +1,6 @@
-#!/usr/local/bin/python3
+#!/usr/bin/env python
 #
-# Copyright (c) 2017-2019  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2023  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,11 +26,10 @@
 
 import sys
 
-sys.path.append("/home/jclarke")
-from sparker import Sparker, MessageType
-import CLEUCreds
+from sparker import Sparker, MessageType  # type: ignore
+import CLEUCreds  # type: ignore
 import re
-from cleu.config import Config as C
+from cleu.config import Config as C  # type: ignore
 
 SPARK_ROOM = "Core Alarms"
 

@@ -1,6 +1,6 @@
-#!/usr/local/bin/python3
+#!/usr/bin/env python
 #
-# Copyright (c) 2017-2020  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2023  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,21 +26,36 @@
 
 import sys
 
-sys.path.append("/home/jclarke")
-from sparker import Sparker, MessageType
-import CLEUCreds
+from sparker import Sparker, MessageType  # type: ignore
+import CLEUCreds  # type: ignore
 import re
-from cleu.config import Config as C
+import os
+import json
+import time
+from cleu.config import Config as C  # type: ignore
 
 SPARK_ROOM = "Err Disable Alarms"
 
+CACHE_FILE = "/home/jclarke/err_disable_cache.json"
+
 
 def make_tool_link(switch, port):
-    return '<a href="{}switchname={}&portname={}">**{}**</a>'.format(C.TOOL_BASE, switch, port, port,)
+    return '<a href="{}switchname={}&portname={}">**{}**</a>'.format(
+        C.TOOL_BASE,
+        switch,
+        port,
+        port,
+    )
 
 
 if __name__ == "__main__":
     spark = Sparker(token=CLEUCreds.SPARK_TOKEN)
+
+    curr_ports = {}
+
+    if os.path.exists(CACHE_FILE):
+        with open(CACHE_FILE, "r") as fd:
+            curr_ports = json.load(fd)
 
     while True:
         output = ""
@@ -63,12 +78,22 @@ if __name__ == "__main__":
                 ),
                 MessageType.WARNING,
             )
+
+            curr_ports[f"{host}:{m.group(2)}"] = int(time.time() * 1000)
         else:
             m = re.search(r"recover from .+? err-disable state on (\S+)", msg)
             if m:
-                spark.post_to_spark(
-                    C.WEBEX_TEAM,
-                    SPARK_ROOM,
-                    "Port {} on **{}** **{}**is recovering from err-disable".format(make_tool_link(host, m.group(1)), host, hpart),
-                    MessageType.GOOD,
-                )
+                if f"{host}:{m.group(1)}" in curr_ports:
+                    # Only send an up if we haven't seen another down for 5 seconds.
+                    if int(time.time() * 1000) - curr_ports[f"{host}:{m.group(1)}"] >= 5000:
+                        spark.post_to_spark(
+                            C.WEBEX_TEAM,
+                            SPARK_ROOM,
+                            "Port {} on **{}** **{}**is recovering from err-disable".format(make_tool_link(host, m.group(1)), host, hpart),
+                            MessageType.GOOD,
+                        )
+
+                        del curr_ports[f"{host}:{m.group(1)}"]
+
+        with open(CACHE_FILE, "w"):
+            json.dump(fd, curr_ports)
