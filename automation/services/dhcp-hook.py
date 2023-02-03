@@ -65,31 +65,30 @@ def normalize_mac(mac):
 
 # TODO: We don't use CMX anymore.  This needs to work with DNS Spaces?
 def get_from_cmx(**kwargs):
-    # marker = "green"
-    # if "user" in kwargs and kwargs["user"] == "gru":
-    #     marker = "gru"
+    marker = "green"
+    if "user" in kwargs and kwargs["user"] == "gru":
+        marker = "gru"
 
-    # if "ip" in kwargs:
-    #     url = "{}?ip={}&marker={}&size=1440".format(C.CMX_GW, kwargs["ip"], marker)
-    # elif "mac" in kwargs:
-    #     url = "{}?mac={}&marker={}&size=1440".format(C.CMX_GW, kwargs["mac"], marker)
-    # else:
-    #     return None
+    if "ip" in kwargs:
+        url = "{}?ip={}&marker={}&size=1440".format(C.CMX_GW, kwargs["ip"], marker)
+    elif "mac" in kwargs:
+        url = "{}?mac={}&marker={}&size=1440".format(C.CMX_GW, kwargs["mac"], marker)
+    else:
+        return None
 
-    # headers = {"Accept": "image/jpeg, application/json"}
+    headers = {"Accept": "image/jpeg, application/json"}
 
-    # try:
-    #     response = requests.request("GET", url, headers=headers, stream=True)
-    #     response.raise_for_status()
-    # except Exception:
-    #     logging.error("Encountered error getting data from cmx: {}".format(traceback.format_exc()))
-    #     return None
+    try:
+        response = requests.request("GET", url, headers=headers, stream=True)
+        response.raise_for_status()
+    except Exception:
+        logging.error("Encountered error getting data from cmx: {}".format(traceback.format_exc()))
+        return None
 
-    # if response.headers.get("content-type") == "application/json":
-    #     return None
+    if response.headers.get("content-type") == "application/json":
+        return None
 
-    # return response.raw.data
-    return None
+    return response.raw.data
 
 
 def get_from_dnac(**kwargs):
@@ -645,6 +644,7 @@ if __name__ == "__main__":
                 print_dnac(spark, uname, res, "")
                 hmac = normalize_mac(res["mac"])
                 leases = check_for_mac(hmac)
+                cmxres = get_from_cmx(mac=hmac)
                 if leases is not None:
                     seen_ip = {}
                     for lres in leases:
@@ -706,6 +706,10 @@ if __name__ == "__main__":
                                     reserved,
                                 ),
                             )
+                if cmxres:
+                    spark.post_to_spark_with_attach(
+                        C.WEBEX_TEAM, SPARK_ROOM, "Location from CMX", cmxres, "{}_location.jpg".format(uname), "image/jpeg"
+                    )
             else:
                 spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, "Sorry, I can't find {}.".format(m.group("uname")))
 
