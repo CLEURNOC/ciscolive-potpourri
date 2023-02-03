@@ -5,7 +5,7 @@
 import requests
 import sys
 import json
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
+from requests.packages.urllib3.exceptions import InsecureRequestWarning  # type: ignore
 from flask import Flask
 from flask import abort
 from flask_restful import Api
@@ -13,13 +13,12 @@ from flask_restful import Resource
 from flask_restful import reqparse
 from flask import send_file
 from pathlib import Path
-from io import StringIO
 from io import BytesIO
 from ipaddress import IPv6Address
 import os
 import traceback
-import CLEUCreds
-from cleu.config import Config as C
+import CLEUCreds  # type: ignore
+from cleu.config import Config as C  # type: ignore
 
 
 from PIL import Image, ImageDraw
@@ -41,6 +40,7 @@ def after_request(response):
 
 cmxBaseUrl = C.CMX
 cmxAuth = (CLEUCreds.CMX_USERNAME, CLEUCreds.CMX_PASSWORD)
+cmxMapAuth = (CLEUCreds.CMX_MAP_USERNAME, CLEUCreds.CMX_PASSWORD)
 PORT = 8002
 
 imgDir = "maps/"
@@ -54,11 +54,11 @@ for filename in markerFiles:
     # markerW, markerH = marker.size
 
 apiUri = {
-    "mac": "/api/location/v2/clients?macAddress=",
-    "ip": "/api/location/v2/clients?ipAddress=",
+    "mac": "/api/location/v3/clients?macAddress=",
+    "ip": "/api/location/v3/clients?ipAddress=",
     "map": "/api/config/v1/maps/imagesource/",
-    "ssid": "/api/location/v2/clients/?include=metadata&pageSize=1000&page=",
-    "count": "/api/location/v2/clients/count",
+    "ssid": "/api/location/v3/clients/?include=metadata&pageSize=1000&page=",
+    "count": "/api/location/v3/clients/count",
     "floors": "/api/config/v1/maps",
     "tag": "/api/location/v1/tags/",
 }
@@ -74,7 +74,7 @@ def serve_pil_image(pil_img):
 def getMap(imageName):
     imgFile = Path(imgDir + imageName)
     if not imgFile.is_file():
-        respImg = requests.get(cmxBaseUrl + apiUri["map"] + imageName, auth=cmxAuth, verify=False, stream=True)
+        respImg = requests.get(cmxBaseUrl + apiUri["map"] + imageName, auth=cmxMapAuth, verify=False, stream=True)
         if respImg.status_code == 200:
             with open(str(imgFile), "wb") as f:
                 for chunk in respImg:
@@ -82,7 +82,7 @@ def getMap(imageName):
 
 
 def getAllFloorMaps():
-    response = requests.get(cmxBaseUrl + apiUri["floors"], auth=cmxAuth, verify=False)
+    response = requests.get(cmxBaseUrl + apiUri["floors"], auth=cmxMapAuth, verify=False)
     floorList = {}
     if response and response != "":
         try:
@@ -106,12 +106,12 @@ def getAllFloorMaps():
 class CMX(Resource):
     def get(self):
         parser = reqparse.RequestParser()
-        parser.add_argument("ip", help="IP address of the endpoint")
-        parser.add_argument("ipv6", help="IPv6 address of the endpoint")
-        parser.add_argument("mac", help="MAC address of the endpoint")
-        parser.add_argument("marker", help="Marker used to display the location of the endpoint", default="marker")
-        parser.add_argument("size", help="Size of the image returned")
-        parser.add_argument("tag", help="Asset tag MAC address")
+        parser.add_argument("ip", location="args", help="IP address of the endpoint")
+        parser.add_argument("ipv6", location="args", help="IPv6 address of the endpoint")
+        parser.add_argument("mac", location="args", help="MAC address of the endpoint")
+        parser.add_argument("marker", location="args", help="Marker used to display the location of the endpoint", default="marker")
+        parser.add_argument("size", location="args", help="Size of the image returned")
+        parser.add_argument("tag", location="args", help="Asset tag MAC address")
 
         args = parser.parse_args()
         response = ""
@@ -169,6 +169,7 @@ class CMX(Resource):
                 else:
                     abort(404, "Requested element not found")
             except Exception as inst:
+                traceback.print_exc()
                 print("Unexpected error with request= {} | error : {}".format(response.text, inst), file=sys.stderr)
                 return {"response": str(response.text), "error": str(inst)}, 500
 
