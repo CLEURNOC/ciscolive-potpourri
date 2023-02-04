@@ -58,6 +58,8 @@ if __name__ == "__main__":
     elif j["details"]["Assurance Issue Priority"] == "P1":
         mt = MessageType(MessageType.BAD)
 
-    message = f"{mt} Device **{j['details']['Device']}** has [issue]({j['ciscoDnaEventLink']}): {j['details']['Assurance Issue Details']}"
+    message = (
+        f"{mt.value} Device **{j['details']['Device']}** has [issue]({j['ciscoDnaEventLink']}): {j['details']['Assurance Issue Details']}"
+    )
 
     print(requests.post(DNAC_WEBHOOK, headers=HEADERS, json={"markdown": message}))
