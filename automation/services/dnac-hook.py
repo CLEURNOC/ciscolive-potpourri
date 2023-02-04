@@ -60,4 +60,4 @@ if __name__ == "__main__":
 
     message = f"{mt} Device **{j['details']['Device']}** has [issue]({j['ciscoDnaEventLink']}): {j['details']['Assurance Issue Details']}"
 
-    requests.post(DNAC_WEBHOOK, header=HEADERS, json={"message": message})
+    print(requests.post(DNAC_WEBHOOK, header=HEADERS, json={"message": message}))
