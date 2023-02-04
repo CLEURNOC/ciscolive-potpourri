@@ -53,13 +53,13 @@ if __name__ == "__main__":
 
     # seen_issues[det["issueId"]] = det["issueMessage"]
     mt = MessageType(MessageType.WARNING)
-    verb = "has"
+    verb = "has an"
     if j["details"]["Assurance Issue Status"] != "active":
         mt = MessageType(MessageType.GOOD)
-        verb = "no longer has"
+        verb = "no longer has an"
     elif j["details"]["Assurance Issue Priority"] == "P1":
         mt = MessageType(MessageType.BAD)
 
-    message = f"{mt.value} Device **{j['details']['Device']}** {verb} [issue]({j['ciscoDnaEventLink']}): {j['details']['Assurance Issue Details']}"
+    message = f"{mt.value} Device **{j['details']['Device']}** {verb} <a href='{j['ciscoDnaEventLink']}'>issue</a>: {j['details']['Assurance Issue Details']}"
 
     print(requests.post(DNAC_WEBHOOK, headers=HEADERS, json={"markdown": message}))
