@@ -68,6 +68,8 @@ def get_from_cmx(**kwargs):
     marker = "green"
     if "user" in kwargs and kwargs["user"] == "gru":
         marker = "gru"
+    elif "user" in kwargs:
+        marker = kwargs["user"]
 
     if "ip" in kwargs:
         url = "{}?ip={}&marker={}&size=1440".format(C.CMX_GW, kwargs["ip"], marker)
