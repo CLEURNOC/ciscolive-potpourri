@@ -638,82 +638,89 @@ if __name__ == "__main__":
             if re.search(r"gru", m.group("uname"), re.I):
                 uname = "rkamerma"
                 usecret = "gru"
-            res = get_user_from_dnac(user=uname)
-            if res is None:
-                res = get_user_from_dnac(user=uname + "@{}".format(C.AD_DOMAIN))
-
-            if res is not None:
-                print_dnac(spark, uname, res, "")
-                hmac = normalize_mac(res["mac"])
-                leases = check_for_mac(hmac)
-                cmxres = get_from_cmx(mac=hmac, user=uname)
-                if leases is not None:
-                    seen_ip = {}
-                    for lres in leases:
-                        if lres["ip"] in seen_ip:
-                            continue
-
-                        reserved = ""
-                        if "is-reserved" in lres and lres["is-reserved"]:
-                            reserved = " (Client has reserved this IP)"
-
-                        seen_ip[lres["ip"]] = True
-                        if re.search(r"available", lres["state"]):
-                            port_info = lres["relay-info"]["port"]
-                            if port_info != "N/A":
-                                port_info = '<a href="{}switchname={}&portname={}">**{}**</a>'.format(
-                                    C.TOOL_BASE,
-                                    "-".join(lres["relay-info"]["switch"].split("-")[:-1]),
-                                    lres["relay-info"]["port"],
-                                    lres["relay-info"]["port"],
-                                )
-                            spark.post_to_spark(
-                                C.WEBEX_TEAM,
-                                SPARK_ROOM,
-                                "User {} has MAC _{}_ and no longer has a lease, but _USED TO HAVE_ lease **{}** (hostname: **{}**) in scope **{}** (state: **{}**) and was connected to switch **{}** on port {} in VLAN **{}**{}.".format(
-                                    uname,
-                                    res["mac"],
-                                    lres["ip"],
-                                    lres["name"],
-                                    lres["scope"],
-                                    lres["state"],
-                                    lres["relay-info"]["switch"],
-                                    port_info,
-                                    lres["relay-info"]["vlan"],
-                                    reserved,
-                                ),
-                            )
-                        else:
-                            port_info = lres["relay-info"]["port"]
-                            if port_info != "N/A":
-                                port_info = '<a href="{}switchname={}&portname={}">**{}**</a>'.format(
-                                    C.TOOL_BASE,
-                                    "-".join(lres["relay-info"]["switch"].split("-")[:-1]),
-                                    lres["relay-info"]["port"],
-                                    lres["relay-info"]["port"],
-                                )
-                            spark.post_to_spark(
-                                C.WEBEX_TEAM,
-                                SPARK_ROOM,
-                                "User {} with MAC _{}_ has lease **{}** (hostname: **{}**) in scope **{}** (state: **{}**) and is connected to switch **{}** on port {} in VLAN **{}**{}.".format(
-                                    uname,
-                                    res["mac"],
-                                    lres["ip"],
-                                    lres["name"],
-                                    lres["scope"],
-                                    lres["state"],
-                                    lres["relay-info"]["switch"],
-                                    port_info,
-                                    lres["relay-info"]["vlan"],
-                                    reserved,
-                                ),
-                            )
-                if cmxres:
-                    spark.post_to_spark_with_attach(
-                        C.WEBEX_TEAM, SPARK_ROOM, "Location from CMX", cmxres, "{}_location.jpg".format(uname), "image/jpeg"
-                    )
+            if uname == "pacman":
+                with open("pacman.gif", "rb") as fd:
+                    cmxres = fd.read()
+                spark.post_to_spark_with_attach(
+                    C.WEBEX_TEAM, SPARK_ROOM, "Location from CMX", cmxres, "{}_location.gif".format(uname), "image/gif"
+                )
             else:
-                spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, "Sorry, I can't find {}.".format(m.group("uname")))
+                res = get_user_from_dnac(user=uname)
+                if res is None:
+                    res = get_user_from_dnac(user=uname + "@{}".format(C.AD_DOMAIN))
+
+                if res is not None:
+                    print_dnac(spark, uname, res, "")
+                    hmac = normalize_mac(res["mac"])
+                    leases = check_for_mac(hmac)
+                    cmxres = get_from_cmx(mac=hmac, user=uname)
+                    if leases is not None:
+                        seen_ip = {}
+                        for lres in leases:
+                            if lres["ip"] in seen_ip:
+                                continue
+
+                            reserved = ""
+                            if "is-reserved" in lres and lres["is-reserved"]:
+                                reserved = " (Client has reserved this IP)"
+
+                            seen_ip[lres["ip"]] = True
+                            if re.search(r"available", lres["state"]):
+                                port_info = lres["relay-info"]["port"]
+                                if port_info != "N/A":
+                                    port_info = '<a href="{}switchname={}&portname={}">**{}**</a>'.format(
+                                        C.TOOL_BASE,
+                                        "-".join(lres["relay-info"]["switch"].split("-")[:-1]),
+                                        lres["relay-info"]["port"],
+                                        lres["relay-info"]["port"],
+                                    )
+                                spark.post_to_spark(
+                                    C.WEBEX_TEAM,
+                                    SPARK_ROOM,
+                                    "User {} has MAC _{}_ and no longer has a lease, but _USED TO HAVE_ lease **{}** (hostname: **{}**) in scope **{}** (state: **{}**) and was connected to switch **{}** on port {} in VLAN **{}**{}.".format(
+                                        uname,
+                                        res["mac"],
+                                        lres["ip"],
+                                        lres["name"],
+                                        lres["scope"],
+                                        lres["state"],
+                                        lres["relay-info"]["switch"],
+                                        port_info,
+                                        lres["relay-info"]["vlan"],
+                                        reserved,
+                                    ),
+                                )
+                            else:
+                                port_info = lres["relay-info"]["port"]
+                                if port_info != "N/A":
+                                    port_info = '<a href="{}switchname={}&portname={}">**{}**</a>'.format(
+                                        C.TOOL_BASE,
+                                        "-".join(lres["relay-info"]["switch"].split("-")[:-1]),
+                                        lres["relay-info"]["port"],
+                                        lres["relay-info"]["port"],
+                                    )
+                                spark.post_to_spark(
+                                    C.WEBEX_TEAM,
+                                    SPARK_ROOM,
+                                    "User {} with MAC _{}_ has lease **{}** (hostname: **{}**) in scope **{}** (state: **{}**) and is connected to switch **{}** on port {} in VLAN **{}**{}.".format(
+                                        uname,
+                                        res["mac"],
+                                        lres["ip"],
+                                        lres["name"],
+                                        lres["scope"],
+                                        lres["state"],
+                                        lres["relay-info"]["switch"],
+                                        port_info,
+                                        lres["relay-info"]["vlan"],
+                                        reserved,
+                                    ),
+                                )
+                    if cmxres:
+                        spark.post_to_spark_with_attach(
+                            C.WEBEX_TEAM, SPARK_ROOM, "Location from CMX", cmxres, "{}_location.jpg".format(uname), "image/jpeg"
+                        )
+                else:
+                    spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, "Sorry, I can't find {}.".format(m.group("uname")))
 
         m = re.search(r"(remove|delete)\s+(the\s+)?reservation.*?([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)", txt, re.I)
         if not m:
