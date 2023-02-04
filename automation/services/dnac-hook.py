@@ -52,11 +52,11 @@ if __name__ == "__main__":
     logging.debug(json.dumps(j, indent=4))
 
     # seen_issues[det["issueId"]] = det["issueMessage"]
-    mt = MessageType.WARNING
+    mt = MessageType(MessageType.WARNING)
     if j["details"]["Assurance Issue Status"] != "active":
-        mt = MessageType.GOOD
+        mt = MessageType(MessageType.GOOD)
     elif j["details"]["Assurance Issue Priority"] == "P1":
-        mt = MessageType.BAD
+        mt = MessageType(MessageType.BAD)
 
     message = f"{mt} Device **{j['details']['Device']}** has [issue]({j['ciscoDnaEventLink']}): {j['details']['Assurance Issue Details']}"
 
