@@ -646,7 +646,7 @@ if __name__ == "__main__":
                 print_dnac(spark, uname, res, "")
                 hmac = normalize_mac(res["mac"])
                 leases = check_for_mac(hmac)
-                cmxres = get_from_cmx(mac=hmac)
+                cmxres = get_from_cmx(mac=hmac, user=uname)
                 if leases is not None:
                     seen_ip = {}
                     for lres in leases:
