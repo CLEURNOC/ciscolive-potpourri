@@ -175,7 +175,7 @@ if __name__ == "__main__":
     txt = msg["text"]
     found_hit = False
 
-    edns = ElementalDns()
+    edns = ElementalDns(url=f"https://{C.DNS_SERVER}:8443/")
 
     if re.search(r"\bhelp\b", txt, re.I):
         spark.post_to_spark(
