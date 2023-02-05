@@ -29,6 +29,9 @@ import sys
 import json
 from sparker import MessageType  # type: ignore
 import requests
+import html
+import re
+import os
 from requests.packages.urllib3.exceptions import InsecureRequestWarning  # type: ignore
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
@@ -60,6 +63,13 @@ if __name__ == "__main__":
     elif j["details"]["Assurance Issue Priority"] == "P1":
         mt = MessageType(MessageType.BAD)
 
-    message = f'{mt.value} Device **{j["details"]["Device"]}** {verb} <a href="{j["ciscoDnaEventLink"]}">issue</a> : {j["details"]["Assurance Issue Details"]}'
+    link = j["ciscoDnaEventLink"]
+    link = html.unescape(link)
+
+    link = re.sub(r"\<DNAC_IP_ADDRESS\>", os.environ["REMOTE_ADDR"], link)
+
+    message = (
+        f'{mt.value} Device **{j["details"]["Device"]}** {verb} <a href="{link}">issue</a> : {j["details"]["Assurance Issue Details"]}'
+    )
 
     print(requests.post(DNAC_WEBHOOK, headers=HEADERS, json={"markdown": message}))
