@@ -130,7 +130,7 @@ if __name__ == "__main__":
             curr_state[scope] = True
             if scope not in prev_state or (scope in prev_state and not prev_state[scope]):
                 spark.post_to_spark(
-                    C.WEBEX_TAM,
+                    C.WEBEX_TEAM,
                     SPARK_ROOM,
                     "Scope **{0}** is now **{1:.2f}%** utilized ({2} of {3} free addresses remain); suppressing future alerts until resolved".format(
                         scope, stat["util"], stat["free-dynamic"], stat["total-dynamic"]
