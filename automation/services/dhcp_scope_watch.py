@@ -83,7 +83,15 @@ def get_results(scope):
         util = (float(outd["active-dynamic"]) / float(outd["total-dynamic"])) * 100.0
         # print('Util for {0} is {1:.2f}% utilized'.format(scope, util))
 
-        return (scope, {"util": util, "active-dynamic": outd["active-dynamic"], "total-dynamic": outd["total-dynamic"]})
+        return (
+            scope,
+            {
+                "util": util,
+                "free-dynamic": outd["free-dynamic"],
+                "active-dynamic": outd["active-dynamic"],
+                "total-dynamic": outd["total-dynamic"],
+            },
+        )
 
 
 def get_metrics(pool):
