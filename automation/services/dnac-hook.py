@@ -55,6 +55,9 @@ if __name__ == "__main__":
     logging.debug(json.dumps(j, indent=4))
 
     # seen_issues[det["issueId"]] = det["issueMessage"]
+    if "Assurance Issue Status" not in j["details"]:
+        print("{}")
+
     mt = MessageType(MessageType.WARNING)
     verb = "has an"
     if j["details"]["Assurance Issue Status"] != "active":
