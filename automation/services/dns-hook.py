@@ -103,7 +103,7 @@ def check_for_record(edns: ElementalDns, hostname: str) -> cpnr.models.model.Rec
     return edns.host.get(hostname, zoneOrigin=C.DNS_DOMAIN + ".")
 
 
-def create_record(edns: ElementalDns, hostname: str, ip: str, aliases: list, message_from: str) -> None:
+def create_record(edns: ElementalDns, hostname: str, ip: str, aliases: str, message_from: str) -> None:
     cpnr_record = {}
 
     cpnr_record["name"] = hostname
@@ -117,7 +117,7 @@ def create_record(edns: ElementalDns, hostname: str, ip: str, aliases: list, mes
         alist = [x + "." + C.DNS_DOMAIN + "." if not x.endswith(".") else x for x in alist]
         cpnr_record["aliases"] = {"stringItem": alist}
 
-    txt_record = f'IN TXT "v=_static created by: {message_from}'
+    txt_record = f'IN TXT "v=_static created by: {message_from}"'
 
     edns.host.add(**cpnr_record)
     rrs = edns.rrset.get(hostname, zoneOrigin=C.DNS_DOMAIN + ".")
