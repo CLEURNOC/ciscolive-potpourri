@@ -135,12 +135,12 @@ if __name__ == "__main__":
     for scope, stat in metrics.items():
         stats[scope] = {"perc": stat["util"]}
         if stat["util"] >= float(THRESHOLD):
-            curr_state[scope] = True
-            if scope not in prev_state or (scope in prev_state and not prev_state[scope]):
+            curr_state[scope] = stat["util"]
+            if scope not in prev_state or (scope in prev_state and stat["util"] - prev_state[scope] > 1.0):
                 spark.post_to_spark(
                     C.WEBEX_TEAM,
                     SPARK_ROOM,
-                    "Scope **{0}** is now **{1:.2f}%** utilized ({2} of {3} free addresses remain); suppressing future alerts until resolved".format(
+                    "Scope **{0}** is now **{1:.2f}%** utilized ({2} of {3} free addresses remain); suppressing future alerts until resolved or utilization increases".format(
                         scope, stat["util"], stat["free-dynamic"], stat["total-dynamic"]
                     ),
                     MessageType.WARNING,
