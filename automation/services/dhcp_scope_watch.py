@@ -136,7 +136,7 @@ if __name__ == "__main__":
         stats[scope] = {"perc": stat["util"]}
         if stat["util"] >= float(THRESHOLD):
             curr_state[scope] = stat["util"]
-            if scope not in prev_state or (scope in prev_state and stat["util"] - prev_state[scope] > 1.0):
+            if scope not in prev_state or (scope in prev_state and stat["util"] - prev_state[scope] >= 1.0):
                 spark.post_to_spark(
                     C.WEBEX_TEAM,
                     SPARK_ROOM,
