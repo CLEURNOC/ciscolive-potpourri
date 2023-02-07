@@ -57,6 +57,7 @@ if __name__ == "__main__":
     # seen_issues[det["issueId"]] = det["issueMessage"]
     if "Assurance Issue Status" not in j["details"]:
         print("{}")
+        exit(0)
 
     mt = MessageType(MessageType.WARNING)
     verb = "has an"
