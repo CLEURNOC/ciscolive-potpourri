@@ -44,6 +44,8 @@ routers = {}
 commands = {"ip_route": "show ip route", "ipv6_route": "show ipv6 route"}
 
 cache_dir = "/home/jclarke/routing-tables"
+
+# TODO: Integrate with NetBox to get edge routers
 ROUTER_FILE = "/home/jclarke/routers.json"
 
 WEBEX_ROOM = "Edge Routing Diffs"
@@ -176,20 +178,20 @@ if __name__ == "__main__":
                                     gfile = re.sub(r"\.curr", ".txt", os.path.basename(curr_path))
                                     shutil.copyfile(curr_path, args.git_repo + "/" + gfile)
                                     os.chdir(args.git_repo)
-                                    call("git add {}".format(gfile), shell=True)
-                                    call('git commit -m "Routing table update" {}'.format(gfile), shell=True)
+                                    call(f"git add {gfile}", shell=True)
+                                    call(f'git commit -m "Routing table update" {gfile}', shell=True)
                                     do_push = True
                                 except Exception as ie:
-                                    print("ERROR: Failed to commit to git repo {}: {}".format(args.git_repo, ie))
+                                    print(f"ERROR: Failed to commit to git repo {args.git_repo}: {ie}")
                             else:
-                                print("ERROR: Git repo {} is not a directory".format(args.git_repo))
+                                print(f"ERROR: Git repo {args.git_repo} is not a directory")
                         # print('XXX: Out = \'{}\''.format(out))
 
                 os.rename(curr_path, prev_path)
 
         except Exception as e:
             ssh_client.close()
-            print("Failed to get routing tables from {}: {}".format(router, e))
+            print(f"Failed to get routing tables from {router}: {e}")
             continue
 
         ssh_client.close()
@@ -199,5 +201,5 @@ if __name__ == "__main__":
             print("ERROR: Cannot push without a branch")
         else:
             os.chdir(args.git_repo)
-            call("git pull origin {}".format(args.git_branch), shell=True)
-            call("git push origin {}".format(args.git_branch), shell=True)
+            call(f"git pull origin {args.git_branch}", shell=True)
+            call(f"git push origin {args.git_branch}", shell=True)
