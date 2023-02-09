@@ -95,5 +95,5 @@ if __name__ == "__main__":
 
                         del curr_ports[f"{host}:{m.group(1)}"]
 
-        with open(CACHE_FILE, "w"):
-            json.dump(fd, curr_ports)
+        with open(CACHE_FILE, "w") as fd:
+            json.dump(curr_ports, fd)
