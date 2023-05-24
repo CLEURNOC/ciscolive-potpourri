@@ -74,7 +74,7 @@ class Sparker(object):
                 response = requests.request(*args, **kwargs)
                 response.raise_for_status()
                 return response
-            except Exception as e:
+            except Exception:
                 if (response.status_code != 429 and response.status_code != 503 and response.status_code != 400) or i == Sparker.RETRIES:
                     return response
 
@@ -340,7 +340,11 @@ class Sparker(object):
                 response = Sparker._request_with_retry("POST", url, json=payload, headers=self._headers)
                 response.raise_for_status()
             except Exception as e:
-                msg = "Error adding member %s to %s: %s" % (member, resource, getattr(e, "message", repr(e)),)
+                msg = "Error adding member %s to %s: %s" % (
+                    member,
+                    resource,
+                    getattr(e, "message", repr(e)),
+                )
                 if self._logit:
                     logging.error(msg)
                 else:
@@ -396,6 +400,55 @@ class Sparker(object):
 
         return True
 
+    def post_to_spark_with_card(self, team, room, person, msg, card, mtype=MessageType.NEUTRAL):
+        if not self.check_token():
+            return None
+
+        mt = None
+
+        try:
+            mt = MessageType(mtype)
+        except Exception as e:
+            emsg = "Invalid message type: {}".format(getattr(e, "message", repr(e)))
+            if self._logit:
+                logging.error(emsg)
+            else:
+                print(emsg)
+            return False
+
+        payload = {}
+
+        if person is not None:
+            payload["toPersonEmail"] = person
+        else:
+            team_id = None
+
+            if team is not None:
+                team_id = self.get_team_id(team)
+            if team_id is None:
+                return False
+
+            room_id = self.get_room_id(team_id, room)
+            if room_id is None:
+                return False
+
+        url = self.SPARK_API + "messages"
+        payload["markdown"] = (mt.value + ((msg[: Sparker.MAX_MSG_LEN] + "...") if len(msg) > Sparker.MAX_MSG_LEN else msg),)
+        payload["attachments"] = [card]
+
+        try:
+            response = Sparker._request_with_retry("POST", url, json=payload, headers=self._headers)
+            response.raise_for_status()
+        except Exception as e:
+            emsg = "Error posting message: {}".format(getattr(e, "message", repr(e)))
+            if self._logit:
+                logging.error(emsg)
+            else:
+                print(emsg)
+            return False
+
+        return True
+
     def post_to_spark_with_attach(self, team, room, msg, attach, fname, ftype, mtype=MessageType.NEUTRAL):
         if not self.check_token():
             return None
@@ -405,11 +458,11 @@ class Sparker(object):
         try:
             mt = MessageType(mtype)
         except Exception as e:
-            msg = "Invalid message type: {}".format(getattr(e, "message", repr(e)))
+            emsg = "Invalid message type: {}".format(getattr(e, "message", repr(e)))
             if self._logit:
-                logging.error(msg)
+                logging.error(emsg)
             else:
-                print(msg)
+                print(emsg)
             return False
 
         team_id = None
@@ -441,11 +494,11 @@ class Sparker(object):
             response = Sparker._request_with_retry("POST", url, data=m, headers=headers)
             response.raise_for_status()
         except Exception as e:
-            msg = "Error posting message: {}".format(getattr(e, "message", repr(e)))
+            emsg = "Error posting message: {}".format(getattr(e, "message", repr(e)))
             if self._logit:
-                logging.error(msg)
+                logging.error(emsg)
             else:
-                print(msg)
+                print(emsg)
             return False
 
         return True
