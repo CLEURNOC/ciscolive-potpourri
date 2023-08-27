@@ -29,6 +29,7 @@ from requests_toolbelt import MultipartEncoder
 from io import BytesIO
 import logging
 import time
+import json
 from enum import Enum, unique
 
 
@@ -47,7 +48,7 @@ class MessageType(Enum):
 
 
 class Sparker(object):
-    SPARK_API = "https://api.ciscospark.com/v1/"
+    SPARK_API = "https://webexapis.com/v1/"
 
     RETRIES = 5
 
@@ -400,7 +401,7 @@ class Sparker(object):
 
         return True
 
-    def post_to_spark_with_card(self, team, room, person, msg, card, mtype=MessageType.NEUTRAL):
+    def post_to_spark_with_card(self, team, room, person, card, msg="", mtype=MessageType.NEUTRAL):
         if not self.check_token():
             return None
 
@@ -432,8 +433,10 @@ class Sparker(object):
             if room_id is None:
                 return False
 
+            payload["roomId"] = room_id
+
         url = self.SPARK_API + "messages"
-        payload["markdown"] = (mt.value + ((msg[: Sparker.MAX_MSG_LEN] + "...") if len(msg) > Sparker.MAX_MSG_LEN else msg),)
+        payload["markdown"] = mt.value + ((msg[: Sparker.MAX_MSG_LEN] + "...") if len(msg) > Sparker.MAX_MSG_LEN else msg)
         payload["attachments"] = [card]
 
         try:
