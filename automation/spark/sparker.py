@@ -29,6 +29,7 @@ from requests_toolbelt import MultipartEncoder
 from io import BytesIO
 import logging
 import time
+import json
 from enum import Enum, unique
 
 
@@ -51,7 +52,7 @@ class Sparker(object):
 
     RETRIES = 5
 
-    MAX_MSG_LEN = 7430
+    MAX_MSG_LEN = 22737
 
     _headers = {"authorization": None, "content-type": "application/json"}
 
@@ -80,6 +81,7 @@ class Sparker(object):
 
                 if response.status_code == 400:
                     print("XXX: Body is {}".format(response.text))
+                    return response
 
                 time.sleep(backoff)
                 backoff *= 2
@@ -404,6 +406,15 @@ class Sparker(object):
         if not self.check_token():
             return False
 
+        card_len = len(json.dumps(card))
+        if card_len > Sparker.MAX_MSG_LEN:
+            emsg = f"Card length {card_len} exceeds max message length {Sparker.MAX_MSG_LEN}"
+            if self._logit:
+                logging.error(emsg)
+            else:
+                print(emsg)
+            return False
+
         mt = None
 
         try:
@@ -435,7 +446,7 @@ class Sparker(object):
             payload["roomId"] = room_id
 
         url = self.SPARK_API + "messages"
-        payload["markdown"] = mt.value + ((msg[: Sparker.MAX_MSG_LEN] + "...") if len(msg) > Sparker.MAX_MSG_LEN else msg)
+        payload["markdown"] = mt.value + ((msg[: Sparker.MAX_MSG_LEN] + "...") if len(msg) > Sparker.MAX_MSG_LEN - card_len else msg)
         payload["attachments"] = [card]
 
         try:
