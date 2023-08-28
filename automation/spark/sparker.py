@@ -91,8 +91,6 @@ class Sparker(object):
                 time.sleep(backoff)
                 backoff *= 2
                 i += 1
-            except Exception:
-                return None
 
     @staticmethod
     def _get_items_pages(*args, **kwargs):
@@ -150,6 +148,25 @@ class Sparker(object):
             response.raise_for_status()
         except Exception as e:
             msg = "Error getting message with ID {}: {}".format(mid, getattr(e, "message", repr(e)))
+            if self._logit:
+                logging.error(msg)
+            else:
+                print(msg)
+            return None
+
+        return response.json()
+
+    def get_card_response(self, did):
+        if not self.check_token():
+            return None
+
+        url = self.SPARK_API + "attachment/actions/" + did
+
+        try:
+            response = Sparker._request_with_retry("GET", url, headers=self._headers)
+            response.raise_for_status()
+        except Exception as e:
+            msg = "Error getting card data with ID {}: {}".format(did, getattr(e, "message", repr(e)))
             if self._logit:
                 logging.error(msg)
             else:
