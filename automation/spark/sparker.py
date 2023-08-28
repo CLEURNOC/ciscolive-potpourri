@@ -29,7 +29,6 @@ from requests_toolbelt import MultipartEncoder
 from io import BytesIO
 import logging
 import time
-import json
 from enum import Enum, unique
 
 
@@ -288,7 +287,7 @@ class Sparker(object):
 
     def add_members(self, members, resource, type=ResourceType.TEAM):
         if not self.check_token():
-            return None
+            return False
 
         payload = {"isModerator": False}
         url = self.SPARK_API
@@ -356,7 +355,7 @@ class Sparker(object):
 
     def post_to_spark(self, team, room, msg, mtype=MessageType.NEUTRAL):
         if not self.check_token():
-            return None
+            return False
 
         mt = None
 
@@ -403,7 +402,7 @@ class Sparker(object):
 
     def post_to_spark_with_card(self, team, room, person, card, msg="", mtype=MessageType.NEUTRAL):
         if not self.check_token():
-            return None
+            return False
 
         mt = None
 
@@ -454,7 +453,7 @@ class Sparker(object):
 
     def post_to_spark_with_attach(self, team, room, msg, attach, fname, ftype, mtype=MessageType.NEUTRAL):
         if not self.check_token():
-            return None
+            return False
 
         mt = None
 
