@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017-2019  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2023  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -75,17 +75,24 @@ class Sparker(object):
                 response = requests.request(*args, **kwargs)
                 response.raise_for_status()
                 return response
-            except Exception:
-                if (response.status_code != 429 and response.status_code != 503 and response.status_code != 400) or i == Sparker.RETRIES:
-                    return response
+            except requests.HTTPError as e:
+                if (
+                    e.response.status_code != 429 and e.response.status_code != 503 and e.response.status_code != 400
+                ) or i == Sparker.RETRIES:
+                    return e.response
 
-                if response.status_code == 400:
+                if e.response.status_code == 400:
                     print("XXX: Body is {}".format(response.text))
-                    return response
+                    return e.response
+
+                if e.response.status_code == 429:
+                    backoff = int(e.response.headers.get("retry-after"))
 
                 time.sleep(backoff)
                 backoff *= 2
                 i += 1
+            except Exception:
+                return None
 
     @staticmethod
     def _get_items_pages(*args, **kwargs):
