@@ -124,7 +124,7 @@ def delete_netbox_device(enb: ElementalNetbox, dname: str) -> None:
 
             dev_obj.delete()
     except Exception as e:
-        sys.stderr.write(f"WARNING: Failed to delete NetBox device for {dname}\n")
+        sys.stderr.write(f"WARNING: Failed to delete NetBox device for {dname}: {e}\n")
 
 
 def populate_objects(enb: ElementalNetbox) -> None:
@@ -195,7 +195,6 @@ def add_netbox_device(enb: ElementalNetbox, dev: dict) -> None:
 
 
 if __name__ == "__main__":
-
     os.environ["NETBOX_ADDRESS"] = C.NETBOX_SERVER
     os.environ["NETBOX_API_TOKEN"] = CLEUCreds.NETBOX_API_TOKEN
 
