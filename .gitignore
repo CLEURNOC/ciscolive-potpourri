@@ -4,4 +4,5 @@
 **/test-playbook.yml
 .vscode
 gs_token.pickle
+gs_token.json
 venv
