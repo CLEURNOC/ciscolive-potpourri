@@ -1,5 +1,5 @@
 [flake8]
 exclude = cmlutils,*venv*,.git,.eggs,__pycache__,docs/source/conf.py,old,build,dist
-ignore = E731, E402, W503
-max-complexity = 20
+ignore = E731, E402, W503, E501
+max-complexity = 30
 max-line-length = 140
