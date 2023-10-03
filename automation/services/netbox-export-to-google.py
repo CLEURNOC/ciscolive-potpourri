@@ -5,8 +5,6 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 import pynetbox
 import os
-import csv
-import io
 import CLEUCreds  # type: ignore
 from cleu.config import Config as C  # type: ignore
 
@@ -27,6 +25,8 @@ def main() -> None:
     except Exception as e:
         print(f"ERROR: Failed to get IPs from NetBox: {e}")
         exit(1)
+
+    new_values = []
 
     headers = [
         "Address",
@@ -50,9 +50,7 @@ def main() -> None:
         "List of additional CNAMEs",
     ]
 
-    output = io.StringIO()
-    dict_writer = csv.DictWriter(output, headers)
-    dict_writer.writeheader()
+    new_values.append(headers)
 
     for ip in ips:
         tenant = None
@@ -90,30 +88,15 @@ def main() -> None:
             "Parent": parent,
             "List of additional CNAMEs": ip.custom_fields["CNAMEs"],
         }
-
-        dict_writer.writerow(row)
-
-    output.seek(0)
-
-    new_values = []
-    new_values.append(headers)
-    dict_reader = csv.DictReader(output)
-    for row in dict_reader:
-        r = []
-        for header in headers:
-            r.append(row[header])
-
-        new_values.append(r)
+        new_values.append(list(row.values()))
 
     gs_service = build("sheets", "v4", credentials=creds)
 
     ip_sheet = gs_service.spreadsheets()
-    ip_result = (
-        ip_sheet.values().update(spreadsheetId=SHEET_ID, range="IPs!A1:ZZ", body={"values": new_values}, valueInputOption="RAW").execute()
-    )
-    print(ip_result)
-
-    output.close()
+    try:
+        (ip_sheet.values().update(spreadsheetId=SHEET_ID, range="IPs!A1:ZZ", body={"values": new_values}, valueInputOption="RAW").execute())
+    except Exception as e:
+        print(f"ERROR: Failed to update sheet: {e}")
 
 
 if __name__ == "__main__":
