@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2017-2023  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2024  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,10 +32,8 @@ requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 import json
 import sys
 import time
-import os
-from subprocess import PIPE, run
+from subprocess import run
 import shlex
-from sparker import Sparker  # type: ignore
 import re
 import CLEUCreds  # type: ignore
 from cleu.config import Config as C  # type: ignore
@@ -44,7 +42,6 @@ CACHE_FILE = "/home/jclarke/monitored_devs.json"
 
 
 def get_devs():
-
     url = "http://{}/get/switches/json".format(C.TOOL)
 
     devs = []
@@ -72,7 +69,6 @@ def get_devs():
 
 
 def delete_device(dev):
-
     res = run(shlex.split("ssh -2 {} /usr/local/www/librenms/delhost.php {}".format(C.MONITORING, dev)), capture_output=True)
 
     return res
@@ -131,7 +127,7 @@ if __name__ == "__main__":
                 devs[tdev["AssetTag"]] = tdev["Hostname"]
                 changed_devs = True
                 continue
-            except Exception as e:
+            except Exception:
                 if not response or response.status_code != 400:
                     text = ""
                     if response:
