@@ -25,6 +25,7 @@ packaging
 paramiko
 protobuf
 pyasn1
+netaddr
 pyasn1-modules
 pycparser
 pyhcl
