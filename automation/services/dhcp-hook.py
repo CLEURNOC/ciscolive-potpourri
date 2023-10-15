@@ -34,7 +34,6 @@ import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning  # type: ignore
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-import time
 import traceback
 import socket
 import logging
@@ -284,7 +283,6 @@ def get_user_from_dnac(**kwargs):
 
 # TODO: We don't use PI anymore.  Remove this in favor of DNAC.
 def get_from_pi(**kwargs):
-
     # what = None
 
     # if "user" in kwargs:
@@ -429,7 +427,7 @@ def check_for_lease(ip):
 
     lease = response.json()
 
-    if not "clientMacAddr" in lease:
+    if "clientMacAddr" not in lease:
         return None
     relay = parse_relay_info(lease)
     if "clientHostName" in lease:
@@ -439,7 +437,9 @@ def check_for_lease(ip):
     else:
         res["name"] = "UNKNOWN"
 
-    res["mac"] = lease["clientMacAddr"][lease["clientMacAddr"].rfind(",") + 1 :]
+    pos = lease["clientMacAddr"].rfind(",") + 1
+
+    res["mac"] = lease["clientMacAddr"][pos:]
     res["scope"] = lease["scopeName"]
     res["state"] = lease["state"]
     res["relay-info"] = relay
@@ -742,7 +742,7 @@ if __name__ == "__main__":
                         )
                     except Exception as e:
                         spark.post_to_spark(
-                            C.WEBEX_TEAM, SPARK_ROOM, "Failed to delete reservation for {}: {}".format(m.group(3)), MessageType.BAD
+                            C.WEBEX_TEAM, SPARK_ROOM, "Failed to delete reservation for {}: {}".format(m.group(3), e), MessageType.BAD
                         )
 
         m = re.search(r"(make|create|add)\s+(a\s+)?reservation.*?([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)", txt, re.I)
@@ -1001,7 +1001,7 @@ if __name__ == "__main__":
                 ip = None
                 try:
                     ip = socket.gethostbyname(hit)
-                except:
+                except Exception:
                     pass
                 if ip:
                     res = check_for_lease(ip)
@@ -1075,7 +1075,7 @@ if __name__ == "__main__":
                 SPARK_ROOM,
                 'Sorry, I didn\'t get that.  Please give me a MAC or IP (or "reservation IP" or "user USER") or just ask for "help".',
             )
-    except Exception as e:
+    except Exception:
         logging.error("Error in obtaining data: {}".format(traceback.format_exc()))
         spark.post_to_spark(
             C.WEBEX_TEAM, SPARK_ROOM, "Whoops, I encountered an error:<br>\n```\n{}\n```".format(traceback.format_exc()), MessageType.BAD
