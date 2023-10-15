@@ -351,6 +351,8 @@ def main() -> int:
         traceback.print_exc()
         return 1
 
+    return 0
+
 
 if __name__ == "__main__":
     if not os.path.isfile(CREDS_FILE):
