@@ -456,6 +456,39 @@ def add_record(record: Union[ARecord, CNAMERecord, PTRRecord], primary_domain: s
         logger.warning(f"⛔️ Unexpected record of type {type(record)}")
 
 
+def dump_hosts(records: list[Union[ARecord, CNAMERecord, PTRRecord]], primary_domain: str, output_file: str) -> None:
+    """Dump the A and CNAME records to a hosts-like file
+
+    Args:
+        :records list: List of records to dump
+        :primary_domain str: Primary domain name to add if the record doesn't contain it
+        :output_file str: Path to the output file
+    """
+    aliases = {}
+    hosts = {}
+    for record in records:
+        if isinstance(record, PTRRecord):
+            continue
+
+        if isinstance(record, ARecord):
+            fqdn = f"{record.hostname}.{primary_domain}"
+            hosts[record.ip] = fqdn
+            if fqdn not in aliases:
+                aliases[fqdn] = [fqdn, record.hostname]
+            else:
+                aliases[fqdn] += [fqdn, record.hostname]
+        elif isinstance(record, CNAMERecord):
+            fqdn = f"{record.host.hostname}.{record.host.domain}"
+            if fqdn not in aliases:
+                aliases[fqdn] = [f"{record.alias}.{record.domain}"]
+            else:
+                aliases[fqdn].append(f"{record.alias}.{record.domain}")
+
+    with open(output_file, "a") as fd:
+        for ip, hname in hosts.items():
+            fd.write(f"{ip}\t{' '.join(aliases[hname])}\n")
+
+
 def parse_args() -> object:
     """Parse any command line arguments.
 
@@ -484,6 +517,8 @@ def parse_args() -> object:
     parser.add_argument(
         "--dummy", metavar="<DUMMY SERVER>", help="Override main DNS server with a dummy server (only used with --tenant", required=False
     )
+    parser.add_argument("--dump-hosts", action="store_true", help="Dump records to a hosts file", required=False)
+    parser.add_argument("--hosts-output", metavar="<OUTPUT_FILE>", help="Path to file to dump host records", required=False)
 
     args = parser.parse_args()
 
@@ -497,6 +532,10 @@ def parse_args() -> object:
 
     if args.dummy and not args.tenant:
         print("--dummy requires --tenant")
+        exit(1)
+
+    if args.dump_hosts and not args.hosts_output:
+        print("A hosts output file must be specified")
         exit(1)
 
     return args
@@ -516,6 +555,10 @@ def main():
         lower_tenant = args.tenant.lower()
 
     enb = ElementalNetbox()
+
+    if args.dump_hosts:
+        with open(args.hosts_output, "w") as fd:
+            fd.truncate()
 
     # 1. Get a list of all tenants.  If we work tenant-by-tenant, we will likely remain connected
     #    to the same DNS server.
@@ -544,18 +587,22 @@ def main():
             check_record, "check DNS record(s)", ip_addresses, "address", 20, False, primary_domain, edns, enb, wip_records
         )
 
-        # 4. If doing a dry-run, only print out the changes.
+        # 4. If desired, dump all hosts to a file.
+        if args.dump_hosts:
+            dump_hosts(wip_records.creates, primary_domain, args.hosts_output)
+
+        # 5. If doing a dry-run, only print out the changes.
         if args.dry_run:
             print_records(wip_records, primary_domain, tenant)
             continue
 
-        # 5. Process records to be deleted first.  Use thread pools again to parallelize this.
+        # 6. Process records to be deleted first.  Use thread pools again to parallelize this.
         success = launch_parallel_task(delete_record, "delete DNS record", wip_records.deletes, None, 20, True, primary_domain, edns)
 
         if not success:
             break
 
-        # 6. Process records to be added next.  Use thread pools again to parallelize this.
+        # 7. Process records to be added next.  Use thread pools again to parallelize this.
         launch_parallel_task(add_record, "add DNS record", wip_records.creates, "_name", 20, False, primary_domain, edns)
 
     # 7. Restart affected DNS servers.
