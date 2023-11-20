@@ -89,6 +89,7 @@ class DnsRecords:
 
     creates: list = field(default_factory=list)
     deletes: List[Tuple] = field(default_factory=list)
+    all: list = field(default_factory=list)
     lock: Lock = Lock()
 
 
@@ -204,10 +205,11 @@ def check_record(ip: IpAddresses, primary_domain: str, edns: ElementalDns, enb: 
         if not found_match:
             change_needed = True
 
+    wip_records.lock.acquire()
+
     if change_needed:
         # If a change is required in the A/PTR records, mark the old records for removal and add
         # the new records.
-        wip_records.lock.acquire()
 
         if current_host_record:
             if (current_host_record.name, primary_domain) not in wip_records.deletes:
@@ -229,7 +231,10 @@ def check_record(ip: IpAddresses, primary_domain: str, edns: ElementalDns, enb: 
 
         wip_records.creates.append(a_record)
 
-        wip_records.lock.release()
+    # Add the record to the overall list of records.
+    wip_records.all.append(a_record)
+
+    wip_records.lock.release()
 
     # Process any CNAMEs that may exist for this record.
     check_cnames(ip=ip, dns_name=dns_name, primary_domain=primary_domain, a_record=a_record, edns=edns, wip_records=wip_records)
@@ -275,6 +280,7 @@ def check_cnames(
             current_cname_record = get_cname_record(alias, current_domain, edns)
 
             wip_records.lock.acquire()
+            wip_records.all.append(cname_record)
 
             if not current_cname_record:
                 # There isn't a CNAME already, so add a new CNAME record.
@@ -589,7 +595,7 @@ def main():
 
         # 4. If desired, dump all hosts to a file.
         if args.dump_hosts:
-            dump_hosts(wip_records.creates, primary_domain, args.hosts_output)
+            dump_hosts(wip_records.all, primary_domain, args.hosts_output)
 
         # 5. If doing a dry-run, only print out the changes.
         if args.dry_run:
