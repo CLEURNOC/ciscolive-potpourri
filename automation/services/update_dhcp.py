@@ -38,18 +38,13 @@ import os
 import CLEUCreds  # type: ignore
 from cleu.config import Config as C  # type: ignore
 
-IDF_CNT = 99
-ADDITIONAL_IDFS = (252, 253, 254)
+IDF_CNT = 242
 FIRST_IP = 31
 LAST_IP = 253
 
 NB_TENANT = "Attendees"
 
-IDF_OVERRIDES = {
-    252: {"first_ip": 160, "last_ip": "250"},
-    253: {"first_ip": 160, "last_ip": "250"},
-    254: {"first_ip": 160, "last_ip": "250"},
-}
+IDF_OVERRIDES = {}
 
 SCOPE_BASE = C.DHCP_BASE + "Scope"
 
@@ -69,21 +64,26 @@ if __name__ == "__main__":
 
     for prefix in prefixes:
         prefix_obj = ipaddress.ip_network(prefix.prefix)
+        dhcpreq = prefix.custom_fields["dhcpreq"]
+        if not dhcpreq:
+            continue
+
+        scope_size = int(prefix.custom_fields["dhcpscopesize"])
 
         start = 1
         cnt = IDF_CNT
 
         idf_set = ()
 
-        if str(prefix_obj.netmask) == "255.255.0.0":
+        if scope_size == 16:
             start = 0
             cnt = 0
 
         for i in range(start, cnt + 1):
             idf_set += (i,)
 
-        if str(prefix_obj.netmask) != "255.255.0.0":
-            idf_set += ADDITIONAL_IDFS
+        # if str(prefix_obj.netmask) != "255.255.0.0":
+        #     idf_set += ADDITIONAL_IDFS
 
         for i in idf_set:
             scope_prefix = f"IDF-{str(i).zfill(3)}"
@@ -104,8 +104,9 @@ if __name__ == "__main__":
                 continue
 
             template = {"optionList": {"OptionItem": []}}
-            if str(prefix_obj.netmask) == "255.255.0.0":
+            if scope_size == 16:
                 roctets[2] = "255"
+
             template["optionList"]["OptionItem"].append({"number": "3", "value": ".".join(roctets)})
             first_ip = FIRST_IP
             last_ip = LAST_IP
@@ -117,7 +118,7 @@ if __name__ == "__main__":
             sipa[3] = str(first_ip)
             eipa = list(octets)
             eipa[3] = str(last_ip)
-            if str(prefix_obj.netmask) == "255.255.0.0":
+            if scope_size == 16:
                 eipa[2] = "255"
 
             sip = ".".join(sipa)
