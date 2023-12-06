@@ -89,7 +89,7 @@ def export_ips(nb: Any, gs_service: Any) -> None:
             interface = str(ip.assigned_object)
 
         cnames = " "
-        if len(ip.custom_fields["CNAMEs"]) > 0:
+        if ip.custom_fields["CNAMEs"] and len(ip.custom_fields["CNAMEs"]) > 0:
             cnames = ip.custom_fields["CNAMEs"]
 
         new_values.append(
