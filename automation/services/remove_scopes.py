@@ -39,7 +39,7 @@ if __name__ == "__main__":
     else:
         ans = input("Really delete all scopes (y/N): ")
 
-    if not re.search(r"^[yY]", ans):
+    if not re.search(r"^[yY]", ans.decode("utf-8")):
         print("Exiting...")
         sys.exit(0)
 

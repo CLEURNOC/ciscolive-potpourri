@@ -125,7 +125,7 @@ if __name__ == "__main__":
             eip = ".".join(eipa)
 
             rlist = {"RangeItem": [{"end": eip, "start": sip}]}
-            cidr = prefix_obj.prefixlen
+            cidr = scope_size
 
             if not prefix.role:
                 sys.stderr.write(f"WARNING: Unable to add scope {scope} as the prefix does not have a role.")
