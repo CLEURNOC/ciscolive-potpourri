@@ -61,7 +61,7 @@ if __name__ == "__main__":
                     shlex.split(f"ssh -2 root@{C.DHCP_SERVER} /root/nrcmd.sh -r scope '\\\"{scope}\\\"' delete"), stdout=PIPE, stderr=PIPE
                 )
                 out, err = proc.communicate()
-                if not re.search(r"^100", out.decode("utf-8")):
+                if not re.search(r"^10[01]", out.decode("utf-8")):
                     print(f"ERROR: Deleting scope {scope} failed: {out.decode('utf-8')}")
             else:
                 print(f'Skipping scope {scope} as it did not match "{match}"')
