@@ -49,8 +49,8 @@ def export_ips(nb: Any, gs_service: Any) -> None:
     new_values.append(headers)
 
     for ip in ips:
-        tenant = ""
-        tenant_group = ""
+        tenant = " "
+        tenant_group = " "
         if ip.tenant:
             ip.tenant.full_details()
             tenant = ip.tenant.name
@@ -179,35 +179,35 @@ def export_prefixes(nb: Any, gs_service: Any) -> None:
     new_values.append(headers)
 
     for prefix in prefixes:
-        tenant = ""
-        tenant_group = ""
+        tenant = " "
+        tenant_group = " "
         if prefix.tenant:
             prefix.tenant.full_details()
             tenant = prefix.tenant.name
             if prefix.tenant.group:
                 tenant_group = str(prefix.tenant.group)
 
-        vlan = ""
-        vlan_group = ""
+        vlan = " "
+        vlan_group = " "
         if prefix.vlan:
             prefix.vlan.full_details()
             vlan = f"{prefix.vlan.name} ({prefix.vlan.vid})"
             if prefix.vlan.group:
                 vlan_group = str(prefix.vlan.group)
 
-        site = ""
+        site = " "
         if prefix.site:
             site = prefix.site.name
 
-        role = ""
+        role = " "
         if prefix.role:
             role = str(prefix.role)
 
-        vrf = ""
+        vrf = " "
         if prefix.vrf:
             vrf = str(prefix.vrf)
 
-        tags = ""
+        tags = " "
         if len(prefix.tags) > 0:
             tags = ",".join(prefix.tags)
 
@@ -272,31 +272,31 @@ def export_vlans(nb: Any, gs_service: Any) -> None:
     new_values.append(headers)
 
     for vlan in vlans:
-        tenant = ""
-        tenant_group = ""
+        tenant = " "
+        tenant_group = " "
         if vlan.tenant:
             vlan.tenant.full_details()
             tenant = vlan.tenant.name
             if vlan.tenant.group:
                 tenant_group = str(vlan.tenant.group)
 
-        group = ""
+        group = " "
         if vlan.group:
             group = str(vlan.group)
 
-        site = ""
+        site = " "
         if vlan.site:
             site = vlan.site.name
 
-        role = ""
+        role = " "
         if vlan.role:
             role = str(vlan.role)
 
-        tags = ""
+        tags = " "
         if len(vlan.tags) > 0:
             tags = ",".join(vlan.tags)
 
-        l2vpn = ""
+        l2vpn = " "
         if vlan.l2vpn_termination:
             l2vpn = str(vlan.l2vpn_termination)
 
