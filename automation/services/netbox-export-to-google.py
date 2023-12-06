@@ -174,6 +174,8 @@ def export_prefixes(nb: Any, gs_service: Any) -> None:
         "Created",
         "Last updated",
         "Depth",
+        "DHCP Required",
+        "DHCP Scope Size",
     ]
 
     new_values.append(headers)
@@ -233,6 +235,8 @@ def export_prefixes(nb: Any, gs_service: Any) -> None:
             "Created": str(prefix.created),
             "Last updated": str(prefix.last_updated),
             "Depth": prefix._depth,
+            "Requires DHCP": prefix.custom_fields["dhcpreq"],
+            "DHCP Scope Size": prefix.custom_fields["dhcpscopesize"],
         }
         new_values.append(list(row.values()))
 
