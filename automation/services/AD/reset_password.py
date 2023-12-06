@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2017-2019  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2024  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,48 +26,48 @@
 
 from __future__ import print_function
 from builtins import bytes
-from pyad import *
+from pyad import adcontainer, adquery, aduser  # type: ignore
 import re
 from functools import wraps
-from flask import request, Response, session, redirect
-from flask import Flask
-import pythoncom
+from flask import request, Response, session, redirect  # type: ignore
+from flask import Flask  # type: ignore
+import pythoncom  # type: ignore
 import CLEUCreds
 import socket
 from cleu.config import Config as C
 
-LOG_EMERG = 0  #  system is unusable
-LOG_ALERT = 1  #  action must be taken immediately
-LOG_CRIT = 2  #  critical conditions
-LOG_ERR = 3  #  error conditions
-LOG_WARNING = 4  #  warning conditions
-LOG_NOTICE = 5  #  normal but significant condition
-LOG_INFO = 6  #  informational
-LOG_DEBUG = 7  #  debug-level messages
+LOG_EMERG = 0  # system is unusable
+LOG_ALERT = 1  # action must be taken immediately
+LOG_CRIT = 2  # critical conditions
+LOG_ERR = 3  # error conditions
+LOG_WARNING = 4  # warning conditions
+LOG_NOTICE = 5  # normal but significant condition
+LOG_INFO = 6  # informational
+LOG_DEBUG = 7  # debug-level messages
 
 #  facility codes
-LOG_KERN = 0  #  kernel messages
-LOG_USER = 1  #  random user-level messages
-LOG_MAIL = 2  #  mail system
-LOG_DAEMON = 3  #  system daemons
-LOG_AUTH = 4  #  security/authorization messages
-LOG_SYSLOG = 5  #  messages generated internally by syslogd
-LOG_LPR = 6  #  line printer subsystem
-LOG_NEWS = 7  #  network news subsystem
-LOG_UUCP = 8  #  UUCP subsystem
-LOG_CRON = 9  #  clock daemon
-LOG_AUTHPRIV = 10  #  security/authorization messages (private)
-LOG_FTP = 11  #  FTP daemon
+LOG_KERN = 0  # kernel messages
+LOG_USER = 1  # random user-level messages
+LOG_MAIL = 2  # mail system
+LOG_DAEMON = 3  # system daemons
+LOG_AUTH = 4  # security/authorization messages
+LOG_SYSLOG = 5  # messages generated internally by syslogd
+LOG_LPR = 6  # line printer subsystem
+LOG_NEWS = 7  # network news subsystem
+LOG_UUCP = 8  # UUCP subsystem
+LOG_CRON = 9  # clock daemon
+LOG_AUTHPRIV = 10  # security/authorization messages (private)
+LOG_FTP = 11  # FTP daemon
 
 #  other codes through 15 reserved for system use
-LOG_LOCAL0 = 16  #  reserved for local use
-LOG_LOCAL1 = 17  #  reserved for local use
-LOG_LOCAL2 = 18  #  reserved for local use
-LOG_LOCAL3 = 19  #  reserved for local use
-LOG_LOCAL4 = 20  #  reserved for local use
-LOG_LOCAL5 = 21  #  reserved for local use
-LOG_LOCAL6 = 22  #  reserved for local use
-LOG_LOCAL7 = 23  #  reserved for local use
+LOG_LOCAL0 = 16  # reserved for local use
+LOG_LOCAL1 = 17  # reserved for local use
+LOG_LOCAL2 = 18  # reserved for local use
+LOG_LOCAL3 = 19  # reserved for local use
+LOG_LOCAL4 = 20  # reserved for local use
+LOG_LOCAL5 = 21  # reserved for local use
+LOG_LOCAL6 = 22  # reserved for local use
+LOG_LOCAL7 = 23  # reserved for local use
 
 
 AD_DC = "dc1-ad." + C.AD_DOMAIN
@@ -286,14 +286,14 @@ def get_main():
 
       <meta name="viewport" content="width=device-width, initial-scale=1">
       <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
-  		<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>      <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/datatables/1.10.12/js/jquery.dataTables.min.js" integrity="sha256-TX6POJQ2u5/aJmHTJ/XUL5vWCbuOw0AQdgUEzk4vYMc=" crossorigin="anonymous"></script>
+                  <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>      <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/datatables/1.10.12/js/jquery.dataTables.min.js" integrity="sha256-TX6POJQ2u5/aJmHTJ/XUL5vWCbuOw0AQdgUEzk4vYMc=" crossorigin="anonymous"></script>
 <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/datatables/1.10.12/js/dataTables.bootstrap.min.js" integrity="sha256-90YqnHom4j8OhcEQgyUI2IhmGYTBO54Adcf3YDZU9xM=" crossorigin="anonymous"></script>
     <script>
     function verify() {
-	if (!$('#new_pass').val().trim()) {
-		alert('Please specify a new password.');
-		return false;
-	}
+        if (!$('#new_pass').val().trim()) {
+                alert('Please specify a new password.');
+                return false;
+        }
     if (!$('#new_pass_confirm').val().trim()) {
         alert('Please confirm the new password.');
         return false;
@@ -302,8 +302,8 @@ def get_main():
         alert('Passwords do not match.');
         return false;
     }
-	return true;
-	}
+        return true;
+        }
     </script>
     </head>
     <body>
