@@ -44,6 +44,7 @@ def export_ips(nb: Any, gs_service: Any) -> None:
         "Interface",
         "Parent",
         "List of additional CNAMEs",
+        "End of Row",
     ]
 
     new_values.append(headers)
@@ -109,6 +110,7 @@ def export_ips(nb: Any, gs_service: Any) -> None:
                 interface,  # Interface
                 parent,  # Parent
                 ip.custom_fields["CNAMEs"],  # List of additional CNAMEs
+                ".",  # End of Row
             ]
         )
 
