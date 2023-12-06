@@ -88,28 +88,29 @@ def export_ips(nb: Any, gs_service: Any) -> None:
         if ip.assigned_object:
             interface = str(ip.assigned_object)
 
-        row = {
-            "Address": ip.address,
-            "VRF": vrf,
-            "Status": ip.status.label,
-            "Role": role,
-            "Tenant": tenant,
-            "Assigned": ip.assigned_object_id,
-            "DNS name": ip.dns_name,
-            "Description": ip.description,
-            "ID": ip.id,
-            "Tenant Group": tenant_group,
-            "NAT (Inside)": nat_inside,
-            "NAT (Outside)": nat_outside,
-            "Comments": ip.comments,
-            "Tags": tags,
-            "Created": str(ip.created),
-            "Last updated": str(ip.last_updated),
-            "Interface": interface,
-            "Parent": parent,
-            "List of additional CNAMEs": ip.custom_fields["CNAMEs"],
-        }
-        new_values.append(list(row.values()))
+        new_values.append(
+            [
+                ip.address,  # Address
+                vrf,  # VRF
+                ip.status.label,  # Status
+                role,  # Role
+                tenant,  # Tenant
+                ip.assigned_object_id,  # Assigned
+                ip.dns_name,  # DNS name
+                ip.description,  # Description
+                ip.id,  # ID
+                tenant_group,  # Tenant Group
+                nat_inside,  # NAT (Inside)
+                nat_outside,  # NAT (Outside)
+                ip.comments,  # Comments
+                tags,  # Tags
+                str(ip.created),  # Created
+                str(ip.last_updated),  # Last updated
+                interface,  # Interface
+                parent,  # Parent
+                ip.custom_fields["CNAMEs"],  # List of additional CNAMEs
+            ]
+        )
 
     ip_sheet = gs_service.spreadsheets()
     ip_sheet.values().update(
