@@ -44,7 +44,6 @@ def export_ips(nb: Any, gs_service: Any) -> None:
         "Interface",
         "Parent",
         "List of additional CNAMEs",
-        "End of Row",
     ]
 
     new_values.append(headers)
@@ -58,36 +57,40 @@ def export_ips(nb: Any, gs_service: Any) -> None:
             if ip.tenant.group:
                 tenant_group = str(ip.tenant.group)
 
-        parent = ""
+        parent = " "
         if ip.assigned_object:
             if ip.assigned_object_type == "virtualization.vminterface":
                 parent = ip.assigned_object.virtual_machine.name
             elif ip.assigned_object_type == "dcim.interface":
                 parent = ip.assigned_object.device.name
 
-        role = ""
+        role = " "
         if ip.role:
             role = str(ip.role)
 
-        nat_inside = ""
+        nat_inside = " "
         if ip.nat_inside:
             nat_inside = str(nat_inside)
 
-        nat_outside = ""
+        nat_outside = " "
         if len(ip.nat_outside) > 0:
             nat_outside = ",".join(ip.nat_outside)
 
-        vrf = ""
+        vrf = " "
         if ip.vrf:
             vrf = str(ip.vrf)
 
-        tags = ""
+        tags = " "
         if len(ip.tags) > 0:
             tags = ",".join(ip.tags)
 
-        interface = ""
+        interface = " "
         if ip.assigned_object:
             interface = str(ip.assigned_object)
+
+        cnames = " "
+        if len(ip.custom_fields["CNAMEs"]) > 0:
+            cnames = ip.custom_fields["CNAMEs"]
 
         new_values.append(
             [
@@ -109,8 +112,7 @@ def export_ips(nb: Any, gs_service: Any) -> None:
                 str(ip.last_updated),  # Last updated
                 interface,  # Interface
                 parent,  # Parent
-                ip.custom_fields["CNAMEs"],  # List of additional CNAMEs
-                ".",  # End of Row
+                cnames,  # List of additional CNAMEs
             ]
         )
 
