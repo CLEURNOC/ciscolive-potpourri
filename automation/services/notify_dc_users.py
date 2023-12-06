@@ -49,13 +49,13 @@ JUMP_HOSTS = ["10.100.252.26", "10.100.252.27", "10.100.252.28", "10.100.252.29"
 DC_MAP = {
     "DC1": ["dc1_datastore_1", "dc1_datastore_2"],
     "DC2": ["dc2_datastore_1", "dc2_datastore_2"],
-    "HyperFlex-DC1": ["DC1-HX-DS-01", "DC1-HX-DS-02"],
-    "HyperFlex-DC2": ["DC2-HX-DS-01", "DC2-HX-DS-02"],
+    # "HyperFlex-DC1": ["DC1-HX-DS-01", "DC1-HX-DS-02"],
+    # "HyperFlex-DC2": ["DC2-HX-DS-01", "DC2-HX-DS-02"],
 }
 
 DEFAULT_CLUSTER = "FlexPod"
 
-HX_DCs = {"HyperFlex-DC1": 1, "HyperFlex-DC2": 1}
+# HX_DCs = {"HyperFlex-DC1": 1, "HyperFlex-DC2": 1}
 
 IP4_SUBNET = "10.100."
 IP6_PREFIX = "2a11:d940:2:"
@@ -63,7 +63,7 @@ STRETCHED_OCTET = 252
 GW_OCTET = 254
 
 # Map VMware VLAN names to NetBox names
-VLAN_MAP = {"CISCO_LABS": "Cisco-Labs", "SESSION_RECORDING": "Session-Recording", "WIRED_DEFAULT": "Wired-Default"}
+# VLAN_MAP = {"CISCO_LABS": "Cisco-Labs", "SESSION_RECORDING": "Session-Recording", "WIRED_DEFAULT": "Wired-Default"}
 
 NETWORK_MAP = {
     "Stretched_VMs": {
@@ -100,33 +100,33 @@ OSTYPE_LIST = [
     (r"(?i)centos", "centos8_64Guest", "linux", "eth0"),
     (r"(?i)red hat", "rhel7_64Guest", "linux", "eth0"),
     (r"(?i)linux", "other3xLinux64Guest", "linux", "eth0"),
-    (r"(?i)freebsd ?13.1", "freebsd12_64Guest", "freebsd13.1", "vmx0"),
+    (r"(?i)freebsd ?13.2", "freebsd12_64Guest", "freebsd13.2", "vmx0"),
     (r"(?i)freebsd", "freebsd12_64Guest", "other", "vmx0"),
 ]
 
 DNS1 = "10.100.253.6"
 DNS2 = "10.100.254.6"
-NTP1 = "10.128.0.1"
-NTP2 = "10.128.0.2"
+NTP1 = "10.127.0.233"
+NTP2 = "10.127.0.234"
 VCENTER = "https://" + C.VCENTER
 DOMAIN = C.DNS_DOMAIN
 AD_DOMAIN = C.AD_DOMAIN
 SMTP_SERVER = C.SMTP_SERVER
 SYSLOG = SMTP_SERVER
 ISO_DS = "dc1_datastore_1"
-ISO_DS_HX1 = "DC1-HX-DS-01"
-ISO_DS_HX2 = "DC2-HX-DS-01"
+# ISO_DS_HX1 = "DC1-HX-DS-01"
+# ISO_DS_HX2 = "DC2-HX-DS-01"
 VPN_SERVER_IP = C.VPN_SERVER_IP
 ANSIBLE_PATH = "/home/jclarke/src/git/ciscolive/automation/cleu-ansible-n9k"
 DATACENTER = "CiscoLive"
 CISCOLIVE_YEAR = C.CISCOLIVE_YEAR
 PW_RESET_URL = C.PW_RESET_URL
 
-TENANT_NAME = "Infrastructure"
+TENANT_NAME = "DC Infrastructure"
 VRF_NAME = "default"
 
-SPREADSHEET_ID = "15sC26okPX1lHzMFDJFnoujDKLNclh4NQhBPmV175slY"
-SHEET_HOSTNAME = 0
+SPREADSHEET_ID = "1pH2h0vpld6cmPkQTlVvJWrcOwUO2az2kEUsTud4ukWo"
+SHEET_HOSTNAME = 13
 SHEET_OS = 1
 SHEET_OVA = 2
 SHEET_CONTACT = 5
@@ -135,9 +135,9 @@ SHEET_RAM = 7
 SHEET_DISK = 8
 SHEET_NICS = 9
 SHEET_COMMENTS = 11
-SHEET_CLUSTER = 12
-SHEET_DC = 13
-SHEET_VLAN = 14
+SHEET_CLUSTER = 14
+SHEET_DC = 15
+SHEET_VLAN = 16
 
 FIRST_IP = 30
 
@@ -257,10 +257,10 @@ def main():
 
         if vm["vlan"] not in NETWORK_MAP:
             # This is an Attendee VLAN that has been added to the DC.
-            if vm["vlan"] in VLAN_MAP:
-                nbvlan = VLAN_MAP[vm["vlan"]]
-            else:
-                nbvlan = vm["vlan"]
+            # if vm["vlan"] in VLAN_MAP:
+            #     nbvlan = VLAN_MAP[vm["vlan"]]
+            # else:
+            nbvlan = vm["vlan"]
 
             nb_vlan = enb.ipam.vlans.get(name=nbvlan, tenant=TENANT_NAME.lower())
             if not nb_vlan:
@@ -323,7 +323,7 @@ def main():
         m = re.search(r"<?(\S+)@", user)
         username = m.group(1)
 
-        body = "Please find the CLEU Data Centre Access details below\r\n\r\n"
+        body = "Please find the CLEUR Data Centre Access details below\r\n\r\n"
         body += f"Before you can access the Data Centre from remote, AnyConnect to {VPN_SERVER_IP} and login with {CLEUCreds.VPN_USER} / {CLEUCreds.VPN_PASS}\r\n"
         body += f"Once connected, your browser should redirect you to the password change tool.  If not go to {PW_RESET_URL} and login with {username} and password {CLEUCreds.DEFAULT_USER_PASSWORD}\r\n"
         body += "Reset your password.  You must use a complex password that contains lower and uppercase letters, numbers, or a special character.\r\n"
@@ -353,8 +353,8 @@ def main():
             iso_ds = datastore
             cluster = DEFAULT_CLUSTER
 
-            if vm["dc"] in HX_DCs:
-                cluster = vm["dc"]
+            # if vm["dc"] in HX_DCs:
+            #     cluster = vm["dc"]
 
             if not vm["is_ova"] and vm["vlan"] != "" and vm["name"] not in created:
                 created[vm["name"]] = False
