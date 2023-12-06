@@ -51,7 +51,7 @@ if __name__ == "__main__":
     scopes = out.decode("utf-8").split("\n")
     for scope in scopes:
         scope = scope.strip()
-        if scope != "100 Ok" and re.search(r"^\w", scope):
+        if "100 Ok" not in scope and re.search(r"^\w", scope):
             delete = True
             if match and not re.search(match, scope):
                 delete = False
