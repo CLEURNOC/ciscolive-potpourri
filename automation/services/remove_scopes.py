@@ -39,14 +39,14 @@ if __name__ == "__main__":
     else:
         ans = input("Really delete all scopes (y/N): ")
 
-    if not re.search(r"^[yY]", ans.decode("utf-8")):
+    if not re.search(r"^[yY]", ans):
         print("Exiting...")
         sys.exit(0)
 
     proc = Popen(shlex.split(f"ssh -2 root@{C.DHCP_SERVER} /root/nrcmd.sh -r scope listnames"), stdout=PIPE, stderr=PIPE)
     out, err = proc.communicate()
     if not re.search(r"^100", out.decode("utf-8")):
-        print('Query for scopes failed: "{}"'.format(out))
+        print('Query for scopes failed: "{}"'.format(out.decode("utf-8")))
         sys.exit(1)
     scopes = out.decode("utf-8").split("\n")
     for scope in scopes:
