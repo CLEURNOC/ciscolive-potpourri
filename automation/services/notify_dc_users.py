@@ -453,7 +453,7 @@ def main():
             )
         body += "```\n"
 
-        body += "DO NOT REPLY HERE.  Let us know via Webex if you need any other details.\n\n"
+        body += "DO NOT REPLY HERE.  Let us know directly via Webex if you need any other details.\n\n"
 
         sig = []
 
