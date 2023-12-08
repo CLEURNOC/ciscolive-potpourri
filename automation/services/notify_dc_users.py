@@ -194,7 +194,7 @@ def main():
     gs_service = build("sheets", "v4", credentials=creds)
 
     vm_sheet = gs_service.spreadsheets()
-    vm_result = vm_sheet.values().get(spreadsheetId=SPREADSHEET_ID, range=args.row_range).execute()
+    vm_result = vm_sheet.values().get(spreadsheetId=SPREADSHEET_ID, range=args.row_range[0]).execute()
     vm_values = vm_result.get("values", [])
 
     if not vm_values:
@@ -203,7 +203,7 @@ def main():
 
     enb = ElementalNetbox()
 
-    (rstart, _) = args.row_range.split(":")
+    (rstart, _) = args.row_range[0].split(":")
 
     i = int(rstart) - 1
     users = {}
