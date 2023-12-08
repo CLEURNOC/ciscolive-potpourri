@@ -144,7 +144,7 @@ SHEET_VLAN = 16
 FIRST_IP = 30
 
 
-def get_next_ip(enb: ElementalNetbox, prefix: str) -> IpAddresses:
+def get_next_ip(enb: ElementalNetbox, prefix: str, args: Namespace) -> IpAddresses:
     """
     Get the next available IP for a prefix.
     """
@@ -158,7 +158,10 @@ def get_next_ip(enb: ElementalNetbox, prefix: str) -> IpAddresses:
         if int(ip_obj.packed[-1]) > FIRST_IP:
             tenant = enb.tenancy.tenants.get(name=TENANT_NAME)
             vrf = enb.ipam.vrfs.get(name=VRF_NAME)
-            return enb.ipam.ip_addresses.create(address=addr.address, tenant=tenant.id, vrf=vrf.id)
+            if args.create:
+                return enb.ipam.ip_addresses.create(address=addr.address, tenant=tenant.id, vrf=vrf.id)
+            else:
+                return addr
 
     return None
 
