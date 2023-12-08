@@ -437,7 +437,7 @@ def main():
             octets = vm["ip"].split(".")
 
             body += "```text\n"
-            body += '{}          : {} (v6: {}{})\n\n(Network: {}, Subnet: {}, GW: {}, v6 Prefix: {}/64, v6 GW: {})\nDeploy to the {} datastore in the "{}" cluster.\nFor this VM upload ISOs to the {} datastore.  There is an "ISOs" folder there already.\n'.format(
+            body += '{}          : {} (v6: {}{})\n\n(Network: {}, Subnet: {}, GW: {}, v6 Prefix: {}/64,\n v6 GW: {})\n\nDeploy to the {} datastore in the "{}" cluster.\nFor this VM upload ISOs to the {} datastore.  There is an "ISOs" folder there already.\n'.format(
                 vm["name"],
                 vm["ip"],
                 NETWORK_MAP[vm["vlan"]]["prefix"],
@@ -458,7 +458,7 @@ def main():
         sig = []
 
         for member, addr in DC_TEAM.items():
-            sig += f"[{member}](webexteams://im?email={addr})"
+            sig.append(f"[{member}](webexteams://im?email={addr})")
 
         body += ", ".join(sig)
 
