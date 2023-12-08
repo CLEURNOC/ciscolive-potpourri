@@ -166,7 +166,7 @@ def get_next_ip(enb: ElementalNetbox, prefix: str) -> IpAddresses:
 def parse_args() -> Namespace:
     parser = argparse.ArgumentParser(description="Create new VMs and notify owners.")
     parser.add_argument("row_range", nargs=1, metavar="ROW_RANGE", help="Spreadsheet range of rows")
-    parser.add_argument("--create", action="store_true", default=True, help="Perform create operations")
+    parser.add_argument("--create", action=argparse.BooleanOptionalAction, default=True, help="Perform create operations")
 
     args = parser.parse_args()
 
