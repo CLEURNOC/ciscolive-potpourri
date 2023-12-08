@@ -38,6 +38,8 @@ import re
 import subprocess
 import ipaddress
 import random
+import argparse
+from argparse import Namespace
 import CLEUCreds  # type: ignore
 from cleu.config import Config as C  # type: ignore
 
@@ -161,12 +163,20 @@ def get_next_ip(enb: ElementalNetbox, prefix: str) -> IpAddresses:
     return None
 
 
+def parse_args() -> Namespace:
+    parser = argparse.ArgumentParser(description="Create new VMs and notify owners.")
+    parser.add_argument("row_range", required=True, metavar="ROW_RANGE", help="Spreadsheet range of rows")
+    parser.add_argument("--create", action="store_true", default=True, help="Perform create operations")
+
+    args = parser.parse_args()
+
+    return args
+
+
 def main():
     global NETWORK_MAP
 
-    if len(sys.argv) != 2:
-        print(f"usage: {sys.argv[0]} ROW_RANGE")
-        sys.exit(1)
+    args = parse_args()
 
     if not os.path.exists("gs_token.pickle"):
         print("ERROR: Google Sheets token does not exist!  Please re-auth the app first.")
@@ -184,7 +194,7 @@ def main():
     gs_service = build("sheets", "v4", credentials=creds)
 
     vm_sheet = gs_service.spreadsheets()
-    vm_result = vm_sheet.values().get(spreadsheetId=SPREADSHEET_ID, range=sys.argv[1]).execute()
+    vm_result = vm_sheet.values().get(spreadsheetId=SPREADSHEET_ID, range=args.row_range).execute()
     vm_values = vm_result.get("values", [])
 
     if not vm_values:
@@ -193,7 +203,7 @@ def main():
 
     enb = ElementalNetbox()
 
-    (rstart, _) = sys.argv[1].split(":")
+    (rstart, _) = args.row_range.split(":")
 
     i = int(rstart) - 1
     users = {}
@@ -289,18 +299,22 @@ def main():
         platform_obj = enb.dcim.platforms.get(name=vm["platform"])
         cluster_obj = enb.virtualization.clusters.get(name=vm["cluster"])
 
-        vm_obj = enb.virtualization.virtual_machines.create(
-            name=name.lower(), platform=platform_obj.id, vcpus=vm["cpu"], disk=vm["disk"], memory=vm["mem"], cluster=cluster_obj.id
-        )
-        vm["vm_obj"] = vm_obj
+        if args.create:
+            vm_obj = enb.virtualization.virtual_machines.create(
+                name=name.lower(), platform=platform_obj.id, vcpus=vm["cpu"], disk=vm["disk"], memory=vm["mem"], cluster=cluster_obj.id
+            )
+            vm["vm_obj"] = vm_obj
+        else:
+            vm["vm_obj"] = {}
 
-        vm_intf = enb.virtualization.interfaces.create(virtual_machine=vm_obj.id, name=mgmt_intf)
+        if args.create:
+            vm_intf = enb.virtualization.interfaces.create(virtual_machine=vm_obj.id, name=mgmt_intf)
 
-        ip_obj.assigned_object_id = vm_intf.id
-        ip_obj.assigned_object_type = "virtualization.vminterface"
-        ip_obj.save()
+            ip_obj.assigned_object_id = vm_intf.id
+            ip_obj.assigned_object_type = "virtualization.vminterface"
+            ip_obj.save()
 
-        vm_obj.primary_ip4 = ip_obj.id
+            vm_obj.primary_ip4 = ip_obj.id
 
         contacts = []
 
@@ -312,10 +326,11 @@ def main():
             users[owner].append(vm)
             contacts.append(owner)
 
-        # TODO: Switch to using the official Contacts and Comments fields.
-        vm_obj.custom_fields["Contact"] = ",".join(contacts)
-        vm_obj.custom_fields["Notes"] = comments
-        vm_obj.save()
+        if args.create:
+            # TODO: Switch to using the official Contacts and Comments fields.
+            vm_obj.custom_fields["Contact"] = ",".join(contacts)
+            vm_obj.custom_fields["Notes"] = comments
+            vm_obj.save()
 
     created = {}
 
@@ -356,7 +371,7 @@ def main():
             # if vm["dc"] in HX_DCs:
             #     cluster = vm["dc"]
 
-            if not vm["is_ova"] and vm["vlan"] != "" and vm["name"] not in created:
+            if not vm["is_ova"] and vm["vlan"] != "" and vm["name"] not in created and args.create:
                 created[vm["name"]] = False
                 print(f"===Adding VM for {vm['name']}===")
                 scsi = "lsilogic"
