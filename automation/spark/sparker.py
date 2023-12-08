@@ -467,8 +467,12 @@ class Sparker(object):
                 print(msg)
             return False
 
-        if "roomId" in kwargs:
-            room_id = kwargs["roomId"]
+        payload = {}
+
+        if "person" in kwargs:
+            payload["toPersonEmail"] = kwargs["person"]
+        elif "roomId" in kwargs:
+            payload["roomId"] = kwargs["roomId"]
         else:
             team_id = None
 
@@ -481,12 +485,11 @@ class Sparker(object):
             if room_id is None:
                 return False
 
+            payload["roomId"] = room_id
+
         url = self.SPARK_API + "messages"
 
-        payload = {
-            "roomId": room_id,
-            "markdown": mt.value + ((msg[: Sparker.MAX_MSG_LEN] + "...") if len(msg) > Sparker.MAX_MSG_LEN else msg),
-        }
+        payload["markdown"] = mt.value + ((msg[: Sparker.MAX_MSG_LEN] + "...") if len(msg) > Sparker.MAX_MSG_LEN else msg)
 
         try:
             response = Sparker._request_with_retry("POST", url, json=payload, headers=self._headers)
