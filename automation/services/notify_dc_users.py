@@ -42,7 +42,7 @@ from argparse import Namespace
 import CLEUCreds  # type: ignore
 from cleu.config import Config as C  # type: ignore
 
-DC_TEAM = ["jclarke@cisco.com", "anjesani@cisco.com", "josterfe@cisco.com"]
+DC_TEAM = {"Joe": "jclarke@cisco.com", "Anthony": "anjesani@cisco.com", "Jara": "josterfe@cisco.com"}
 
 JUMP_HOSTS = ["10.100.252.26", "10.100.252.27", "10.100.252.28", "10.100.252.29"]
 
@@ -343,10 +343,10 @@ def main():
         m = re.search(r"<?(\S+@[a-zA-Z0-9.-_]+)", user)
         webex_addr = m.group(1)
 
-        body = "Please find the CLEUR Data Centre Access details below\n\n"
+        body = "Please find the CLEUR Data Centre Access details below:\n\n"
         body += f"Before you can access the Data Centre from remote, AnyConnect to {VPN_SERVER_IP} and login with **{CLEUCreds.VPN_USER}** / **{CLEUCreds.VPN_PASS}**\n"
         body += f"Once connected, your browser should redirect you to the password change tool.  If not [reset]({PW_RESET_URL}) your password by logging in with **{username}** and password **{CLEUCreds.DEFAULT_USER_PASSWORD}**\n"
-        body += "Reset your password.  You must use a complex password that contains lower and uppercase letters, numbers, or a special character.\n"
+        body += "You must use a complex password that contains lower and uppercase letters, numbers, or a special character.\n"
         body += f"After resetting your password, drop the VPN and reconnect to {VPN_SERVER_IP} with **{username}** and the new password you just set.\n\n"
         body += "You can use any of the following Windows Jump Hosts to access the data centre using RDP:\n\n"
 
@@ -437,7 +437,7 @@ def main():
             octets = vm["ip"].split(".")
 
             body += "```text\n"
-            body += '{}          : {} (v6: {}{}) (Network: {}, Subnet: {}, GW: {}, v6 Prefix: {}/64, v6 GW: {})  : Deploy to the {} datastore in the "{}" cluster.\n\nFor this VM upload ISOs to the {} datastore.  There is an "ISOs" folder there already.\n'.format(
+            body += '{}          : {} (v6: {}{})\n\n(Network: {}, Subnet: {}, GW: {}, v6 Prefix: {}/64, v6 GW: {})\nDeploy to the {} datastore in the "{}" cluster.\nFor this VM upload ISOs to the {} datastore.  There is an "ISOs" folder there already.\n'.format(
                 vm["name"],
                 vm["ip"],
                 NETWORK_MAP[vm["vlan"]]["prefix"],
@@ -453,15 +453,20 @@ def main():
             )
         body += "```\n"
 
-        body += "Let us know via Webex if you need any other details.\n\n"
+        body += "DO NOT REPLY HERE.  Let us know via Webex if you need any other details.\n\n"
 
-        body += "Joe, Anthony, and Jara"
+        sig = []
+
+        for member, addr in DC_TEAM.items():
+            sig += f"[{member}](webexteams://im?email={addr})"
+
+        body += ", ".join(sig)
 
         body = f"# Cisco Live Europe {CISCOLIVE_YEAR} Data Centre Access Info\n\n" + body
 
         spark.post_to_spark(None, None, body, mtype=MessageType.NEUTRAL, person=webex_addr)
 
-        for member in DC_TEAM:
+        for member in DC_TEAM.values():
             spark.post_to_spark(None, None, body, mtype=MessageType.NEUTRAL, person=member)
 
 
