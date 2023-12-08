@@ -31,8 +31,7 @@ import os
 from googleapiclient.discovery import build
 from elemental_utils import ElementalNetbox
 from pynetbox.models.ipam import IpAddresses
-import smtplib
-from email.message import EmailMessage
+from sparker import Sparker, MessageType  # type: ignore
 import sys
 import re
 import subprocess
@@ -43,8 +42,7 @@ from argparse import Namespace
 import CLEUCreds  # type: ignore
 from cleu.config import Config as C  # type: ignore
 
-FROM = "Joe Clarke <jclarke@cisco.com>"
-CC = "Anthony Jesani <anjesani@cisco.com>, Jara Osterfeld <josterfe@cisco.com>"
+DC_TEAM = ["jclarke@cisco.com", "anjesani@cisco.com", "josterfe@cisco.com"]
 
 JUMP_HOSTS = ["10.100.252.26", "10.100.252.27", "10.100.252.28", "10.100.252.29"]
 
@@ -204,6 +202,8 @@ def main():
         print("ERROR: Did not read anything from Google Sheets!")
         sys.exit(1)
 
+    spark = Sparker(token=CLEUCreds.SPARK_TOKEN)
+
     enb = ElementalNetbox()
 
     (rstart, _) = args.row_range[0].split(":")
@@ -340,32 +340,38 @@ def main():
     for user, vms in users.items():
         m = re.search(r"<?(\S+)@", user)
         username = m.group(1)
+        m = re.search(r"<?(\S+@[a-zA-Z0-9.-_]+)")
+        webex_addr = m.group(1)
 
-        body = "Please find the CLEUR Data Centre Access details below\r\n\r\n"
-        body += f"Before you can access the Data Centre from remote, AnyConnect to {VPN_SERVER_IP} and login with {CLEUCreds.VPN_USER} / {CLEUCreds.VPN_PASS}\r\n"
-        body += f"Once connected, your browser should redirect you to the password change tool.  If not go to {PW_RESET_URL} and login with {username} and password {CLEUCreds.DEFAULT_USER_PASSWORD}\r\n"
-        body += "Reset your password.  You must use a complex password that contains lower and uppercase letters, numbers, or a special character.\r\n"
-        body += f"After resetting your password, drop the VPN and reconnect to {VPN_SERVER_IP} with {username} and the new password you just set.\r\n\r\n"
-        body += "You can use any of the following Windows Jump Hosts to access the data centre using RDP:\r\n\r\n"
+        body = "Please find the CLEUR Data Centre Access details below\n\n"
+        body += f"Before you can access the Data Centre from remote, AnyConnect to {VPN_SERVER_IP} and login with **{CLEUCreds.VPN_USER}** / **{CLEUCreds.VPN_PASS}**\n"
+        body += f"Once connected, your browser should redirect you to the password change tool.  If not [reset]({PW_RESET_URL}) your password by logging in with **{username}** and password **{CLEUCreds.DEFAULT_USER_PASSWORD}**\n"
+        body += "Reset your password.  You must use a complex password that contains lower and uppercase letters, numbers, or a special character.\n"
+        body += f"After resetting your password, drop the VPN and reconnect to {VPN_SERVER_IP} with **{username}** and the new password you just set.\n\n"
+        body += "You can use any of the following Windows Jump Hosts to access the data centre using RDP:\n\n"
 
         for js in JUMP_HOSTS:
-            body += f"{js}\r\n"
+            body += f"* {js}\n"
 
-        body += "\r\nIf a Jump Host is full, try the next one.\r\n\r\n"
-        body += f"Your login is {username} (or {username}@{AD_DOMAIN} on Windows).  Your password is the same you used for the VPN.\r\n\r\n"
-        body += "The network details for your VM(s) are:\r\n\r\n"
-        body += f"DNS1          : {DNS1}\r\n"
-        body += f"DNS2          : {DNS2}\r\n"
-        body += f"NTP1          : {NTP1}\r\n"
-        body += f"NTP2          : {NTP2}\r\n"
-        body += f"DNS DOMAIN    : {DOMAIN}\r\n"
-        body += f"SMTP          : {SMTP_SERVER}\r\n"
-        body += f"AD DOMAIN     : {AD_DOMAIN}\r\n"
-        body += f"Syslog/NetFlow: {SYSLOG}\r\n\r\n"
+        body += "\nIf a Jump Host is full, try the next one.\n\n"
+        body += (
+            f"Your login is **{username}** (or **{username}@{AD_DOMAIN}** on Windows).  Your password is the same you used for the VPN.\n\n"
+        )
+        body += "The network details for your VM(s) are:\n\n"
+        body += "```text\n"
+        body += f"DNS1          : {DNS1}\n"
+        body += f"DNS2          : {DNS2}\n"
+        body += f"NTP1          : {NTP1}\n"
+        body += f"NTP2          : {NTP2}\n"
+        body += f"DNS DOMAIN    : {DOMAIN}\n"
+        body += f"SMTP          : {SMTP_SERVER}\n"
+        body += f"AD DOMAIN     : {AD_DOMAIN}\n"
+        body += f"Syslog/NetFlow: {SYSLOG}\n\n"
+        body += "```\n"
 
-        body += f"vCenter is {VCENTER}.  You MUST use the web client.  Your AD credentials above will work there.  VMs that don't require an OVA have been pre-created, but require installation and configuration.  If you use an OVA, you will need to deploy it yourself.\r\n\r\n"
+        body += f"vCenter is {VCENTER}.  You MUST use the web client.  Your AD credentials above will work there.  VMs that don't require an OVA have been pre-created, but require installation and configuration.  If you use an OVA, you will need to deploy it yourself.\n\n"
 
-        body += "Your VM details are as follows.  DNS records have been pre-created for the VM name (i.e., hostname) below:\r\n\r\n"
+        body += "Your VM details are as follows.  DNS records have been pre-created for the VM name (i.e., hostname) below:\n\n"
         for vm in vms:
             datastore = DC_MAP[vm["dc"]][random.randint(0, len(DC_MAP[vm["dc"]]) - 1)]
             iso_ds = datastore
@@ -430,7 +436,8 @@ def main():
 
             octets = vm["ip"].split(".")
 
-            body += '{}          : {} (v6: {}{}) (Network: {}, Subnet: {}, GW: {}, v6 Prefix: {}/64, v6 GW: {})  : Deploy to the {} datastore in the "{}" cluster.\r\n\r\nFor this VM upload ISOs to the {} datastore.  There is an "ISOs" folder there already.\r\n\r\n'.format(
+            body += "```text\n"
+            body += '{}          : {} (v6: {}{}) (Network: {}, Subnet: {}, GW: {}, v6 Prefix: {}/64, v6 GW: {})  : Deploy to the {} datastore in the "{}" cluster.\n\nFor this VM upload ISOs to the {} datastore.  There is an "ISOs" folder there already.\n'.format(
                 vm["name"],
                 vm["ip"],
                 NETWORK_MAP[vm["vlan"]]["prefix"],
@@ -444,24 +451,18 @@ def main():
                 cluster,
                 iso_ds,
             )
+        body += "```\n"
 
-        body += "Let us know via Webex if you need any other details.\r\n\r\n"
+        body += "Let us know via Webex if you need any other details.\n\n"
 
-        body += "Joe, Anthony, and Jara\r\n\r\n"
+        body += "Joe, Anthony, and Jara"
 
-        subject = f"Cisco Live Europe {CISCOLIVE_YEAR} Data Centre Access Info"
+        body = f"# Cisco Live Europe {CISCOLIVE_YEAR} Data Centre Access Info\n\n" + body
 
-        smtp = smtplib.SMTP(SMTP_SERVER)
-        msg = EmailMessage()
-        msg.set_content(body)
+        spark.post_to_spark(None, None, body, mtype=MessageType.NEUTRAL, person=webex_addr)
 
-        msg["Subject"] = subject
-        msg["From"] = FROM
-        msg["To"] = user
-        msg["Cc"] = CC + "," + FROM
-
-        smtp.send_message(msg)
-        smtp.quit()
+        for member in DC_TEAM:
+            spark.post_to_spark(None, None, body, mtype=MessageType.NEUTRAL, person=member)
 
 
 if __name__ == "__main__":
