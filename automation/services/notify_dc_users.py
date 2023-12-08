@@ -272,7 +272,7 @@ def main():
             # else:
             nbvlan = vm["vlan"]
 
-            nb_vlan = enb.ipam.vlans.get(name=nbvlan, tenant=TENANT_NAME.lower())
+            nb_vlan = enb.ipam.vlans.get(name=nbvlan, tenant=TENANT_NAME.lower().replace(" ", "-"))
             if not nb_vlan:
                 print(f"WARNING: Invalid VLAN {nbvlan} for {name}.")
                 continue
