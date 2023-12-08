@@ -52,7 +52,8 @@ class Sparker(object):
 
     RETRIES = 5
 
-    MAX_MSG_LEN = 22737
+    MAX_CARD_LEN = 22737
+    MAX_MSG_LEN = 7439
 
     _headers = {"authorization": None, "content-type": "application/json"}
 
@@ -137,6 +138,77 @@ class Sparker(object):
 
         return True
 
+    def get_webhook_for_url(self, target_url):
+        if not self.check_token():
+            return None
+
+        url = self.SPARK_API + "webhooks"
+
+        try:
+            items = Sparker._get_items_pages("GET", url, headers=self._headers)
+        except Exception as e:
+            msg = "Error listing webhooks: {}".format(getattr(e, "message", repr(e)))
+            if self._logit:
+                logging.exception(msg)
+            else:
+                print(msg)
+            return None
+
+        for hook in items:
+            if hook["targetUrl"] == target_url:
+                return hook
+
+        return None
+
+    def register_webhook(self, name, callback_url, resource, event, **kwargs):
+        if not self.check_token():
+            return None
+
+        url = self.SPARK_API + "webhooks"
+
+        payload = {
+            "name": name,
+            "targetUrl": callback_url,
+            "resource": resource,
+            "event": event,
+        }
+
+        if "filter" in kwargs:
+            payload["filter"] = kwargs["filter"]
+
+        if "secret" in kwargs:
+            payload["secret"] = kwargs["secret"]
+
+        try:
+            response = Sparker._request_with_retry("POST", url, json=payload, headers=self._headers)
+            response.raise_for_status()
+        except Exception as e:
+            msg = "Error registering webhook: {}".format(getattr(e, "message", repr(e)))
+            if self._logit:
+                logging.exception(msg)
+            else:
+                print(msg)
+            return None
+
+        return response.json()
+
+    def unregister_webook(self, webhook_id):
+        if not self.check_token():
+            return
+
+        url = self.SPARK_API + "webhooks/" + webhook_id
+
+        try:
+            response = Sparker._request_with_retry("DELETE", url, headers=self._headers)
+            response.raise_for_status()
+        except Exception as e:
+            msg = "Error unregistering webhook: {}".format(getattr(e, "message", repr(e)))
+            if self._logit:
+                logging.exception(msg)
+            else:
+                print(msg)
+            return
+
     def get_message(self, mid):
         if not self.check_token():
             return None
@@ -168,7 +240,7 @@ class Sparker(object):
         except Exception as e:
             msg = "Error getting card data with ID {}: {}".format(did, getattr(e, "message", repr(e)))
             if self._logit:
-                logging.error(msg)
+                logging.exception(msg)
             else:
                 print(msg)
             return None
@@ -187,7 +259,7 @@ class Sparker(object):
         except Exception as e:
             msg = "Error getting person with ID {}: {}".format(pid, getattr(e, "message", repr(e)))
             if self._logit:
-                logging.error(msg)
+                logging.exception(msg)
             else:
                 print(msg)
             return None
@@ -208,7 +280,7 @@ class Sparker(object):
         except Exception as e:
             msg = "Error retrieving teams: {}".format(getattr(e, "message", repr(e)))
             if self._logit:
-                logging.error(msg)
+                logging.exception(msg)
             else:
                 print(msg)
             return None
@@ -249,7 +321,7 @@ class Sparker(object):
         except Exception as e:
             msg = "Error retrieving room {}: {}".format(room, getattr(e, "message", repr(e)))
             if self._logit:
-                logging.error(msg)
+                logging.exception(msg)
             else:
                 print(msg)
             return None
@@ -304,7 +376,7 @@ class Sparker(object):
         except Exception as e:
             msg = "Error getting resource membership: {}".format(getattr(e, "message", repr(e)))
             if self._logit:
-                logging.error(msg)
+                logging.exception(msg)
             else:
                 print(msg)
             return None
@@ -372,14 +444,14 @@ class Sparker(object):
                     getattr(e, "message", repr(e)),
                 )
                 if self._logit:
-                    logging.error(msg)
+                    logging.exception(msg)
                 else:
                     print(msg)
                 err_occurred = True
 
         return not err_occurred
 
-    def post_to_spark(self, team, room, msg, mtype=MessageType.NEUTRAL):
+    def post_to_spark(self, team, room, msg, mtype=MessageType.NEUTRAL, **kwargs):
         if not self.check_token():
             return False
 
@@ -390,21 +462,24 @@ class Sparker(object):
         except Exception as e:
             msg = "Invalid message type: {}".format(getattr(e, "message", repr(e)))
             if self._logit:
-                logging.error(msg)
+                logging.exception(msg)
             else:
                 print(msg)
             return False
 
-        team_id = None
+        if "roomId" in kwargs:
+            room_id = kwargs["roomId"]
+        else:
+            team_id = None
 
-        if team is not None:
-            team_id = self.get_team_id(team)
-            if team_id is None:
+            if team is not None:
+                team_id = self.get_team_id(team)
+                if team_id is None:
+                    return False
+
+            room_id = self.get_room_id(team_id, room)
+            if room_id is None:
                 return False
-
-        room_id = self.get_room_id(team_id, room)
-        if room_id is None:
-            return False
 
         url = self.SPARK_API + "messages"
 
@@ -419,9 +494,28 @@ class Sparker(object):
         except Exception as e:
             msg = "Error posting message: {}".format(getattr(e, "message", repr(e)))
             if self._logit:
-                logging.error(msg)
+                logging.exception(msg)
             else:
                 print(msg)
+            return False
+
+        return True
+
+    def delete_message(self, mid):
+        if not self.check_token():
+            return False
+
+        url = self.SPARK_API + "messages/" + mid
+
+        try:
+            response = Sparker._request_with_retry("DELETE", url, headers=self._headers)
+            response.raise_for_status()
+        except Exception as e:
+            emsg = "Error deleting message: {}".format(getattr(e, "message", repr(e)))
+            if self._logit:
+                logging.exception(emsg)
+            else:
+                print(emsg)
             return False
 
         return True
@@ -431,8 +525,8 @@ class Sparker(object):
             return False
 
         card_len = len(json.dumps(card))
-        if card_len > Sparker.MAX_MSG_LEN:
-            emsg = f"Card length {card_len} exceeds max message length {Sparker.MAX_MSG_LEN}"
+        if card_len > Sparker.MAX_CARD_LEN:
+            emsg = f"Card length {card_len} exceeds max message length {Sparker.MAX_CARD_LEN}"
             if self._logit:
                 logging.error(emsg)
             else:
@@ -446,7 +540,7 @@ class Sparker(object):
         except Exception as e:
             emsg = "Invalid message type: {}".format(getattr(e, "message", repr(e)))
             if self._logit:
-                logging.error(emsg)
+                logging.exception(emsg)
             else:
                 print(emsg)
             return False
@@ -479,7 +573,7 @@ class Sparker(object):
         except Exception as e:
             emsg = "Error posting message: {}".format(getattr(e, "message", repr(e)))
             if self._logit:
-                logging.error(emsg)
+                logging.exception(emsg)
             else:
                 print(emsg)
             return False
@@ -497,7 +591,7 @@ class Sparker(object):
         except Exception as e:
             emsg = "Invalid message type: {}".format(getattr(e, "message", repr(e)))
             if self._logit:
-                logging.error(emsg)
+                logging.exception(emsg)
             else:
                 print(emsg)
             return False
@@ -533,7 +627,7 @@ class Sparker(object):
         except Exception as e:
             emsg = "Error posting message: {}".format(getattr(e, "message", repr(e)))
             if self._logit:
-                logging.error(emsg)
+                logging.exception(emsg)
             else:
                 print(emsg)
             return False
