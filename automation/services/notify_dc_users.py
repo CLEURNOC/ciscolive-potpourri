@@ -340,7 +340,7 @@ def main():
     for user, vms in users.items():
         m = re.search(r"<?(\S+)@", user)
         username = m.group(1)
-        m = re.search(r"<?(\S+@[a-zA-Z0-9.-_]+)")
+        m = re.search(r"<?(\S+@[a-zA-Z0-9.-_]+)", user)
         webex_addr = m.group(1)
 
         body = "Please find the CLEUR Data Centre Access details below\n\n"
