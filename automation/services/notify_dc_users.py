@@ -292,7 +292,7 @@ def main():
         vm["ip"] = ip_obj.address.split("/")[0]
 
         vm_obj = enb.virtualization.virtual_machines.filter(name=name.lower())
-        if vm_obj and len(vm_obj) > 0:
+        if vm_obj and len(vm_obj) > 0 and args.create:
             print(f"WARNING: Duplicate VM name {name} in NetBox for row {i}.")
             continue
 
