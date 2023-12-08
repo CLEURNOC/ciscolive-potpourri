@@ -287,7 +287,7 @@ def main():
                 "gw6": f"{IP6_PREFIX}{format(int(nb_vlan.vid), 'x')}{format(int(STRETCHED_OCTET), 'x')}::{format(int(GW_OCTET), 'x')}",
             }
 
-        ip_obj = get_next_ip(enb, NETWORK_MAP[vm["vlan"]]["subnet"])
+        ip_obj = get_next_ip(enb, NETWORK_MAP[vm["vlan"]]["subnet"], args)
         if not ip_obj:
             print(f"WARNING: No free IP addresses for {name} in subnet {NETWORK_MAP[vm['vlan']]}.")
             continue
