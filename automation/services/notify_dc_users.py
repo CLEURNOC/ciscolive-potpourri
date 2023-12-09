@@ -304,7 +304,13 @@ def main():
 
         if args.create:
             vm_obj = enb.virtualization.virtual_machines.create(
-                name=name.lower(), platform=platform_obj.id, vcpus=vm["cpu"], disk=vm["disk"], memory=vm["mem"], cluster=cluster_obj.id
+                name=name.lower(),
+                tenant=TENANT_NAME.lower().replace(" ", "-"),
+                platform=platform_obj.id,
+                vcpus=vm["cpu"],
+                disk=vm["disk"],
+                memory=vm["mem"],
+                cluster=cluster_obj.id,
             )
             vm["vm_obj"] = vm_obj
         else:
