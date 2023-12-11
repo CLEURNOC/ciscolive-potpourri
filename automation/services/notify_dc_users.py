@@ -84,6 +84,12 @@ NETWORK_MAP = {
         "prefix": "{}64fe::".format(IP6_PREFIX),
         "gw6": "{}64fe::{}".format(IP6_PREFIX, format(int(GW_OCTET), "x")),
     },
+    "Public-Internet": {
+        "subnet": "83.97.13.128/27",
+        "gw": "83.97.13.158",
+        "prefix": "{}c8fd::".format(IP6_PREFIX),
+        "gw6": "{}c8fd::{}".format(IP6_PREFIX, format(158, "x")),
+    },
 }
 
 OSTYPE_LIST = [
