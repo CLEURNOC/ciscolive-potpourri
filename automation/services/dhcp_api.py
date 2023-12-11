@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright (c) 2017-2020  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2024  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,18 +24,17 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-from flask import Flask
-from flask import Response, jsonify
+from flask import Flask  # type: ignore
+from flask import jsonify  # type: ignore
 import requests
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
+from requests.packages.urllib3.exceptions import InsecureRequestWarning  # type: ignore
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-import json
 import CLEUCreds
 import re
-from gevent.pywsgi import WSGIServer
-from webargs.flaskparser import use_kwargs
-from webargs import fields
+from gevent.pywsgi import WSGIServer  # type: ignore
+from webargs.flaskparser import use_kwargs  # type: ignore
+from webargs import fields  # type: ignore
 from cleu.config import Config as C
 
 
@@ -77,7 +76,7 @@ def get_items_pages(*args, **kwargs):
                 more_pages = False
             else:
                 more_pages = False
-        except Exception as e:
+        except Exception:
             return (result, response)
 
     return (result, response)
@@ -86,7 +85,7 @@ def get_items_pages(*args, **kwargs):
 @app.route("/api/v1/subnetLookup")
 @use_kwargs({"subnet": fields.Str()}, locations=("query",))
 def get_leases_for_subnet(**kwargs):
-    if not "subnet" in kwargs:
+    if "subnet" not in kwargs:
         return jsonify({"msg": "subnet parameter is required"}), 400
 
     url = C.DHCP_BASE + "Scope"
@@ -135,7 +134,7 @@ def get_leases_for_subnet(**kwargs):
             status_code = response.status_code
         return (
             jsonify({"msg": "Error getting leases for subnet {}: {}".format(kwargs["subnet"], getattr(e, "message", repr(e)))}),
-            staus_code,
+            status_code,
         )
 
     return jsonify(result), 200
