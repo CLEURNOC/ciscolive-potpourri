@@ -385,6 +385,7 @@ def main():
         body += f"vCenter is {VCENTER}.  You MUST use the web client.  Your AD credentials above will work there.  VMs that don't require an OVA have been pre-created, but require installation and configuration.  If you use an OVA, you will need to deploy it yourself.\n\n"
 
         body += "Your VM details are as follows.  DNS records have been pre-created for the VM name (i.e., hostname) below:\n\n"
+        body += "```text\n"
         for vm in vms:
             datastore = DC_MAP[vm["dc"]][random.randint(0, len(DC_MAP[vm["dc"]]) - 1)]
             iso_ds = datastore
@@ -449,7 +450,6 @@ def main():
 
             octets = vm["ip"].split(".")
 
-            body += "```text\n"
             body += '{}          : {} (v6: {}{})\n\n(Network: {}, Subnet: {}, GW: {}, v6 Prefix: {}/64,\n v6 GW: {})\n\nDeploy to the {} datastore in the "{}" cluster.\nFor this VM upload ISOs to the {} datastore.  There is an "ISOs" folder there already.\n'.format(
                 vm["name"],
                 vm["ip"],
@@ -464,6 +464,7 @@ def main():
                 cluster,
                 iso_ds,
             )
+
         body += "```\n"
 
         body += "DO NOT REPLY HERE.  Let us know directly via Webex if you need any other details.\n\n"
