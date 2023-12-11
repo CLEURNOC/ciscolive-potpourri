@@ -303,9 +303,10 @@ def main():
         cluster_obj = enb.virtualization.clusters.get(name=vm["cluster"])
 
         if args.create:
+            tenant = enb.tenancy.tenants.get(name=TENANT_NAME)
             vm_obj = enb.virtualization.virtual_machines.create(
                 name=name.lower(),
-                tenant=TENANT_NAME.lower().replace(" ", "-"),
+                tenant=tenant.id,
                 platform=platform_obj.id,
                 vcpus=vm["cpu"],
                 disk=vm["disk"],
