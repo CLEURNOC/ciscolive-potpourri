@@ -66,19 +66,19 @@ GW_OCTET = 254
 # VLAN_MAP = {"CISCO_LABS": "Cisco-Labs", "SESSION_RECORDING": "Session-Recording", "WIRED_DEFAULT": "Wired-Default"}
 
 NETWORK_MAP = {
-    "Stretched_VMs": {
+    "Cross-DC-VMs": {
         "subnet": "{}{}.0/24".format(IP4_SUBNET, STRETCHED_OCTET),
         "gw": "{}{}.{}".format(IP4_SUBNET, STRETCHED_OCTET, GW_OCTET),
         "prefix": "{}64{}::".format(IP6_PREFIX, format(int(STRETCHED_OCTET), "x")),
         "gw6": "{}64{}::{}".format(IP6_PREFIX, format(int(STRETCHED_OCTET), "x"), format(int(GW_OCTET), "x")),
     },
-    "VMs-DC1": {
+    "DC1-VMs": {
         "subnet": "{}253.0/24".format(IP4_SUBNET),
         "gw": "{}253.{}".format(IP4_SUBNET, GW_OCTET),
         "prefix": "{}64fd::".format(IP6_PREFIX),
         "gw6": "{}64fd::{}".format(IP6_PREFIX, format(int(GW_OCTET), "x")),
     },
-    "VMs-DC2": {
+    "DC2-VMs": {
         "subnet": "{}254.0/24".format(IP4_SUBNET),
         "gw": "{}254.{}".format(IP4_SUBNET, GW_OCTET),
         "prefix": "{}64fe::".format(IP6_PREFIX),
