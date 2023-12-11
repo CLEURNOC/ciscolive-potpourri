@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2017-2023  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2024  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,10 +24,9 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-from flask import Flask
-from flask import Response
-import CLEUCreds  # type: ignore
-from gevent.pywsgi import WSGIServer
+from flask import Flask  # type: ignore
+from flask import Response  # type: ignore
+from gevent.pywsgi import WSGIServer  # type: ignore
 from subprocess import run
 import shlex
 import re
