@@ -162,9 +162,7 @@ def add_netbox_device(enb: ElementalNetbox, dev: dict) -> None:
         sys.stderr.write(f"ERROR: Invalid site for {dev['name']}: {dev['site']}\n")
         return
 
-    dev_obj = enb.dcim.devices.create(
-        name=dev["name"], device_role=role_obj.id, device_type=type_obj.id, site=site_obj.id, tenant=tenant_obj.id
-    )
+    dev_obj = enb.dcim.devices.create(name=dev["name"], role=role_obj.id, device_type=type_obj.id, site=site_obj.id, tenant=tenant_obj.id)
 
     if not dev_obj:
         sys.stderr.write(f"ERROR: Failed to create NetBox entry for {dev['name']}\n")
