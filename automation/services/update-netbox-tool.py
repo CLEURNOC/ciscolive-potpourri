@@ -68,7 +68,7 @@ ROLE_OBJ_MAP = {}
 
 VRF_NAME = "default"
 VRF_OBJ = None
-TENANT_NAME = "Infrastructure"
+TENANT_NAME = "DC Infrastructure"
 TENANT_OBJ = None
 
 
