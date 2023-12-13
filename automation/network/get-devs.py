@@ -117,7 +117,7 @@ def ping_device(dev):
 def get_devs(p):
     global additional_devices
 
-    url = "http://{}/get/switches/json".format(C.TOOL)
+    # url = "http://{}/get/switches/json".format(C.TOOL)
 
     devices = []
     #    response = requests.request('GET', url)
@@ -156,7 +156,7 @@ if __name__ == "__main__":
     try:
         with open(PING_DEVS_FILE, "r") as fd:
             additional_devices = json.load(fd)
-    except:
+    except Exception:
         pass
 
     pool = Pool(20)
