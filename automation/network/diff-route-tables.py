@@ -129,7 +129,7 @@ if __name__ == "__main__":
             try:
                 send_command(chan, "term length 0")
                 send_command(chan, "term width 0")
-            except:
+            except Exception:
                 pass
             for fname, command in list(commands.items()):
                 output = ""
