@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2017-2020  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2024  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -87,7 +87,7 @@ if __name__ == "__main__":
             try:
                 send_command(chan, "term length 0")
                 send_command(chan, "term width 0")
-            except:
+            except Exception:
                 pass
             output = ""
             try:
