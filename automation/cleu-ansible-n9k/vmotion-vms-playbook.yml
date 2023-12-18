@@ -1,0 +1,7 @@
+---
+- name: vMotion a VM or set of VMs
+  hosts: vCenter
+  gather_facts: false
+  roles:
+    - vm
+  tags: vmotion

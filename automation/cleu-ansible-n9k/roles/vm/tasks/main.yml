@@ -19,6 +19,16 @@
           scsi: "{{ guest_scsi }}"
       networks:
           - name: "{{ guest_network }}"
-      validate_certs : no
+      validate_certs: no
   delegate_to: localhost
   tags: vm
+
+- name: vMotion virtual machine
+  vmware_vmotion:
+      hostname: "{{ inventory_hostname }}"
+      destination_host: "{{ vmware_host }}"
+      vm_name: "{{ item }}"
+      validate_certs: no
+  delegate_to: localhost
+  tags: vmotion
+  with_items: "{{ vms }}"
