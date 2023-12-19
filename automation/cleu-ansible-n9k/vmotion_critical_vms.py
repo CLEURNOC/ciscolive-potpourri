@@ -23,6 +23,7 @@ def main():
         "--host",
         "-H",
         metavar="<HOST>",
+        required=True,
         help="vSphere host to which to migrate VMs",
     )
     args = parser.parse_args()
@@ -50,11 +51,15 @@ def main():
     ]
 
     p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    output = ""
     for c in iter(lambda: p.stdout.read(1), b""):
-        sys.stdout.write(c.decode("utf-8"))
-        sys.stdout.flush()
+        output += c.decode("utf-8")
 
-    p.poll()
+    p.wait()
+    rc = p.returncode
+
+    if rc != 0:
+        print(f"\n\n***ERROR: Failed to vMotion critical VMs\n{output}!")
 
 
 if __name__ == "__main__":
