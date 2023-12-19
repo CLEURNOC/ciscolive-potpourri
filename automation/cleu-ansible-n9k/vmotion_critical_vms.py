@@ -28,6 +28,10 @@ def main():
     )
     args = parser.parse_args()
 
+    if "dc1-" not in args.host:
+        print("ERROR: The target host must be in DC1 and must be specified by hostname.")
+        exit(1)
+
     os.environ["VMWARE_USER"] = CLEUCreds.VMWARE_USER
     os.environ["VMWARE_PASSWORD"] = CLEUCreds.VMWARE_PASSWORD
 
