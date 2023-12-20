@@ -54,8 +54,10 @@ def get_devs():
         for dev in j:
             if dev["IPAddress"] == "0.0.0.0" or not dev["Reachable"]:
                 continue
+
             if not re.search(r"^[0-9A-Za-z]{3}-", dev["Hostname"]):
                 continue
+
             if (
                 re.search(r".*CORE.*", dev["Hostname"], flags=re.I)
                 or re.search(r"^WLC", dev["Hostname"], flags=re.I)
