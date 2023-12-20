@@ -60,6 +60,7 @@ def get_devs():
                 re.search(r".*CORE.*", dev["Hostname"], flags=re.I)
                 or re.search(r"^WLC", dev["Hostname"], flags=re.I)
                 or re.search(r".*MER[124]-dist.*", dev["Hostname"], flags=re.I)
+                or re.search(r".*EDGE.*", dev["Hostname"], flags=re.I)
             ):
                 continue
 
