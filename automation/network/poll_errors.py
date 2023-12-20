@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2017-2023  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2024  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -44,8 +44,8 @@ IF_UP = 1
 prev_state = {}
 curr_state = {}
 
-if __name__ == "__main__":
 
+def main():
     spark = Sparker(token=CLEUCreds.SPARK_TOKEN)
 
     parser = argparse.ArgumentParser(prog=sys.argv[0], description="Poll errors from network devices")
@@ -99,7 +99,6 @@ if __name__ == "__main__":
             prev_state = json.load(fd)
 
     for device in devices:
-
         swent = {}
 
         if not args.no_discards:
@@ -140,17 +139,17 @@ if __name__ == "__main__":
             swent[var.iid][var.tag] = var.val
 
         curr_state[device] = swent
-        if not device in prev_state:
+        if device not in prev_state:
             continue
 
         for ins, vard in list(curr_state[device].items()):
-            if not ins in prev_state[device]:
+            if ins not in prev_state[device]:
                 continue
-            if not "ifDescr" in vard:
+            if "ifDescr" not in vard:
                 continue
             if "ifOperStatus" not in vard or int(vard["ifOperStatus"]) != IF_UP:
                 continue
-            if not "ifAlias" in vard:
+            if "ifAlias" not in vard:
                 vard["ifAlias"] = ""
             if "count" in prev_state[device][ins]:
                 curr_state[device][ins]["count"] = prev_state[device][ins]["count"]
@@ -203,3 +202,7 @@ if __name__ == "__main__":
 
     with open(cache_file, "w") as fd:
         json.dump(curr_state, fd, indent=4)
+
+
+if __name__ == "__main__":
+    main()
