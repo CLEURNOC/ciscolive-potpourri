@@ -297,7 +297,7 @@ def get_metrics(pool):
 
 if __name__ == "__main__":
     # Add some jitter.
-    time.sleep(random.randrange(30))
+    time.sleep(random.randrange(90))
 
     pool = Pool(20)
     response = get_metrics(pool)

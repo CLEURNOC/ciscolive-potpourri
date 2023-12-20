@@ -208,6 +208,6 @@ def main():
 
 if __name__ == "__main__":
     # Add jitter.
-    time.sleep(random.randrange(30))
+    time.sleep(random.randrange(150))
 
     main()
