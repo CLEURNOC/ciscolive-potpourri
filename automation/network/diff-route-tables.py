@@ -30,6 +30,7 @@ import paramiko
 import os
 from sparker import Sparker, MessageType  # type: ignore
 import time
+import random
 from subprocess import Popen, PIPE, call
 import shlex
 import re
@@ -85,7 +86,7 @@ def send_command(chan, command):
     return output
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description="Usage:")
 
     # script arguments
@@ -203,3 +204,10 @@ if __name__ == "__main__":
             os.chdir(args.git_repo)
             call(f"git pull origin {args.git_branch}", shell=True)
             call(f"git push origin {args.git_branch}", shell=True)
+
+
+if __name__ == "__main__":
+    # Add jitter.
+    time.sleep(random.randrange(30))
+
+    main()
