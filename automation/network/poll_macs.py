@@ -30,6 +30,7 @@ import os
 import re
 import sys
 import time
+import random
 import json
 import paramiko
 from multiprocessing import Pool
@@ -256,7 +257,6 @@ def get_results(dev):
 
 
 def get_metrics(pool):
-
     response = []
     targets = []
 
@@ -296,6 +296,9 @@ def get_metrics(pool):
 
 
 if __name__ == "__main__":
+    # Add some jitter.
+    time.sleep(random.randrange(30))
+
     pool = Pool(20)
     response = get_metrics(pool)
 
