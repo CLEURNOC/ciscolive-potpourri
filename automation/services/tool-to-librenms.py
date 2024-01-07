@@ -32,20 +32,20 @@ requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 import json
 import sys
 import time
-from subprocess import run
-import shlex
 import re
 import CLEUCreds  # type: ignore
 from cleu.config import Config as C  # type: ignore
 
 CACHE_FILE = "/home/jclarke/monitored_devs.json"
 
+LIBRE_HEADERS = {"X-Auth-Token": CLEUCreds.LIBRENMS_TOKEN}
+
 
 def get_devs():
     url = "http://{}/get/switches/json".format(C.TOOL)
 
     devs = []
-    response = requests.request("GET", url)
+    response = requests.get(url)
     code = 200
     code = response.status_code
     if code == 200:
@@ -72,9 +72,12 @@ def get_devs():
 
 
 def delete_device(dev):
-    res = run(shlex.split("ssh -2 {} /usr/local/www/librenms/delhost.php {}".format(C.MONITORING, dev)), capture_output=True)
+    global LIBRE_HEADERS
 
-    return res
+    url = f"https://librenms.{C.DNS_DOMAIN}/api/v0/devices/{dev}"
+    resp = requests.delete(url, headers=LIBRE_HEADERS)
+
+    return resp
 
 
 if __name__ == "__main__":
@@ -99,12 +102,9 @@ if __name__ == "__main__":
         if tdev["AssetTag"] in list(devs.keys()) and devs[tdev["AssetTag"]] != tdev["Hostname"]:
             print("=== Deleting device {} from LibreNMS ({} / {}) ===".format(tdev["Hostname"], i, len(tdevs)))
             res = delete_device(devs[tdev["AssetTag"]])
-            if res.returncode != 0:
-                print(
-                    "\n\n***WARNING: Failed to remove LibreNMS device for {}: out='{}', err='{}'".format(
-                        devs[tdev["AssetTag"]], res.stdout.decode("utf-8").strip(), res.stderr.decode("utf-8").strip()
-                    )
-                )
+            if res.stauts_code > 299:
+                print("\n\n***WARNING: Failed to remove LibreNMS device {}: response='{}'".format(devs[tdev["AssetTag"]], res.text))
+
             print("=== DONE. ===")
             changed_devs = True
             del devs[tdev["AssetTag"]]
@@ -114,18 +114,15 @@ if __name__ == "__main__":
             if force:
                 print("=== Deleting device {} from LibreNMS ({} / {}) ===".format(tdev["Hostname"], i, len(tdevs)))
                 res = delete_device(tdev["Hostname"])
-                if res.returncode != 0:
-                    print(
-                        "\n\n***WARNING: Failed to remove LibreNMS device {}: out='{}', err='{}'".format(
-                            tdev["Hostname"], res.stdout.decode("utf-8").strip(), res.stderr.decode("utf-8").strip()
-                        )
-                    )
+                if res.status_code > 299:
+                    print("\n\n***WARNING: Failed to remove LibreNMS device {}: response='{}'".format(tdev["Hostname"], res.text))
+
                 print("=== DONE. ===")
                 time.sleep(3)
 
             url = "https://librenms." + C.DNS_DOMAIN + "/api/v0/inventory/" + tdev["Hostname"]
             try:
-                response = requests.request("GET", url, headers={"X-Auth-Token": CLEUCreds.LIBRENMS_TOKEN}, verify=False)
+                response = requests.get(url, headers=LIBRE_HEADERS)
                 response.raise_for_status()
                 devs[tdev["AssetTag"]] = tdev["Hostname"]
                 changed_devs = True
@@ -135,24 +132,26 @@ if __name__ == "__main__":
                     text = ""
                     if response:
                         text = response.text
-                    print(f"Error retrieving device status for {tdev['Hostname']} from LibreNMS: {response.text}")
+
+                    print(f"Error retrieving device status for {tdev['Hostname']} from LibreNMS: '{text}'")
 
             print("=== Adding device {} to LibreNMS ({} / {}) ===".format(tdev["Hostname"], i, len(tdevs)))
-            res = run(
-                shlex.split(
-                    "ssh -2 {} /usr/local/www/librenms/addhost.php {} ap v3 CLEUR {} {} sha aes".format(
-                        C.MONITORING, tdev["Hostname"], CLEUCreds.SNMP_AUTH_PASS, CLEUCreds.SNMP_PRIV_PASS
-                    )
-                ),
-                capture_output=True,
-            )
-            if res.returncode != 0:
-                print(
-                    "\n\n***ERROR: Failed to add {} to LibreNMS: out='{}', err='{}'".format(
-                        tdev["Hostname"], res.stdout.decode("utf-8").strip(), res.stderr.decode("utf-8").strip()
-                    )
-                )
+            url = f"https://librenms.{C.DNS_DOMAIN}/api/v0/devices"
+            payload = {
+                "hostname": tdev["Hostname"],
+                "version": "v3",
+                "authlevel": "authPriv",
+                "authname": "CLEUR",
+                "authpass": CLEUCreds.SNMP_AUTH_PASS,
+                "authalgo": "sha",
+                "cryptopass": CLEUCreds.SNMP_PRIV_PASS,
+                "cryptoalgo": "aes",
+            }
+            res = requests.post(url, headers=LIBRE_HEADERS, json=payload)
+            if res.status_code > 299:
+                print("\n\n***ERROR: Failed to add {} to LibreNMS: response='{}'".format(tdev["Hostname"], res.text))
                 continue
+
             print("=== DONE. ===")
 
             changed_devs = True
