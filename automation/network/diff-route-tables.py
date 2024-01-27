@@ -36,6 +36,7 @@ import shlex
 import re
 import json
 import argparse
+import traceback
 import CLEUCreds  # type: ignore
 import shutil
 from cleu.config import Config as C  # type: ignore
@@ -193,6 +194,7 @@ def main():
         except Exception as e:
             ssh_client.close()
             print(f"Failed to get routing tables from {router}: {e}")
+            traceback.print_exc()
             continue
 
         ssh_client.close()
