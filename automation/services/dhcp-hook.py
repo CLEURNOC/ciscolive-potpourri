@@ -750,7 +750,7 @@ if __name__ == "__main__":
 
         m = re.search(r"(make|create|add)\s+(a\s+)?reservation.*?([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)", txt, re.I)
         if not m:
-            m = re.search(r"(reserve)(\s+)(.*?)([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)", txt, re.I)
+            m = re.search(r"(\breserve\b)(.*?)([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)", txt, re.I)
 
         if not found_hit and m:
             found_hit = True
