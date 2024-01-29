@@ -62,8 +62,10 @@ def normalize_mac(mac):
     return mac_addr.lower()
 
 
-# TODO: We don't use CMX anymore.  This needs to work with DNS Spaces?
+# TODO: We don't use CMX anymore.  This needs to work with DNA Spaces?
 def get_from_cmx(**kwargs):
+    return None
+    """
     marker = "green"
     if "user" in kwargs and kwargs["user"] == "gru":
         marker = "gru"
@@ -90,6 +92,7 @@ def get_from_cmx(**kwargs):
         return None
 
     return response.raw.data
+    """
 
 
 def get_from_dnac(**kwargs):
@@ -118,12 +121,12 @@ def get_from_dnac(**kwargs):
             response = requests.request("POST", turl, headers=theaders, auth=BASIC_AUTH, verify=False, timeout=REST_TIMEOUT)
             response.raise_for_status()
         except Exception as e:
-            logging.warning("Unable to get an auth token from DNAC: {}".format(getattr(e, "message", repr(e))))
+            logging.warning("Unable to get an auth token from Catalyst Center: {}".format(getattr(e, "message", repr(e))))
             continue
 
         j = response.json()
         if "Token" not in j:
-            logging.warning(f"Failed to get a Token element from DNAC {dnac}: {response.text}")
+            logging.warning(f"Failed to get a Token element from Catalyst Center {dnac}: {response.text}")
             continue
 
         cheaders = {"accept": "application/json", "x-auth-token": j["Token"]}
@@ -133,12 +136,12 @@ def get_from_dnac(**kwargs):
             response = requests.request("GET", curl, params=params, headers=cheaders, verify=False)
             response.raise_for_status()
         except Exception as e:
-            logging.warning("Failed to find MAC address {} in DNAC: {}".format(kwargs["mac"], getattr(e, "message", repr(e))))
+            logging.warning("Failed to find MAC address {} in Catalyst Center: {}".format(kwargs["mac"], getattr(e, "message", repr(e))))
             continue
 
         j = response.json()
         if "detail" not in j:
-            logging.warning("Got an unknown response from DNAC: '{}'".format(response.text))
+            logging.warning("Got an unknown response from Catalyst Center: '{}'".format(response.text))
             continue
 
         if "errorCode" in j["detail"] or len(j["detail"].keys()) == 0:
@@ -209,12 +212,12 @@ def get_user_from_dnac(**kwargs):
             response = requests.request("POST", turl, headers=theaders, auth=BASIC_AUTH, verify=False, timeout=REST_TIMEOUT)
             response.raise_for_status()
         except Exception as e:
-            logging.warning("Unable to get an auth token from DNAC: {}".format(getattr(e, "message", repr(e))))
+            logging.warning("Unable to get an auth token from Catalyst Center: {}".format(getattr(e, "message", repr(e))))
             continue
 
         j = response.json()
         if "Token" not in j:
-            logging.warning(f"Failed to get a Token element from DNAC {dnac}: {response.text}")
+            logging.warning(f"Failed to get a Token element from Catalyst Center {dnac}: {response.text}")
             continue
 
         cheaders = {
@@ -227,12 +230,12 @@ def get_user_from_dnac(**kwargs):
             response = requests.request("GET", curl, headers=cheaders, verify=False)
             response.raise_for_status()
         except Exception as e:
-            logging.warning("Failed to find user {} in DNAC: {}".format(kwargs["user"], getattr(e, "message", repr(e))))
+            logging.warning("Failed to find user {} in Catalyst Center: {}".format(kwargs["user"], getattr(e, "message", repr(e))))
             continue
 
         j = response.json()
         if len(j) == 0 or "userDetails" not in j[0]:
-            logging.warning("Got an unknown response from DNAC: '{}'".format(response.text))
+            logging.warning("Got an unknown response from Catalyst Center: '{}'".format(response.text))
             continue
 
         if len(j[0]["userDetails"].keys()) == 0:
@@ -359,7 +362,7 @@ def check_for_reservation(ip):
         response = requests.request("GET", url, auth=BASIC_AUTH, headers=CNR_HEADERS, verify=False, timeout=REST_TIMEOUT)
         response.raise_for_status()
     except Exception as e:
-        logging.warning("Did not get a good response from CNR for reservation {}: {}".format(ip, e))
+        logging.warning("Did not get a good response from CPNR for reservation {}: {}".format(ip, e))
         return None
     rsvp = response.json()
     res["mac"] = ":".join(rsvp["lookupKey"].split(":")[-6:])
@@ -382,7 +385,7 @@ def check_for_reservation_by_mac(mac):
         )
         response.raise_for_status()
     except Exception as e:
-        logging.warning("Did not get a good response from CNR for reservation {}: {}".format(ip, e))
+        logging.warning("Did not get a good response from CPNR for reservation {}: {}".format(ip, e))
         return None
     j = response.json()
     if len(j) == 0:
@@ -422,7 +425,7 @@ def check_for_lease(ip):
         response = requests.request("GET", url, auth=BASIC_AUTH, headers=CNR_HEADERS, verify=False, timeout=REST_TIMEOUT)
         response.raise_for_status()
     except Exception as e:
-        logging.warning("Did not get a good response from CNR for IP {}: {}".format(ip, e))
+        logging.warning("Did not get a good response from CPNR for IP {}: {}".format(ip, e))
         return None
 
     lease = response.json()
@@ -794,15 +797,15 @@ if __name__ == "__main__":
             found_hit = True
             for hit in m:
                 res = check_for_lease(hit)
-                pires = get_from_pi(ip=hit)
+                # pires = get_from_pi(ip=hit)
                 cmxres = None
                 dnacres = None
                 if res is not None:
                     cmxres = get_from_cmx(mac=re.sub(r"(\d+,)+", "", res["mac"]))
                     dnacres = get_from_dnac(mac=re.sub(r"(\d+,)+", "", res["mac"]))
-                elif pires is not None:
-                    cmxres = get_from_cmx(mac=pires[0]["clientDetailsDTO"]["macAddress"])
-                    dnacres = get_from_dnac(mac=pires[0]["clientDetailsDTO"]["macAddress"])
+                # else pires is not None:
+                #     cmxres = get_from_cmx(mac=pires[0]["clientDetailsDTO"]["macAddress"])
+                #     dnacres = get_from_dnac(mac=pires[0]["clientDetailsDTO"]["macAddress"])
                 if res is not None:
                     reserved = ""
                     if "is-reserved" in res and res["is-reserved"]:
@@ -857,8 +860,8 @@ if __name__ == "__main__":
                                 reserved,
                             ),
                         )
-                    if pires is not None:
-                        print_pi(spark, hit, pires, "I also found this from Prime Infra:")
+                    # if pires is not None:
+                    #     print_pi(spark, hit, pires, "I also found this from Prime Infra:")
                     if dnacres is not None:
                         print_dnac(spark, hit, dnacres, "I also found this from Cisco DNA Center:")
                     if cmxres is not None:
@@ -867,8 +870,8 @@ if __name__ == "__main__":
                         )
                 else:
                     spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, "I did not find a lease for {}.".format(hit))
-                    if pires is not None:
-                        print_pi(spark, hit, pires, "But I did get this from Prime Infra:")
+                    # if pires is not None:
+                    #     print_pi(spark, hit, pires, "But I did get this from Prime Infra:")
                     if dnacres is not None:
                         print_dnac(spark, hit, dnacres, "But I did get this from Cisco DNA Center:")
                     if cmxres is not None:
@@ -880,23 +883,23 @@ if __name__ == "__main__":
             "\\b(?:(?:[0-9A-Fa-f]{1,4}:){6}(?:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}|(?:(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))|::(?:[0-9A-Fa-f]{1,4}:){5}(?:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}|(?:(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))|(?:[0-9A-Fa-f]{1,4})?::(?:[0-9A-Fa-f]{1,4}:){4}(?:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}|(?:(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))|(?:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4})?::(?:[0-9A-Fa-f]{1,4}:){3}(?:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}|(?:(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))|(?:(?:[0-9A-Fa-f]{1,4}:){,2}[0-9A-Fa-f]{1,4})?::(?:[0-9A-Fa-f]{1,4}:){2}(?:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}|(?:(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))|(?:(?:[0-9A-Fa-f]{1,4}:){,3}[0-9A-Fa-f]{1,4})?::[0-9A-Fa-f]{1,4}:(?:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}|(?:(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))|(?:(?:[0-9A-Fa-f]{1,4}:){,4}[0-9A-Fa-f]{1,4})?::(?:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}|(?:(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))|(?:(?:[0-9A-Fa-f]{1,4}:){,5}[0-9A-Fa-f]{1,4})?::[0-9A-Fa-f]{1,4}|(?:(?:[0-9A-Fa-f]{1,4}:){,6}[0-9A-Fa-f]{1,4})?::)\\b",
             txt,
         )
-        if not found_hit and len(m) > 0:
-            found_hit = True
-            for hit in m:
-                pires = get_from_pi(ip=hit)
-                if pires is not None:
-                    print_pi(spark, hit, pires, "")
-                    dnacres = get_from_dnac(mac=pires[0]["clientDetailsDTO"]["macAddress"])
-                    cmxres = get_from_cmx(mac=pires[0]["clientDetailsDTO"]["macAddress"])
-                    if dnacres is not None:
-                        print_dnac(spark, hit, dnacres, "")
-                    if cmxres is not None:
-                        spark.post_to_spark_with_attach(
-                            C.WEBEX_TEAM, SPARK_ROOM, "Location from CMX", cmxres, "{}_location.jpg".format(hit), "image/jpeg"
-                        )
+        # if not found_hit and len(m) > 0:
+        #     found_hit = True
+        #     for hit in m:
+        #         pires = get_from_pi(ip=hit)
+        #         if pires is not None:
+        #             print_pi(spark, hit, pires, "")
+        #             dnacres = get_from_dnac(mac=pires[0]["clientDetailsDTO"]["macAddress"])
+        #             cmxres = get_from_cmx(mac=pires[0]["clientDetailsDTO"]["macAddress"])
+        #             if dnacres is not None:
+        #                 print_dnac(spark, hit, dnacres, "")
+        #             if cmxres is not None:
+        #                 spark.post_to_spark_with_attach(
+        #                     C.WEBEX_TEAM, SPARK_ROOM, "Location from CMX", cmxres, "{}_location.jpg".format(hit), "image/jpeg"
+        #                 )
 
-                else:
-                    spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, "I did not find anything about {} in Prime Infra.".format(hit))
+        #         else:
+        #             spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, "I did not find anything about {} in Prime Infra.".format(hit))
 
         m = re.findall(
             r"\b(([a-fA-F0-9]{1,2}:[a-fA-F0-9]{1,2}:[a-fA-F0-9]{1,2}:[a-fA-F0-9]{1,2}:[a-fA-F0-9]{1,2}:[a-fA-F0-9]{1,2})|([a-fA-F0-9]{4}\.[a-fA-F0-9]{4}\.[a-fA-F0-9]{4})|([a-fA-F0-9]{1,2}-[a-fA-F0-9]{1,2}-[a-fA-F0-9]{1,2}-[a-fA-F0-9]{1,2}-[a-fA-F0-9]{1,2}-[a-fA-F0-9]{1,2}))\b",
@@ -907,7 +910,7 @@ if __name__ == "__main__":
             for hit in m:
                 hmac = normalize_mac(hit[0])
                 leases = check_for_mac(hmac)
-                pires = get_from_pi(mac=hmac)
+                # pires = get_from_pi(mac=hmac)
                 cmxres = get_from_cmx(mac=re.sub(r"(\d+,)+", "", hmac))
                 dnacres = get_from_dnac(mac=re.sub(r"(\d+,)+", "", hmac))
                 if leases is not None:
@@ -969,9 +972,9 @@ if __name__ == "__main__":
                                     reserved,
                                 ),
                             )
-                            if pires is not None:
-                                # spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, '```\n{}\n```'.format(json.dumps(pires, indent=4)))
-                                print_pi(spark, hit[0], pires, "I also found this from Prime Infra:")
+                            # if pires is not None:
+                            #     # spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, '```\n{}\n```'.format(json.dumps(pires, indent=4)))
+                            #     print_pi(spark, hit[0], pires, "I also found this from Prime Infra:")
                             if dnacres is not None:
                                 print_dnac(spark, hit[0], dnacres, "I also found this fron Cisco DNA Center:")
                             if cmxres is not None:
@@ -980,8 +983,8 @@ if __name__ == "__main__":
                                 )
                 else:
                     spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, "I did not find a lease for {}.".format(hit[0]))
-                    if pires is not None:
-                        print_pi(spark, hit[0], pires, "But I did get this from Prime Infra:")
+                    # if pires is not None:
+                    #     print_pi(spark, hit[0], pires, "But I did get this from Prime Infra:")
                     if dnacres is not None:
                         print_dnac(spark, hit[0], dnacres, "But I did get this from Cisco DNA Center:")
                     if cmxres is not None:
@@ -1005,7 +1008,7 @@ if __name__ == "__main__":
                     pass
                 if ip:
                     res = check_for_lease(ip)
-                    pires = get_from_pi(ip=ip)
+                    # pires = get_from_pi(ip=ip)
                     if res is not None:
                         reserved = ""
                         if "is-reserved" in res and res["is-reserved"]:
@@ -1043,31 +1046,31 @@ if __name__ == "__main__":
                                     res["relay-info"]["vlan"],
                                 ),
                             )
-                        if pires is not None:
-                            found_hit = True
-                            # spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, '```\n{}\n```'.format(json.dumps(pires, indent=4)))
-                            print_pi(spark, hit, pires, "I also found this from Prime Infra:")
-                            dnacres = get_from_dnac(mac=pires[0]["clientDetailsDTO"]["macAddress"])
-                            cmxres = get_from_cmx(mac=pires[0]["clientDetailsDTO"]["macAddress"])
-                            if dnacres is not None:
-                                print_dnac(spark, hit, dnacres, "I also found this from Cisco DNA Center:")
-                            if cmxres is not None:
-                                spark.post_to_spark_with_attach(
-                                    C.WEBEX_TEAM, SPARK_ROOM, "Location from CMX", cmxres, "{}_location.jpg".format(hit), "image/jpeg"
-                                )
+                        # if pires is not None:
+                        #     found_hit = True
+                        #     # spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, '```\n{}\n```'.format(json.dumps(pires, indent=4)))
+                        #     print_pi(spark, hit, pires, "I also found this from Prime Infra:")
+                        #     dnacres = get_from_dnac(mac=pires[0]["clientDetailsDTO"]["macAddress"])
+                        #     cmxres = get_from_cmx(mac=pires[0]["clientDetailsDTO"]["macAddress"])
+                        #     if dnacres is not None:
+                        #         print_dnac(spark, hit, dnacres, "I also found this from Cisco DNA Center:")
+                        #     if cmxres is not None:
+                        #         spark.post_to_spark_with_attach(
+                        #             C.WEBEX_TEAM, SPARK_ROOM, "Location from CMX", cmxres, "{}_location.jpg".format(hit), "image/jpeg"
+                        #         )
                     else:
                         found_hit = True
                         spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, "I did not find a lease for {}.".format(hit))
-                        if pires is not None:
-                            print_pi(spark, hit, pires, "But I did get this from Prime Infra:")
-                            dnacres = get_from_dnac(mac=pires[0]["clientDetailsDTO"]["macAddress"])
-                            cmxres = get_from_cmx(mac=pires[0]["clientDetailsDTO"]["macAddress"])
-                            if dnacres is not None:
-                                print_dnac(spark, hit, dnacres, "But I did get this from Cisco DNA Center:")
-                            if cmxres is not None:
-                                spark.post_to_spark_with_attach(
-                                    C.WEBEX_TEAM, SPARK_ROOM, "Location from CMX", cmxres, "{}_location.jpg".format(hit), "image/jpeg"
-                                )
+                        # if pires is not None:
+                        #     # print_pi(spark, hit, pires, "But I did get this from Prime Infra:")
+                        #     dnacres = get_from_dnac(mac=pires[0]["clientDetailsDTO"]["macAddress"])
+                        #     cmxres = get_from_cmx(mac=pires[0]["clientDetailsDTO"]["macAddress"])
+                        #     if dnacres is not None:
+                        #         print_dnac(spark, hit, dnacres, "But I did get this from Cisco Catalyst Center:")
+                        #     if cmxres is not None:
+                        #         spark.post_to_spark_with_attach(
+                        #             C.WEBEX_TEAM, SPARK_ROOM, "Location from CMX", cmxres, "{}_location.jpg".format(hit), "image/jpeg"
+                        #         )
 
         if not found_hit:
             spark.post_to_spark(
@@ -1076,7 +1079,7 @@ if __name__ == "__main__":
                 'Sorry, I didn\'t get that.  Please give me a MAC or IP (or "reservation IP" or "user USER") or just ask for "help".',
             )
     except Exception:
-        logging.error("Error in obtaining data: {}".format(traceback.format_exc()))
+        logging.exception("Error in obtaining data:")
         spark.post_to_spark(
             C.WEBEX_TEAM, SPARK_ROOM, "Whoops, I encountered an error:<br>\n```\n{}\n```".format(traceback.format_exc()), MessageType.BAD
         )
