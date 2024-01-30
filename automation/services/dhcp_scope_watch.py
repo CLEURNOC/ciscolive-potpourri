@@ -113,7 +113,7 @@ if __name__ == "__main__":
         with open(CACHE_FILE, "r") as fd:
             prev_state = json.load(fd)
 
-    pool = Pool(20)
+    pool = Pool(5)
     metrics = get_metrics(pool)
 
     for scope, stat in metrics.items():
