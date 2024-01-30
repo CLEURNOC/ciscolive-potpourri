@@ -59,7 +59,7 @@ def get_results(scope):
             )
             r.raise_for_status()
         except Exception as e:
-            sys.stderr.write(f"ERROR: Failed to query {scope}: {e}")
+            sys.stderr.write(f"ERROR: Failed to query {scope}: {e}\n")
             return None
 
         outd = r.json()
