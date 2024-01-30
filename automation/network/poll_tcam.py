@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright (c) 2017-2020  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2024  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,18 +25,16 @@
 # SUCH DAMAGE.
 
 from __future__ import division
-from past.utils import old_div
-import os
+from past.utils import old_div  # type: ignore
 import re
 import sys
 import time
 import json
 import paramiko
-from sparker import Sparker, MessageType
-from multiprocessing import Pool
+from sparker import Sparker, MessageType  # type: ignore
 import traceback
-import CLEUCreds
-from cleu.config import Config as C
+import CLEUCreds  # type: ignore
+from cleu.config import Config as C  # type: ignore
 
 
 devices = ["CORE1-WA", "CORE2-WA"]
@@ -107,9 +105,9 @@ def get_results(dev, cache):
             break
         line = re.sub(r"\s+", " ", line)
         elements = line.split(" ")
-        used = elements[-1]
-        max = elements[-2]
-        metric = " ".join(elements[0:-2])
+        used = elements[-6]
+        max = elements[-7]
+        metric = " ".join(elements[0:-7])
         metric = metric.strip()
         m = re.search(r"(\d+)(/\d+)?", used)
         used = float(m.group(1))
