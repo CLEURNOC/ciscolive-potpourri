@@ -26,7 +26,6 @@
 
 from __future__ import print_function
 import sys
-import json
 from argparse import ArgumentParser
 from sparker import Sparker, ResourceType
 
