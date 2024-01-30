@@ -32,7 +32,10 @@ import re
 import shlex
 import os
 from multiprocessing import Pool
-import time
+import requests
+from requests.packages.urllib3.exceptions import InsecureRequestWarning  # type: ignore
+
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 import CLEUCreds  # type: ignore
 from cleu.config import Config as C  # type: ignore
 
@@ -43,53 +46,34 @@ CACHE_FILE = "/home/jclarke/dhcp_scope.dat"
 STATS_FILE = "/home/jclarke/dhcp_scope_stats.dat"
 
 
-def parse_result(out):
-    matches = re.findall(r"([\w-]+=[^;]+);(?=\s|$)", out)
-    res = {}
-    for m in matches:
-        if m == "":
-            continue
-        k, v = m.split("=")
-        res[k] = v
-    return res
-
-
 def get_results(scope):
     global DHCP_SERVER
 
     scope = scope.strip()
 
     if scope != "100 Ok" and scope != "":
-        for _ in range(2):
-            proc = Popen(
-                shlex.split(f"ssh -2 root@{C.DHCP_SERVER} /root/nrcmd.sh -r scope {scope} getUtilization"), stdout=PIPE, stderr=PIPE
+        url = f"https://{C.DHCP_SERVER}:8443/web-services/rest/stats/CurrentUtilization/{scope}"
+        try:
+            r = requests.get(
+                url, auth=(CLEUCreds.CPNR_USERNAME, CLEUCreds.CPNR_PASSWORD), headers={"Accept": "application/json"}, verify=False
             )
-            out, err = proc.communicate()
-            outs = out.decode("utf-8")
-            errs = err.decode("utf-8")
-            if re.search(r"^100", outs):
-                break
-
-            time.sleep(1)
-
-        if not re.search(r"^100", outs):
-            sys.stderr.write(f"Error getting scope utilization for {scope}: {outs} {errs}\n")
+            r.raise_for_status()
+        except Exception as e:
+            sys.stderr.write(f"ERROR: Failed to query {scope}: {e}")
             return None
 
-        outd = parse_result(outs)
-        if "active-dynamic" not in outd or "total-dynamic" not in outd or "free-dynamic" not in outd:
-            return None
+        outd = r.json()
 
-        util = (float(outd["active-dynamic"]) / float(outd["total-dynamic"])) * 100.0
+        util = (float(outd["activeDynamic"]) / float(outd["totalDynamic"])) * 100.0
         # print('Util for {0} is {1:.2f}% utilized'.format(scope, util))
 
         return (
             scope,
             {
                 "util": util,
-                "free-dynamic": outd["free-dynamic"],
-                "active-dynamic": outd["active-dynamic"],
-                "total-dynamic": outd["total-dynamic"],
+                "free-dynamic": outd["freeDynamic"],
+                "active-dynamic": outd["activeDynamic"],
+                "total-dynamic": outd["totalDynamic"],
             },
         )
 
