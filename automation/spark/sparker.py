@@ -53,7 +53,7 @@ class Sparker(object):
     RETRIES = 5
 
     MAX_CARD_LEN = 22737
-    MAX_MSG_LEN = 7436
+    MAX_MSG_LEN = 7435
 
     _headers = {"authorization": None, "content-type": "application/json"}
 
