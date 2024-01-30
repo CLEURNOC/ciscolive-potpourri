@@ -94,6 +94,8 @@ def get_results(dev, cache):
 
     cache[dev] = {}
 
+    cached_elements = None
+
     for line in output.split("\n"):
         line = line.strip()
         if re.search(r"^-+$", line):
@@ -105,6 +107,14 @@ def get_results(dev, cache):
             break
         line = re.sub(r"\s+", " ", line)
         elements = line.split(" ")
+        if len(elements) < 9:
+            cached_elements = elements
+            continue
+
+        if cached_elements:
+            elements = cached_elements + elements
+            cached_elements = None
+
         used = elements[-6]
         max = elements[-7]
         metric = " ".join(elements[0:-7])
