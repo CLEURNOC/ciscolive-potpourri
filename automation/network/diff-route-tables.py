@@ -180,8 +180,8 @@ def main():
                                     gfile = re.sub(r"\.curr", ".txt", os.path.basename(curr_path))
                                     shutil.copyfile(curr_path, args.git_repo + "/" + gfile)
                                     os.chdir(args.git_repo)
-                                    call(f"git add {gfile}", shell=True)
-                                    call(f'git commit -m "Routing table update" {gfile}', shell=True)
+                                    call(f"git add {gfile}", shell=True, stdout=DEVNULL)
+                                    call(f'git commit -m "Routing table update" {gfile}', shell=True, stdout=DEVNULL)
                                     do_push = True
                                 except Exception as ie:
                                     print(f"ERROR: Failed to commit to git repo {args.git_repo}: {ie}")
