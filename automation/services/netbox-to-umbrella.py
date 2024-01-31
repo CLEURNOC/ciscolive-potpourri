@@ -105,8 +105,10 @@ def main():
 
     umbr_cred = f"{CLEUCreds.UMBRELLA_KEY}:{CLEUCreds.UMBRELLA_SECRET}"
 
-    umbr_sites = umbr_api.management.sites(orgid=C.UMBRELLA_ORGID, cred=umbr_cred, console=False, page=-1, limit=200)
-    umbr_int_networks = umbr_api.management.internalnetworks(orgid=C.UMBRELLA_ORGID, cred=umbr_cred, console=False, page=-1, limit=200)
+    umbr_sites = umbr_api.management.sites(orgid=C.UMBRELLA_ORGID, cred=umbr_cred, console=False, page=1, limit=200).json()
+    umbr_int_networks = umbr_api.management.internalnetworks(
+        orgid=C.UMBRELLA_ORGID, cred=umbr_cred, console=False, page=1, limit=200
+    ).json()
 
     enb = ElementalNetbox()
 
@@ -129,6 +131,8 @@ def main():
             vlan_name = vlan.name.format(dc="1")
         elif str(vlan.group.name) == "DC2 VLANs":
             vlan_name = vlan.name.format(dc="2")
+        else:
+            vlan_name = vlan.name
 
         # We don't want a guaranteed-unique name yet, just one that is the right length.
         # If the name exists and the address/prefix length are the same, don't do anything.
