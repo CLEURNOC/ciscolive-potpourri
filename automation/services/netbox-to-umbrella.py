@@ -7,13 +7,169 @@ import logging.config
 import logging
 from logzero import setup_logger
 import ipaddress
-import umbr_api
+import requests
+import time
 import CLEUCreds  # type: ignore
 from cleu.config import Config as C  # type: ignore
 
 logging.config.fileConfig(os.path.realpath(os.path.dirname(os.path.realpath(__file__)) + "/dns_logger.conf"))
 logger = setup_logger()
 logger.setLevel(logging.INFO)
+
+
+class UmbrellaAPI:
+    def __init__(self):
+        try:
+            self.access_token = self.getAccessToken()
+            if self.access_token is None:
+                raise Exception("Request for access token failed")
+        except Exception as e:
+            print(e)
+
+    def getAccessToken(self):
+        try:
+            payload = {}
+            rsp = requests.post(
+                "https://api.umbrella.com/auth/v2/token", data=payload, auth=(CLEUCreds.UMBRELLA_KEY, CLEUCreds.UMBRELLA_SECRET)
+            )
+            rsp.raise_for_status()
+        except Exception as e:
+            print(e)
+            return None
+        else:
+            clock_skew = 300
+            self.access_token_expiration = int(time.time()) + rsp.json()["expires_in"] - clock_skew
+            return rsp.json()["access_token"]
+
+
+def refreshToken(decorated):
+    def wrapper(api, *args, **kwargs):
+        if int(time.time()) > api.access_token_expiration:
+            api.access_token = api.getAccessToken()
+        return decorated(api, *args, **kwargs)
+
+    return wrapper
+
+
+@refreshToken
+def add_site(api, name):
+    """Add a new site to Umbrella."""
+
+    api_uri = "https://api.umbrella.com/deployments/v2/sites"
+
+    response = requests.post(
+        api_uri,
+        json={"name": name},
+        headers={"Authorization": f"Bearer {api.access_token}"},
+    )
+
+    if response.status_code != 200:
+        logger.error("HTTP Status code: %d\n%s", response.status_code, response.text)
+
+    return response
+
+
+@refreshToken
+def get_sites(api, limit=10, page=1):
+    """Get all Umbrella Sites."""
+
+    get_all_pages = False
+    results = []
+    response = None
+
+    if page == -1:
+        get_all_pages = True
+        page = 1
+
+    while True:
+        api_uri = "https://api.umbrella.com/deployments/v2/sites?limit={}&page={}".format(limit, page)
+        response = requests.get(api_uri, headers={"Authorization": f"Bearer {api.access_token}", "Accept": "application/json"})
+
+        if response.status_code != 200:
+            logger.error("HTTP Status code: %d\n%s", response.status_code, response.text)
+            if get_all_pages:
+                raise Exception(
+                    "HTTP Status code: %d\n%s",
+                    response.status_code,
+                    response.text,
+                )
+            else:
+                return response
+
+        curr_results = response.json()
+
+        if len(curr_results) == 0 or not get_all_pages:
+            break
+
+        results += curr_results
+        page += 1
+
+    if get_all_pages:
+        return results
+
+    return response
+
+
+@refreshToken
+def get_internal_networks(api, limit=10, page=1):
+    """Get all Umbrella Internal Networks."""
+
+    get_all_pages = False
+    results = []
+    response = None
+
+    if page == -1:
+        get_all_pages = True
+        page = 1
+
+    while True:
+        api_uri = "https://api.umbrella.com/deployments/v2/internalnetworks?limit={}&page={}".format(limit, page)
+        response = requests.get(api_uri, headers={"Authorization": f"Bearer {api.access_token}", "Accept": "application/json"})
+
+        if response.status_code != 200:
+            logger.error("HTTP Status code: %d\n%s", response.status_code, response.text)
+            if get_all_pages:
+                raise Exception(
+                    "HTTP Status code: %d\n%s",
+                    response.status_code,
+                    response.text,
+                )
+            else:
+                return response
+
+        curr_results = response.json()
+
+        if len(curr_results) == 0 or not get_all_pages:
+            break
+
+        results += curr_results
+        page += 1
+
+    if get_all_pages:
+        return results
+
+    return response
+
+
+@refreshToken
+def add_internal_network(api, name, ipaddress, prefixlen, siteid):
+    """Add a new internal network to Umbrella."""
+
+    api_uri = "https://api.umbrella.com/deployments/v2/internalnetworks"
+
+    payload = {
+        "name": name,
+        "ipAddress": ipaddress,
+        "prefixLength": int(prefixlen),
+        "siteId": int(siteid),
+    }
+
+    response = requests.post(api_uri, json=payload, headers={"Authorization": f"Bearer {api.access_token}"})
+
+    if response.status_code != 200:
+        logger.error("HTTP Status code: %d\n%s", response.status_code, response.text)
+
+    return response
 
 
 def truncate_network_name(name: str, suffix: int = None) -> str:
@@ -103,12 +259,10 @@ def main():
 
     errors = 0
 
-    umbr_cred = f"{CLEUCreds.UMBRELLA_KEY}:{CLEUCreds.UMBRELLA_SECRET}"
+    api = UmbrellaAPI()
 
-    umbr_sites = umbr_api.management.sites(orgid=C.UMBRELLA_ORGID, cred=umbr_cred, console=False, page=1, limit=200).json()
-    umbr_int_networks = umbr_api.management.internalnetworks(
-        orgid=C.UMBRELLA_ORGID, cred=umbr_cred, console=False, page=1, limit=200
-    ).json()
+    umbr_sites = get_sites(api, page=-1, limit=200)
+    umbr_int_networks = get_internal_networks(api, page=-1, limit=200)
 
     enb = ElementalNetbox()
 
@@ -147,13 +301,12 @@ def main():
                     break
 
         if create_new:
-            new_net = umbr_api.management.add_internal_network(
+            new_net = add_internal_network(
+                api,
                 name=umbr_name,
                 ipaddress=addr,
                 prefixlen=plen,
                 siteid=siteid,
-                orgid=C.UMBRELLA_ORGID,
-                cred=umbr_cred,
             )
             if new_net.status_code != 200:
                 logger.warning(
