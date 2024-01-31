@@ -147,27 +147,27 @@ def main():
                     break
 
         if create_new:
-            # new_net = umbr_api.management.add_internal_network(
-            #     name=umbr_name,
-            #     ipaddress=addr,
-            #     prefixlen=plen,
-            #     siteid=siteid,
-            #     orgid=C.UMBRELLA_ORGID,
-            #     cred=umbr_cred,
-            # )
-            # if new_net.status_code != 200:
-            #     logger.warning(
-            #         f"⛔️ Failed to create new internal network {umbr_name} with network IP {addr} and prefix length {plen} for site "
-            #         f"{site_name}: {new_net.json()}"
-            #     )
-            #     errors += 1
-            #     continue
+            new_net = umbr_api.management.add_internal_network(
+                name=umbr_name,
+                ipaddress=addr,
+                prefixlen=plen,
+                siteid=siteid,
+                orgid=C.UMBRELLA_ORGID,
+                cred=umbr_cred,
+            )
+            if new_net.status_code != 200:
+                logger.warning(
+                    f"⛔️ Failed to create new internal network {umbr_name} with network IP {addr} and prefix length {plen} for site "
+                    f"{site_name}: {new_net.json()}"
+                )
+                errors += 1
+                continue
 
             logger.info(
                 f"🎨 Created new Umbrella internal network {umbr_name} with network IP {addr} and prefix length {plen} "
                 f"for site {site_name}"
             )
-            # umbr_int_networks.append(new_net.json())
+            umbr_int_networks.append(new_net.json())
 
     exit(errors)
 
