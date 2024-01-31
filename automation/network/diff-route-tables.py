@@ -31,7 +31,7 @@ import os
 from sparker import Sparker, MessageType  # type: ignore
 import time
 import random
-from subprocess import Popen, PIPE, call
+from subprocess import Popen, PIPE, call, DEVNULL
 import shlex
 import re
 import json
@@ -159,7 +159,7 @@ def main():
                         stdout=PIPE,
                         stderr=PIPE,
                     )
-                    out, err = proc.communicate()
+                    out, _ = proc.communicate()
                     rc = proc.returncode
 
                     if rc != 0:
@@ -204,8 +204,8 @@ def main():
             print("ERROR: Cannot push without a branch")
         else:
             os.chdir(args.git_repo)
-            call(f"git pull origin {args.git_branch}", shell=True)
-            call(f"git push origin {args.git_branch}", shell=True)
+            call(f"git pull origin {args.git_branch}", shell=True, stdout=DEVNULL)
+            call(f"git push origin {args.git_branch}", shell=True, stdout=DEVNULL)
 
 
 if __name__ == "__main__":
