@@ -47,7 +47,7 @@ def ontap_to_webex():
     else:
         sev = "✴️ "
 
-    payload = {"markdown": f"{sev} **NetApp {sevstr.capitalize} Event**: {event_dict['netapp']['ems-message-info']['event']}"}
+    payload = {"markdown": f"{sev} **NetApp {sevstr.capitalize()} Event**: {event_dict['netapp']['ems-message-info']['event']}"}
     requests.post(WEBHOOK_URL, json=payload)
 
     return Response("<result>OK</result>", mimetype="text/xml")
