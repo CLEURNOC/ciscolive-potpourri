@@ -37,6 +37,7 @@ requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 import traceback
 import socket
 import logging
+import pynetbox
 import CLEUCreds  # type: ignore
 from cleu.config import Config as C  # type: ignore
 
@@ -93,6 +94,22 @@ def get_from_cmx(**kwargs):
 
     return response.raw.data
     """
+
+
+def get_from_netbox(pnb, **kwargs):
+    for prefix in ("24", "32", "16"):
+        ipa = pnb.ipam.ip_addresses.get(address=f"{kwargs['ip']}/{prefix}")
+        if ipa:
+            break
+
+    if ipa:
+        ipa.full_details()
+        if ipa.assigned_object_type == "virtualization.vminterface":
+            return ("VM", str(ipa.assigned_object.virtual_machine))
+        elif ipa.assigned_object_type == "dcim.interface":
+            return ("device", str(ipa.assigned_object.device))
+
+    return None
 
 
 def get_from_dnac(**kwargs):
@@ -495,6 +512,12 @@ def check_for_mac(mac):
     return leases
 
 
+def print_netbox(spark, what, nb_obj, msg):
+    nb_msg = f"{msg} {what} is a {nb_obj[0]} named {nb_obj[1]}"
+
+    spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, nb_msg)
+
+
 def print_dnac(spark, what, dna_obj, msg):
     host_info = ""
     ssid = ""
@@ -565,6 +588,7 @@ def print_pi(spark, what, ents, msg):
 
 
 spark = Sparker(token=CLEUCreds.SPARK_TOKEN, logit=True)
+pnb = pynetbox.api(C.NETBOX_SERVER, CLEUCreds.NETBOX_API_TOKEN)
 
 SPARK_ROOM = "DHCP Queries"
 
@@ -801,6 +825,7 @@ if __name__ == "__main__":
             for hit in m:
                 res = check_for_lease(hit)
                 # pires = get_from_pi(ip=hit)
+                nbres = get_from_netbox(pnb, ip=hit)
                 cmxres = None
                 dnacres = None
                 if res is not None:
@@ -881,6 +906,8 @@ if __name__ == "__main__":
                         spark.post_to_spark_with_attach(
                             C.WEBEX_TEAM, SPARK_ROOM, "Location from CMX", cmxres, "{}_location.jpg".format(hit), "image/jpeg"
                         )
+                    if nbres:
+                        print_netbox(spark, hit, nbres, "But I did get this from NetBox:")
 
         m = re.findall(
             "\\b(?:(?:[0-9A-Fa-f]{1,4}:){6}(?:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}|(?:(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))|::(?:[0-9A-Fa-f]{1,4}:){5}(?:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}|(?:(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))|(?:[0-9A-Fa-f]{1,4})?::(?:[0-9A-Fa-f]{1,4}:){4}(?:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}|(?:(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))|(?:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4})?::(?:[0-9A-Fa-f]{1,4}:){3}(?:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}|(?:(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))|(?:(?:[0-9A-Fa-f]{1,4}:){,2}[0-9A-Fa-f]{1,4})?::(?:[0-9A-Fa-f]{1,4}:){2}(?:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}|(?:(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))|(?:(?:[0-9A-Fa-f]{1,4}:){,3}[0-9A-Fa-f]{1,4})?::[0-9A-Fa-f]{1,4}:(?:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}|(?:(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))|(?:(?:[0-9A-Fa-f]{1,4}:){,4}[0-9A-Fa-f]{1,4})?::(?:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}|(?:(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))|(?:(?:[0-9A-Fa-f]{1,4}:){,5}[0-9A-Fa-f]{1,4})?::[0-9A-Fa-f]{1,4}|(?:(?:[0-9A-Fa-f]{1,4}:){,6}[0-9A-Fa-f]{1,4})?::)\\b",
