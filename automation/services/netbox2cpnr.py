@@ -33,7 +33,7 @@ from utils import (
     dedup_cnames,
     get_cname_record,
     launch_parallel_task,
-    restart_dns_servers,
+    # restart_dns_servers,
     get_reverse_zone,
 )
 
@@ -603,7 +603,7 @@ def main():
         primary_domain = C.DNS_DOMAIN + "."
 
         edns = ElementalDns(url=f"https://{C.DNS_SERVER}:8443/")
-        ecdnses = C.CDNS_SERVERS
+        # ecdnses = C.CDNS_SERVERS
 
         # 2. Get all IP addresses for the tenant.
         ip_addresses = list(enb.ipam.ip_addresses.filter(tenant_id=tenant.id))
@@ -639,7 +639,8 @@ def main():
     if not args.dry_run:
         # Technically nothing is modified in dry-run, but just to be safe.
         if EDNS_MODIFIED:
-            restart_dns_servers(edns, ecdnses)
+            # restart_dns_servers(edns, ecdnses)
+            pass
 
 
 if __name__ == "__main__":
