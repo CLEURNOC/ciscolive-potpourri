@@ -28,7 +28,7 @@
 import requests
 import json
 import re
-import cleu.config as C  # type: ignore
+from cleu.config import Config as C  # type: ignore
 
 OUTPUT = "/home/jclarke/idf-devices.json"
 
