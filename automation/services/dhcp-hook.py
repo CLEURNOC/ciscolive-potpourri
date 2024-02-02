@@ -197,7 +197,7 @@ def get_from_dnac(**kwargs):
         if "clientConnection" in detail:
             dna_obj["ap"] = detail["clientConnection"]
 
-        if "connectionInfo" in j and "band" in j["connectionInfo"]:
+        if "connectionInfo" in j and j["connectionInfo"] and "band" in j["connectionInfo"]:
             dna_obj["band"] = j["connectionInfo"]["band"]
 
         return dna_obj
