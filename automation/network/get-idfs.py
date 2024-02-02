@@ -58,4 +58,4 @@ def get_devs():
 if __name__ == "__main__":
     idfs = get_devs()
     with open(OUTPUT, "w") as fd:
-        json.dump(idfs, indent=2)
+        json.dump(idfs, fd, indent=2)
