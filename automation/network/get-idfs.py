@@ -50,7 +50,7 @@ def get_devs():
             if not re.search(r"[xX]\d+-", dev["Hostname"]):
                 continue
 
-            devs.append(dev)
+            devs.append(dev["Hostname"])
 
     return devs
 
