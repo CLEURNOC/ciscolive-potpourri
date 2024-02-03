@@ -105,13 +105,13 @@ commands = {
     },
     "natGatewayStatsIn": {
         "command": "show platform hardware qfp active feature nat datapath gatein activity",
-        "pattern": r"Hits ([^,]+), Miss ([^,]+), Aged ([^ ]+) Added ([^ ]+) Active ([0-9]+)",
-        "metrics": ["natGateInHits", "natGateInMisses", "natGateInAged", "natGateInAdded", "natGateInActive"],
+        "pattern": r"Hits ([^,]+), Miss ([^,]+), Aged ([^ ]+) Added ([^ ]+) Replaced ([^ ]+) Active ([0-9]+)",
+        "metrics": ["natGateInHits", "natGateInMisses", "natGateInAged", "natGateInAdded", "natGateInReplaced", "natGateInActive"],
     },
     "natGatewayStatsOut": {
         "command": "show platform hardware qfp active feature nat datapath gateout activity",
-        "pattern": r"Hits ([^,]+), Miss ([^,]+), Aged ([^ ]+) Added ([^ ]+) Active ([0-9]+)",
-        "metrics": ["natGateOutHits", "natGateOutMisses", "natGateOutAged", "natGateOutAdded", "natGateOutActive"],
+        "pattern": r"Hits ([^,]+), Miss ([^,]+), Aged ([^ ]+) Added ([^ ]+) Replaced ([^ ]+) Active ([0-9]+)",
+        "metrics": ["natGateOutHits", "natGateOutMisses", "natGateOutAged", "natGateOutAdded", "natGateOutReplaced", "natGateOutActive"],
     },
     "natHealthStats": {
         "command": "show ip nat statistics | begin In-to-out",
