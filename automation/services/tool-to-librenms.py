@@ -128,14 +128,14 @@ if __name__ == "__main__":
                 devs[tdev["AssetTag"]] = tdev["Hostname"]
                 changed_devs = True
                 continue
+            except requests.exceptions.HTTPError as he:
+                if he.response.status_code != 400:
+                    print(f"Error retrieving device status for {tdev['Hostname']} from LibreNMS: '{he.response.text}'")
+                else:
+                    delete_device(tdev["Hostname"])
             except Exception:
-                if not response or response.status_code != 400:
-                    text = ""
-                    if response:
-                        text = response.text
-
-                    print(f"Error retrieving device status for {tdev['Hostname']} from LibreNMS: '{text}'")
-                    traceback.print_exc()
+                print(f"Error retrieving device status for {tdev['Hostname']} from LibreNMS")
+                traceback.print_exc()
 
             print("=== Adding device {} to LibreNMS ({} / {}) ===".format(tdev["Hostname"], i, len(tdevs)))
             url = f"https://librenms.{C.DNS_DOMAIN}/api/v0/devices"
