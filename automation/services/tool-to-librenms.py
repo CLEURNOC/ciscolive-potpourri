@@ -102,7 +102,7 @@ if __name__ == "__main__":
         if tdev["AssetTag"] in list(devs.keys()) and devs[tdev["AssetTag"]] != tdev["Hostname"]:
             print("=== Deleting device {} from LibreNMS ({} / {}) ===".format(tdev["Hostname"], i, len(tdevs)))
             res = delete_device(devs[tdev["AssetTag"]])
-            if res.stauts_code > 299:
+            if res.status_code > 299:
                 print("\n\n***WARNING: Failed to remove LibreNMS device {}: response='{}'".format(devs[tdev["AssetTag"]], res.text))
 
             print("=== DONE. ===")
