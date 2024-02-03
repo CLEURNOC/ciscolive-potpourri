@@ -105,21 +105,22 @@ def restart_dns_servers(edns: ElementalDns, cdnses: list) -> None:
         :edns ElementalDns: ElementalDns object to restart
         :ecdns ElementalCdns: ElementalCdns object to restart
     """
-    logger = logging.getLogger(__name__)
-    # A sync is not required here
-    # try:
-    #     edns.sync_ha_pair(instance="DNSHA", add_params={"mode": "exact", "direction": "fromMain"})
-    # except Exception:
-    #     # This can fail when we don't yet have an HA pair.
-    #     pass
-    # edns.reload_server()
-    # logger.info(f"🏁 Reloaded server {edns.base_url}")
+    return
+    # logger = logging.getLogger(__name__)
+    # # A sync is not required here
+    # # try:
+    # #     edns.sync_ha_pair(instance="DNSHA", add_params={"mode": "exact", "direction": "fromMain"})
+    # # except Exception:
+    # #     # This can fail when we don't yet have an HA pair.
+    # #     pass
+    # # edns.reload_server()
+    # # logger.info(f"🏁 Reloaded server {edns.base_url}")
 
-    # Restart each applicable CDNS server.
-    for cdns in cdnses:
-        ecdns = ElementalCdns(url=f"https://{cdns}:8443/")
-        ecdns.reload_server()
-        logger.info(f"🏁 Reloaded CDNS server {ecdns.base_url}")
+    # # Restart each applicable CDNS server.
+    # for cdns in cdnses:
+    #     ecdns = ElementalCdns(url=f"https://{cdns}:8443/")
+    #     ecdns.reload_server()
+    #     logger.info(f"🏁 Reloaded CDNS server {ecdns.base_url}")
 
 
 def get_reverse_zone(ip: str) -> str:
