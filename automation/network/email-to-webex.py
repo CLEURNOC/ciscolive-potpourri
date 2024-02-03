@@ -51,7 +51,7 @@ def main(spark, args):
 
         msg += line + "\n"
 
-    spark.post_to_spark_with_attach(C.WEBEX_TEAM, args.room, f"**{subject.strip()}**", msg.encode("utf-8"), "config.diff", "text/plain")
+    spark.post_to_spark(C.WEBEX_TEAM, args.room, f"**{subject.strip()}**\n\n```text\n{msg}```")
 
 
 if __name__ == "__main__":
