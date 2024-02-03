@@ -1,11 +1,8 @@
 from elemental_utils import ElementalDns, ElementalCdns
-from pynetbox.models.virtualization import VirtualMachines
-from pynetbox.core.response import Record
 from elemental_utils import cpnr
 from typing import List
 import concurrent.futures
 import logging
-from cleu.config import Config as C  # type: ignore
 
 
 def normalize_cnames(cnames: List[str], domain: str) -> List[str]:
