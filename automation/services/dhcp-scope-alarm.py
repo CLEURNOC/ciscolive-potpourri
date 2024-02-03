@@ -35,12 +35,12 @@ SPARK_ROOM = "DHCP Scope Alarms"
 def main(spark, args):
     global SPARK_ROOM
 
-    if args.threshold == "high":
+    if args.threshold == "low":
         spark.post_to_spark(
             C.WEBEX_TEAM,
             SPARK_ROOM,
             "Scope **{0}** is now **{1:.2f}%** utilized ({2} free addresses remain); suppressing future alerts until resolved or utilization increases".format(
-                args.scope, args.percent, args.addresses
+                args.scope, (100 - args.percent), args.addresses
             ),
             MessageType.WARNING,
         )
@@ -48,7 +48,9 @@ def main(spark, args):
         spark.post_to_spark(
             C.WEBEX_TEAM,
             SPARK_ROOM,
-            "Scope **{0}** is now at or below **{1:.2f}%** utilized ({2} free addresses)".format(args.scope, args.percent, args.addresses),
+            "Scope **{0}** is now at or below **{1:.2f}%** utilized ({2} free addresses)".format(
+                args.scope, (100 - args.percent), args.addresses
+            ),
             MessageType.GOOD,
         )
 
