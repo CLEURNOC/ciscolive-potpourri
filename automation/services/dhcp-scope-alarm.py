@@ -39,7 +39,7 @@ def main(spark, args):
         spark.post_to_spark(
             C.WEBEX_TEAM,
             SPARK_ROOM,
-            "Scope **{0}** is now **{1:.2f}%** utilized ({2} free addresses remain); suppressing future alerts until resolved or utilization increases".format(
+            "Scope **{0}** is now at least **{1:.2f}%** utilized ({2} free addresses remain); suppressing future alerts until resolved or utilization increases".format(
                 args.scope, (100 - args.percent), args.addresses
             ),
             MessageType.WARNING,
