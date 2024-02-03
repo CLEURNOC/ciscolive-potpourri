@@ -33,6 +33,7 @@ import json
 import sys
 import time
 import re
+import traceback
 import CLEUCreds  # type: ignore
 from cleu.config import Config as C  # type: ignore
 
@@ -120,7 +121,7 @@ if __name__ == "__main__":
                 print("=== DONE. ===")
                 time.sleep(3)
 
-            url = "https://librenms." + C.DNS_DOMAIN + "/api/v0/inventory/" + tdev["Hostname"]
+            url = f"https://librenms.{C.DNS_DOMAIN}/api/v0/inventory/{tdev['Hostname']}"
             try:
                 response = requests.get(url, headers=LIBRE_HEADERS)
                 response.raise_for_status()
@@ -134,6 +135,7 @@ if __name__ == "__main__":
                         text = response.text
 
                     print(f"Error retrieving device status for {tdev['Hostname']} from LibreNMS: '{text}'")
+                    traceback.print_exc()
 
             print("=== Adding device {} to LibreNMS ({} / {}) ===".format(tdev["Hostname"], i, len(tdevs)))
             url = f"https://librenms.{C.DNS_DOMAIN}/api/v0/devices"
