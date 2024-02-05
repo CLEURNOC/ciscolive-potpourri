@@ -41,11 +41,17 @@ app = Flask("DHCP Stats Fetcher")
 def get_metrics():
     global CACHE_FILE
 
-    fd = open(CACHE_FILE, "r")
-    macs = json.load(fd)
-    fd.close()
+    with open(CACHE_FILE, "r") as fd:
+        macs = json.load(fd)
 
-    return Response("\n".join(macs) + "\n", mimetype="text/plain")
+    response = []
+
+    for line in macs:
+        line = line.rstrip()
+        if line != "":
+            response.append(line)
+
+    return Response("\n".join(response) + "\n", mimetype="text/plain")
 
 
 if __name__ == "__main__":
