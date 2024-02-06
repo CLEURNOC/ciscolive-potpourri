@@ -165,6 +165,24 @@ devices = [
             "natGatewayStatsOut",
         ],
     },
+    {
+        "pattern": "CORE1-OLD-EDGE",
+        "range": {"min": 1, "max": 2},
+        "commands": [
+            "natTrans",
+            "qfpUtil",
+            "umbrella1Trans",
+            "umbrella2Trans",
+            "natPoolDefault1",
+            "natPoolDefault2",
+            "natPoolDns",
+            "natPoolLabs",
+            "natPoolWLC",
+            "natHealthStats",
+            "natGatewayStatsIn",
+            "natGatewayStatsOut",
+        ],
+    },
 ]
 
 
