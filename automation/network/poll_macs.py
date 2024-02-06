@@ -166,7 +166,7 @@ devices = [
         ],
     },
     {
-        "pattern": "CORE1-OLD-EDGE",
+        "pattern": "CORE{}-OLD-EDGE",
         "range": {"min": 1, "max": 2},
         "commands": [
             "natTrans",
