@@ -75,6 +75,7 @@ class ARecord:
     ip: str
     domain: str
     nb_record: IpAddresses
+    ttl: int
     _name: str
 
 
@@ -85,6 +86,7 @@ class CNAMERecord:
     alias: str
     domain: str
     host: ARecord
+    ttl: int
     _name: str
 
 
@@ -194,13 +196,15 @@ def check_record(ip: IpAddresses, primary_domain: str, edns: ElementalDns, enb: 
     ptr_name = ip_address.split(".")[::-1][0]
     old_ptrs = []
 
+    ttl = ip.custom_fields.get("DNS TTL")
+
     # Get the current A record from DNS (if it exists)
     current_host_record = edns.host.get(dns_name, zoneOrigin=primary_domain)
     # Get the current PTR record from DNS (if it exists)
     current_ptr_record = edns.rrset.get(ptr_name, zoneOrigin=rzone_name)
 
     # Declare an A record for the current object.
-    a_record = ARecord(dns_name, ip_address, primary_domain, ip, dns_name)
+    a_record = ARecord(dns_name, ip_address, primary_domain, ip, ttl, dns_name)
 
     # Track whether or not we need a change
     change_needed = False
@@ -279,6 +283,7 @@ def check_cnames(
     """
 
     cnames = ip.custom_fields.get("CNAMEs")
+    ttl = ip.custom_fields.get("DNS TTL")
     if not cnames:
         cnames = ""
     else:
@@ -299,7 +304,7 @@ def check_cnames(
         for cname in cname_list:
             current_domain = ".".join(cname.split(".")[1:])
             alias = cname.split(".")[0]
-            cname_record = CNAMERecord(alias, current_domain, a_record, alias)
+            cname_record = CNAMERecord(alias, current_domain, a_record, ttl, alias)
 
             current_cname_record = get_cname_record(alias, current_domain, edns)
 
@@ -468,6 +473,18 @@ def add_record(record: Union[ARecord, CNAMERecord, PTRRecord], primary_domain: s
         logger.info(f"🎨 Successfully created record for host {record.hostname} : {record.ip}")
         rrs = edns.rrset.get(record.hostname, zoneOrigin=primary_domain)
         rrs.rrList["CCMRRItem"].append({"rdata": txt_record, "rrClass": "IN", "rrType": "TXT"})
+        if record.ttl > -1:
+            for rr in rrs.rrList["CCMRRItem"]:
+                rr["ttl"] = record.ttl
+
+            ptr_name = record.ip.split(".")[::-1][0]
+            ptr_rrs = edns.rrset.get(ptr_name, zoneOrigin=primary_domain)
+            if ptr_rrs:
+                for rr in ptr_rrs.rrList["CCMRRItem"]:
+                    rr["ttl"] = record.ttl
+
+                ptr_rrs.save()
+
         rrs.save()
         logger.info(f"🎨 Successfully created TXT meta-record for host {record.hostname} in domain {primary_domain}")
         EDNS_MODIFIED = True
@@ -476,7 +493,7 @@ def add_record(record: Union[ARecord, CNAMERecord, PTRRecord], primary_domain: s
         cpnr_record["name"] = record.alias
         cpnr_record["zoneOrigin"] = record.domain
         target = f"{record.host.hostname}.{record.host.domain}"
-        cpnr_record["rrList"] = {"CCMRRItem": [{"rdata": target, "rrClass": "IN", "rrType": "CNAME"}]}
+        cpnr_record["rrList"] = {"CCMRRItem": [{"rdata": target, "rrClass": "IN", "rrType": "CNAME", "ttl": record.ttl}]}
 
         curr_edns.rrset.add(**cpnr_record)
         logger.info(f"🎨 Successfully created CNAME record in domain {record.domain} for alias {record.alias} ==> {target}")
