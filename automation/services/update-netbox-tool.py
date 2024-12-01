@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2017-2024  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2025  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -42,6 +42,8 @@ from cleu.config import Config as C  # type: ignore
 CACHE_FILE = "netbox_tool_cache.json"
 SKU_MAP = {
     "WS-C3560CX-12PD-S": "WS-C3560CX-12PD-S",
+    "C9200CX-12P-2X2G": "C9200CX-12P-2X2G",
+    "C9200CX-8UXG-2X": "C9200CX-8UXG-2X",
     "C9300-48U": "C9300-48P",
     "C9300-48P": "C9300-48P",
     "C9300-48UXM": "C9300-48P",
@@ -71,6 +73,8 @@ VRF_NAME = "default"
 VRF_OBJ = None
 TENANT_NAME = "DC Infrastructure"
 TENANT_OBJ = None
+
+TTL = 300
 
 
 def get_devs():
@@ -125,7 +129,7 @@ def delete_netbox_device(enb: ElementalNetbox, dname: str) -> None:
 
             dev_obj.delete()
     except Exception as e:
-        sys.stderr.write(f"WARNING: Failed to delete NetBox device for {dname}: {e}\n")
+        sys.stderr.write("WARNING: Failed to delete NetBox device for %s: %s\n" % (dname, str(e)))
 
 
 def populate_objects(enb: ElementalNetbox) -> None:
@@ -187,6 +191,7 @@ def add_netbox_device(enb: ElementalNetbox, dev: dict) -> None:
     ip_obj.assigned_object_type = "dcim.interface"
     dev["aliases"].sort()
     ip_obj.custom_fields["CNAMEs"] = ",".join(dev["aliases"])
+    ip_obj.custom_fields["DNS TTL"] = TTL
     ip_obj.save()
 
     dev_obj.primary_ip4 = ip_obj.id
