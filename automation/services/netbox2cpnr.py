@@ -196,7 +196,9 @@ def check_record(ip: IpAddresses, primary_domain: str, edns: ElementalDns, enb: 
     ptr_name = ip_address.split(".")[::-1][0]
     old_ptrs = []
 
-    ttl = ip.custom_fields.get("DNS TTL")
+    ttl = ip.custom_fields.get("dns_ttl")
+    if not ttl:
+        ttl = -1
 
     # Get the current A record from DNS (if it exists)
     current_host_record = edns.host.get(dns_name, zoneOrigin=primary_domain)
