@@ -106,7 +106,7 @@ def export_ips(nb: Any, gs_service: Any) -> None:
 
         tags = ""
         if len(ip.tags) > 0:
-            tags = ",".join(ip.tags)
+            tags = ",".join(str(ip.tags))
 
         interface = ""
         if ip.assigned_object:
