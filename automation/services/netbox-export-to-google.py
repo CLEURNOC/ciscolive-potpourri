@@ -73,72 +73,67 @@ def export_ips(nb: Any, gs_service: Any) -> None:
     new_values.append(headers)
 
     for ip in ips:
-        tenant = " "
-        tenant_group = " "
+        tenant = ""
+        tenant_group = ""
         if ip.tenant:
             ip.tenant.full_details()
             tenant = ip.tenant.name
             if ip.tenant.group:
                 tenant_group = str(ip.tenant.group)
 
-        parent = " "
+        parent = ""
         if ip.assigned_object:
             if ip.assigned_object_type == "virtualization.vminterface":
                 parent = ip.assigned_object.virtual_machine.name
             elif ip.assigned_object_type == "dcim.interface":
                 parent = ip.assigned_object.device.name
 
-        role = " "
+        role = ""
         if ip.role:
             role = str(ip.role)
 
-        nat_inside = " "
+        nat_inside = ""
         if ip.nat_inside:
             nat_inside = str(nat_inside)
 
-        nat_outside = " "
+        nat_outside = ""
         if len(ip.nat_outside) > 0:
             nat_outside = ",".join(ip.nat_outside)
 
-        vrf = " "
+        vrf = ""
         if ip.vrf:
             vrf = str(ip.vrf)
 
-        tags = " "
+        tags = ""
         if len(ip.tags) > 0:
             tags = ",".join(ip.tags)
 
-        interface = " "
+        interface = ""
         if ip.assigned_object:
             interface = str(ip.assigned_object)
 
-        cnames = " "
-        if ip.custom_fields["CNAMEs"] and len(ip.custom_fields["CNAMEs"]) > 0:
-            cnames = ip.custom_fields["CNAMEs"]
-
-        new_values.append(
-            [
-                ip.address,  # Address
-                vrf,  # VRF
-                ip.status.label,  # Status
-                role,  # Role
-                tenant,  # Tenant
-                ip.assigned_object_id,  # Assigned
-                ip.dns_name,  # DNS name
-                ip.description,  # Description
-                ip.id,  # ID
-                tenant_group,  # Tenant Group
-                nat_inside,  # NAT (Inside)
-                nat_outside,  # NAT (Outside)
-                ip.comments,  # Comments
-                tags,  # Tags
-                str(ip.created),  # Created
-                str(ip.last_updated),  # Last updated
-                interface,  # Interface
-                parent,  # Parent
-                cnames,  # List of additional CNAMEs
-            ]
-        )
+        row = {
+            "Address": ip.address,
+            "VRF": vrf,
+            "Status": ip.status.label,
+            "Role": role,
+            "Tenant": tenant,
+            "Assigned": ip.assigned_object_id,
+            "DNS name": ip.dns_name,
+            "Description": ip.description,
+            "ID": ip.id,
+            "Tenant Group": tenant_group,
+            "NAT (Inside)": nat_inside,
+            "NAT (Outside)": nat_outside,
+            "Comments": ip.comments,
+            "Tags": tags,
+            "Created": str(ip.created),
+            "Last updated": str(ip.last_updated),
+            "Interface": interface,
+            "Parent": parent,
+            "List of additional CNAMEs": ip.custom_fields["CNAMEs"],
+        }
+        new_values.append(list(row.values()))
 
     ip_sheet = gs_service.spreadsheets()
     ip_sheet.values().update(
@@ -198,42 +193,40 @@ def export_prefixes(nb: Any, gs_service: Any) -> None:
         "Created",
         "Last updated",
         "Depth",
-        "DHCP Required",
-        "DHCP Scope Size",
     ]
 
     new_values.append(headers)
 
     for prefix in prefixes:
-        tenant = " "
-        tenant_group = " "
+        tenant = ""
+        tenant_group = ""
         if prefix.tenant:
             prefix.tenant.full_details()
             tenant = prefix.tenant.name
             if prefix.tenant.group:
                 tenant_group = str(prefix.tenant.group)
 
-        vlan = " "
-        vlan_group = " "
+        vlan = ""
+        vlan_group = ""
         if prefix.vlan:
             prefix.vlan.full_details()
             vlan = f"{prefix.vlan.name} ({prefix.vlan.vid})"
             if prefix.vlan.group:
                 vlan_group = str(prefix.vlan.group)
 
-        site = " "
+        site = ""
         if prefix.site:
             site = prefix.site.name
 
-        role = " "
+        role = ""
         if prefix.role:
             role = str(prefix.role)
 
-        vrf = " "
+        vrf = ""
         if prefix.vrf:
             vrf = str(prefix.vrf)
 
-        tags = " "
+        tags = ""
         if len(prefix.tags) > 0:
             tags = ",".join(prefix.tags)
 
@@ -259,8 +252,6 @@ def export_prefixes(nb: Any, gs_service: Any) -> None:
             "Created": str(prefix.created),
             "Last updated": str(prefix.last_updated),
             "Depth": prefix._depth,
-            "Requires DHCP": prefix.custom_fields["dhcpreq"],
-            "DHCP Scope Size": prefix.custom_fields["dhcpscopesize"],
         }
         new_values.append(list(row.values()))
 
@@ -300,31 +291,31 @@ def export_vlans(nb: Any, gs_service: Any) -> None:
     new_values.append(headers)
 
     for vlan in vlans:
-        tenant = " "
-        tenant_group = " "
+        tenant = ""
+        tenant_group = ""
         if vlan.tenant:
             vlan.tenant.full_details()
             tenant = vlan.tenant.name
             if vlan.tenant.group:
                 tenant_group = str(vlan.tenant.group)
 
-        group = " "
+        group = ""
         if vlan.group:
             group = str(vlan.group)
 
-        site = " "
+        site = ""
         if vlan.site:
             site = vlan.site.name
 
-        role = " "
+        role = ""
         if vlan.role:
             role = str(vlan.role)
 
-        tags = " "
+        tags = ""
         if len(vlan.tags) > 0:
             tags = ",".join(vlan.tags)
 
-        l2vpn = " "
+        l2vpn = ""
         if vlan.l2vpn_termination:
             l2vpn = str(vlan.l2vpn_termination)
 
@@ -383,8 +374,6 @@ def main() -> int:
         print(f"ERROR: Failed to export VLANs to Google Sheets: {e}")
         traceback.print_exc()
         return 1
-
-    return 0
 
 
 if __name__ == "__main__":
