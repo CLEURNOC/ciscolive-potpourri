@@ -44,3 +44,6 @@ uritemplate
 urllib3
 requests_toolbelt
 logzero
+Flask
+gevent
+xmltodict
