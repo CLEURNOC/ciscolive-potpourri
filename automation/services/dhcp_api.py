@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright (c) 2017-2024  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2025  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,12 +30,12 @@ import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning  # type: ignore
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-import CLEUCreds
+import CLEUCreds  # type: ignore
 import re
-from gevent.pywsgi import WSGIServer  # type: ignore
-from webargs.flaskparser import use_kwargs  # type: ignore
-from webargs import fields  # type: ignore
-from cleu.config import Config as C
+from gevent.pywsgi import WSGIServer
+from webargs.flaskparser import use_kwargs
+from webargs import fields
+from cleu.config import Config as C  # type: ignore
 
 
 PORT = 8084

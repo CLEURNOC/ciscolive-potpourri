@@ -294,7 +294,7 @@ if __name__ == "__main__":
                 SPARK_ROOM,
                 'Sorry, I didn\'t get that.  Please ask me to create or delete a DNS entry; or just ask for "help".',
             )
-    except Exception as e:
+    except Exception:
         logging.error("Error in obtaining data: {}".format(traceback.format_exc()))
         spark.post_to_spark(
             C.WEBEX_TEAM, SPARK_ROOM, "Whoops, I encountered an error:<br>\n```\n{}\n```".format(traceback.format_exc()), MessageType.BAD
