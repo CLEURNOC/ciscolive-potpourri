@@ -42,3 +42,4 @@ rsa
 six
 uritemplate
 urllib3
+requests_toolbelt
