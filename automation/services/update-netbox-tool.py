@@ -191,7 +191,7 @@ def add_netbox_device(enb: ElementalNetbox, dev: dict) -> None:
     ip_obj.assigned_object_type = "dcim.interface"
     dev["aliases"].sort()
     ip_obj.custom_fields["CNAMEs"] = ",".join(dev["aliases"])
-    ip_obj.custom_fields["DNS TTL"] = TTL
+    ip_obj.custom_fields["dns_ttl"] = TTL
     ip_obj.save()
 
     dev_obj.primary_ip4 = ip_obj.id
