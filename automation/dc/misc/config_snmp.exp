@@ -1,0 +1,49 @@
+#!/usr/local/bin/expect
+
+set SNMP_USER "CLEUR"
+
+if { ! [info exists env(ESXI_ROOT_PW)] } {
+    puts "ERROR: Please set the ESXI_ROOT_PW environment variable first!"
+    exit 1
+}
+if { ! [info exists env(SNMP_PW)] } {
+    puts "ERROR: Please set the SNMP_PW environment variable first!"
+    exit 1
+}
+set pw $env(ESXI_ROOT_PW)
+set SNMP_PW $env(SNMP_PW)
+
+set hosts [list \
+"dc1-esx-01.ciscolive.network" \
+"dc1-esx-02.ciscolive.network" \
+"dc1-esx-03.ciscolive.network" \
+"dc1-esx-04.ciscolive.network" \
+"dc1-esx-05.ciscolive.network" \
+"dc1-esx-06.ciscolive.network" \
+"dc2-esx-01.ciscolive.network" \
+"dc2-esx-02.ciscolive.network" \
+"dc2-esx-03.ciscolive.network" \
+"dc2-esx-04.ciscolive.network" \
+"dc2-esx-05.ciscolive.network" \
+"dc2-esx-06.ciscolive.network" \
+]
+
+foreach host $hosts {
+
+    eval spawn ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@$host
+    interact -o -nobuffer -re "assword:" return
+    send "$pw\r"
+    interact -o -nobuffer -re "root@.*\]" return
+    send "esxcli system snmp set -a SHA1 -e true -x AES128\r"
+    expect -re "root@.*\]"
+    send "esxcli system snmp hash --auth-hash $SNMP_PW --priv-hash $SNMP_PW --raw-secret\r"
+    expect -re "root@.*\]"
+    if { ! [regexp {Authhash: ([a-fA-F0-9]+)} $expect_out(buffer) -> hash] } {
+	puts "\nFailed to gen hash for $host"
+	continue
+    }
+    send "esxcli system snmp set -u $SNMP_USER/$hash/$hash/priv\r"
+    expect -re "root@.*\]"
+
+    send "exit\r"
+}
