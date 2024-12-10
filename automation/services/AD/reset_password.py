@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2017-2024  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2025  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,9 +32,9 @@ from functools import wraps
 from flask import request, Response, session, redirect  # type: ignore
 from flask import Flask  # type: ignore
 import pythoncom  # type: ignore
-import CLEUCreds
+import CLEUCreds  # type: ignore
 import socket
-from cleu.config import Config as C
+from cleu.config import Config as C  # type: ignore
 
 LOG_EMERG = 0  # system is unusable
 LOG_ALERT = 1  # action must be taken immediately
@@ -163,7 +163,7 @@ def authenticate():
     return Response(
         "Failed to verify credentials for password reset.\n" "You have to login with proper credentials.",
         401,
-        {"WWW-Authenticate": 'Basic realm="CLEU Password Reset; !!!ENTER YOUR AD USERNAME AND PASSWORD!!!"'},
+        {"WWW-Authenticate": 'Basic realm="CLEUR Password Reset; !!!ENTER YOUR AD USERNAME AND PASSWORD!!!"'},
     )
 
 

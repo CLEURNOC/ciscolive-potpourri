@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2017-2020  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2025  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,13 +25,13 @@
 # SUCH DAMAGE.
 
 from __future__ import print_function
-from pyad import *
+from pyad import adcontainer, aduser, adgroup  # type: ignore
 import sys
 import re
-import sparker
-import CLEUCreds
+import sparker  # type: ignore
+import CLEUCreds  # type: ignore
 import time
-from cleu.config import Config as C
+from cleu.config import Config as C  # type: ignore
 
 DEFAULT_GROUP = "CL NOC Users"
 
@@ -67,7 +67,7 @@ if __name__ == "__main__":
                         new_user.delete()
                         sys.stderr.write("Error adding user {} (maybe duplicate?)\n".format(m.group(1)))
                         continue
-                    except:
+                    except Exception:
                         pass
 
                 try:
