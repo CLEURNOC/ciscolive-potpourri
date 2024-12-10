@@ -25,13 +25,14 @@
 # SUCH DAMAGE.
 
 from __future__ import print_function
-from pyad import adcontainer, aduser, adgroup  # type: ignore
+from pyad import *  # type: ignore
 import sys
 import re
 import sparker  # type: ignore
 import CLEUCreds  # type: ignore
 import time
 from cleu.config import Config as C  # type: ignore
+import traceback
 
 DEFAULT_GROUP = "CL NOC Users"
 
@@ -40,7 +41,7 @@ if __name__ == "__main__":
     members = spark.get_members(C.WEBEX_TEAM)
     # pyad.set_defaults(ldap_server=AD_DC, username=AD_USERNAME, password=AD_PASSWORD, ssl=True)
     ou = adcontainer.ADContainer.from_dn(C.AD_DN_BASE)
-    if members is not None:
+    if members:
         for member in members:
             m = re.search(r"([^@]+)@cisco.com$", member["personEmail"])
             if m:
@@ -48,7 +49,7 @@ if __name__ == "__main__":
                 fullname = names[0] + " " + names[-1]
                 try:
                     ad_user = aduser.ADUser.from_dn("cn={}, {}".format(fullname, C.AD_DN_BASE))
-                    if ad_user is not None:
+                    if ad_user:
                         sys.stderr.write("Not creating {} ({}) as they already exist.\n".format(m.group(1), fullname))
                         continue
                 except Exception:
@@ -57,6 +58,7 @@ if __name__ == "__main__":
                     new_user = aduser.ADUser.create(fullname, ou, password=CLEUCreds.DEFAULT_USER_PASSWORD)
                 except Exception as e:
                     sys.stderr.write("Failed to create user {}: {}\n".format(m.group(1), e))
+                    traceback.print_exc()
                     continue
                 new_user.update_attribute("mail", member["personEmail"])
                 try:
@@ -74,6 +76,7 @@ if __name__ == "__main__":
                     new_user.force_pwd_change_on_login()
                 except Exception as e:
                     sys.stderr.write("Error setting password policy for user {}: {}".format(m.group(1), e))
+                    traceback.print_exc()
                 def_group = adgroup.ADGroup.from_cn(DEFAULT_GROUP)
                 def_group.add_members([new_user])
                 print("Added user {}".format(m.group(1)))
