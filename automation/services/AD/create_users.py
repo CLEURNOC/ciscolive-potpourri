@@ -51,6 +51,7 @@ if __name__ == "__main__":
                     ad_user = aduser.ADUser.from_dn("cn={}, {}".format(fullname, C.AD_DN_BASE))
                     if ad_user:
                         sys.stderr.write("Not creating {} ({}) as they already exist.\n".format(m.group(1), fullname))
+                        ad_user.update_attribute("otherMailbox", m.group(1) + "@" + C.DNS_DOMAIN)
                         continue
                 except Exception:
                     pass
@@ -61,6 +62,7 @@ if __name__ == "__main__":
                     traceback.print_exc()
                     continue
                 new_user.update_attribute("mail", member["personEmail"])
+                new_user.update_attribute("otherMailbox", m.group(1) + "@" + C.DNS_DOMAIN)
                 try:
                     new_user.update_attribute("sAMAccountName", m.group(1))
                     new_user.update_attribute("userPrincipalName", "{}@{}".format(m.group(1), C.AD_DOMAIN))
