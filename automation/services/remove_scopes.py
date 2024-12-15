@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+
+# !!! This script is obsolete!  Run `remove_scopes.sh` instead !!!
+
 #
 # Copyright (c) 2017-2024  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
