@@ -26,7 +26,6 @@
 #
 use strict;
 use warnings;
-use 5.026;
 
 sub run_command {
     my ($command) = @_;
