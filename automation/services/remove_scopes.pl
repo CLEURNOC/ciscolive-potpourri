@@ -27,9 +27,6 @@
 use strict;
 use warnings;
 use 5.026;
-use Fcntl qw(:DEFAULT);
-use File::Spec;
-use File::Basename;
 
 sub run_command {
     my ($command) = @_;
