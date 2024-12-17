@@ -217,6 +217,7 @@ def construct_ipv6_address(ip: str) -> str:
     hextets[-2] = format(hextet, "x")
     # Re-add the last element.
     hextets.append("")
+    hextets[-1] = format(int(octets[-1]), "x")
 
     return ":".join(hextets)
 
