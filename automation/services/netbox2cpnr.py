@@ -340,11 +340,16 @@ def check_record(ip: IpAddresses, primary_domain: str, edns: ElementalDns, enb: 
         # An A record doesn't yet exist.
         change_needed = True
     else:
-        if ip_address not in current_host_record.addrs["stringItem"]:
+        if ip.family.value == 4:
+            addr_list = current_host_record.addrs["stringItem"]
+        else:
+            addr_list = current_host_record.ip6AddressList["stringItem"]
+
+        if ip_address not in addr_list:
             # An A record exists for the hostname but pointing to a different IP.  Remove it.
             change_needed = True
             # Also, remove the old PTR.
-            for addr in current_host_record.addrs["stringItem"]:
+            for addr in addr_list:
                 if "." in addr:
                     # IPv4 address.
                     old_ptrs.append((addr.split(".")[::-1][0], get_reverse_zone(addr)))
@@ -356,21 +361,16 @@ def check_record(ip: IpAddresses, primary_domain: str, edns: ElementalDns, enb: 
                             get_reverse_zone(addr, C.IPV6_PREFIX_SIZE),
                         )
                     )
-        elif ipv6_addr and ipv6_addr not in current_host_record.addrs["stringItem"]:
+        elif ipv6_addr and ipv6_addr not in current_host_record.ip6AddressList["stringItem"]:
             # The host record is missing its IPv6 address.
             change_needed = True
-            for addr in current_host_record.addrs["stringItem"]:
-                if "." in addr:
-                    # IPv4 address.
-                    old_ptrs.append((addr.split(".")[::-1][0], get_reverse_zone(addr)))
-                else:
-                    # IPv6 address.
-                    old_ptrs.append(
-                        (
-                            ".".join(":".join(ipaddress.IPv6Address(addr).exploded.split(":")[::-1][0:index]).replace(":", "")),
-                            get_reverse_zone(addr, C.IPV6_PREFIX_SIZE),
-                        )
+            for addr in current_host_record.ip6AddressList["stringItem"]:
+                old_ptrs.append(
+                    (
+                        ".".join(":".join(ipaddress.IPv6Address(addr).exploded.split(":")[::-1][0:index]).replace(":", "")),
+                        get_reverse_zone(addr, C.IPV6_PREFIX_SIZE),
                     )
+                )
         else:
             # Check if we have a TXT meta-record.  If this does not exist the existing host record will be removed and a new one added
             change_needed = check_txt_record(current_host_record, ip, edns)
@@ -627,7 +627,15 @@ def add_record(record: Union[ARecord, CNAMERecord, PTRRecord], primary_domain: s
 
     if isinstance(record, ARecord):
         cpnr_record["name"] = record.hostname
-        cpnr_record["addrs"] = {"stringItem": record.ips}
+        for ip in record.ips:
+            if "." in ip:
+                if "addrs" not in cpnr_record:
+                    cpnr_record["addrs"] = {"stringItem": []}
+                cpnr_record["addrs"]["stringItem"].append(ip)
+            else:
+                if "ip6AddressList" not in cpnr_record:
+                    cpnr_record["ip6AddressList"] = {"stringItem": []}
+                cpnr_record["ip6AddressList"]["stringItem"].append(ip)
         cpnr_record["zoneOrigin"] = primary_domain
         cpnr_record["createPtrRecords"] = True
         txt_record = get_txt_record(record.nb_record)
