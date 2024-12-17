@@ -298,11 +298,11 @@ def check_record(ip: IpAddresses, primary_domain: str, edns: ElementalDns, enb: 
 
     ip_address = ip.address.split("/")[0]
     rzone_name = get_reverse_zone(ip_address, C.IPV6_PREFIX_SIZE)
-    index = int((128 - C.IPV6_PREFIX_SIZE) / 16)
+    index = int((128 - C.IPV6_PREFIX_SIZE) / 4)
     if ip.family.value == 4:
-        ptr_name = ip_address.split(".")[::-1][0]
+        ptr_name = ".".join(ip_address.split(".")[::-1][:-1])
     else:
-        ptr_name = ".".join(":".join(ipaddress.IPv6Address(ip_address).exploded.split(":")[::-1][0:index]).replace(":", ""))
+        ptr_name = ".".join(list(ipaddress.IPv6Address(ip_address).exploded.replace(":", ""))[::-1][0:index])
 
     old_ptrs = []
 
@@ -326,7 +326,7 @@ def check_record(ip: IpAddresses, primary_domain: str, edns: ElementalDns, enb: 
         addresses.append(ipv6_addr)
         v6_rzone_name = get_reverse_zone(ipv6_addr, C.IPV6_PREFIX_SIZE)
         current_v6_ptr_record = edns.rrset.get(
-            ".".join(":".join(ipaddress.IPv6Address(ipv6_addr).exploded.split(":")[::-1][0:index]).replace(":", "")),
+            ".".join(list(ipaddress.IPv6Address(ipv6_addr).exploded.replace(":", ""))[::-1][0:index]),
             zoneOrigin=v6_rzone_name,
         )
 
@@ -352,12 +352,12 @@ def check_record(ip: IpAddresses, primary_domain: str, edns: ElementalDns, enb: 
             for addr in addr_list:
                 if "." in addr:
                     # IPv4 address.
-                    old_ptrs.append((addr.split(".")[::-1][0], get_reverse_zone(addr)))
+                    old_ptrs.append((".".join(addr.split(".")[::-1][:-1]), get_reverse_zone(addr)))
                 else:
                     # IPv6 address.
                     old_ptrs.append(
                         (
-                            ".".join(":".join(ipaddress.IPv6Address(addr).exploded.split(":")[::-1][0:index]).replace(":", "")),
+                            ".".join(list(ipaddress.IPv6Address(addr).exploded.replace(":", ""))[::-1][0:index]),
                             get_reverse_zone(addr, C.IPV6_PREFIX_SIZE),
                         )
                     )
@@ -367,7 +367,7 @@ def check_record(ip: IpAddresses, primary_domain: str, edns: ElementalDns, enb: 
             for addr in current_host_record.ip6AddressList["stringItem"]:
                 old_ptrs.append(
                     (
-                        ".".join(":".join(ipaddress.IPv6Address(addr).exploded.split(":")[::-1][0:index]).replace(":", "")),
+                        ".".join(list(ipaddress.IPv6Address(addr).exploded.replace(":", ""))[::-1][0:index]),
                         get_reverse_zone(addr, C.IPV6_PREFIX_SIZE),
                     )
                 )
@@ -650,10 +650,10 @@ def add_record(record: Union[ARecord, CNAMERecord, PTRRecord], primary_domain: s
 
             for ip in record.ips:
                 if "." in ip:
-                    ptr_name = ip.split(".")[::-1][0]
+                    ptr_name = ".".join(ip.split(".")[::-1][:-1])
                 else:
-                    index = int((128 - C.IPV6_PREFIX_SIZE) / 16)
-                    ptr_name = ".".join(":".join(ipaddress.IPv6Address(ip).exploded.split(":")[::-1][0:index]).replace(":", ""))
+                    index = int((128 - C.IPV6_PREFIX_SIZE) / 4)
+                    ptr_name = ".".join(list(ipaddress.IPv6Address(ip).exploded.replace(":", ""))[::-1][0:index])
 
                 ptr_rrs = edns.rrset.get(ptr_name, zoneOrigin=get_reverse_zone(ip, C.IPV6_PREFIX_SIZE))
                 if ptr_rrs:

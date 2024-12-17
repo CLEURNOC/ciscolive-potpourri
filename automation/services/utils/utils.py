@@ -134,12 +134,12 @@ def get_reverse_zone(ip: str, prefix_size: int = 48) -> str:
     if "." in ip:
         # IPv4 address.
         octets = ip.split(".")
-        rzone_name = f"{'.'.join(octets[::-1][1:])}.in-addr.arpa."
+        rzone_name = f"{octets[::-1][-1]}.in-addr.arpa."
     else:
         # IPv6 address.
         index = int((128 - prefix_size) / 16)
         addr = ":".join(ipaddress.IPv6Address(ip).exploded.split(":")[:-index])
-        rzone_name = re.sub(r"^(0\.)+", "", ipaddress.IPv6Network(addr + f"::/{prefix_size}").network_address.reverse_pointer)
+        rzone_name = re.sub(r"^(0\.)+", "", ipaddress.IPv6Network(addr + f"::/{prefix_size}").network_address.reverse_pointer) + "."
 
     return rzone_name
 
