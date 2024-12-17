@@ -196,7 +196,7 @@ def construct_ipv6_address(ip: str) -> str:
     Returns:
         :str: Generated IPv6 address
     """
-    hextets = str(C.IPV6_PREFIX).split(":")
+    hextets = C.IPV6_PREFIX.split(":")
     hextet = 0
     octets = ip.split(".")
     if C.VLAN_OCTET > -1:
@@ -204,15 +204,15 @@ def construct_ipv6_address(ip: str) -> str:
             raise ValueError("VLAN octet cannot be the same as IDF octet")
 
         if C.VLAN_OCTET == 2:
-            hextet |= octets[C.VLAN_OCTET - 1] << 8
+            hextet |= int(octets[C.VLAN_OCTET - 1]) << 8
         else:
-            hextet |= octets[C.VLAN_OCTET - 1]
+            hextet |= int(octets[C.VLAN_OCTET - 1])
 
     if C.IDF_OCTET > -1:
         if C.IDF_OCTET == 2:
-            hextet |= octets[C.IDF_OCTET - 1] << 8
+            hextet |= int(octets[C.IDF_OCTET - 1]) << 8
         else:
-            hextet |= octets[C.IDF_OCTET - 1]
+            hextet |= int(octets[C.IDF_OCTET - 1])
 
     hextets[-2] = format(hextet, "x")
     # Re-add the last element.
