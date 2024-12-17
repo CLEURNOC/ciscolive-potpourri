@@ -3,6 +3,7 @@ from elemental_utils import cpnr
 from typing import List
 import concurrent.futures
 import logging
+import ipaddress
 
 
 def normalize_cnames(cnames: List[str], domain: str) -> List[str]:
@@ -120,7 +121,7 @@ def restart_dns_servers(edns: ElementalDns, cdnses: list) -> None:
         logger.info(f"🏁 Reloaded CDNS server {ecdns.base_url}")
 
 
-def get_reverse_zone(ip: str) -> str:
+def get_reverse_zone(ip: str, prefix_size: int = 48) -> str:
     """Get the reverse zone for an IP.
 
     Args:
@@ -129,8 +130,15 @@ def get_reverse_zone(ip: str) -> str:
     Returns:
         :str: Reverse zone name
     """
-    octets = ip.split(".")
-    rzone_name = f"{'.'.join(octets[::-1][1:])}.in-addr.arpa."
+    if "." in ip:
+        # IPv4 address.
+        octets = ip.split(".")
+        rzone_name = f"{'.'.join(octets[::-1][1:])}.in-addr.arpa."
+    else:
+        # IPv6 address.
+        index = int((128 - prefix_size) / 16)
+        addr = ":".join(ipaddress.IPv6Address(ip).exploded.split(":")[:-index])
+        rzone_name = ipaddress.IPv6Network(addr + f"::/{prefix_size}").network_address.reverse_pointer
 
     return rzone_name
 

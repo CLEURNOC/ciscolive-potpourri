@@ -50,7 +50,7 @@ from dataclasses import dataclass, field
 from threading import Lock
 import os
 
-# import ipaddress
+import ipaddress
 import logging.config
 import logging
 import argparse
@@ -72,7 +72,7 @@ class ARecord:
     """Class representing a DNS Address record."""
 
     hostname: str
-    ip: str
+    ips: List[str]
     domain: str
     nb_record: IpAddresses
     ttl: int
@@ -142,7 +142,7 @@ def get_txt_record(ip: IpAddresses) -> str:
     return f'"{result}"'
 
 
-def get_dns_name(ip: IpAddresses) -> str:
+def get_dns_name(ip: IpAddresses) -> str | None:
     """Get a DNS name based on the IP object's assigned object.
 
     Args:
@@ -152,23 +152,122 @@ def get_dns_name(ip: IpAddresses) -> str:
         :str: DNS name if one is found else None
     """
     dns_name = None
-    if ip.assigned_object:
-        atype = ip.assigned_object_type
-        aobj = ip.assigned_object
-        if atype == "virtualization.vminterface":
-            if aobj.virtual_machine.primary_ip4 == ip:
-                dns_name = aobj.virtual_machine.name.lower()
-            elif ip.dns_name and ip.dns_name != "":
-                dns_name = ip.dns_name.strip().lower()
-        elif atype == "dcim.interface":
-            if aobj.device.primary_ip4 == ip:
-                dns_name = aobj.device.name.lower()
-            elif ip.dns_name and ip.dns_name != "":
-                dns_name = ip.dns_name.strip().lower()
-    elif ip.dns_name and ip.dns_name != "":
-        dns_name = ip.dns_name.strip().lower()
+    if ip.family.value == 4:
+        if ip.assigned_object:
+            atype = ip.assigned_object_type
+            aobj = ip.assigned_object
+            if atype == "virtualization.vminterface":
+                if aobj.virtual_machine.primary_ip4 == ip:
+                    dns_name = aobj.virtual_machine.name.lower()
+                elif ip.dns_name and ip.dns_name != "":
+                    dns_name = ip.dns_name.strip().lower()
+            elif atype == "dcim.interface":
+                if aobj.device.primary_ip4 == ip:
+                    dns_name = aobj.device.name.lower()
+                elif ip.dns_name and ip.dns_name != "":
+                    dns_name = ip.dns_name.strip().lower()
+        elif ip.dns_name and ip.dns_name != "":
+            dns_name = ip.dns_name.strip().lower()
+    elif ip.family.value == 6:
+        # atype = ip.assigned_object_type
+        # aobj = ip.assigned_object
+        # if atype == "virtualization.vminterface":
+        #     if aobj.virtual_machine.primary_ip6 == ip:
+        #         dns_name = aobj.virtual_machine.name.lower()
+        #     elif ip.dns_name and ip.dns_name != "":
+        #         dns_name = ip.dns_name.strip().lower()
+        # elif atype == "dcim.interface":
+        #     if aobj.device.primary_ip6 == ip:
+        #         dns_name = aobj.device.name.lower()
+        #     elif ip.dns_name and ip.dns_name != "":
+        #         dns_name = ip.dns_name.strip().lower()
+        if ip.dns_name and ip.dns_name != "":
+            dns_name = ip.dns_name.strip().lower()
 
     return dns_name
+
+
+def construct_ipv6_address(ip: str) -> str:
+    """Construct an IPv6 address based on addressing rules.
+
+    Args:
+        :ip str: IPv4 address to use as a base
+
+    Returns:
+        :str: Generated IPv6 address
+    """
+    hextets = str(C.IPV6_PREFIX).split(":")
+    hextet = 0
+    octets = ip.split(".")
+    if C.VLAN_OCTET > -1:
+        if C.VLAN_OCTET == C.IDF_OCTET:
+            raise ValueError("VLAN octet cannot be the same as IDF octet")
+
+        if C.VLAN_OCTET == 2:
+            hextet |= octets[C.VLAN_OCTET - 1] << 8
+        else:
+            hextet |= octets[C.VLAN_OCTET - 1]
+
+    if C.IDF_OCTET > -1:
+        if C.IDF_OCTET == 2:
+            hextet |= octets[C.IDF_OCTET - 1] << 8
+        else:
+            hextet |= octets[C.IDF_OCTET - 1]
+
+    hextets[-2] = format(hextet, "x")
+    # Re-add the last element.
+    hextets.append("")
+
+    return ":".join(hextets)
+
+
+def get_ipv6_address(ip: IpAddresses) -> str | None:
+    """Retrieve an IPv6 address for a given IPv4 address.
+
+    Args:
+        :ip IpAddresses: NetBox IP address to check
+
+    Returns:
+        :str: Corresponding IPv6 address or None if no assigned object
+    """
+    if ip.family.value != 4 or not ip.assigned_object:
+        return None
+
+    ipv6_addr = None
+
+    atype = ip.assigned_object_type
+    aobj = ip.assigned_object
+    if atype == "virtualization.vminterface":
+        if aobj.virtual_machine.primary_ip6 and aobj.virtual_machine.primary_ip6 != "":
+            ipv6_addr = aobj.virtual_machine.primary_ip6.address.split("/")[0]
+    elif atype == "dcim.interface":
+        if aobj.device.primary_ip6 and aobj.device.primary_ip6 != "":
+            ipv6_addr = aobj.device.primary_ip6.address.split("/")[0]
+
+    if not ipv6_addr:
+        ip_addr = ip.address.split("/")[0]
+        ipv6_addr = construct_ipv6_address(ip_addr)
+
+    return ipv6_addr
+
+
+def check_ptr(ptr: cpnr.models.model.Record, rzone: str, deletes: list, primary_domain: str) -> None:
+    """Check if a current PTR record is good.
+
+    Args:
+        :ptr cpnr.models.model.Record: PTR record to check
+        :rzone str: Reverse zone name
+        :deletes list: List to add to if the record needs to be deleted
+        :primary_domain str: Primary domain name for the A record
+    """
+    if (ptr.name, rzone) not in deletes:
+        deletes.append((ptr.name, rzone))
+        # Delete the old A record, too.
+        for rr in ptr.rrList["CCMRRItem"]:
+            if rr["rrType"] == "PTR":
+                host_name = rr["rdata"].split(".")[0]
+                if (host_name, primary_domain) not in deletes:
+                    deletes.append((host_name, primary_domain))
 
 
 def check_record(ip: IpAddresses, primary_domain: str, edns: ElementalDns, enb: ElementalNetbox, wip_records: DnsRecords) -> None:
@@ -181,6 +280,11 @@ def check_record(ip: IpAddresses, primary_domain: str, edns: ElementalDns, enb: 
         :enb ElementalNetbox: ElementalNetbox object for querying
         :wip_records DnsRecords: Object to hold the results of the function
     """
+    if ip.family.value == 6 and ip.assigned_object:
+        # If this is an IPv6 address and it's assigned to an object, skip it.
+        # We will pick this up via the primary IPv4 address.
+        return
+
     dns_name = get_dns_name(ip)
 
     # If we don't have a name, then we have nothing to check.
@@ -192,21 +296,41 @@ def check_record(ip: IpAddresses, primary_domain: str, edns: ElementalDns, enb: 
         return
 
     ip_address = ip.address.split("/")[0]
-    rzone_name = get_reverse_zone(ip_address)
-    ptr_name = ip_address.split(".")[::-1][0]
+    rzone_name = get_reverse_zone(ip_address, C.IPV6_PREFIX_SIZE)
+    index = int((128 - C.IPV6_PREFIX_SIZE) / 16)
+    if ip.family.value == 4:
+        ptr_name = ip_address.split(".")[::-1][0]
+    else:
+        ptr_name = ".".join(":".join(ipaddress.IPv6Address(ip_address).exploded.split(":")[::-1][0:index]).replace(":", ""))
+
     old_ptrs = []
 
     ttl = ip.custom_fields.get("dns_ttl")
     if not ttl:
         ttl = -1
 
+    # Attempt to retrieve any specifically-assigned IPv6 addresses based on the assigned object (if any).
+    # If no IPv6 address exists, generate one using the current prefix and the addressing rules.
+    ipv6_addr = get_ipv6_address(ip)
+
     # Get the current A record from DNS (if it exists)
     current_host_record = edns.host.get(dns_name, zoneOrigin=primary_domain)
     # Get the current PTR record from DNS (if it exists)
     current_ptr_record = edns.rrset.get(ptr_name, zoneOrigin=rzone_name)
 
+    addresses = [ip_address]
+    v6_rzone_name = None
+    current_v6_ptr_record = None
+    if ipv6_addr:
+        addresses.append(ipv6_addr)
+        v6_rzone_name = get_reverse_zone(ipv6_addr, C.IPV6_PREFIX_SIZE)
+        current_v6_ptr_record = edns.rrset.get(
+            ".".join(":".join(ipaddress.IPv6Address(ipv6_addr).exploded.split(":")[::-1][0:index]).replace(":", "")),
+            zoneOrigin=v6_rzone_name,
+        )
+
     # Declare an A record for the current object.
-    a_record = ARecord(dns_name, ip_address, primary_domain, ip, ttl, dns_name)
+    a_record = ARecord(dns_name, addresses, primary_domain, ip, ttl, dns_name)
 
     # Track whether or not we need a change
     change_needed = False
@@ -220,7 +344,32 @@ def check_record(ip: IpAddresses, primary_domain: str, edns: ElementalDns, enb: 
             change_needed = True
             # Also, remove the old PTR.
             for addr in current_host_record.addrs["stringItem"]:
-                old_ptrs.append((addr.split(".")[::-1][0], get_reverse_zone(addr)))
+                if "." in addr:
+                    # IPv4 address.
+                    old_ptrs.append((addr.split(".")[::-1][0], get_reverse_zone(addr)))
+                else:
+                    # IPv6 address.
+                    old_ptrs.append(
+                        (
+                            ".".join(":".join(ipaddress.IPv6Address(addr).exploded.split(":")[::-1][0:index]).replace(":", "")),
+                            get_reverse_zone(addr, C.IPV6_PREFIX_SIZE),
+                        )
+                    )
+        elif ipv6_addr and ipv6_addr not in current_host_record.addrs["stringItem"]:
+            # The host record is missing its IPv6 address.
+            change_needed = True
+            for addr in current_host_record.addrs["stringItem"]:
+                if "." in addr:
+                    # IPv4 address.
+                    old_ptrs.append((addr.split(".")[::-1][0], get_reverse_zone(addr)))
+                else:
+                    # IPv6 address.
+                    old_ptrs.append(
+                        (
+                            ".".join(":".join(ipaddress.IPv6Address(addr).exploded.split(":")[::-1][0:index]).replace(":", "")),
+                            get_reverse_zone(addr, C.IPV6_PREFIX_SIZE),
+                        )
+                    )
         else:
             # Check if we have a TXT meta-record.  If this does not exist the existing host record will be removed and a new one added
             change_needed = check_txt_record(current_host_record, ip, edns)
@@ -234,6 +383,20 @@ def check_record(ip: IpAddresses, primary_domain: str, edns: ElementalDns, enb: 
 
         if not found_match:
             change_needed = True
+    else:
+        change_needed = True
+
+    if current_v6_ptr_record:
+        found_match = False
+        for rr in current_v6_ptr_record.rrList["CCMRRItem"]:
+            if rr["rrType"] == "PTR" and rr["rdata"] == f"{dns_name}.{primary_domain}":
+                found_match = True
+                break
+
+        if not found_match:
+            change_needed = True
+    elif ipv6_addr:
+        change_needed = True
 
     wip_records.lock.acquire()
 
@@ -250,14 +413,10 @@ def check_record(ip: IpAddresses, primary_domain: str, edns: ElementalDns, enb: 
                     wip_records.deletes.append(old_ptr)
 
         if current_ptr_record:
-            if (current_ptr_record.name, rzone_name) not in wip_records.deletes:
-                wip_records.deletes.append((current_ptr_record.name, rzone_name))
-            # Delete the old A record, too.
-            for rr in current_ptr_record.rrList["CCMRRItem"]:
-                if rr["rrType"] == "PTR":
-                    host_name = rr["rdata"].split(".")[0]
-                    if (host_name, primary_domain) not in wip_records.deletes:
-                        wip_records.deletes.append((host_name, primary_domain))
+            check_ptr(current_ptr_record, rzone_name, wip_records.deletes, primary_domain)
+
+        if current_v6_ptr_record:
+            check_ptr(current_v6_ptr_record, v6_rzone_name, wip_records.deletes, primary_domain)
 
         wip_records.creates.append(a_record)
 
@@ -285,7 +444,7 @@ def check_cnames(
     """
 
     cnames = ip.custom_fields.get("CNAMEs")
-    ttl = ip.custom_fields.get("DNS TTL")
+    ttl = ip.custom_fields.get("dns_ttl")
     if not cnames:
         cnames = ""
     else:
@@ -373,8 +532,9 @@ def print_records(wip_records: DnsRecords, primary_domain: str, tenant: Record) 
     print(f"DNS records to be created for tenant {tenant.name} ({len(wip_records.creates)} records):")
     for rec in wip_records.creates:
         if isinstance(rec, ARecord):
-            print(f"\t{Fore.GREEN}CREATE{Style.RESET_ALL} [A] {rec.hostname}.{primary_domain} : {rec.ip}")
-            print(f"\t{Fore.GREEN}CREATE{Style.RESET_ALL} [PTR] {rec.ip}.{get_reverse_zone(rec.ip)} ==> {rec.hostname}.{primary_domain}")
+            for ip in rec.ips:
+                print(f"\t{Fore.GREEN}CREATE{Style.RESET_ALL} [A] {rec.hostname}.{primary_domain} : {ip}")
+                print(f"\t{Fore.GREEN}CREATE{Style.RESET_ALL} [PTR] {ip}.{get_reverse_zone(ip)} ==> {rec.hostname}.{primary_domain}")
             print(f"\t{Fore.GREEN}CREATE{Style.RESET_ALL} [TXT] {rec.hostname}.{primary_domain} : {get_txt_record(rec.nb_record)}")
         elif isinstance(rec, CNAMERecord):
             print(f"\t{Fore.GREEN}CREATE{Style.RESET_ALL} [CNAME] {rec.alias}.{rec.domain} ==> {rec.host.hostname}.{rec.host.domain}")
@@ -466,26 +626,32 @@ def add_record(record: Union[ARecord, CNAMERecord, PTRRecord], primary_domain: s
 
     if isinstance(record, ARecord):
         cpnr_record["name"] = record.hostname
-        cpnr_record["addrs"] = {"stringItem": [record.ip]}
+        cpnr_record["addrs"] = {"stringItem": record.ips}
         cpnr_record["zoneOrigin"] = primary_domain
         cpnr_record["createPtrRecords"] = True
         txt_record = get_txt_record(record.nb_record)
 
         edns.host.add(**cpnr_record)
-        logger.info(f"🎨 Successfully created record for host {record.hostname} : {record.ip}")
+        logger.info(f"🎨 Successfully created record for host {record.hostname} : {record.ips}")
         rrs = edns.rrset.get(record.hostname, zoneOrigin=primary_domain)
         rrs.rrList["CCMRRItem"].append({"rdata": txt_record, "rrClass": "IN", "rrType": "TXT"})
         if record.ttl > -1:
             for rr in rrs.rrList["CCMRRItem"]:
                 rr["ttl"] = record.ttl
 
-            ptr_name = record.ip.split(".")[::-1][0]
-            ptr_rrs = edns.rrset.get(ptr_name, zoneOrigin=primary_domain)
-            if ptr_rrs:
-                for rr in ptr_rrs.rrList["CCMRRItem"]:
-                    rr["ttl"] = record.ttl
+            for ip in record.ips:
+                if "." in ip:
+                    ptr_name = ip.split(".")[::-1][0]
+                else:
+                    index = int((128 - C.IPV6_PREFIX_SIZE) / 16)
+                    ptr_name = ".".join(":".join(ipaddress.IPv6Address(ip).exploded.split(":")[::-1][0:index]).replace(":", ""))
 
-                ptr_rrs.save()
+                ptr_rrs = edns.rrset.get(ptr_name, zoneOrigin=get_reverse_zone(ip, C.IPV6_PREFIX_SIZE))
+                if ptr_rrs:
+                    for rr in ptr_rrs.rrList["CCMRRItem"]:
+                        rr["ttl"] = record.ttl
+
+                    ptr_rrs.save()
 
         rrs.save()
         logger.info(f"🎨 Successfully created TXT meta-record for host {record.hostname} in domain {primary_domain}")
@@ -521,7 +687,8 @@ def dump_hosts(records: list[Union[ARecord, CNAMERecord, PTRRecord]], primary_do
 
         if isinstance(record, ARecord):
             fqdn = f"{record.hostname}.{primary_domain}"
-            hosts[record.ip] = fqdn
+            for ip in record.ips:
+                hosts[ip] = fqdn
             if fqdn not in aliases:
                 aliases[fqdn] = [fqdn, record.hostname]
             else:
