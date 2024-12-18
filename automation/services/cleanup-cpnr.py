@@ -87,12 +87,13 @@ def get_ptr_rrs(ips: list, edns: ElementalDns) -> List[cpnr.models.model.Record]
     """
     result = []
     for addr in ips:
-        rzone = get_reverse_zone(addr, C.IPV6_PREFIX_SIZE)
-        if "." in addr:
-            ptr_name = addr.split(".")[::-1][:-1]
-        else:
-            index = int((128 - C.IPV6_PREFIX_SIZE) / 4)
-            ptr_name = ".".join(list(ipaddress.IPv6Address(addr).exploded.replace(":", ""))[::-1][0:index])
+        rzone = get_reverse_zone(addr, C.IPV6_PREFIX_SIZE, C.REVERSE_ZONE_MAP)
+        # if "." in addr:
+        #     ptr_name = addr.split(".")[::-1][:-1]
+        # else:
+        #     index = int((128 - C.IPV6_PREFIX_SIZE) / 4)
+        #     ptr_name = ".".join(list(ipaddress.IPv6Address(addr).exploded.replace(":", ""))[::-1][0:index])
+        ptr_name = re.sub(rf"\.{rzone}", "", ipaddress.ip_address(addr).reverse_pointer + ".")
         ptr_rrs = edns.rrset.get(ptr_name, zoneOrigin=rzone)
         if ptr_rrs:
             result.append(ptr_rrs)
