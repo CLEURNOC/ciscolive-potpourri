@@ -298,11 +298,6 @@ def check_record(ip: IpAddresses, primary_domain: str, edns: ElementalDns, enb: 
 
     ip_address = ip.address.split("/")[0]
     rzone_name = get_reverse_zone(ip_address, C.IPV6_PREFIX_SIZE, C.REVERSE_ZONE_MAP)
-    # index = int((128 - C.IPV6_PREFIX_SIZE) / 4)
-    # if ip.family.value == 4:
-    #     ptr_name = ".".join(ip_address.split(".")[::-1][:-1])
-    # else:
-    #     ptr_name = ".".join(list(ipaddress.IPv6Address(ip_address).exploded.replace(":", ""))[::-1][0:index])
     # We have to filter out the rzone_name from the ptr_name.
     ptr_name = re.sub(rf"\.{rzone_name}", "", ipaddress.ip_address(ip_address).reverse_pointer + ".")
 
@@ -327,10 +322,6 @@ def check_record(ip: IpAddresses, primary_domain: str, edns: ElementalDns, enb: 
     if ipv6_addr:
         addresses.append(ipv6_addr)
         v6_rzone_name = get_reverse_zone(ipv6_addr, C.IPV6_PREFIX_SIZE, C.REVERSE_ZONE_MAP)
-        # current_v6_ptr_record = edns.rrset.get(
-        #     ".".join(list(ipaddress.IPv6Address(ipv6_addr).exploded.replace(":", ""))[::-1][0:index]),
-        #     zoneOrigin=v6_rzone_name,
-        # )
         v6_ptr_name = re.sub(rf"\.{v6_rzone_name}", "", ipaddress.IPv6Address(ipv6_addr).reverse_pointer + ".")
         current_v6_ptr_record = edns.rrset.get(v6_ptr_name, zoneOrigin=v6_rzone_name)
 
@@ -356,18 +347,11 @@ def check_record(ip: IpAddresses, primary_domain: str, edns: ElementalDns, enb: 
             for addr in addr_list:
                 if "." in addr:
                     # IPv4 address.
-                    # old_ptrs.append((".".join(addr.split(".")[::-1][:-1]), get_reverse_zone(addr, C.IPV6_PREFIX_SIZE, C.REVERSE_ZONE_MAP)))
                     rzn = get_reverse_zone(addr, C.IPV6_PREFIX_SIZE, C.REVERSE_ZONE_MAP)
                     ptrn = re.sub(rf"\.{rzn}", "", ipaddress.IPv4Address(addr).reverse_pointer + ".")
                     old_ptrs.append((ptrn, rzn))
                 else:
                     # IPv6 address.
-                    # old_ptrs.append(
-                    #     (
-                    #         ".".join(list(ipaddress.IPv6Address(addr).exploded.replace(":", ""))[::-1][0:index]),
-                    #         get_reverse_zone(addr, C.IPV6_PREFIX_SIZE),
-                    #     )
-                    # )
                     rzn = get_reverse_zone(addr, C.IPV6_PREFIX_SIZE, C.REVERSE_ZONE_MAP)
                     ptrn = re.sub(rf"\.{rzn}", "", ipaddress.IPv6Address(addr).reverse_pointer + ".")
                     old_ptrs.append((ptrn, rzn))
@@ -375,12 +359,6 @@ def check_record(ip: IpAddresses, primary_domain: str, edns: ElementalDns, enb: 
             # The host record is missing its IPv6 address.
             change_needed = True
             for addr in current_host_record.ip6AddressList["stringItem"]:
-                # old_ptrs.append(
-                #     (
-                #         ".".join(list(ipaddress.IPv6Address(addr).exploded.replace(":", ""))[::-1][0:index]),
-                #         get_reverse_zone(addr, C.IPV6_PREFIX_SIZE),
-                #     )
-                # )
                 rzn = get_reverse_zone(addr, C.IPV6_PREFIX_SIZE, C.REVERSE_ZONE_MAP)
                 ptrn = re.sub(rf"\.{rzn}", "", ipaddress.IPv6Address(addr).reverse_pointer + ".")
                 old_ptrs.append((ptrn, rzn))
@@ -664,11 +642,6 @@ def add_record(record: Union[ARecord, CNAMERecord, PTRRecord], primary_domain: s
                 rr["ttl"] = record.ttl
 
             for ip in record.ips:
-                # if "." in ip:
-                #     ptr_name = ".".join(ip.split(".")[::-1][:-1])
-                # else:
-                #     index = int((128 - C.IPV6_PREFIX_SIZE) / 4)
-                #     ptr_name = ".".join(list(ipaddress.IPv6Address(ip).exploded.replace(":", ""))[::-1][0:index])
                 rzn = get_reverse_zone(ip, C.IPV6_PREFIX_SIZE, C.REVERSE_ZONE_MAP)
                 ptr_name = re.sub(rf"\.{rzn}", "", ipaddress.ip_address(ip).reverse_pointer + ".")
 
