@@ -547,7 +547,7 @@ def print_records(wip_records: DnsRecords, primary_domain: str, tenant: Record) 
             for ip in rec.ips:
                 print(f"\t{Fore.GREEN}CREATE{Style.RESET_ALL} [A] {rec.hostname}.{primary_domain} : {ip}")
                 print(
-                    f"\t{Fore.GREEN}CREATE{Style.RESET_ALL} [PTR] {ip}.{get_reverse_zone(ip, C.IPV6_PREFIX_SIZE, C.REVERSE_ZONE_MAP)} ==> {rec.hostname}.{primary_domain}"
+                    f"\t{Fore.GREEN}CREATE{Style.RESET_ALL} [PTR] {ipaddress.ip_address(ip).reverse_pointer + '.'} ==> {rec.hostname}.{primary_domain}"
                 )
             print(f"\t{Fore.GREEN}CREATE{Style.RESET_ALL} [TXT] {rec.hostname}.{primary_domain} : {get_txt_record(rec.nb_record)}")
         elif isinstance(rec, CNAMERecord):
