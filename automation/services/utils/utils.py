@@ -122,24 +122,37 @@ def restart_dns_servers(edns: ElementalDns, cdnses: list) -> None:
         logger.info(f"🏁 Reloaded CDNS server {ecdns.base_url}")
 
 
-def get_reverse_zone(ip: str, prefix_size: int = 48) -> str:
+def get_reverse_zone(ip: str, prefix_size: int = 48, rzone_dict: dict[str, str] | None = None) -> str:
     """Get the reverse zone for an IP.
 
     Args:
         :ip str: IP address to parse
+        :prefix_size int: Length of IPv6 prefix (default: 48)
+        :rzone_dict dict[str,str]: Dictionary mapping IPv4 private, IPv4 public, and IPv6 reverse zones (default: None)
 
     Returns:
         :str: Reverse zone name
     """
-    if "." in ip:
-        # IPv4 address.
-        octets = ip.split(".")
-        rzone_name = f"{octets[::-1][-1]}.in-addr.arpa."
+    ipaddr = ipaddress.ip_address(ip)
+    if rzone_dict:
+        if isinstance(ipaddr, ipaddress.IPv4Address):
+            if ipaddr.is_private:
+                rzone_name = rzone_dict["v4_private"]
+            else:
+                rzone_name = rzone_dict["v4_public"]
+        else:
+            rzone_name = rzone_dict["v6"]
     else:
-        # IPv6 address.
-        index = int((128 - prefix_size) / 16)
-        addr = ":".join(ipaddress.IPv6Address(ip).exploded.split(":")[:-index])
-        rzone_name = re.sub(r"^(0\.)+", "", ipaddress.IPv6Network(addr + f"::/{prefix_size}").network_address.reverse_pointer) + "."
+        if isinstance(ipaddr, ipaddress.IPv4Address):
+            classes = [ipaddress.IPv4Network("10.0.0.0/8"), ipaddress.IPv4Network("172.16.0.0/12"), ipaddress.IPv4Network("192.168.0.0/16")]
+            for cl in classes:
+                if ipaddr in cl:
+                    rzone_name = re.sub(r"^(0\.)+", "", cl.network_address.reverse_pointer) + "."
+        else:
+            # IPv6 address.
+            rzone_name = (
+                re.sub(r"^(0\.)+", "", ipaddress.IPv6Network(f"{ip}/{prefix_size}", strict=False).network_address.reverse_pointer) + "."
+            )
 
     return rzone_name
 
