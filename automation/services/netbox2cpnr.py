@@ -345,16 +345,9 @@ def check_record(ip: IpAddresses, primary_domain: str, edns: ElementalDns, enb: 
             change_needed = True
             # Also, remove the old PTR.
             for addr in addr_list:
-                if "." in addr:
-                    # IPv4 address.
-                    rzn = get_reverse_zone(addr, C.IPV6_PREFIX_SIZE, C.REVERSE_ZONE_MAP)
-                    ptrn = re.sub(rf"\.{rzn}", "", ipaddress.IPv4Address(addr).reverse_pointer + ".")
-                    old_ptrs.append((ptrn, rzn))
-                else:
-                    # IPv6 address.
-                    rzn = get_reverse_zone(addr, C.IPV6_PREFIX_SIZE, C.REVERSE_ZONE_MAP)
-                    ptrn = re.sub(rf"\.{rzn}", "", ipaddress.IPv6Address(addr).reverse_pointer + ".")
-                    old_ptrs.append((ptrn, rzn))
+                rzn = get_reverse_zone(addr, C.IPV6_PREFIX_SIZE, C.REVERSE_ZONE_MAP)
+                ptrn = re.sub(rf"\.{rzn}", "", ipaddress.ip_address(addr).reverse_pointer + ".")
+                old_ptrs.append((ptrn, rzn))
         elif ipv6_addr and ipv6_addr not in current_host_record.ip6AddressList["stringItem"]:
             # The host record is missing its IPv6 address.
             change_needed = True
