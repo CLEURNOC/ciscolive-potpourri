@@ -74,6 +74,8 @@ VRF_OBJ = None
 TENANT_NAME = "DC Infrastructure"
 TENANT_OBJ = None
 
+MGMT_PREFIX = "10.127.0."
+
 TTL = 300
 
 
@@ -99,21 +101,24 @@ def get_devs():
                 continue
 
             dev_dic["type"] = SKU_MAP[dev["SKU"]]
-            if re.search(r"^[0-9A-Za-z]{3}-[Xx]", dev["Hostname"]):
+            m = re.search(r"^[0-9A-Za-z]{3}-[Xx](\d{3})", dev["Hostname"])
+            if m:
                 dev_dic["role"] = ROLE_MAP["IDF"]
                 dev_dic["intf"] = INTF_MAP["IDF"]
                 dev_dic["cidr"] = INTF_CIDR_MAP["IDF"]
                 dev_dic["site"] = SITE_MAP["IDF"]
+                dev_dic["ip"] = f"{MGMT_PREFIX}{m.group(1).lstrip('0')}"
+                dev_dic["v6"] = True
             else:
                 dev_dic["role"] = ROLE_MAP["Access"]
                 dev_dic["intf"] = INTF_MAP["Access"]
                 dev_dic["cidr"] = INTF_CIDR_MAP["Access"]
                 dev_dic["site"] = SITE_MAP["Access"]
+                dev_dic["ip"] = dev["IPAddress"]
+                dev_dic["v6"] = False
 
             dev_dic["name"] = dev["Hostname"]
             dev_dic["aliases"] = [f"{dev['Name']}", f"{dev['AssetTag']}"]
-
-            dev_dic["ip"] = dev["IPAddress"]
 
             devices.append(dev_dic)
 
@@ -192,6 +197,7 @@ def add_netbox_device(enb: ElementalNetbox, dev: dict) -> None:
     dev["aliases"].sort()
     ip_obj.custom_fields["CNAMEs"] = ",".join(dev["aliases"])
     ip_obj.custom_fields["dns_ttl"] = TTL
+    ip_obj.custom_fields["v6_based_on_v4"] = dev["v6"]
     ip_obj.save()
 
     dev_obj.primary_ip4 = ip_obj.id
