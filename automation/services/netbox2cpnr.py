@@ -359,14 +359,21 @@ def check_record(ip: IpAddresses, primary_domain: str, edns: ElementalDns, enb: 
             # Also, remove the old PTR.
             find_old_ptrs(addr_list, old_ptrs)
 
-            if ipv6_addr:
+            if ipv6_addr and current_host_record.get("ip6AddressList"):
                 find_old_ptrs(current_host_record.ip6AddressList["stringItem"], old_ptrs)
-        elif (ipv6_addr and ipv6_addr not in current_host_record.ip6AddressList["stringItem"]) or (
-            not ipv6_addr and ip.family.value == 4 and len(current_host_record.ip6AddressList["stringItem"]) > 0
+        elif (
+            ipv6_addr
+            and (not current_host_record.get("ip6AddressList") or ipv6_addr not in current_host_record.ip6AddressList["stringItem"])
+        ) or (
+            not ipv6_addr
+            and ip.family.value == 4
+            and current_host_record.get("ip6AddressList")
+            and len(current_host_record.ip6AddressList["stringItem"]) > 0
         ):
             # The host record is missing its IPv6 address or it has a v6 address but shouldn't.
             change_needed = True
-            find_old_ptrs(current_host_record.ip6AddressList["stringItem"], old_ptrs)
+            if current_host_record.get("ip6AddressList"):
+                find_old_ptrs(current_host_record.ip6AddressList["stringItem"], old_ptrs)
             find_old_ptrs(current_host_record.addrs["stringItem"], old_ptrs)
         else:
             # Check if we have a TXT meta-record.  If this does not exist the existing host record will be removed and a new one added
