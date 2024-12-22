@@ -152,7 +152,8 @@ def check_record(
         wip_records.deletes.append(host_rr)
         # Also remove any PTR records.
         wip_records.deletes.extend(get_ptr_rrs(host.addrs["stringItem"], edns))
-        wip_records.deletes.extend(get_ptr_rrs(host.ip6AddressList["stringItem"], edns))
+        if host.get("ip6AddressList"):
+            wip_records.deletes.extend(get_ptr_rrs(host.ip6AddressList["stringItem"], edns))
     elif found_txt.startswith('"v=_netbox'):
         txt_obj = parse_txt_record(found_txt)
         ip_obj = enb.ipam.ip_addresses.get(int(txt_obj["ip_id"]))
@@ -161,7 +162,8 @@ def check_record(
             wip_records.deletes.append(host_rr)
             # Also remove the PTR record
             wip_records.deletes.extend(get_ptr_rrs(host.addrs["stringItem"], edns))
-            wip_records.deletes.extend(get_ptr_rrs(host.ip6AddressList["stringItem"], edns))
+            if host.get("ip6AddressList"):
+                wip_records.deletes.extend(get_ptr_rrs(host.ip6AddressList["stringItem"], edns))
         elif txt_obj["type"] == "device" or txt_obj["type"] == "vm":
             # The IP object exists, so check the assigned object to make sure it hasn't been
             # renamed.
@@ -174,7 +176,8 @@ def check_record(
             if not nb_obj or (nb_obj.name.lower() != host_rr.name.lower() and host_rr.name.lower() != ip_obj.dns_name.lower()):
                 wip_records.deletes.append(host_rr)
                 wip_records.deletes.extend(get_ptr_rrs(host.addrs["stringItem"], edns))
-                wip_records.deletes.extend(get_ptr_rrs(host.ip6AddressList["stringItem"], edns))
+                if host.get("ip6AddressList"):
+                    wip_records.deletes.extend(get_ptr_rrs(host.ip6AddressList["stringItem"], edns))
 
     wip_records.lock.release()
 
