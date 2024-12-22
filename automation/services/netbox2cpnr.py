@@ -231,19 +231,20 @@ def get_ipv6_address(ip: IpAddresses) -> str | None:
     Returns:
         :str: Corresponding IPv6 address or None if no assigned object
     """
-    if ip.family.value != 4 or not ip.assigned_object:
+    if ip.family.value != 4:
         return None
 
     ipv6_addr = None
 
-    atype = ip.assigned_object_type
-    aobj = ip.assigned_object
-    if atype == "virtualization.vminterface":
-        if aobj.virtual_machine.primary_ip6 and aobj.virtual_machine.primary_ip6 != "":
-            ipv6_addr = aobj.virtual_machine.primary_ip6.address.split("/")[0]
-    elif atype == "dcim.interface":
-        if aobj.device.primary_ip6 and aobj.device.primary_ip6 != "":
-            ipv6_addr = aobj.device.primary_ip6.address.split("/")[0]
+    if ip.assigned_object:
+        atype = ip.assigned_object_type
+        aobj = ip.assigned_object
+        if atype == "virtualization.vminterface":
+            if aobj.virtual_machine.primary_ip6 and aobj.virtual_machine.primary_ip6 != "":
+                ipv6_addr = aobj.virtual_machine.primary_ip6.address.split("/")[0]
+        elif atype == "dcim.interface":
+            if aobj.device.primary_ip6 and aobj.device.primary_ip6 != "":
+                ipv6_addr = aobj.device.primary_ip6.address.split("/")[0]
 
     if not ipv6_addr and ip.custom_fields.get("v6_based_on_v4"):
         ip_addr = ip.address.split("/")[0]
