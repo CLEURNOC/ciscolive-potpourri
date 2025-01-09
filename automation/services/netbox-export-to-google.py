@@ -215,8 +215,8 @@ def export_prefixes(nb: Any, gs_service: Any) -> None:
                 vlan_group = str(prefix.vlan.group)
 
         site = ""
-        if prefix.site:
-            site = prefix.site.name
+        # if prefix.site:
+        #     site = prefix.site.name
 
         role = ""
         if prefix.role:
