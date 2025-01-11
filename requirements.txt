@@ -48,3 +48,4 @@ Flask
 gevent
 xmltodict
 webargs
+ollama
