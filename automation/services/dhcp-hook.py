@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 #
+# !!! This is obsolete.  It is being replaced with a GenAI version !!!
+#
 # Copyright (c) 2017-2023  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #

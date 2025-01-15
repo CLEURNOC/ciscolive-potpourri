@@ -49,3 +49,4 @@ gevent
 xmltodict
 webargs
 ollama
+gunicorn
