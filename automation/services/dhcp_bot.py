@@ -29,7 +29,7 @@ import json
 import os
 import logging
 from sparker import Sparker, MessageType  # type: ignore
-from typing import Dict, List
+from typing import Dict, List, Union
 import re
 from hashlib import sha1
 import hmac
@@ -56,7 +56,7 @@ DEFAULT_INT_TYPE = "GigabitEthernet"
 ALLOWED_TO_DELETE = ["jclarke@cisco.com", "josterfe@cisco.com", "anjesani@cisco.com"]
 
 SPARK_ROOM = "DHCP Queries"
-CALLBACK_URL = "https://cleur-dhcp-hook.nerdops.io/chat"
+CALLBACK_URL = "https://cleur-dhcp-hook.ciscolive.network/chat"
 BOT_NAME = "DHCP Bot"
 ME = "livenocbot@sparkbot.io"
 
@@ -77,7 +77,7 @@ logging.getLogger().setLevel(log_level)
 
 class DhcpHook(object):
 
-    def __init__(self, pnb: pynetbox.api) -> None:
+    def __init__(self, pnb: pynetbox.api):
         self.pnb = pnb
 
     @staticmethod
@@ -141,7 +141,7 @@ class DhcpHook(object):
         return res
 
     @staticmethod
-    def check_for_reservation(ip: str = None, mac: str = None) -> Dict[str, str] | None:
+    def check_for_reservation(ip: str = None, mac: str = None) -> Union[Dict[str, str], None]:
         """
         Check for a DHCP lease by IP or MAC address within CPNR.
 
@@ -189,7 +189,7 @@ class DhcpHook(object):
 
         return res
 
-    def create_dhcp_reservation_in_cpnr(self, ip: str, mac: str) -> bool:
+    def create_dhcp_reservation_in_cpnr(self, ip: str, mac: str) -> Dict[str, Union[str, bool]]:
         """
         Create a new DHCP reservation in CPNR.
 
@@ -198,12 +198,12 @@ class DhcpHook(object):
           mac (str): MAC address of the client
 
         Returns:
-          bool: True if the reservation was created successfully, False if an error occurred
+          Dict[str, Union[str, bool]]: A dict with keys "success" (bool) if the reservation was created successfully and "error" if the success is False
         """
         global CNR_HEADERS, BASIC_AUTH, AT_MACADDR, REST_TIMEOUT
 
         if not mac or not ip:
-            return False
+            return {"success": False, "error": "Both ip and mac must be specified"}
 
         mac_addr = DhcpHook.normalize_mac(mac)
 
@@ -213,12 +213,13 @@ class DhcpHook(object):
             response = requests.request("POST", url, auth=BASIC_AUTH, headers=CNR_HEADERS, json=payload, verify=False, timeout=REST_TIMEOUT)
             response.raise_for_status()
         except Exception as e:
-            logging.exception("Failed to create DHCP reservation for %s => %s: %s" % (ip, mac_addr, str(e)))
-            return False
+            msg = "Failed to create DHCP reservation for %s => %s: %s" % (ip, mac_addr, str(e))
+            logging.exception(msg)
+            return {"success": False, "error": msg}
 
-        return True
+        return {"success": True}
 
-    def delete_dhcp_reservation_from_cpnr(self, ip: str) -> bool:
+    def delete_dhcp_reservation_from_cpnr(self, ip: str) -> Dict[str, Union[str, bool]]:
         """
         Delete a DHCP reservation from CPNR.
 
@@ -226,112 +227,125 @@ class DhcpHook(object):
           ip (str): IP address that is reserved in CPNR
 
         Returns:
-          bool: True if the reservation was deleted successfully, False if an error occurred
+          Dict[str, Union[str, bool]]: A dict with keys "success" (bool) if the reservation was deleted successfully and "error" if the success is False
         """
         global CNR_HEADERS, BASIC_AUTH, REST_TIMEOUT
 
         if not ip:
-            return False
+            return {"success": False, "error": "ip must be specified"}
 
         url = f"{C.DHCP_BASE}/Reservation/{ip}"
         try:
             response = requests.request("DELETE", url, auth=BASIC_AUTH, headers=CNR_HEADERS, verify=False, timeout=REST_TIMEOUT)
             response.raise_for_status()
         except Exception as e:
-            logging.exception("Failed to delete reservation for %s: %s" % (ip, str(e)))
-            return False
+            msg = "Failed to delete reservation for %s: %s" % (ip, str(e))
+            logging.exception(msg)
+            return {"success": False, "error": msg}
 
-        return True
+        return {"success": True}
 
-    def get_dhcp_lease_info_from_cpnr(self, ip: str) -> Dict[str, str] | None:
+    # def get_dhcp_lease_info_from_cpnr(self, ip: str) -> Dict[str, str] | None:
+    #     """
+    #     Get DHCP lease information from CPNR based on the IP address of a client.
+
+    #     Args:
+    #       ip (str): IP address of the client
+
+    #     Returns:
+    #       Dict[str, str]|None: A dict of DHCP lease details with keys "name" (hostname of the client), "mac" (client MAC address), "scope" (DHCP scope in which the IP is leased),
+    #                            "state" (lease state), "relay-info" (DHCP relay details which is a dict with key "switch" (switch client is connected to), "vlan" (VLAN the client is on), and "port"
+    #                            (port client is connected to)), and "is-reserved" (True if the lease is reserved) or None if the lease was not found in CPNR
+
+    #     """
+    #     global CNR_HEADERS, BASIC_AUTH, REST_TIMEOUT
+
+    #     if not ip:
+    #         return None
+
+    #     res = {}
+    #     url = f"{C.DHCP_LEASE}/Lease/{ip}"
+    #     try:
+    #         response = requests.request("GET", url, auth=BASIC_AUTH, headers=CNR_HEADERS, verify=False, timeout=REST_TIMEOUT)
+    #         response.raise_for_status()
+    #     except Exception as e:
+    #         logging.exception("Did not get a good response from CPNR for IP %s: %s" % (ip, e))
+    #         return None
+
+    #     lease = response.json()
+
+    #     if "clientMacAddr" not in lease:
+    #         return None
+
+    #     relay = DhcpHook.parse_relay_info(lease)
+    #     if "clientHostName" in lease:
+    #         res["name"] = lease["clientHostName"]
+    #     elif "client-dns-name" in lease:
+    #         res["name"] = lease["clientDnsName"]
+    #     else:
+    #         res["name"] = "UNKNOWN"
+
+    #     pos = lease["clientMacAddr"].rfind(",") + 1
+
+    #     res["mac"] = lease["clientMacAddr"][pos:]
+    #     res["scope"] = lease["scopeName"]
+    #     res["state"] = lease["state"]
+    #     res["relay-info"] = relay
+    #     rsvp = DhcpHook.check_for_reservation(ip=ip)
+    #     if rsvp and rsvp["mac"] == res["mac"]:
+    #         res["is-reserved"] = True
+
+    #     return res
+
+    def get_dhcp_lease_info_from_cpnr(self, mac: Union[str, None] = None, ip: Union[str, None] = None) -> Union[List[Dict[str, str]], None]:
         """
-        Get DHCP lease information from CPNR based on the IP address of a client.
+        Get a list of DHCP leases with hostname of the client, MAC address of the client, scope for the lease, state of the lease,
+        DHCP relay information (switch, VLAN, and port), and whether the lease is reserved for a given MAC address from CPNR.
 
         Args:
-          ip (str): IP address of the client
+          mac (Union[str, None], optional): MAC address of the client (at least one of mac or ip is required)
+          ip (Union[str, None], optional): IP address of the client (at least one of mac or ip is required)
 
         Returns:
-          Dict[str, str]|None: A dict of DHCP lease details with keys "name" (hostname of the client), "mac" (client MAC address), "scope" (DHCP scope in which the IP is leased),
-                               "state" (lease state), "relay-info" (DHCP relay details which is a dict with key "switch" (switch client is connected to), "vlan" (VLAN the client is on), and "port"
-                               (port client is connected to)), and "is-reserved" (True if the lease is reserved) or None if the lease was not found in CPNR
-
-        """
-        global CNR_HEADERS, BASIC_AUTH, REST_TIMEOUT
-
-        if not ip:
-            return None
-
-        res = {}
-        url = f"{C.DHCP_LEASE}/Lease/{ip}"
-        try:
-            response = requests.request("GET", url, auth=BASIC_AUTH, headers=CNR_HEADERS, verify=False, timeout=REST_TIMEOUT)
-            response.raise_for_status()
-        except Exception as e:
-            logging.exception("Did not get a good response from CPNR for IP %s: %s" % (ip, e))
-            return None
-
-        lease = response.json()
-
-        if "clientMacAddr" not in lease:
-            return None
-
-        relay = DhcpHook.parse_relay_info(lease)
-        if "clientHostName" in lease:
-            res["name"] = lease["clientHostName"]
-        elif "client-dns-name" in lease:
-            res["name"] = lease["clientDnsName"]
-        else:
-            res["name"] = "UNKNOWN"
-
-        pos = lease["clientMacAddr"].rfind(",") + 1
-
-        res["mac"] = lease["clientMacAddr"][pos:]
-        res["scope"] = lease["scopeName"]
-        res["state"] = lease["state"]
-        res["relay-info"] = relay
-        rsvp = DhcpHook.check_for_reservation(ip=ip)
-        if rsvp and rsvp["mac"] == res["mac"]:
-            res["is-reserved"] = True
-
-        return res
-
-    def get_dhcp_lease_info_from_cpnr_by_mac(self, mac: str) -> List[Dict[str, str]] | None:
-        """
-        Get a list of DHCP leases for a given MAC address from CPNR.
-
-        Args:
-          mac (str): MAC address of the client
-
-        Returns:
-          List[Dict[str,str]]|None: A list of dicts where each dict contains lease details with the keys "name" (hostname of the client), "mac" (client MAC address),
+          Union[List[Dict[str,str]], None]: A list of dicts where each dict contains lease details with the keys "name" (hostname of the client), "mac" (client MAC address),
                                     "scope" (DHCP scope in which the IP is leased), "state" (lease state),
                                     "relay-info" (DHCP relay details which is a dict with key "switch" (switch client is connected to), "vlan" (VLAN the client is on), and "port"
                                     (port client is connected to)), and "is-reserved" (True if the lease is reserved) or None if the lease was not found in CPNR
         """
         global CNR_HEADERS, BASIC_AUTH, REST_TIMEOUT
 
-        if not mac:
-            return None
+        if not mac and not ip:
+            raise ValueError("At least one of mac or ip must be specified")
 
-        url = f"{C.DHCP_BASE}/Lease"
+        if mac:
+            url = f"{C.DHCP_BASE}/Lease"
+            params = {"clientMacAddr": mac}
+            client = mac
+        else:
+            url = f"{C.DHCP_LEASE}/Lease/{ip}"
+            params = {}
+            client = ip
 
         try:
-            response = requests.request(
-                "GET", url, auth=BASIC_AUTH, headers=CNR_HEADERS, verify=False, params={"clientMacAddr": mac}, timeout=REST_TIMEOUT
-            )
+            response = requests.request("GET", url, auth=BASIC_AUTH, headers=CNR_HEADERS, verify=False, params=params, timeout=REST_TIMEOUT)
             response.raise_for_status()
         except Exception as e:
-            logging.exception("Did not get a good response from CPNR for MAC %s: %s" % (mac, e))
+            logging.exception("Did not get a good response from CPNR for client %s: %s" % (client, e))
             return None
 
         j = response.json()
-        if len(j) == 0:
-            return None
+        if mac:
+            if len(j) == 0:
+                return None
+
+            cpnr_leases = j
+        else:
+            cpnr_leases = [j]
 
         leases = []
-        for lease in j:
+        for lease in cpnr_leases:
             res = {}
-            if "address" not in lease:
+            if "address" not in lease or "clientMacAddr" not in lease:
                 continue
             relay = DhcpHook.parse_relay_info(lease)
             res["ip"] = lease["address"]
@@ -341,18 +355,22 @@ class DhcpHook(object):
                 res["name"] = lease["clientDnsName"]
             else:
                 res["name"] = "UNKNOWN"
+
+            pos = lease["clientMacAddr"].rfind(",") + 1
+
+            res["mac"] = lease["clientMacAddr"][pos:]
             res["scope"] = lease["scopeName"]
             res["state"] = lease["state"]
             res["relay-info"] = relay
             rsvp = DhcpHook.check_for_reservation(ip=res["ip"])
-            if rsvp and rsvp["mac"] == mac:
+            if rsvp and rsvp["mac"] == res["mac"]:
                 res["is-reserved"] = True
 
             leases.append(res)
 
         return leases
 
-    def get_from_netbox(self, ip: str) -> Dict[str, str] | None:
+    def get_from_netbox(self, ip: str) -> Union[Dict[str, str], None]:
         """
         Obtain type and name of an object from NetBox
 
@@ -360,7 +378,7 @@ class DhcpHook(object):
           ip (str): IP address of object to lookup in NetBox
 
         Returns:
-          Dict[str, str]|None: A dict with keys for "name" and "type" of the object or None if the object is not found in NetBox
+          Union[Dict[str, str], None]: A dict with keys for "name" and "type" of the object or None if the object is not found in NetBox
         """
         if not ip:
             return None
@@ -379,125 +397,22 @@ class DhcpHook(object):
 
         return None
 
-    def get_from_cat_center(self, mac: str) -> Dict[str, str] | None:
+    def get_user_from_cat_center(self, user: Union[str, None] = None, mac: Union[str, None] = None) -> Union[Dict[str, str], None]:
         """
-        Obtain client health, location, and type from Catalyst Center based on MAC address.
+        Obtain client connect and onboard health, location, OS type, associated AP and SSID, and type from Catalyst Center based on the client's username or MAC address.
 
         Args:
-          mac (str): MAC address of client
+          user (Union[str, None]): Username of the client (at least user or mac is required)
+          mac (Union[str, None]): MAC address of the client (at least union or mac is required)
 
         Returns:
-          Dict[str,str]|None: A dict with client "ostype" (OS type), "type", "location", "ap" (associated AP), "ssid" (associated SSID), "health" (health score), "onboard" (onboarding score),
+          Union[Dict[str,str], None]: A dict with client "ostype" (OS type), "type", "location", "ap" (associated AP), "ssid" (associated SSID), "health" (health score), "onboard" (onboarding score),
                               "connect" (connection score), "reason" (error reason if an error occurred), "band" (WiFi band) as keys or None if client was not found in Catalyst Center
         """
         global BASIC_AUTH, REST_TIMEOUT
 
-        dna_obj = {
-            "ostype": None,
-            "type": None,
-            "location": None,
-            "ap": None,
-            "ssid": None,
-            "health": None,
-            "onboard": None,
-            "connect": None,
-            "reason": None,
-            "band": None,
-        }
-
-        for dnac in C.DNACS:
-            curl = f"https://{dnac}/dna/intent/api/v1/client-detail"
-
-            # Get timestamp with milliseconds
-            # epoch = int(time.time() * 1000)
-
-            turl = f"https://{dnac}/dna/system/api/v1/auth/token"
-            theaders = {"content-type": "application/json"}
-            try:
-                response = requests.request("POST", turl, headers=theaders, auth=BASIC_AUTH, verify=False, timeout=REST_TIMEOUT)
-                response.raise_for_status()
-            except Exception as e:
-                logging.exception("Unable to get an auth token from Catalyst Center: %s" % getattr(e, "message", repr(e)))
-                continue
-
-            j = response.json()
-            if "Token" not in j:
-                logging.warning(f"Failed to get a Token element from Catalyst Center {dnac}: {response.text}")
-                continue
-
-            cheaders = {"accept": "application/json", "x-auth-token": j["Token"]}
-            # params = {"macAddress": kwargs["mac"], "timestamp": epoch}
-            params = {"macAddress": mac}
-            try:
-                response = requests.request("GET", curl, params=params, headers=cheaders, verify=False)
-                response.raise_for_status()
-            except Exception as e:
-                logging.exception("Failed to find MAC address %s in Catalyst Center: %s" % (mac, getattr(e, "message", repr(e))))
-                continue
-
-            j = response.json()
-            if "detail" not in j:
-                logging.warning("Got an unknown response from Catalyst Center: '%s'" % response.text)
-                continue
-
-            if "errorCode" in j["detail"] or len(j["detail"].keys()) == 0:
-                continue
-
-            detail = j["detail"]
-
-            if "hostType" in detail:
-                dna_obj["type"] = detail["hostType"]
-
-            if "userId" in detail:
-                dna_obj["user"] = detail["userId"]
-
-            if "hostOs" in detail and detail["hostOs"]:
-                dna_obj["ostype"] = detail["hostOs"]
-            elif "subType" in detail:
-                dna_obj["ostype"] = detail["subType"]
-
-            if "healthScore" in detail:
-                for hscore in detail["healthScore"]:
-                    if hscore["healthType"] == "OVERALL":
-                        dna_obj["health"] = hscore["score"]
-                        if hscore["reason"] != "":
-                            dna_obj["reason"] = hscore["reason"]
-                    elif hscore["healthType"] == "ONBOARDED":
-                        dna_obj["onboard"] = hscore["score"]
-                    elif hscore["healthType"] == "CONNECTED":
-                        dna_obj["connect"] = hscore["score"]
-
-            if "ssid" in detail:
-                dna_obj["ssid"] = detail["ssid"]
-
-            if "location" in detail:
-                dna_obj["location"] = detail["location"]
-
-            if "clientConnection" in detail:
-                dna_obj["ap"] = detail["clientConnection"]
-
-            if "connectionInfo" in j and j["connectionInfo"] and "band" in j["connectionInfo"]:
-                dna_obj["band"] = j["connectionInfo"]["band"]
-
-            return dna_obj
-
-        return None
-
-    def get_user_from_cat_center(self, user: str) -> Dict[str, str] | None:
-        """
-        Obtain client health, location, and type from Catalyst Center based on the client's username.
-
-        Args:
-          user (str): Username of the client
-
-        Returns:
-          Dict[str,str]|None: A dict with client "ostype" (OS type), "type", "location", "ap" (associated AP), "ssid" (associated SSID), "health" (health score), "onboard" (onboarding score),
-                              "connect" (connection score), "reason" (error reason if an error occurred), "band" (WiFi band) as keys or None if client was not found in Catalyst Center
-        """
-        global BASIC_AUTH, REST_TIMEOUT
-
-        if not user:
-            return None
+        if not user and not mac:
+            raise ValueError("At least one of user or mac must be specified")
 
         dna_obj = {
             "ostype": None,
@@ -514,8 +429,6 @@ class DhcpHook(object):
         }
 
         for dnac in C.DNACS:
-            curl = f"https://{dnac}/dna/intent/api/v1/client-enrichment-details"
-
             turl = f"https://{dnac}/dna/system/api/v1/auth/token"
             theaders = {"content-type": "application/json"}
             try:
@@ -530,28 +443,128 @@ class DhcpHook(object):
                 logging.warning(f"Failed to get a Token element from Catalyst Center {dnac}: {response.text}")
                 continue
 
-            cheaders = {
-                "accept": "application/json",
-                "x-auth-token": j["Token"],
-                "entity_type": "network_user_id",
-                "entity_value": user,
-            }
+            if user:
+                curl = f"https://{dnac}/dna/intent/api/v1/client-enrichment-details"
+
+                cheaders = {
+                    "accept": "application/json",
+                    "x-auth-token": j["Token"],
+                    "entity_type": "network_user_id",
+                    "entity_value": user,
+                }
+                params = {}
+                client = user
+            else:
+                curl = f"https://{dnac}/dna/intent/api/v1/client-detail"
+
+                cheaders = {"accept": "application/json", "x-auth-token": j["Token"]}
+                # params = {"macAddress": kwargs["mac"], "timestamp": epoch}
+                params = {"macAddress": mac}
+                client = mac
+                dna_obj["mac"] = mac
+
             try:
-                response = requests.request("GET", curl, headers=cheaders, verify=False)
+                response = requests.request("GET", curl, headers=cheaders, params=params, verify=False)
                 response.raise_for_status()
             except Exception as e:
-                logging.exception("Failed to find user %s in Catalyst Center: %s" % (user, getattr(e, "message", repr(e))))
+                logging.exception("Failed to find client %s in Catalyst Center: %s" % (client, getattr(e, "message", repr(e))))
                 continue
 
             j = response.json()
-            if len(j) == 0 or "userDetails" not in j[0]:
-                logging.warning("Got an unknown response from Catalyst Center: '%s'" % response.text)
-                continue
 
-            if len(j[0]["userDetails"].keys()) == 0:
-                continue
+            if user:
+                if len(j) == 0 or "userDetails" not in j[0]:
+                    logging.warning("Got an unknown response from Catalyst Center: '%s'" % response.text)
+                    continue
 
-            detail = j[0]["userDetails"]
+                if len(j[0]["userDetails"].keys()) == 0:
+                    continue
+
+                detail = j[0]["userDetails"]
+
+                # if "hostType" in detail:
+                #     dna_obj["type"] = detail["hostType"]
+
+                # if "userId" in detail:
+                #     dna_obj["user"] = detail["userId"]
+
+                # if "hostMac" in detail:
+                #     dna_obj["mac"] = detail["hostMac"]
+
+                # if "hostOs" in detail and detail["hostOs"]:
+                #     dna_obj["ostype"] = detail["hostOs"]
+                # elif "subType" in detail:
+                #     dna_obj["ostype"] = detail["subType"]
+
+                # if "healthScore" in detail:
+                #     for hscore in detail["healthScore"]:
+                #         if hscore["healthType"] == "OVERALL":
+                #             dna_obj["health"] = hscore["score"]
+                #             if hscore["reason"] != "":
+                #                 dna_obj["reason"] = hscore["reason"]
+                #         elif hscore["healthType"] == "ONBOARDED":
+                #             dna_obj["onboard"] = hscore["score"]
+                #         elif hscore["healthType"] == "CONNECTED":
+                #             dna_obj["connect"] = hscore["score"]
+
+                # if "ssid" in detail:
+                #     dna_obj["ssid"] = detail["ssid"]
+
+                # if "location" in detail:
+                #     dna_obj["location"] = detail["location"]
+
+                # if "clientConnection" in detail:
+                #     dna_obj["ap"] = detail["clientConnection"]
+
+                # if "frequency" in detail:
+                #     dna_obj["band"] = detail["frequency"]
+
+                # return dna_obj
+            else:
+                if "detail" not in j:
+                    logging.warning("Got an unknown response from Catalyst Center: '%s'" % response.text)
+                    continue
+
+                if "errorCode" in j["detail"] or len(j["detail"].keys()) == 0:
+                    continue
+
+                detail = j["detail"]
+
+                # if "hostType" in detail:
+                #     dna_obj["type"] = detail["hostType"]
+
+                # if "userId" in detail:
+                #     dna_obj["user"] = detail["userId"]
+
+                # if "hostOs" in detail and detail["hostOs"]:
+                #     dna_obj["ostype"] = detail["hostOs"]
+                # elif "subType" in detail:
+                #     dna_obj["ostype"] = detail["subType"]
+
+                # if "healthScore" in detail:
+                #     for hscore in detail["healthScore"]:
+                #         if hscore["healthType"] == "OVERALL":
+                #             dna_obj["health"] = hscore["score"]
+                #             if hscore["reason"] != "":
+                #                 dna_obj["reason"] = hscore["reason"]
+                #         elif hscore["healthType"] == "ONBOARDED":
+                #             dna_obj["onboard"] = hscore["score"]
+                #         elif hscore["healthType"] == "CONNECTED":
+                #             dna_obj["connect"] = hscore["score"]
+
+                # if "ssid" in detail:
+                #     dna_obj["ssid"] = detail["ssid"]
+
+                # if "location" in detail:
+                #     dna_obj["location"] = detail["location"]
+
+                # if "clientConnection" in detail:
+                #     dna_obj["ap"] = detail["clientConnection"]
+
+                # if "connectionInfo" in j and j["connectionInfo"] and "band" in j["connectionInfo"]:
+                #     dna_obj["band"] = j["connectionInfo"]["band"]
+
+                # return dna_obj
 
             if "hostType" in detail:
                 dna_obj["type"] = detail["hostType"]
@@ -559,7 +572,8 @@ class DhcpHook(object):
             if "userId" in detail:
                 dna_obj["user"] = detail["userId"]
 
-            dna_obj["mac"] = detail["hostMac"]
+            if "hostMac" in detail:
+                dna_obj["mac"] = detail["hostMac"]
 
             if "hostOs" in detail and detail["hostOs"]:
                 dna_obj["ostype"] = detail["hostOs"]
