@@ -51,7 +51,7 @@ CNR_HEADERS = {"Accept": "application/json"}
 BASIC_AUTH = (CLEUCreds.CPNR_USERNAME, CLEUCreds.CPNR_PASSWORD)
 REST_TIMEOUT = 10
 
-DEFAULT_INT_TYPE = "GigabitEthernet"
+DEFAULT_INT_TYPE = "Ethernet"
 
 ALLOWED_TO_DELETE = ["jclarke@cisco.com", "josterfe@cisco.com", "anjesani@cisco.com"]
 
@@ -62,6 +62,7 @@ ME = "livenocbot@sparkbot.io"
 
 MODEL = "llama3.3"
 
+webhook_id = None
 app = Flask(BOT_NAME)
 
 # Set our initial logging level.
@@ -150,7 +151,7 @@ class DhcpHook(object):
           mac (str, optional): MAC address of the lease to check (at least ip or mac must be specified)
 
         Returns:
-          Dict[str, str]|None: A dict containing the MAC address and lease scope if a lease is found or None if the lease is not found or an error occurs
+          Union[Dict[str, str], None]: A dict containing the MAC address and lease scope if a lease is found or None if the lease is not found or an error occurs
 
         Raises:
           ValueError: If both ip and mac were not specified
@@ -245,6 +246,9 @@ class DhcpHook(object):
 
         return {"success": True}
 
+    # Only these users are allowed to delete reservations.
+    delete_dhcp_reservation_from_cpnr.auth_list = ALLOWED_TO_DELETE
+
     # def get_dhcp_lease_info_from_cpnr(self, ip: str) -> Dict[str, str] | None:
     #     """
     #     Get DHCP lease information from CPNR based on the IP address of a client.
@@ -330,7 +334,7 @@ class DhcpHook(object):
             response = requests.request("GET", url, auth=BASIC_AUTH, headers=CNR_HEADERS, verify=False, params=params, timeout=REST_TIMEOUT)
             response.raise_for_status()
         except Exception as e:
-            logging.exception("Did not get a good response from CPNR for client %s: %s" % (client, e))
+            logging.exception("Did not get a good response from CPNR for client %s: %s" % (client, str(e)))
             return None
 
         j = response.json()
@@ -372,7 +376,7 @@ class DhcpHook(object):
 
     def get_from_netbox(self, ip: str) -> Union[Dict[str, str], None]:
         """
-        Obtain type and name of an object from NetBox
+        Obtain type and name of an object from NetBox.
 
         Args:
           ip (str): IP address of object to lookup in NetBox
@@ -610,7 +614,7 @@ class DhcpHook(object):
 
 def register_webhook(spark: Sparker) -> str:
     """Register a callback URL for our bot."""
-    global CALLBACK_URL
+    global CALLBACK_URL, BOT_NAME
     webhook = spark.get_webhook_for_url(CALLBACK_URL)
     if webhook:
         spark.unregister_webhook(webhook["id"])
@@ -626,7 +630,7 @@ def register_webhook(spark: Sparker) -> str:
 
 def handle_message(msg: str, person: str) -> None:
     """Handle the Webex message using GenAI."""
-    global spark, SPARK_ROOM, available_functions, dhcp_hook, ollama_client, MODEL, ALLOWED_TO_DELETE
+    global spark, SPARK_ROOM, available_functions, dhcp_hook, ollama_client, MODEL
 
     final_response = None
 
@@ -648,11 +652,11 @@ def handle_message(msg: str, person: str) -> None:
     if response.message.tool_calls:
         for tool in response.message.tool_calls:
             if func := getattr(dhcp_hook, tool.function.name):
-                if tool.function.name == "delete_dhcp_reservation_from_cpnr" and person["from_email"] not in ALLOWED_TO_DELETE:
+                if hasattr(func, "auth_list") and person["from_email"] not in func.auth_list:
                     spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, f"I'm sorry, {person['nickName']}.  I can't do that for you.")
                     return
 
-                logging.debug("Calling function %s" % tool.function.name)
+                logging.debug("Calling function %s with arguments %s" % (tool.function.name, str(tool.function.arguments)))
                 output[tool.function.name] = func(**tool.function.arguments)
             else:
                 logging.error("Failed to find a function named %s" % tool.function.name)
@@ -773,12 +777,12 @@ def cleanup() -> None:
 
 
 spark = Sparker(token=CLEUCreds.SPARK_TOKEN, logit=True)
+pnb = pynetbox.api(C.NETBOX_SERVER, CLEUCreds.NETBOX_API_TOKEN)
+dhcp_hook = DhcpHook(pnb)
 
-try:
-    webhook_id = register_webhook(spark)
-except Exception as e:
-    logging.exception("Failed to register Webex webhook callback: %s" % str(e))
-    exit(1)
+ollama_client = Client(host=C.LLAMA_URL, auth=(CLEUCreds.LLAMA_USER, CLEUCreds.LLAMA_PASSWORD))
+
+available_functions = [f[1] for f in inspect.getmembers(dhcp_hook, predicate=inspect.ismethod) if not f[0].startswith("_")]
 
 tid = spark.get_team_id(C.WEBEX_TEAM)
 if not tid:
@@ -790,9 +794,8 @@ if not rid:
     logging.error("Failed to get Spark Room ID")
     exit(1)
 
-pnb = pynetbox.api(C.NETBOX_SERVER, CLEUCreds.NETBOX_API_TOKEN)
-dhcp_hook = DhcpHook(pnb)
-
-ollama_client = Client(host=C.LLAMA_URL, auth=(CLEUCreds.LLAMA_USER, CLEUCreds.LLAMA_PASSWORD))
-
-available_functions = [f[1] for f in inspect.getmembers(dhcp_hook, predicate=inspect.ismethod) if not f[0].startswith("_")]
+try:
+    webhook_id = register_webhook(spark)
+except Exception as e:
+    logging.exception("Failed to register Webex webhook callback: %s" % str(e))
+    exit(1)
