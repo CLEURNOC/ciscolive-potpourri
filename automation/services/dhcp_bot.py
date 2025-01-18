@@ -333,6 +333,11 @@ class DhcpHook(object):
         try:
             response = requests.request("GET", url, auth=BASIC_AUTH, headers=CNR_HEADERS, verify=False, params=params, timeout=REST_TIMEOUT)
             response.raise_for_status()
+        except requests.HTTPError as he:
+            if he.response.status_code != 404:
+                logging.exception("Did not get a good response from CPNR for client %s: %s" % (client, str(he)))
+
+            return None
         except Exception as e:
             logging.exception("Did not get a good response from CPNR for client %s: %s" % (client, str(e)))
             return None
@@ -444,7 +449,7 @@ class DhcpHook(object):
 
             j = response.json()
             if "Token" not in j:
-                logging.warning(f"Failed to get a Token element from Catalyst Center {dnac}: {response.text}")
+                logging.warning("Failed to get a Token element from Catalyst Center %s: %s" % (dnac, response.text))
                 continue
 
             if user:
@@ -468,17 +473,17 @@ class DhcpHook(object):
                 dna_obj["mac"] = mac
 
             try:
-                response = requests.request("GET", curl, headers=cheaders, params=params, verify=False)
+                response = requests.request("GET", curl, headers=cheaders, params=params, verify=False, timeout=REST_TIMEOUT)
                 response.raise_for_status()
             except Exception as e:
-                logging.exception("Failed to find client %s in Catalyst Center: %s" % (client, getattr(e, "message", repr(e))))
+                logging.exception("Failed to find client %s in Catalyst Center %s: %s" % (client, dnac, getattr(e, "message", repr(e))))
                 continue
 
             j = response.json()
 
             if user:
                 if len(j) == 0 or "userDetails" not in j[0]:
-                    logging.warning("Got an unknown response from Catalyst Center: '%s'" % response.text)
+                    logging.warning("Got an unknown response from Catalyst Center %s: '%s'" % (dnac, response.text))
                     continue
 
                 if len(j[0]["userDetails"].keys()) == 0:
@@ -526,7 +531,7 @@ class DhcpHook(object):
                 # return dna_obj
             else:
                 if "detail" not in j:
-                    logging.warning("Got an unknown response from Catalyst Center: '%s'" % response.text)
+                    logging.warning("Got an unknown response from Catalyst Center %s: '%s'" % (dnac, response.text))
                     continue
 
                 if "errorCode" in j["detail"] or len(j["detail"].keys()) == 0:
