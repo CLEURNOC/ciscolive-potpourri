@@ -672,7 +672,7 @@ def handle_message(msg: str, person: str) -> None:
 
         final_response = ollama_client.chat(MODEL, messages=messages)
 
-    if final_response:
+    if final_response and final_response != "":
         spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, final_response)
     else:
         spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, "Sorry, %s.  I couldn't find anything regarding your question 🥺" % person)
