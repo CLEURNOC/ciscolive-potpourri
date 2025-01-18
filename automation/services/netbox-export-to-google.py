@@ -136,6 +136,7 @@ def export_ips(nb: Any, gs_service: Any) -> None:
         new_values.append(list(row.values()))
 
     ip_sheet = gs_service.spreadsheets()
+    ip_sheet.values().clear(spreadsheetId=SHEET_ID, range="IP Addresses", body={}).execute()
     ip_sheet.values().update(
         spreadsheetId=SHEET_ID, range="IP Addresses!A1:ZZ", body={"values": new_values}, valueInputOption="RAW"
     ).execute()
@@ -256,6 +257,7 @@ def export_prefixes(nb: Any, gs_service: Any) -> None:
         new_values.append(list(row.values()))
 
     prefix_sheet = gs_service.spreadsheets()
+    prefix_sheet.values().clear(spreadsheetId=SHEET_ID, range="IP Prefixes", body={}).execute()
     prefix_sheet.values().update(
         spreadsheetId=SHEET_ID, range="IP Prefixes!A1:ZZ", body={"values": new_values}, valueInputOption="RAW"
     ).execute()
@@ -342,6 +344,7 @@ def export_vlans(nb: Any, gs_service: Any) -> None:
         new_values.append(list(row.values()))
 
     vlan_sheet = gs_service.spreadsheets()
+    vlan_sheet.values().clear(spreadsheetId=SHEET_ID, range="VLANs", body={}).execute()
     vlan_sheet.values().update(spreadsheetId=SHEET_ID, range="VLANs!A1:ZZ", body={"values": new_values}, valueInputOption="RAW").execute()
 
 
