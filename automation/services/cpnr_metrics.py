@@ -33,7 +33,7 @@ import re
 from cleu.config import Config as C  # type: ignore
 
 
-CACHE_FILE = "/home/jclarke/cpnr_metrics.dat"
+# CACHE_FILE = "/home/jclarke/cpnr_metrics.dat"
 PORT = 8085
 
 app = Flask("CPNR Stats Fetcher")
