@@ -57,6 +57,7 @@ def get_metrics():
                 i = 1
                 for metric in COMMANDS[command]["metrics"]:
                     output += f'{metric}{{server="{server}"}} {m.group(i)}\n'
+                    i += 1
 
     return Response(output, mimetype="text/plain")
 
