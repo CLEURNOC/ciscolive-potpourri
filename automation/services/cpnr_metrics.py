@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2017-2024  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2025  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -48,21 +48,15 @@ def get_metrics():
     output = ""
     for server in C.CPNR_SERVERS:
         for command in list(COMMANDS.keys()):
-            res = run(shlex.split("ssh -2 root@{} {}".format(server, command)), capture_output=True)
+            res = run(shlex.split(f"ssh -2 root@{server} {command}"), capture_output=True, text=True)
             if res.returncode != 0:
-                print(
-                    "ERROR: Failed to execute {} on {}: out='{}', err='{}'".format(
-                        command, server, res.stdout.decode("utf-8").strip(), res.stderr.decode("utf-8").strip()
-                    )
-                )
+                print("ERROR: Failed to execute %s on %s: out='%s', err='%s'" % (command, server, res.stdout.strip(), res.stderr.strip()))
                 continue
 
-            m = re.search(COMMANDS[command]["pattern"], res.stdout.decode("utf-8").strip())
-
-            if m:
+            if m := re.search(COMMANDS[command]["pattern"], res.stdout.strip()):
                 i = 1
                 for metric in COMMANDS[command]["metrics"]:
-                    output += '{}{{server="{}"}} {}\n'.format(metric, server, m.group(i))
+                    output += f'{metric}{{server="{server}"}} {m.group(i)}\n'
 
     return Response(output, mimetype="text/plain")
 
