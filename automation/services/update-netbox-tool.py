@@ -26,7 +26,7 @@
 
 
 from __future__ import print_function
-from elemental_utils import ElementalNetbox
+from elemental_utils import ElementalNetbox  # type: ignore
 import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning  # type: ignore
 
