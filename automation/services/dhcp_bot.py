@@ -392,7 +392,7 @@ class DhcpHook(object):
         if not ip:
             return None
 
-        for prefix in ("24", "32", "16", "64", "128"):
+        for prefix in ("24", "31", "32", "16", "64", "128"):
             ipa = self.pnb.ipam.ip_addresses.get(address=f"{ip}/{prefix}")
             if ipa:
                 break
