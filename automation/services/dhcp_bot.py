@@ -144,7 +144,7 @@ class DhcpHook(object):
     @staticmethod
     def check_for_reservation(ip: str = None, mac: str = None) -> Union[Dict[str, str], None]:
         """
-        Check for a DHCP lease by IP or MAC address within CPNR.
+        Check for a DHCP lease by IP or MAC address within CPNR.  Only one of IP address or MAC address is required.
 
         Args:
           ip (str, optional): IP address of the lease to check (at least ip or mac must be specified)
@@ -190,21 +190,24 @@ class DhcpHook(object):
 
         return res
 
-    def create_dhcp_reservation_in_cpnr(self, ip: str, mac: str) -> Dict[str, Union[str, bool]]:
+    def create_dhcp_reservation_in_cpnr(self, ip: str) -> Dict[str, Union[str, bool]]:
         """
         Create a new DHCP reservation in CPNR.
 
         Args:
           ip (str): IP address that is leased to the client
-          mac (str): MAC address of the client
 
         Returns:
           Dict[str, Union[str, bool]]: A dict with keys "success" (bool) if the reservation was created successfully and "error" if the success is False
         """
         global CNR_HEADERS, BASIC_AUTH, AT_MACADDR, REST_TIMEOUT
 
-        if not mac or not ip:
+        if not ip:
             return {"success": False, "error": "Both ip and mac must be specified"}
+
+        mac = DhcpHook.check_for_reservation_by(ip=ip)
+        if not mac:
+            return {"success": False, "error": "IP %s is not currently leased" % ip}
 
         mac_addr = DhcpHook.normalize_mac(mac)
 
@@ -409,6 +412,7 @@ class DhcpHook(object):
     def get_user_from_cat_center(self, user: Union[str, None] = None, mac: Union[str, None] = None) -> Union[Dict[str, str], None]:
         """
         Obtain client connect and onboard health, location, OS type, associated AP and SSID, and type from Catalyst Center based on the client's username or MAC address.
+        At least one of the client's IP address or MAC address is required.
 
         Args:
           user (Union[str, None]): Username of the client (at least user or mac is required)
@@ -644,8 +648,8 @@ def handle_message(msg: str, person: str) -> None:
             "role": "system",
             "content": "You are a helpful network automation assistant with tool calling capabilities. When you receive a tool call response, attempt to determine the data source's name,"
             "use the output to format an answer to the original user question using markdown to highlight key elements, and return a response using the person's name indicating which data source"
-            "each output comes from.  If a data source returns nothing, skip it in the output.  Include emojis where appropriate.  <|eot_id|><|start_header_id|>user<|end_header_id|> "
-            "Given the following functions, please respond with a JSON for a function call with its proper arguments that best answers the given prompt."
+            "each output comes from.  If a data source returns nothing, skip it in the output.  Include emojis where appropriate."
+            "Given the following functions, please respond with JSON for a function call with its proper arguments that best answers the given prompt."
             'Respond in the format {"name": function name, "parameters": dictionary of argument name and its value}. Do not use variables.  Do not make up values.  It is okay to return null for all arguments.',
         },
         {"role": "user", "content": msg},
