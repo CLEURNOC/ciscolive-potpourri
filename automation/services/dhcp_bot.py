@@ -209,7 +209,7 @@ class DhcpHook(object):
         if not mac:
             return {"success": False, "error": "IP %s is not currently leased" % ip}
 
-        mac_addr = DhcpHook.normalize_mac(mac)
+        mac_addr = DhcpHook.normalize_mac(mac["mac"])
 
         url = f"{C.DHCP_BASE}/Reservation"
         payload = {"ipaddr": ip, "lookupKey": "01:06:" + mac_addr, "lookupKeyType": AT_MACADDR}
