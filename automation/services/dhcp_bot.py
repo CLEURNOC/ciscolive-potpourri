@@ -757,10 +757,11 @@ def receive_callback():
         return jsonify({"error": "Did not get a message"}), 422
 
     person = spark.get_person(record["data"]["personId"])
-    person["from_email"] = sender
-    if not person:
+    if person:
+        person["from_email"] = sender
         spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, f"Hey, {person['nickName']}!  Working on that for you...")
     else:
+        person = {"from_email": sender}
         spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, "Working on that for you...")
 
     txt = msg["text"]
