@@ -647,11 +647,12 @@ def handle_message(msg: str, person: str) -> None:
         {
             "role": "system",
             "content": "You are a helpful network automation assistant with tool calling capabilities. When you receive a tool call response, attempt to determine the data source's name,"
-            "use the output to format an answer to the original user question using markdown to highlight key elements, and return a response using the person's name indicating which data source"
-            "each output comes from.  If a data source returns nothing, skip it in the output.  Include emojis where appropriate."
+            "use the output to format an answer to the original user question using markdown to highlight key elements, and return a response using the person's name and indicating which data source"
+            "each output comes from.  If a data source returns nothing, skip it in the output.  Include emojis where and when appropriate."
             "Given the following functions, please respond with JSON for a function call with its proper arguments that best answers the given prompt."
             'Respond in the format {"name": function name, "parameters": dictionary of argument name and its value}. Do not use variables.  Do not make up values.  It is okay to return null for all arguments.',
         },
+        {"role": "user", "content": f"My name is {person['nickName']}"},
         {"role": "user", "content": msg},
     ]
 
@@ -757,12 +758,12 @@ def receive_callback():
         return jsonify({"error": "Did not get a message"}), 422
 
     person = spark.get_person(record["data"]["personId"])
-    if person:
-        person["from_email"] = sender
-        spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, f"Hey, {person['nickName']}!  Working on that for you...")
+    if not person:
+        person = {"from_email": sender, "nickName": "mate"}
     else:
-        person = {"from_email": sender}
-        spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, "Working on that for you...")
+        person["from_email"] = sender
+
+    spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, f"Hey, {person['nickName']}!  Let **ChatNOC** work on that for you...")
 
     txt = msg["text"]
 
