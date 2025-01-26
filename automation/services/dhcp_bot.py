@@ -652,7 +652,7 @@ def handle_message(msg: str, person: str) -> None:
             "Given the following functions, please respond with JSON for a function call with its proper arguments that best answers the given prompt."
             'Respond in the format {"name": function name, "parameters": dictionary of argument name and its value}. Do not use variables.  Do not make up values.  It is okay to return null for all arguments.',
         },
-        {"role": "user", "content": f"My name is {person['nickName']}"},
+        {"role": "user", "content": f"Hi! My name is {person['nickName']}"},
         {"role": "user", "content": msg},
     ]
 
