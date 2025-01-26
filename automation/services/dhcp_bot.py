@@ -329,7 +329,7 @@ class DhcpHook(object):
             params = {"clientMacAddr": mac}
             client = mac
         else:
-            url = f"{C.DHCP_LEASE}/Lease/{ip}"
+            url = f"{C.DHCP_BASE}/Lease/{ip}"
             params = {}
             client = ip
 
@@ -412,15 +412,15 @@ class DhcpHook(object):
     def get_user_from_cat_center(self, user: Union[str, None] = None, mac: Union[str, None] = None) -> Union[Dict[str, str], None]:
         """
         Obtain client connect and onboard health, location, OS type, associated AP and SSID, and type from Catalyst Center based on the client's username or MAC address.
-        At least one of the client's IP address or MAC address is required.
+        At least one of the client's username or MAC address is required.
 
         Args:
-          user (Union[str, None]): Username of the client (at least user or mac is required)
-          mac (Union[str, None]): MAC address of the client (at least union or mac is required)
+            user (Union[str, None]): Username of the client (at least user or mac is required)
+            mac (Union[str, None]): MAC address of the client (at least user or mac is required)
 
         Returns:
-          Union[Dict[str,str], None]: A dict with client "ostype" (OS type), "type", "location", "ap" (associated AP), "ssid" (associated SSID), "health" (health score), "onboard" (onboarding score),
-                              "connect" (connection score), "reason" (error reason if an error occurred), "band" (WiFi band) as keys or None if client was not found in Catalyst Center
+            Union[Dict[str,str], None]: A dict with client "ostype" (OS type), "type", "location", "ap" (associated AP), "ssid" (associated SSID), "health" (health score), "onboard" (onboarding score),
+                                "connect" (connection score), "reason" (error reason if an error occurred), "band" (WiFi band) as keys or None if client was not found in Catalyst Center
         """
         global BASIC_AUTH, REST_TIMEOUT
 
@@ -637,7 +637,7 @@ def register_webhook(spark: Sparker) -> str:
     return webhook["id"]
 
 
-def handle_message(msg: str, person: str) -> None:
+def handle_message(msg: str, person: Dict[str, str]) -> None:
     """Handle the Webex message using GenAI."""
     global spark, SPARK_ROOM, available_functions, dhcp_hook, ollama_client, MODEL
 
@@ -646,11 +646,14 @@ def handle_message(msg: str, person: str) -> None:
     messages = [
         {
             "role": "system",
-            "content": "You are a helpful network automation assistant with tool calling capabilities. When you receive a tool call response, attempt to determine the data source's name,"
+            "content": "You are a helpful network automation assistant with tool calling capabilities. Analyze the given user prompt and decide whether or not it can be answered by any of the available tools that you have access to."
+            "When you receive a tool call response, attempt to determine the data source's name,"
             "use the output to format an answer to the original user question using markdown to highlight key elements, and return a response using the person's name and indicating which data source"
             "each output comes from.  If a data source returns nothing, skip it in the output.  Include emojis where and when appropriate."
-            "Given the following functions, please respond with JSON for a function call with its proper arguments that best answers the given prompt."
-            'Respond in the format {"name": function name, "parameters": dictionary of argument name and its value}. Do not use variables.  Do not make up values.  It is okay to return null for all arguments.',
+            "If you choose to call a function ONLY respond in the JSON format:"
+            '{"name": function name, "parameters": dictionary of argument names and their values}. Do not use variables.  If looking for real time'
+            "information use relevant functions before falling back to brave_search.  Function calls MUST follow the specified format.  Required parameters MUST always be specified in the response."
+            "Put the entire function call reply on one line.",
         },
         {"role": "user", "content": f"Hi! My name is {person['nickName']}"},
         {"role": "user", "content": msg},
@@ -677,10 +680,20 @@ def handle_message(msg: str, person: str) -> None:
 
         final_response = ollama_client.chat(MODEL, messages=messages)
 
-    if final_response and final_response != "":
-        spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, final_response)
+    try:
+        # The LLM may still choose to try and call an unavailable tool.
+        json.loads(final_response.message.content)
+    except Exception:
+        fresponse = final_response.message.content
     else:
-        spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, "Sorry, %s.  I couldn't find anything regarding your question 🥺" % person)
+        fresponse = None
+
+    if fresponse:
+        spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, fresponse)
+    else:
+        spark.post_to_spark(
+            C.WEBEX_TEAM, SPARK_ROOM, "Sorry, %s.  I couldn't find anything regarding your question 🥺" % person["nickName"]
+        )
 
 
 @app.route("/chat", methods=["POST"])
@@ -772,7 +785,7 @@ def receive_callback():
     except Exception as e:
         logging.exception("Failed to handle message from %s: %s" % (person["nickName"], str(e)))
         spark.post_to_spark(
-            C.WEBEX_TEAM, SPARK_ROOM, "Whoops, I encountered an error:<br>\n```\n%s\n```" % traceback.format_exc, MessageType.BAD
+            C.WEBEX_TEAM, SPARK_ROOM, "Whoops, I encountered an error:<br>\n```\n%s\n```" % traceback.format_exc(), MessageType.BAD
         )
         return jsonify({"error": "Failed to handle message"}), 500
 
