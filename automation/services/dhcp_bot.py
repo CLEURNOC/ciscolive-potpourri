@@ -142,13 +142,13 @@ class DhcpHook(object):
         return res
 
     @staticmethod
-    def check_for_reservation(ip: str = None, mac: str = None) -> Union[Dict[str, str], None]:
+    def check_for_reservation(ip: Union[str, None] = None, mac: Union[str, None] = None) -> Union[Dict[str, str], None]:
         """
         Check for a DHCP lease by IP or MAC address within CPNR.  Only one of IP address or MAC address is required.
 
         Args:
-          ip (str, optional): IP address of the lease to check (at least ip or mac must be specified)
-          mac (str, optional): MAC address of the lease to check (at least ip or mac must be specified)
+          ip (Union[str, None], optional): IP address of the lease to check (at least ip or mac must be specified)
+          mac (Union[str, None], optional): MAC address of the lease to check (at least ip or mac must be specified)
 
         Returns:
           Union[Dict[str, str], None]: A dict containing the MAC address and lease scope if a lease is found or None if the lease is not found or an error occurs
@@ -158,10 +158,10 @@ class DhcpHook(object):
         """
         global CNR_HEADERS, BASIC_AUTH, REST_TIMEOUT
 
-        res = {}
-
         if not ip and not mac:
             raise ValueError("At least one of ip or mac must be specified")
+
+        res = {}
 
         if ip:
             url = f"{C.DHCP_BASE}/Reservation/{ip}"
@@ -382,7 +382,7 @@ class DhcpHook(object):
 
         return leases
 
-    def get_from_netbox(self, ip: str) -> Union[Dict[str, str], None]:
+    def get_object_info_from_netbox(self, ip: str) -> Union[Dict[str, str], None]:
         """
         Obtain type and name of an object from NetBox.
 
@@ -409,7 +409,9 @@ class DhcpHook(object):
 
         return None
 
-    def get_user_from_cat_center(self, user: Union[str, None] = None, mac: Union[str, None] = None) -> Union[Dict[str, str], None]:
+    def get_client_details_from_cat_center(
+        self, user: Union[str, None] = None, mac: Union[str, None] = None
+    ) -> Union[Dict[str, str], None]:
         """
         Obtain client connect and onboard health, location, OS type, associated AP and SSID, and type from Catalyst Center based on the client's username or MAC address.
         At least one of the client's username or MAC address is required.
