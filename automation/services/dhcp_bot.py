@@ -655,7 +655,7 @@ def handle_message(msg: str, person: Dict[str, str]) -> None:
             "If you choose to call a function ONLY respond in the JSON format:"
             '{"name": function name, "parameters": dictionary of argument names and their values}. Do not use variables.  If looking for real time'
             "information use relevant functions before falling back to brave_search.  Function calls MUST follow the specified format.  Required parameters MUST always be specified in the response."
-            "Put the entire function call reply on one line.",
+            "Put the entire function call reply on one line.  Do NOT call any functions that are not in the available tools list.",
         },
         {"role": "user", "content": f"Hi! My name is {person['nickName']}"},
         {"role": "user", "content": msg},
