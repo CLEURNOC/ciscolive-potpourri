@@ -655,7 +655,7 @@ def handle_message(msg: str, person: Dict[str, str]) -> None:
             "If you choose to call a function ONLY respond in the JSON format:"
             '{"name": function name, "parameters": dictionary of argument names and their values}. Do not use variables.  If looking for real time'
             "information use relevant functions before falling back to brave_search.  Function calls MUST follow the specified format.  Required parameters MUST always be specified in the response."
-            "Put the entire function call reply on one line.  Do NOT use any functions that are not in the available function list.",
+            "Put the entire function call reply on one line.",
         },
         {"role": "user", "content": f"Hi! My name is {person['nickName']}"},
         {"role": "user", "content": msg},
@@ -682,15 +682,15 @@ def handle_message(msg: str, person: Dict[str, str]) -> None:
 
         final_response = ollama_client.chat(MODEL, messages=messages)
 
-    try:
-        # The LLM may still choose to try and call an unavailable tool.
-        json.loads(final_response.message.content)
-    except Exception:
-        fresponse = final_response.message.content
-    else:
-        fresponse = None
+    fresponse = ""
+    for line in final_response.message.content.split("\n"):
+        try:
+            # The LLM may still choose to try and call an unavailable tool.
+            json.loads(line)
+        except Exception:
+            fresponse += line
 
-    if fresponse:
+    if fresponse != "":
         spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, fresponse)
     else:
         spark.post_to_spark(
