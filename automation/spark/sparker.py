@@ -192,7 +192,7 @@ class Sparker(object):
 
         return response.json()
 
-    def unregister_webook(self, webhook_id):
+    def unregister_webhook(self, webhook_id):
         if not self.check_token():
             return
 
