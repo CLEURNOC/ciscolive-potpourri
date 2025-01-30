@@ -14,8 +14,6 @@ def main():
         "ansible-playbook",
         "-i",
         "inventory/hosts",
-        "-e",
-        "ansible_python_interpreter={}".format(sys.executable),
         "--tags",
         "ollama",
         "update-ollama-playbook.yml",
