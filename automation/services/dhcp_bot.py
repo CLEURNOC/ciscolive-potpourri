@@ -738,7 +738,7 @@ def receive_callback():
     logging.debug("Received payload: %s" % payload)
 
     sig_header = sig_header.strip().lower()
-    hashed_payload = hmac.new(CLEUCreds.CALLBACK_TOKEN, payload, sha1)
+    hashed_payload = hmac.new(CLEUCreds.CALLBACK_TOKEN.encode("UTF-8"), payload, sha1)
     signature = hashed_payload.hexdigest().strip().lower()
     if signature != sig_header:
         logging.error("Received invalid signature from callback; expected %s, received %s" % (signature, sig_header))
