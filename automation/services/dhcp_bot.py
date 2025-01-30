@@ -205,7 +205,7 @@ class DhcpHook(object):
         if not ip:
             return {"success": False, "error": "Both ip and mac must be specified"}
 
-        mac = DhcpHook.check_for_reservation_by(ip=ip)
+        mac = DhcpHook.check_for_reservation(ip=ip)
         if not mac:
             return {"success": False, "error": "IP %s is not currently leased" % ip}
 
@@ -666,15 +666,20 @@ def handle_message(msg: str, person: Dict[str, str]) -> None:
 
     if response.message.tool_calls:
         for tool in response.message.tool_calls:
-            if func := getattr(dhcp_hook, tool.function.name):
+            if hasattr(dhcp_hook, tool.function.name):
+                func = getattr(dhcp_hook, tool.function.name)
                 if hasattr(func, "auth_list") and person["from_email"] not in func.auth_list:
                     spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, f"I'm sorry, {person['nickName']}.  I can't do that for you.")
                     return
 
                 logging.debug("Calling function %s with arguments %s" % (tool.function.name, str(tool.function.arguments)))
-                output[tool.function.name] = func(**tool.function.arguments)
+                try:
+                    output[tool.function.name] = func(**tool.function.arguments)
+                except Exception as e:
+                    output[tool.function.name] = str(e)
             else:
                 logging.error("Failed to find a function named %s" % tool.function.name)
+                output[tool.function.name] = "You're asking me to do a naughty thing."
 
         messages.append(response.message)
         for fn, tool_output in output.items():
@@ -683,12 +688,13 @@ def handle_message(msg: str, person: Dict[str, str]) -> None:
         final_response = ollama_client.chat(MODEL, messages=messages)
 
     fresponse = ""
-    for line in final_response.message.content.split("\n"):
-        try:
-            # The LLM may still choose to try and call an unavailable tool.
-            json.loads(line)
-        except Exception:
-            fresponse += line
+    if final_response.message.content:
+        for line in final_response.message.content.split("\n"):
+            try:
+                # The LLM may still choose to try and call an unavailable tool.
+                json.loads(line)
+            except Exception:
+                fresponse += line
 
     if fresponse != "":
         spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, fresponse)
