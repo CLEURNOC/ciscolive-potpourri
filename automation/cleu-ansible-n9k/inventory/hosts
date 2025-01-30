@@ -22,6 +22,12 @@ core1-net-pdu2.ciscolive.network
 core2-net-pdu1.ciscolive.network
 core2-net-pdu2.ciscolive.network
 
+[OLLAMA_NODES]
+dc1-ollama-node-5.ciscolive.network
+dc1-ollama-node-6.ciscolive.network
+dc2-ollama-node-5.ciscolive.network
+dc2-ollama-node-6.ciscolive.network
+
 [EDGE1]
 core1-edge.ciscolive.network
 

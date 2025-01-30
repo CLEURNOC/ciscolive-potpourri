@@ -1,0 +1,6 @@
+---
+- name: Update and restart ollama
+  hosts: OLLAMA_NODES
+  gather_facts: false
+  roles:
+    - ollama

@@ -1,0 +1,17 @@
+---
+- name: Stop ollama container
+  community.docker.docker_compose_v2:
+    project_src: ollama
+    state: absent
+  tags: ollama
+
+- name: Restart ollama container (pull is implicit)
+  community.docker.docker_compose_v2:
+    project_src: ollama
+  register: output
+  tags: ollama
+
+- name: Show start output
+  ansible.builtin.debug:
+    var: output
+  tags: ollama
