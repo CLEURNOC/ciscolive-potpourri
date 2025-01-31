@@ -184,7 +184,6 @@ devices = [
             "natPoolDefault1",
             "natPoolRes1",
             "natPoolRes2",
-            "natPoolDns",
             "natPoolLabs",
             "natPoolWLC",
             "natHealthStats",
