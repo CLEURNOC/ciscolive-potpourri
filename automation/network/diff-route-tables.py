@@ -158,6 +158,7 @@ def main():
                         shlex.split("/usr/bin/diff -b -B -w -u {} {}".format(prev_path, curr_path)),
                         stdout=PIPE,
                         stderr=PIPE,
+                        text=True,
                     )
                     out, _ = proc.communicate()
                     rc = proc.returncode
@@ -168,7 +169,7 @@ def main():
                                 C.WEBEX_TEAM,
                                 WEBEX_ROOM,
                                 "Routing table diff ({}) on **{}**:\n```\n{}\n```".format(
-                                    command, router, re.sub(cache_dir + "/", "", out.decode("utf-8"))
+                                    command, router, re.sub(cache_dir + "/", "", out)
                                 ),
                                 MessageType.BAD,
                             )
@@ -204,7 +205,7 @@ def main():
             print("ERROR: Cannot push without a branch")
         else:
             os.chdir(args.git_repo)
-            call(f"git pull origin {args.git_branch}", shell=True, stdout=DEVNULL, stderr=DEVNULL)
+            call(f"git pull origin {args.git_branch}", shell=True, stdout=DEVNULL, stderr=DEVNULL, text=True)
             proc = Popen(
                 shlex.split(f"git push origin {args.git_branch}"),
                 stdout=PIPE,
@@ -213,7 +214,7 @@ def main():
             out, _ = proc.communicate()
             rc = proc.returncode
             if rc != 0:
-                print(f"ERROR: Failed to push to git: {out.decode('utf-8')}")
+                print(f"ERROR: Failed to push to git: {out}")
 
 
 if __name__ == "__main__":
