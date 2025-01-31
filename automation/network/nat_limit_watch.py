@@ -71,7 +71,7 @@ if __name__ == "__main__":
     ssh_client = paramiko.SSHClient()
     ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
-    routers = ["CORE1-EDGE", "CORE2-EDGE"]
+    routers = ["CORE1-EDGE", "CORE2-EDGE", "CORE1-NAT64", "CORE2-NAT64"]
 
     for router in routers:
         try:
