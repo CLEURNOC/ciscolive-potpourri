@@ -68,38 +68,48 @@ commands = {
         "pattern": r"Total number of translations: (\d+)",
         "metric": "natTranslations",
     },
-    "umbrella1Trans": {
-        "command": "show platform hardware qfp active feature nat datapath limit",
-        "pattern": r"limit_type 5 limit_id 0xa64fd06.*curr_count (\d+)",
-        "metric": "umbrella1NatTrans",
-    },
-    "umbrella2Trans": {
-        "command": "show platform hardware qfp active feature nat datapath limit",
-        "pattern": r"limit_type 5 limit_id 0xa64fe06.*curr_count (\d+)",
-        "metric": "umbrella2NatTrans",
-    },
+    # "umbrella1Trans": {
+    #     "command": "show platform hardware qfp active feature nat datapath limit",
+    #     "pattern": r"limit_type 5 limit_id 0xa64fd06.*curr_count (\d+)",
+    #     "metric": "umbrella1NatTrans",
+    # },
+    # "umbrella2Trans": {
+    #     "command": "show platform hardware qfp active feature nat datapath limit",
+    #     "pattern": r"limit_type 5 limit_id 0xa64fe06.*curr_count (\d+)",
+    #     "metric": "umbrella2NatTrans",
+    # },
     "natPoolDefault1": {
         "command": "show ip nat statistics | begin NAT-POOL-DEFAULT-1",
         "pattern": r"total addresses (\d+), allocated (\d+)[^,]+, misses (\d+)",
         "metrics": ["natPoolDefault1Addresses", "natPoolDefault1Allocated", "natPoolDefault1Misses"],
     },
-    "natPoolDefault2": {
-        "command": "show ip nat statistics | begin NAT-POOL-DEFAULT-2",
+    "natPoolRes1": {
+        "command": "show ip nat statistics | begin NAT-POOL-RES-1",
         "pattern": r"total addresses (\d+), allocated (\d+)[^,]+, misses (\d+)",
-        "metrics": ["natPoolDefault2Addresses", "natPoolDefault2Allocated", "natPoolDefault2Misses"],
+        "metrics": ["natPoolRes1Addresses", "natPoolRes1Allocated", "natPoolRes1Misses"],
     },
-    "natPoolDns": {
-        "command": "show ip nat statistics | begin NAT-POOL-DNS",
+    "natPoolRes2": {
+        "command": "show ip nat statistics | begin NAT-POOL-RES-2",
         "pattern": r"total addresses (\d+), allocated (\d+)[^,]+, misses (\d+)",
-        "metrics": ["natPoolDnsAddresses", "natPoolDnsAllocated", "natPoolDnsMisses"],
+        "metrics": ["natPoolRes2Addresses", "natPoolRes2Allocated", "natPoolRes2Misses"],
     },
+    # "natPoolDefault2": {
+    #     "command": "show ip nat statistics | begin NAT-POOL-DEFAULT-2",
+    #     "pattern": r"total addresses (\d+), allocated (\d+)[^,]+, misses (\d+)",
+    #     "metrics": ["natPoolDefault2Addresses", "natPoolDefault2Allocated", "natPoolDefault2Misses"],
+    # },
+    # "natPoolDns": {
+    #     "command": "show ip nat statistics | begin NAT-POOL-DNS",
+    #     "pattern": r"total addresses (\d+), allocated (\d+)[^,]+, misses (\d+)",
+    #     "metrics": ["natPoolDnsAddresses", "natPoolDnsAllocated", "natPoolDnsMisses"],
+    # },
     "natPoolLabs": {
         "command": "show ip nat statistics | begin NAT-POOL-LABS",
         "pattern": r"total addresses (\d+), allocated (\d+)[^,]+, misses (\d+)",
         "metrics": ["natPoolLabsAddresses", "natPoolLabsAllocated", "natPoolLabsMisses"],
     },
     "natPoolWLC": {
-        "command": "show ip nat statistics | begin NAT-ACL-WLC",
+        "command": "show ip nat statistics | begin NAT-POOL-WLC",
         "pattern": r"total addresses (\d+), allocated (\d+)[^,]+, misses (\d+)",
         "metrics": ["natPoolWLCAddresses", "natPoolWLCAllocated", "natPoolWLCMisses"],
     },
@@ -171,10 +181,9 @@ devices = [
         "commands": [
             "natTrans",
             "qfpUtil",
-            "umbrella1Trans",
-            "umbrella2Trans",
             "natPoolDefault1",
-            "natPoolDefault2",
+            "natPoolRes1",
+            "natPoolRes2",
             "natPoolDns",
             "natPoolLabs",
             "natPoolWLC",
@@ -187,18 +196,7 @@ devices = [
         "pattern": "CORE{}-NAT64",
         "range": {"min": 1, "max": 2},
         "commands": [
-            "natTrans",
             "qfpUtil",
-            "umbrella1Trans",
-            "umbrella2Trans",
-            "natPoolDefault1",
-            "natPoolDefault2",
-            "natPoolDns",
-            "natPoolLabs",
-            "natPoolWLC",
-            "natHealthStats",
-            "natGatewayStatsIn",
-            "natGatewayStatsOut",
         ],
     },
 ]
