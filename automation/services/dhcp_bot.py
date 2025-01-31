@@ -687,17 +687,17 @@ def handle_message(msg: str, person: Dict[str, str]) -> None:
 
         final_response = ollama_client.chat(MODEL, messages=messages)
 
-    fresponse = ""
+    fresponse = []
     if final_response.message.content:
         for line in final_response.message.content.split("\n"):
             try:
                 # The LLM may still choose to try and call an unavailable tool.
                 json.loads(line)
             except Exception:
-                fresponse += line
+                fresponse.append(line)
 
-    if fresponse != "":
-        spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, fresponse)
+    if len(fresponse) > 0:
+        spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, "\n".join(fresponse))
     else:
         spark.post_to_spark(
             C.WEBEX_TEAM, SPARK_ROOM, "Sorry, %s.  I couldn't find anything regarding your question 🥺" % person["nickName"]
