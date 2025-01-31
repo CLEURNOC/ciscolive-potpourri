@@ -648,14 +648,14 @@ def handle_message(msg: str, person: Dict[str, str]) -> None:
     messages = [
         {
             "role": "system",
-            "content": "You are a helpful network automation assistant with tool calling capabilities. Analyze the given user prompt and decide whether or not it can be answered by any of the available tools that you have access to."
+            "content": "You are a helpful network automation assistant with tool calling capabilities. Analyze the given user prompt and decide whether it can be answered by any of the available tools that you have access to."
             "When you receive a tool call response, attempt to determine the data source's name,"
             "use the output to format an answer to the original user question using markdown to highlight key elements, and return a response using the person's name and indicating which data source"
             "each output comes from.  If a data source returns nothing, skip it in the output.  Include emojis where and when appropriate."
             "If you choose to call a function ONLY respond in the JSON format:"
             '{"name": function name, "parameters": dictionary of argument names and their values}. Do not use variables.  If looking for real time'
             "information use relevant functions before falling back to brave_search.  Function calls MUST follow the specified format.  Required parameters MUST always be specified in the response."
-            "Put the entire function call reply on one line.",
+            "Do NOT call a function if its arguments are not available from your analysis of the query.  Put the entire function call reply on one line.",
         },
         {"role": "user", "content": f"Hi! My name is {person['nickName']}"},
         {"role": "user", "content": msg},
