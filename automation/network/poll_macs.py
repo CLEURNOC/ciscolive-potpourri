@@ -166,7 +166,25 @@ devices = [
     #     ],
     # },
     {
-        "pattern": "CORE{}-(EDGE|NAT64)",
+        "pattern": "CORE{}-EDGE",
+        "range": {"min": 1, "max": 2},
+        "commands": [
+            "natTrans",
+            "qfpUtil",
+            "umbrella1Trans",
+            "umbrella2Trans",
+            "natPoolDefault1",
+            "natPoolDefault2",
+            "natPoolDns",
+            "natPoolLabs",
+            "natPoolWLC",
+            "natHealthStats",
+            "natGatewayStatsIn",
+            "natGatewayStatsOut",
+        ],
+    },
+    {
+        "pattern": "CORE{}-NAT64",
         "range": {"min": 1, "max": 2},
         "commands": [
             "natTrans",
