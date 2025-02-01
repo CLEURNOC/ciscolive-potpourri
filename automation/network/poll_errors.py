@@ -30,6 +30,7 @@ import os
 import json
 import argparse
 import sys
+import re
 from sparker import Sparker, MessageType  # type: ignore
 import CLEUCreds  # type: ignore
 from cleu.config import Config as C  # type: ignore
@@ -159,6 +160,8 @@ def main():
             if_descr = vard["ifDescr"]
             if_alias = vard["ifAlias"]
             if device in ignore_interfaces and if_descr in ignore_interfaces[device]:
+                continue
+            if re.search(r"ignore", if_alias, re.I):
                 continue
             found_error = False
             for k, v in list(vard.items()):
