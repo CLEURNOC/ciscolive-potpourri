@@ -186,6 +186,7 @@ def main():
                                     do_push = True
                                 except Exception as ie:
                                     print(f"ERROR: Failed to commit to git repo {args.git_repo}: {ie}")
+                                    traceback.print_exc()
                             else:
                                 print(f"ERROR: Git repo {args.git_repo} is not a directory")
                         # print('XXX: Out = \'{}\''.format(out))
