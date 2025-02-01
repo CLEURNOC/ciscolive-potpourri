@@ -29,7 +29,7 @@ import json
 import os
 import logging
 from sparker import Sparker, MessageType  # type: ignore
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Tuple
 import re
 from hashlib import sha1
 import hmac
@@ -80,6 +80,7 @@ class DhcpHook(object):
 
     def __init__(self, pnb: pynetbox.api):
         self.pnb = pnb
+        self.ip_to_mac_cache = {}
 
     @staticmethod
     def is_ascii(s: str) -> bool:
@@ -332,6 +333,8 @@ class DhcpHook(object):
             url = f"{C.DHCP_BASE}/Lease/{ip}"
             params = {}
             client = ip
+            if ip in self.ip_to_mac_cache:
+                return self.ip_to_mac_cache[ip]
 
         try:
             response = requests.request("GET", url, auth=BASIC_AUTH, headers=CNR_HEADERS, verify=False, params=params, timeout=REST_TIMEOUT)
@@ -380,6 +383,9 @@ class DhcpHook(object):
 
             leases.append(res)
 
+        for lease in leases:
+            self.ip_to_mac_cache[lease["ip"]] = leases
+
         return leases
 
     def get_object_info_from_netbox(self, ip: str) -> Union[Dict[str, str], None]:
@@ -409,25 +415,121 @@ class DhcpHook(object):
 
         return None
 
+    @staticmethod
+    def _get_request_from_cat_center(
+        curl: str, cheaders: Dict[str, str], params: Dict[str, str], client: str, dnac: str
+    ) -> Tuple[Union[Dict[str, str], None]]:
+        global REST_TIMEOUT
+        try:
+            response = requests.request("GET", curl, headers=cheaders, params=params, verify=False, timeout=REST_TIMEOUT)
+            response.raise_for_status()
+        except Exception as e:
+            logging.exception("Failed to find client %s in Catalyst Center %s: %s" % (client, dnac, getattr(e, "message", repr(e))))
+            return (None, None)
+
+        return (response.json(), response)
+
+    @staticmethod
+    def _get_token_from_cat_center(dnac: str) -> Union[str, None]:
+        global BASIC_AUTH, REST_TIMEOUT
+
+        turl = f"https://{dnac}/dna/system/api/v1/auth/token"
+        theaders = {"content-type": "application/json"}
+        try:
+            response = requests.request("POST", turl, headers=theaders, auth=BASIC_AUTH, verify=False, timeout=REST_TIMEOUT)
+            response.raise_for_status()
+        except Exception as e:
+            logging.exception("Unable to get an auth token from Catalyst Center: %s" % getattr(e, "message", repr(e)))
+            return None
+
+        j = response.json()
+        if "Token" not in j:
+            logging.warning("Failed to get a Token element from Catalyst Center %s: %s" % (dnac, response.text))
+            return None
+
+        return j["Token"]
+
+    @staticmethod
+    def _process_cat_center_user(j: Dict[str, str], response: object, dnac: str) -> Union[Dict[str, str], None]:
+        if len(j) == 0 or "userDetails" not in j[0]:
+            logging.warning("Got an unknown response from Catalyst Center %s: '%s'" % (dnac, response.text))
+            return None
+
+        if len(j[0]["userDetails"].keys()) == 0:
+            return None
+
+        return j[0]["userDetails"]
+
+    @staticmethod
+    def _process_cat_center_mac(j: Dict[str, str], dnac: str) -> Union[Dict[str, str], None]:
+        if "detail" not in j:
+            logging.warning("Got an unknown response from Catalyst Center %s: '%s'" % (dnac, str(j)))
+            return None
+
+        if "errorCode" in j["detail"] or len(j["detail"].keys()) == 0:
+            return None
+
+        return j["detail"]
+
+    @staticmethod
+    def _build_dna_obj(dna_obj: Dict[str, str], detail: Dict[str, str]) -> Dict[str, str]:
+        if "hostType" in detail:
+            dna_obj["type"] = detail["hostType"]
+
+        if "userId" in detail:
+            dna_obj["user"] = detail["userId"]
+
+        if "hostMac" in detail:
+            dna_obj["mac"] = detail["hostMac"]
+
+        if "hostOs" in detail and detail["hostOs"]:
+            dna_obj["ostype"] = detail["hostOs"]
+        elif "subType" in detail:
+            dna_obj["ostype"] = detail["subType"]
+
+        if "healthScore" in detail:
+            for hscore in detail["healthScore"]:
+                if hscore["healthType"] == "OVERALL":
+                    dna_obj["health"] = hscore["score"]
+                    if hscore["reason"] != "":
+                        dna_obj["reason"] = hscore["reason"]
+                elif hscore["healthType"] == "ONBOARDED":
+                    dna_obj["onboard"] = hscore["score"]
+                elif hscore["healthType"] == "CONNECTED":
+                    dna_obj["connect"] = hscore["score"]
+
+        if "ssid" in detail:
+            dna_obj["ssid"] = detail["ssid"]
+
+        if "location" in detail:
+            dna_obj["location"] = detail["location"]
+
+        if "clientConnection" in detail:
+            dna_obj["ap"] = detail["clientConnection"]
+
+        if "frequency" in detail:
+            dna_obj["band"] = detail["frequency"]
+
+        return dna_obj
+
     def get_client_details_from_cat_center(
-        self, user: Union[str, None] = None, mac: Union[str, None] = None
+        self, user: Union[str, None] = None, mac: Union[str, None] = None, ip: Union[str, None] = None
     ) -> Union[Dict[str, str], None]:
         """
         Obtain client connect and onboard health, location, OS type, associated AP and SSID, and type from Catalyst Center based on the client's username or MAC address.
         At least one of the client's username or MAC address is required.
 
         Args:
-            user (Union[str, None]): Username of the client (at least user or mac is required)
-            mac (Union[str, None]): MAC address of the client (at least user or mac is required)
+            user (Union[str, None]): Username of the client (at least user, mac or ip is required)
+            mac (Union[str, None]): MAC address of the client (at least user, mac or ip is required)
+            ip (Union[str, None]): IP address of the client (at least user, mac or ip is required)
 
         Returns:
             Union[Dict[str,str], None]: A dict with client "ostype" (OS type), "type", "location", "ap" (associated AP), "ssid" (associated SSID), "health" (health score), "onboard" (onboarding score),
                                 "connect" (connection score), "reason" (error reason if an error occurred), "band" (WiFi band) as keys or None if client was not found in Catalyst Center
         """
-        global BASIC_AUTH, REST_TIMEOUT
-
-        if not user and not mac:
-            raise ValueError("At least one of user or mac must be specified")
+        if not user and not mac and not ip:
+            raise ValueError("At least one of user, mac, or ip must be specified")
 
         dna_obj = {
             "ostype": None,
@@ -443,19 +545,20 @@ class DhcpHook(object):
             "mac": None,
         }
 
-        for dnac in C.DNACS:
-            turl = f"https://{dnac}/dna/system/api/v1/auth/token"
-            theaders = {"content-type": "application/json"}
-            try:
-                response = requests.request("POST", turl, headers=theaders, auth=BASIC_AUTH, verify=False, timeout=REST_TIMEOUT)
-                response.raise_for_status()
-            except Exception as e:
-                logging.exception("Unable to get an auth token from Catalyst Center: %s" % getattr(e, "message", repr(e)))
-                continue
+        macs = []
 
-            j = response.json()
-            if "Token" not in j:
-                logging.warning("Failed to get a Token element from Catalyst Center %s: %s" % (dnac, response.text))
+        if ip and not mac and not user:
+            leases = self.get_dhcp_lease_info_from_cpnr(ip=ip)
+            if leases and len(leases) > 0:
+                macs = [le["mac"] for le in leases]
+            else:
+                return None
+        elif mac:
+            macs = [mac]
+
+        for dnac in C.DNACS:
+            token = DhcpHook._get_token_from_cat_center(dnac)
+            if not token:
                 continue
 
             if user:
@@ -463,162 +566,50 @@ class DhcpHook(object):
 
                 cheaders = {
                     "accept": "application/json",
-                    "x-auth-token": j["Token"],
+                    "x-auth-token": token,
                     "entity_type": "network_user_id",
                     "entity_value": user,
                 }
                 params = {}
                 client = user
+
+                (j, response) = DhcpHook._get_request_from_cat_center(curl, cheaders, params, client, dnac)
+                if not j:
+                    continue
             else:
                 curl = f"https://{dnac}/dna/intent/api/v1/client-detail"
+                jsons = {}
 
-                cheaders = {"accept": "application/json", "x-auth-token": j["Token"]}
+                cheaders = {"accept": "application/json", "x-auth-token": token}
                 # params = {"macAddress": kwargs["mac"], "timestamp": epoch}
-                params = {"macAddress": mac}
-                client = mac
-                dna_obj["mac"] = mac
+                if ip:
+                    client = ip
+                else:
+                    client = macs[0]
 
-            try:
-                response = requests.request("GET", curl, headers=cheaders, params=params, verify=False, timeout=REST_TIMEOUT)
-                response.raise_for_status()
-            except Exception as e:
-                logging.exception("Failed to find client %s in Catalyst Center %s: %s" % (client, dnac, getattr(e, "message", repr(e))))
-                continue
+                for macaddr in macs:
+                    params = {"macAddress": macaddr}
 
-            j = response.json()
+                    (j, response) = DhcpHook._get_request_from_cat_center(curl, cheaders, params, client, dnac)
+                    if j:
+                        jsons[macaddr] = j
+
+                if len(jsons) == 0:
+                    continue
 
             if user:
-                if len(j) == 0 or "userDetails" not in j[0]:
-                    logging.warning("Got an unknown response from Catalyst Center %s: '%s'" % (dnac, response.text))
+                detail = DhcpHook._process_cat_center_user(j, response, dnac)
+                if not detail:
                     continue
-
-                if len(j[0]["userDetails"].keys()) == 0:
-                    continue
-
-                detail = j[0]["userDetails"]
-
-                # if "hostType" in detail:
-                #     dna_obj["type"] = detail["hostType"]
-
-                # if "userId" in detail:
-                #     dna_obj["user"] = detail["userId"]
-
-                # if "hostMac" in detail:
-                #     dna_obj["mac"] = detail["hostMac"]
-
-                # if "hostOs" in detail and detail["hostOs"]:
-                #     dna_obj["ostype"] = detail["hostOs"]
-                # elif "subType" in detail:
-                #     dna_obj["ostype"] = detail["subType"]
-
-                # if "healthScore" in detail:
-                #     for hscore in detail["healthScore"]:
-                #         if hscore["healthType"] == "OVERALL":
-                #             dna_obj["health"] = hscore["score"]
-                #             if hscore["reason"] != "":
-                #                 dna_obj["reason"] = hscore["reason"]
-                #         elif hscore["healthType"] == "ONBOARDED":
-                #             dna_obj["onboard"] = hscore["score"]
-                #         elif hscore["healthType"] == "CONNECTED":
-                #             dna_obj["connect"] = hscore["score"]
-
-                # if "ssid" in detail:
-                #     dna_obj["ssid"] = detail["ssid"]
-
-                # if "location" in detail:
-                #     dna_obj["location"] = detail["location"]
-
-                # if "clientConnection" in detail:
-                #     dna_obj["ap"] = detail["clientConnection"]
-
-                # if "frequency" in detail:
-                #     dna_obj["band"] = detail["frequency"]
-
-                # return dna_obj
             else:
-                if "detail" not in j:
-                    logging.warning("Got an unknown response from Catalyst Center %s: '%s'" % (dnac, response.text))
-                    continue
+                for macaddr, j in jsons.items():
+                    detail = DhcpHook._process_cat_center_mac(j, dnac)
+                    if detail:
+                        dna_obj["mac"] = macaddr
+                        break
 
-                if "errorCode" in j["detail"] or len(j["detail"].keys()) == 0:
-                    continue
-
-                detail = j["detail"]
-
-                # if "hostType" in detail:
-                #     dna_obj["type"] = detail["hostType"]
-
-                # if "userId" in detail:
-                #     dna_obj["user"] = detail["userId"]
-
-                # if "hostOs" in detail and detail["hostOs"]:
-                #     dna_obj["ostype"] = detail["hostOs"]
-                # elif "subType" in detail:
-                #     dna_obj["ostype"] = detail["subType"]
-
-                # if "healthScore" in detail:
-                #     for hscore in detail["healthScore"]:
-                #         if hscore["healthType"] == "OVERALL":
-                #             dna_obj["health"] = hscore["score"]
-                #             if hscore["reason"] != "":
-                #                 dna_obj["reason"] = hscore["reason"]
-                #         elif hscore["healthType"] == "ONBOARDED":
-                #             dna_obj["onboard"] = hscore["score"]
-                #         elif hscore["healthType"] == "CONNECTED":
-                #             dna_obj["connect"] = hscore["score"]
-
-                # if "ssid" in detail:
-                #     dna_obj["ssid"] = detail["ssid"]
-
-                # if "location" in detail:
-                #     dna_obj["location"] = detail["location"]
-
-                # if "clientConnection" in detail:
-                #     dna_obj["ap"] = detail["clientConnection"]
-
-                # if "connectionInfo" in j and j["connectionInfo"] and "band" in j["connectionInfo"]:
-                #     dna_obj["band"] = j["connectionInfo"]["band"]
-
-                # return dna_obj
-
-            if "hostType" in detail:
-                dna_obj["type"] = detail["hostType"]
-
-            if "userId" in detail:
-                dna_obj["user"] = detail["userId"]
-
-            if "hostMac" in detail:
-                dna_obj["mac"] = detail["hostMac"]
-
-            if "hostOs" in detail and detail["hostOs"]:
-                dna_obj["ostype"] = detail["hostOs"]
-            elif "subType" in detail:
-                dna_obj["ostype"] = detail["subType"]
-
-            if "healthScore" in detail:
-                for hscore in detail["healthScore"]:
-                    if hscore["healthType"] == "OVERALL":
-                        dna_obj["health"] = hscore["score"]
-                        if hscore["reason"] != "":
-                            dna_obj["reason"] = hscore["reason"]
-                    elif hscore["healthType"] == "ONBOARDED":
-                        dna_obj["onboard"] = hscore["score"]
-                    elif hscore["healthType"] == "CONNECTED":
-                        dna_obj["connect"] = hscore["score"]
-
-            if "ssid" in detail:
-                dna_obj["ssid"] = detail["ssid"]
-
-            if "location" in detail:
-                dna_obj["location"] = detail["location"]
-
-            if "clientConnection" in detail:
-                dna_obj["ap"] = detail["clientConnection"]
-
-            if "frequency" in detail:
-                dna_obj["band"] = detail["frequency"]
-
-            return dna_obj
+            if detail:
+                return DhcpHook._build_dna_obj(detail)
 
         return None
 
@@ -641,9 +632,13 @@ def register_webhook(spark: Sparker) -> str:
 
 def handle_message(msg: str, person: Dict[str, str]) -> None:
     """Handle the Webex message using GenAI."""
-    global spark, SPARK_ROOM, available_functions, dhcp_hook, ollama_client, MODEL
+    global spark, SPARK_ROOM, ollama_client, MODEL
 
     final_response = None
+
+    dhcp_hook = DhcpHook(pnb)
+
+    available_functions = [f[1] for f in inspect.getmembers(dhcp_hook, predicate=inspect.ismethod) if not f[0].startswith("_")]
 
     messages = [
         {
@@ -810,11 +805,8 @@ def cleanup() -> None:
 
 spark = Sparker(token=CLEUCreds.SPARK_TOKEN, logit=True)
 pnb = pynetbox.api(C.NETBOX_SERVER, CLEUCreds.NETBOX_API_TOKEN)
-dhcp_hook = DhcpHook(pnb)
 
 ollama_client = Client(host=C.LLAMA_URL, auth=(CLEUCreds.LLAMA_USER, CLEUCreds.LLAMA_PASSWORD))
-
-available_functions = [f[1] for f in inspect.getmembers(dhcp_hook, predicate=inspect.ismethod) if not f[0].startswith("_")]
 
 tid = spark.get_team_id(C.WEBEX_TEAM)
 if not tid:
