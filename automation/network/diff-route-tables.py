@@ -111,7 +111,7 @@ def main():
         routers = json.load(fd)
         fd.close()
     except Exception as e:
-        print("ERROR: Failed to load routers file {}: {}".format(ROUTER_FILE, e))
+        print(f"ERROR: Failed to load routers file {ROUTER_FILE}: {e}")
 
     do_push = False
 
@@ -206,12 +206,8 @@ def main():
             print("ERROR: Cannot push without a branch")
         else:
             os.chdir(args.git_repo)
-            call(f"git pull origin {args.git_branch}", shell=True, stdout=DEVNULL, stderr=DEVNULL, text=True)
-            proc = Popen(
-                shlex.split(f"git push origin {args.git_branch}"),
-                stdout=PIPE,
-                stderr=STDOUT,
-            )
+            call(f"git pull origin {args.git_branch}", shell=True, stdout=DEVNULL, stderr=DEVNULL)
+            proc = Popen(shlex.split(f"git push origin {args.git_branch}"), stdout=PIPE, stderr=STDOUT, text=True)
             out, _ = proc.communicate()
             rc = proc.returncode
             if rc != 0:
