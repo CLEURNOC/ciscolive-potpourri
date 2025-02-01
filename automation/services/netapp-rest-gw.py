@@ -30,9 +30,10 @@ import requests
 import xmltodict
 from gevent.pywsgi import WSGIServer
 from cleu.config import Config as C  # type: ignore
+import CLEUCreds  # type: ignore
 
 PORT = 9999
-WEBHOOK_URL = "https://webexapis.com/v1/webhooks/incoming/Y2lzY29zcGFyazovL3VzL1dFQkhPT0svYTJmNzhkN2MtNDBmYi00YTcyLThjMGMtMmQzNzUyMWYzZDky"
+WEBHOOK_URL = CLEUCreds.NETAPP_WEBHOOK_GW
 
 app = Flask("NetApp Alert Gateway")
 
