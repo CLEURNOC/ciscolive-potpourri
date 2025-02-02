@@ -617,7 +617,7 @@ class DhcpHook(object):
         return None
 
     def get_user_details_from_ise(
-        self, username: Union[str, None], mac: Union[str, None], ip: Union[str, None]
+        self, username: Union[str, None] = None, mac: Union[str, None] = None, ip: Union[str, None] = None
     ) -> Union[Dict[str, str], None]:
         """
         Get session details for a client from ISE based on the client's username, MAC address, or IP address.
