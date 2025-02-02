@@ -327,6 +327,7 @@ class DhcpHook(object):
 
         if mac:
             url = f"{C.DHCP_BASE}/Lease"
+            mac = DhcpHook.normalize_mac(mac)
             params = {"clientMacAddr": mac}
             client = mac
         else:
@@ -554,7 +555,7 @@ class DhcpHook(object):
             else:
                 return None
         elif mac:
-            macs = [mac]
+            macs = [DhcpHook.normalize_mac(mac)]
 
         for dnac in C.DNACS:
             token = DhcpHook._get_token_from_cat_center(dnac)
