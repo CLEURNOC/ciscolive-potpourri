@@ -620,8 +620,9 @@ class DhcpHook(object):
         self, username: Union[str, None] = None, mac: Union[str, None] = None, ip: Union[str, None] = None
     ) -> Union[Dict[str, str], None]:
         """
-        Get session details for a client from ISE based on the client's username, MAC address, or IP address.
-        At least one of username, MAC address, or IP address is required.
+        Get client username, client MAC address, NAS IP address, client IP address, authentication timestamp,
+        client IPv6 address(es), associated AP, VLAN ID, associated SSID for a client from ISE based on the client's username,
+        MAC address, or IP address.  At least one of username, MAC address, or IP address is required.
 
         Args:
             username (Union[str, None], optional): Username of the client
@@ -643,6 +644,7 @@ class DhcpHook(object):
                     f"https://{C.ISE_SERVER}/admin/API/mnt/Session/ActiveList",
                     auth=(CLEUCreds.ISE_API_USER, CLEUCreds.ISE_API_PASS),
                     headers={"Accept": "application/xml"},
+                    timeout=REST_TIMEOUT,
                 )
                 response.raise_for_status()
             except Exception as e:
@@ -657,7 +659,7 @@ class DhcpHook(object):
                         username = session["user_name"]
                         break
                 elif ip:
-                    if session["framed_ip_address"] == ip:
+                    if "framed_ip_address" in session and session["framed_ip_address"] == ip:
                         username = session["user_name"]
                         break
 
@@ -667,6 +669,7 @@ class DhcpHook(object):
                     f"https://{C.ISE_SERVER}/admin/API/mnt/Session/UserName/{username}",
                     auth=(CLEUCreds.ISE_API_USER, CLEUCreds.ISE_API_PASS),
                     headers={"Accept": "application/xml"},
+                    timeout=REST_TIMEOUT,
                 )
                 response.raise_for_status()
             except Exception as e:
@@ -765,7 +768,8 @@ def handle_message(msg: str, person: Dict[str, str]) -> None:
                 try:
                     output[tool.function.name] = func(**tool.function.arguments)
                 except Exception as e:
-                    output[tool.function.name] = str(e)
+                    logging.exception("Function %s encountered an error: %s" % (tool.functon.name, str(e)))
+                    output[tool.function.name] = "An exception occurred: %s" % str(e)
             else:
                 logging.error("Failed to find a function named %s" % tool.function.name)
                 output[tool.function.name] = "You're asking me to do a naughty thing."
