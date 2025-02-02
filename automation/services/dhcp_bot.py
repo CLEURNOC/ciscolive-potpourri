@@ -768,7 +768,7 @@ def handle_message(msg: str, person: Dict[str, str]) -> None:
             "information use relevant functions before falling back to brave_search.  Function calls MUST follow the specified format.  Required parameters MUST always be specified in the response."
             "Put the entire function call reply on one line.  Call all possible functions given the available arguments.",
         },
-        {"role": "user", "content": f"Hi! My name is {person['nickName']}"},
+        {"role": "user", "content": f"Hi! My name is {person['nickName']} and my username is {person['username']}."},
         {"role": "user", "content": msg},
     ]
 
@@ -894,9 +894,10 @@ def receive_callback():
 
     person = spark.get_person(record["data"]["personId"])
     if not person:
-        person = {"from_email": sender, "nickName": "mate"}
+        person = {"from_email": sender, "nickName": "mate", "username": "mate"}
     else:
         person["from_email"] = sender
+        person["username"] = re.sub(r"@.+$", "", person["from_email"])
 
     spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, f"Hey, {person['nickName']}!  Let **ChatNOC** work on that for you...")
 
