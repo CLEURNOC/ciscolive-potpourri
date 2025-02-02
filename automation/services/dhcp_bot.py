@@ -391,17 +391,36 @@ class DhcpHook(object):
 
         return leases
 
-    def get_object_info_from_netbox(self, ip: str) -> Union[Dict[str, str], None]:
+    def get_object_info_from_netbox(self, ip: Union[str, None] = None, name: Union[str, None] = None) -> List[Union[Dict[str, str], None]]:
         """
-        Obtain type and name of an object from NetBox.
+        Get a list of types, names, and IPs of objects from NetBox given an IP address or a name.
 
         Args:
-          ip (str): IP address of object to lookup in NetBox
+          ip (Union[str, None], optional): IP address of object to lookup in NetBox
+          name (Union[str, None], optional): Object name (either device or VM)
 
         Returns:
-          Union[Dict[str, str], None]: A dict with keys for "name" and "type" of the object or None if the object is not found in NetBox
+          Union[List[Dict[str, str]], None]: A list of dicts with keys for "name", "type", and "ip"
+          of the object or None if the object is not found in NetBox
         """
-        if not ip:
+        if not ip and not name:
+            raise ValueError("At least one of ip or name is required")
+
+        if name:
+            res = []
+            devs = list(self.pnb.dcim.devices.filter(name__ic=name))
+            if len(devs) > 0:
+                for dev in devs:
+                    res.append({"name": dev.name, "type": "device", "ip": dev.primary_ip4})
+            else:
+                vms = list(self.pnb.virtualization.virtual_machines.filter(name__ic=name))
+                if len(vms) > 0:
+                    for vm in vms:
+                        res.append({"name": vm.name, "type": "VM", "ip": vm.primary_ip4})
+
+            if len(res) > 0:
+                return res
+
             return None
 
         for prefix in ("24", "31", "32", "16", "64", "128"):
@@ -412,9 +431,9 @@ class DhcpHook(object):
         if ipa:
             ipa.full_details()
             if ipa.assigned_object_type == "virtualization.vminterface":
-                return {"type": "VM", "name": str(ipa.assigned_object.virtual_machine)}
+                return [{"type": "VM", "name": str(ipa.assigned_object.virtual_machine), "ip": str(ipa)}]
             elif ipa.assigned_object_type == "dcim.interface":
-                return {"type": "device", "name": str(ipa.assigned_object.device)}
+                return [{"type": "device", "name": str(ipa.assigned_object.device), "ip": str(ipa)}]
 
         return None
 
@@ -747,7 +766,7 @@ def handle_message(msg: str, person: Dict[str, str]) -> None:
             "If you choose to call a function ONLY respond in the JSON format:"
             '{"name": function name, "parameters": dictionary of argument names and their values}. Do not use variables.  If looking for real time'
             "information use relevant functions before falling back to brave_search.  Function calls MUST follow the specified format.  Required parameters MUST always be specified in the response."
-            "Put the entire function call reply on one line.  Call all functions possible with the available arguments.",
+            "Put the entire function call reply on one line.  Call all possible functions given the available arguments.",
         },
         {"role": "user", "content": f"Hi! My name is {person['nickName']}"},
         {"role": "user", "content": msg},
