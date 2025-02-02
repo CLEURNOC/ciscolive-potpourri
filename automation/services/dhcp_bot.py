@@ -308,7 +308,8 @@ class DhcpHook(object):
     def get_dhcp_lease_info_from_cpnr(self, mac: Union[str, None] = None, ip: Union[str, None] = None) -> Union[List[Dict[str, str]], None]:
         """
         Get a list of DHCP leases with hostname of the client, MAC address of the client, scope for the lease, state of the lease,
-        DHCP relay information (switch, VLAN, and port), and whether the lease is reserved for a given MAC address from CPNR.
+        DHCP relay information (switch, VLAN, and port), and whether the lease is reserved for a given MAC address
+        or IP address from CPNR.
 
         Args:
           mac (Union[str, None], optional): MAC address of the client (at least one of mac or ip is required)
@@ -518,12 +519,12 @@ class DhcpHook(object):
     ) -> Union[Dict[str, str], None]:
         """
         Obtain client connect and onboard health, location, OS type, associated AP and SSID, and type from Catalyst Center based on the client's username or MAC address.
-        At least one of the client's username or MAC address is required.
+        At least one of the client's username, MAC address, or IP address is required.
 
         Args:
-            user (Union[str, None]): Username of the client (at least user, mac or ip is required)
-            mac (Union[str, None]): MAC address of the client (at least user, mac or ip is required)
-            ip (Union[str, None]): IP address of the client (at least user, mac or ip is required)
+            user (Union[str, None], optional): Username of the client (at least user, mac or ip is required)
+            mac (Union[str, None], optional): MAC address of the client (at least user, mac or ip is required)
+            ip (Union[str, None], optional): IP address of the client (at least user, mac or ip is required)
 
         Returns:
             Union[Dict[str,str], None]: A dict with client "ostype" (OS type), "type", "location", "ap" (associated AP), "ssid" (associated SSID), "health" (health score), "onboard" (onboarding score),
@@ -633,7 +634,7 @@ def register_webhook(spark: Sparker) -> str:
 
 def handle_message(msg: str, person: Dict[str, str]) -> None:
     """Handle the Webex message using GenAI."""
-    global spark, SPARK_ROOM, ollama_client, MODEL
+    global spark, SPARK_ROOM, ollama_client, MODEL, pnb
 
     final_response = None
 
@@ -651,7 +652,7 @@ def handle_message(msg: str, person: Dict[str, str]) -> None:
             "If you choose to call a function ONLY respond in the JSON format:"
             '{"name": function name, "parameters": dictionary of argument names and their values}. Do not use variables.  If looking for real time'
             "information use relevant functions before falling back to brave_search.  Function calls MUST follow the specified format.  Required parameters MUST always be specified in the response."
-            "Do NOT call a function if its arguments are not available from your analysis of the query.  Put the entire function call reply on one line.",
+            "Put the entire function call reply on one line.  Call all functions possible with the available arguments.",
         },
         {"role": "user", "content": f"Hi! My name is {person['nickName']}"},
         {"role": "user", "content": msg},
