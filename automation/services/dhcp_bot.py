@@ -34,6 +34,7 @@ import re
 from hashlib import sha1
 import hmac
 import requests
+import xmltodict
 from collections import OrderedDict
 from requests.packages.urllib3.exceptions import InsecureRequestWarning  # type: ignore
 
@@ -612,6 +613,97 @@ class DhcpHook(object):
 
             if detail:
                 return DhcpHook._build_dna_obj(detail)
+
+        return None
+
+    def get_user_details_from_ise(
+        self, username: Union[str, None], mac: Union[str, None], ip: Union[str, None]
+    ) -> Union[Dict[str, str], None]:
+        """
+        Get session details for a client from ISE based on the client's username, MAC address, or IP address.
+        At least one of username, MAC address, or IP address is required.
+
+        Args:
+            username (Union[str, None], optional): Username of the client
+            mac (Union[str, None], optional): MAC address of the client
+            ip (Union[str, None], optional): IP address of the client
+
+        Returns:
+            Union[Dict[str,str], None]: A dict with parameters client username, client MAC address, NAS IP address,
+            client IP address, authentication timestamp, client IPv6 address(es), associated AP, VLAN ID, associated SSID
+        """
+        global REST_TIMEOUT
+
+        if not username and not mac and not ip:
+            raise ValueError("One of username, mac, or ip is required")
+
+        if not username:
+            try:
+                response = requests.get(
+                    f"https://{C.ISE_SERVER}/admin/API/mnt/Session/ActiveList",
+                    auth=(CLEUCreds.ISE_API_USER, CLEUCreds.ISE_API_PASS),
+                    headers={"Accept": "application/xml"},
+                )
+                response.raise_for_status()
+            except Exception as e:
+                logging.exception("Unable to get client details from ISE: %s" % getattr(e, "message", repr(e)))
+                return None
+
+            active_list = xmltodict.parse(response.text)
+            for session in active_list["activeList"]["activeSession"]:
+                if mac:
+                    mac = DhcpHook.normalize_mac(mac)
+                    if mac.lower() == session["calling_station_id"].lower():
+                        username = session["user_name"]
+                        break
+                elif ip:
+                    if session["framed_ip_address"] == ip:
+                        username = session["user_name"]
+                        break
+
+        if username:
+            try:
+                response = requests.get(
+                    f"https://{C.ISE_SERVER}//Session/UserName/{username}",
+                    auth=(CLEUCreds.ISE_API_USER, CLEUCreds.ISE_API_PASS),
+                    headers={"Accept": "application/xml"},
+                )
+                response.raise_for_status()
+            except Exception as e:
+                logging.exception("Unable to get client details from ISE: %s" % getattr(e, "message", repr(e)))
+                return None
+
+            session_details = xmltodict.parse(response.text)["sessionParameters"]
+
+            res = {
+                "username": username,
+                "client_ipv4": session_details["framed_ip_address"],
+                "nas_ip_address": session_details["nas_ip_address"],
+                "client_mac": session_details["calling_station_id"],
+            }
+
+            if "framed_ipv6_address" in session_details and "ipv6_address" in session_details["framed_ipv6_address"]:
+                res["client_ipv6"] = session_details["framed_ipv6_address"]["ipv6_address"]
+            else:
+                res["client_ipv6"] = []
+
+            res["authentication_timestamp"] = session_details["auth_acs_timestamp"]
+
+            if "other_attr_string" in session_details:
+                ap = re.search(r"Called-Station-ID=([a-fA-F0-9-]+)", session_details["other_attr_string"])
+                ssid = re.search(r"cisco-wlan-ssid=([^,]+)", session_details["other_attr_string"])
+                vlan = re.search(r"vlan-id=([^,]+)", session_details["other_attr_string"])
+
+                if ap:
+                    res["associated_access_point"] = DhcpHook.normalize_mac(ap.group(1))
+
+                if ssid:
+                    res["associated_ssid"] = ssid.group(1)
+
+                if vlan:
+                    res["connected_vlan"] = vlan.group(1)
+
+            return res
 
         return None
 
