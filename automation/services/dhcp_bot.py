@@ -787,7 +787,7 @@ def handle_message(msg: str, person: Dict[str, str]) -> None:
                 try:
                     output[tool.function.name] = func(**tool.function.arguments)
                 except Exception as e:
-                    logging.exception("Function %s encountered an error: %s" % (tool.functon.name, str(e)))
+                    logging.exception("Function %s encountered an error: %s" % (tool.function.name, str(e)))
                     output[tool.function.name] = "An exception occurred: %s" % str(e)
             else:
                 logging.error("Failed to find a function named %s" % tool.function.name)
