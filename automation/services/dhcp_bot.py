@@ -516,14 +516,14 @@ class DhcpHook(object):
         return dna_obj
 
     def get_client_details_from_cat_center(
-        self, user: Union[str, None] = None, mac: Union[str, None] = None, ip: Union[str, None] = None
+        self, username: Union[str, None] = None, mac: Union[str, None] = None, ip: Union[str, None] = None
     ) -> Union[Dict[str, str], None]:
         """
-        Obtain client connect and onboard health, location, OS type, associated AP and SSID, and type from Catalyst Center based on the client's username or MAC address.
+        Get client connect and onboard health, location, OS type, associated AP and SSID, and type from Catalyst Center based on the client's username or MAC address.
         At least one of the client's username, MAC address, or IP address is required.
 
         Args:
-            user (Union[str, None], optional): Username of the client (at least user, mac or ip is required)
+            username (Union[str, None], optional): Username of the client (at least user, mac or ip is required)
             mac (Union[str, None], optional): MAC address of the client (at least user, mac or ip is required)
             ip (Union[str, None], optional): IP address of the client (at least user, mac or ip is required)
 
@@ -531,8 +531,8 @@ class DhcpHook(object):
             Union[Dict[str,str], None]: A dict with client "ostype" (OS type), "type", "location", "ap" (associated AP), "ssid" (associated SSID), "health" (health score), "onboard" (onboarding score),
                                 "connect" (connection score), "reason" (error reason if an error occurred), "band" (WiFi band) as keys or None if client was not found in Catalyst Center
         """
-        if not user and not mac and not ip:
-            raise ValueError("At least one of user, mac, or ip must be specified")
+        if not username and not mac and not ip:
+            raise ValueError("At least one of username, mac, or ip must be specified")
 
         dna_obj = {
             "ostype": None,
@@ -550,7 +550,7 @@ class DhcpHook(object):
 
         macs = []
 
-        if ip and not mac and not user:
+        if ip and not mac and not username:
             leases = self.get_dhcp_lease_info_from_cpnr(ip=ip)
             if leases and len(leases) > 0:
                 macs = [le["mac"] for le in leases]
@@ -564,17 +564,17 @@ class DhcpHook(object):
             if not token:
                 continue
 
-            if user:
+            if username:
                 curl = f"https://{dnac}/dna/intent/api/v1/client-enrichment-details"
 
                 cheaders = {
                     "accept": "application/json",
                     "x-auth-token": token,
                     "entity_type": "network_user_id",
-                    "entity_value": user,
+                    "entity_value": username,
                 }
                 params = {}
-                client = user
+                client = username
 
                 (j, response) = DhcpHook._get_request_from_cat_center(curl, cheaders, params, client, dnac)
                 if not j:
@@ -600,7 +600,7 @@ class DhcpHook(object):
                 if len(jsons) == 0:
                     continue
 
-            if user:
+            if username:
                 detail = DhcpHook._process_cat_center_user(j, response, dnac)
                 if not detail:
                     continue
@@ -630,7 +630,7 @@ class DhcpHook(object):
             ip (Union[str, None], optional): IP address of the client
 
         Returns:
-            Union[Dict[str,str], None]: A dict with parameters client username, client MAC address, NAS IP address,
+            Union[Dict[str,str], None]: A dict with parameters client username, client MAC address, network access server IP,
             client IP address, authentication timestamp, client IPv6 address(es), associated AP, VLAN ID, associated SSID
         """
         global REST_TIMEOUT
@@ -681,7 +681,7 @@ class DhcpHook(object):
             res = {
                 "username": username,
                 "client_ipv4": session_details["framed_ip_address"],
-                "nas_ip_address": session_details["nas_ip_address"],
+                "network_access_server": session_details["nas_ip_address"],
                 "client_mac": session_details["calling_station_id"],
             }
 
