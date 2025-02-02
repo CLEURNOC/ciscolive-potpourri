@@ -791,7 +791,9 @@ def handle_message(msg: str, person: Dict[str, str]) -> None:
                     output[tool.function.name] = "An exception occurred: %s" % str(e)
             else:
                 logging.error("Failed to find a function named %s" % tool.function.name)
-                output[tool.function.name] = "You're asking me to do a naughty thing."
+                output[tool.function.name] = (
+                    "You're asking me to do a naughty thing.  I don't have a function called %s." % tool.function.name
+                )
 
         messages.append(response.message)
         for fn, tool_output in output.items():
