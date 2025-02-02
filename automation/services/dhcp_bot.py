@@ -664,7 +664,7 @@ class DhcpHook(object):
         if username:
             try:
                 response = requests.get(
-                    f"https://{C.ISE_SERVER}//Session/UserName/{username}",
+                    f"https://{C.ISE_SERVER}/admin/API/mnt/Session/UserName/{username}",
                     auth=(CLEUCreds.ISE_API_USER, CLEUCreds.ISE_API_PASS),
                     headers={"Accept": "application/xml"},
                 )
