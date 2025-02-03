@@ -14,10 +14,10 @@ def print_client_mac(pkt):
 
     print(f"Got packet from {pkt.dhcp.hw.mac_addr}, {pkt.dhcp.option.type}")
 
-    is_v6mostly = 0
+    is_v6mostly = False
 
     if "108" in pkt.dhcp.option.type:
-        is_v6mostly = 1
+        is_v6mostly = True
 
     json_body = [
         {
