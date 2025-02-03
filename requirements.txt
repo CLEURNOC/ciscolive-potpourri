@@ -51,3 +51,5 @@ webargs
 ollama
 gunicorn
 future
+pyshark
+influxdb
