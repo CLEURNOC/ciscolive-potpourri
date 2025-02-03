@@ -23,8 +23,7 @@ def print_client_mac(pkt):
         {
             "measurement": "dhcp_client",
             "time": datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
-            "tags": {"client_mac": pkt.dhcp.hw.mac_addr},
-            "fields": {"supports_v6mostly": is_v6mostly},
+            "fields": {"supports_v6mostly": is_v6mostly, "client_mac": pkt.dhcp.hw.mac_addr},
         }
     ]
     client.write_points(json_body)
