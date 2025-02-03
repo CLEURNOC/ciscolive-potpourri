@@ -207,9 +207,16 @@ class DhcpHook(object):
         if not ip:
             return {"success": False, "error": "Both ip and mac must be specified"}
 
-        mac = DhcpHook.check_for_reservation(ip=ip)
-        if not mac:
+        macs = self.get_dhcp_lease_info_from_cpnr(ip=ip)
+        if not macs:
             return {"success": False, "error": "IP %s is not currently leased" % ip}
+
+        if len(macs) > 1:
+            for mac in macs:
+                if mac["state"].lower() == "leased":
+                    break
+        else:
+            mac = macs[0]
 
         mac_addr = DhcpHook.normalize_mac(mac["mac"])
 
