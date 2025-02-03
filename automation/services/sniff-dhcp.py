@@ -12,13 +12,19 @@ import CLEUCreds  # type: ignore
 def print_client_mac(pkt):
     global client
 
-    print(f"Got packet from {pkt.dhcp.hw_mac_addr}")
+    print(f"Got packet from {pkt.dhcp.hw.mac_addr}, {pkt.dhcp.option.type}")
+
+    is_v6mostly = 0
+
+    if "108" in pkt.dhcp.option.type:
+        is_v6mostly = 1
 
     json_body = [
         {
             "measurement": "v6mostly_client",
             "time": datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
-            "fields": {"client_mac": pkt.dhcp.hw_mac_addr},
+            "tags": {"client_mac": pkt.dhcp.hw.mac_addr},
+            "fields": {"supports_v6mostly": is_v6mostly},
         }
     ]
     client.write_points(json_body)
@@ -27,7 +33,7 @@ def print_client_mac(pkt):
 def main():
     p = Popen(split(f"ssh root@{C.DHCP_SERVER} 'tcpdump -U -i ens160 -w - udp port 67'"), stdout=PIPE, stderr=DEVNULL)
 
-    capture = pyshark.PipeCapture(p.stdout, display_filter="dhcp.option.request_list_item==108 && dhcp.option.dhcp==1")
+    capture = pyshark.PipeCapture(p.stdout, display_filter="dhcp.option.request_list_item==108 && dhcp.option.dhcp==1", use_json=True)
     capture.apply_on_packets(print_client_mac, timeout=1000)
 
     p.wait()
