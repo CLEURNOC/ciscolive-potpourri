@@ -12,6 +12,8 @@ import CLEUCreds  # type: ignore
 def print_client_mac(pkt):
     global client
 
+    print(f"Got packet from {pkt.dhcp.hw_mac_addr}")
+
     json_body = [
         {
             "measurement": "v6mostly_client",
