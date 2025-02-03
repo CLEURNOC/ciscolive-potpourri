@@ -33,7 +33,7 @@ def print_client_mac(pkt):
 def main():
     p = Popen(split(f"ssh root@{C.DHCP_SERVER} 'tcpdump -U -i ens160 -w - udp port 67'"), stdout=PIPE, stderr=DEVNULL)
 
-    capture = pyshark.PipeCapture(p.stdout, display_filter="dhcp.option.dhcp==1", use_json=True)
+    capture = pyshark.PipeCapture(p.stdout, display_filter="dhcp.type==1", use_json=True)
     capture.apply_on_packets(print_client_mac)
 
     p.wait()
