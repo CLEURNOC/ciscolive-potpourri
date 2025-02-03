@@ -17,7 +17,7 @@ def print_client_mac(pkt):
     is_v6mostly = False
 
     if "55" in pkt.dhcp.option.type:
-        param_list = pkt.dhcp.option.type.index("55")
+        param_list = pkt.dhcp.option.type_tree[pkt.dhcp.option.type.index("55")]
         print(f"Param list is {param_list.request_list_item}")
         if "108" in param_list.request_list_item:
             is_v6mostly = True
