@@ -695,7 +695,7 @@ class DhcpHook(object):
             "username": username,
             "client_ipv4": session_details["framed_ip_address"],
             "network_access_server": session_details["nas_ip_address"],
-            "client_mac": session_details["calling_station_id"],
+            "client_mac": DhcpHook.normalize_mac(session_details["calling_station_id"]),
         }
 
         if "framed_ipv6_address" in session_details and "ipv6_address" in session_details["framed_ipv6_address"]:
