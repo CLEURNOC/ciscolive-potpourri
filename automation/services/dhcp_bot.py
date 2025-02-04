@@ -133,7 +133,10 @@ class DhcpHook(object):
                 port = str(first_part)
                 if first_part != 0:
                     port = str(first_part) + "/0"
-                res["port"] = DEFAULT_INT_TYPE + port + "/" + str(int(octets[5], 16))
+                if first_part > 1:
+                    res["port"] = f"Port-channel{str(int(octets[5], 16))}"
+                else:
+                    res["port"] = DEFAULT_INT_TYPE + port + "/" + str(int(octets[5], 16))
 
         if "relayAgentRemoteId" in outd:
             octets = outd["relayAgentRemoteId"].split(":")
