@@ -5,21 +5,12 @@ import json
 import os
 import logging
 from sparker import Sparker, MessageType  # type: ignore
-from typing import Tuple, Dict
+from typing import Dict
 import re
 from hashlib import sha1
 import hmac
-import base64
-from langchain_community.document_loaders import UnstructuredPDFLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.embeddings import OllamaEmbeddings
-from langchain_community.vectorstores.chroma import Chroma
-from langchain_community.chat_models import ChatOllama
-from langchain.prompts import ChatPromptTemplate, PromptTemplate
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnablePassthrough
-from langchain.retrievers.multi_query import MultiQueryRetriever
-
+from subprocess import run
+from shlex import split
 import traceback
 import CLEUCreds  # type: ignore
 from cleu.config import Config as C  # type: ignore
@@ -51,70 +42,14 @@ logging.basicConfig(
 logging.getLogger().setLevel(log_level)
 
 
-def get_vector_db() -> Chroma:
-    llama_auth = base64.b64encode(f"{CLEUCreds.LLAMA_USER}:{CLEUCreds.LLAMA_PASSWORD}")
-    embedding = OllamaEmbeddings(
-        model=EMBEDDING_MODEL, show_progress=True, base_url=C.LLAMA_URL, headers={"Authorization": f"Basic {llama_auth}"}
-    )
-
-    db = Chroma(collection_name=COLLECTION_NAME, persist_directory=CHROMA_PATH, embedding_function=embedding)
-
-    return db
-
-
-def load_and_split_data(file: str) -> list:
-    """Load the PDF and split it."""
-    loader = UnstructuredPDFLoader(file_path=file)
-    data = loader.load()
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=7500, chunk_overlap=100)
-    chunks = text_splitter.split_documents(data)
-
-    return chunks
-
-
-def embed(file: str) -> None:
-    """Load and split the file, and then add the chunks to the vector DB."""
-    chunks = load_and_split_data(file)
-    db = get_vector_db()
-    db.add_documents(chunks)
-    db.persist()
-
-
-def get_prompt() -> Tuple[PromptTemplate, PromptTemplate]:
-    """Get the prompts for the AI."""
-    QUERY_PROMPT = PromptTemplate(
-        input_variables=["question"],
-        template="""You are an AI language model assistant versed in the CiscoLive Know Before You Go. Your task is to generate five
-        different versions of the given user question to retrieve relevant documents from
-        a vector database. By generating multiple perspectives on the user question, your
-        goal is to help the user overcome some of the limitations of the distance-based
-        similarity search. Provide these alternative questions separated by newlines.
-        Original question: {question}""",
-    )
-
-    template = """Answer the question based ONLY on the following context:
-    {context}
-    Question: {question}
-    """
-
-    prompt = ChatPromptTemplate.from_template(template)
-
-    return (QUERY_PROMPT, prompt)
-
-
 def handle_message(msg: str, person: Dict[str, str]) -> None:
-    llm = ChatOllama(base_url=C.LLAMA_URL, auth=(CLEUCreds.LLAMA_USER, CLEUCreds.LLAMA_PASSWORD), model=MODEL)
-    db = get_vector_db()
-
-    QUERY_PROMPT, prompt = get_prompt()
-
-    retriever = MultiQueryRetriever.from_llm(db.as_retriever(), llm, prompt=QUERY_PROMPT)
-
-    chain = {"context": retriever, "question": RunnablePassthrough()} | prompt | llm | StrOutputParser()
-
-    response = chain.invoke(input)
-
-    spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, response)
+    res = run(split(f"ssh dc1-ollama-node6.ciscolive.network ./kbyg_bot.sh '{msg}'"), text=True, capture_output=True)
+    if res.returncode != 0:
+        spark.post_to_spark(
+            C.WEBEX_TEAM, SPARK_ROOM, "Sorry, %s.  I couldn't find anything regarding your question 🥺" % person["nickName"]
+        )
+    else:
+        spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, res.stdout.strip())
 
 
 @app.route("/chat", methods=["POST"])
@@ -249,8 +184,6 @@ rid = spark.get_room_id(tid, SPARK_ROOM)
 if not rid:
     logging.error("Failed to get Spark Room ID")
     exit(1)
-
-embed(KBYG_FILE)
 
 try:
     webhook_id = register_webhook(spark)
