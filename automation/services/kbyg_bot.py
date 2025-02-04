@@ -117,7 +117,7 @@ def handle_message(msg: str, person: Dict[str, str]) -> None:
     spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, response)
 
 
-@app.route("/chat", methods=["POST"])
+@app.route("/kbyg", methods=["POST"])
 def receive_callback():
     global rid, spark, SPARK_ROOM, ME
     """Receive a callback from the Webex service."""
