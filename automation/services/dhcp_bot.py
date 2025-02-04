@@ -643,7 +643,7 @@ class DhcpHook(object):
                         break
 
             if detail:
-                return DhcpHook._build_dna_obj(detail)
+                return DhcpHook._build_dna_obj(dna_obj, detail)
 
         return None
 
@@ -669,77 +669,57 @@ class DhcpHook(object):
         if not username and not mac and not ip:
             raise ValueError("One of username, mac, or ip is required")
 
-        if not username:
-            try:
-                response = requests.get(
-                    f"https://{C.ISE_SERVER}/admin/API/mnt/Session/ActiveList",
-                    auth=(CLEUCreds.ISE_API_USER, CLEUCreds.ISE_API_PASS),
-                    headers={"Accept": "application/xml"},
-                    timeout=REST_TIMEOUT,
-                )
-                response.raise_for_status()
-            except Exception as e:
-                logging.exception("Unable to get client details from ISE: %s" % getattr(e, "message", repr(e)))
-                return None
+        if mac:
+            mac = DhcpHook.normalize_mac(mac).upper()
+            url = f"https://{C.ISE_SERVER}/admin/API/mnt/Session/MACAddress/{mac}"
+        elif ip:
+            url = f"https://{C.ISE_SERVER}/admin/API/mnt/Session/EndPointIPAddress/{ip}"
+        else:
+            url = f"https://{C.ISE_SERVER}/admin/API/mnt/Session/UserName/{username}"
 
-            active_list = xmltodict.parse(response.text)
-            for session in active_list["activeList"]["activeSession"]:
-                if mac:
-                    mac = DhcpHook.normalize_mac(mac)
-                    if mac.lower() == session["calling_station_id"].lower():
-                        username = session["user_name"]
-                        break
-                elif ip:
-                    if "framed_ip_address" in session and session["framed_ip_address"] == ip:
-                        username = session["user_name"]
-                        break
+        try:
+            response = requests.get(
+                url,
+                auth=(CLEUCreds.ISE_API_USER, CLEUCreds.ISE_API_PASS),
+                headers={"Accept": "application/xml"},
+                timeout=REST_TIMEOUT,
+            )
+            response.raise_for_status()
+        except Exception as e:
+            logging.exception("Unable to get client details from ISE: %s" % getattr(e, "message", repr(e)))
+            return None
 
-        if username:
-            try:
-                response = requests.get(
-                    f"https://{C.ISE_SERVER}/admin/API/mnt/Session/UserName/{username}",
-                    auth=(CLEUCreds.ISE_API_USER, CLEUCreds.ISE_API_PASS),
-                    headers={"Accept": "application/xml"},
-                    timeout=REST_TIMEOUT,
-                )
-                response.raise_for_status()
-            except Exception as e:
-                logging.exception("Unable to get client details from ISE: %s" % getattr(e, "message", repr(e)))
-                return None
+        session_details = xmltodict.parse(response.text)["sessionParameters"]
 
-            session_details = xmltodict.parse(response.text)["sessionParameters"]
+        res = {
+            "username": username,
+            "client_ipv4": session_details["framed_ip_address"],
+            "network_access_server": session_details["nas_ip_address"],
+            "client_mac": session_details["calling_station_id"],
+        }
 
-            res = {
-                "username": username,
-                "client_ipv4": session_details["framed_ip_address"],
-                "network_access_server": session_details["nas_ip_address"],
-                "client_mac": session_details["calling_station_id"],
-            }
+        if "framed_ipv6_address" in session_details and "ipv6_address" in session_details["framed_ipv6_address"]:
+            res["client_ipv6"] = session_details["framed_ipv6_address"]["ipv6_address"]
+        else:
+            res["client_ipv6"] = []
 
-            if "framed_ipv6_address" in session_details and "ipv6_address" in session_details["framed_ipv6_address"]:
-                res["client_ipv6"] = session_details["framed_ipv6_address"]["ipv6_address"]
-            else:
-                res["client_ipv6"] = []
+        res["authentication_timestamp"] = session_details["auth_acs_timestamp"]
 
-            res["authentication_timestamp"] = session_details["auth_acs_timestamp"]
+        if "other_attr_string" in session_details:
+            ap = re.search(r"Called-Station-ID=([a-fA-F0-9-]+)", session_details["other_attr_string"])
+            ssid = re.search(r"cisco-wlan-ssid=([^,]+)", session_details["other_attr_string"])
+            vlan = re.search(r"vlan-id=([^,]+)", session_details["other_attr_string"])
 
-            if "other_attr_string" in session_details:
-                ap = re.search(r"Called-Station-ID=([a-fA-F0-9-]+)", session_details["other_attr_string"])
-                ssid = re.search(r"cisco-wlan-ssid=([^,]+)", session_details["other_attr_string"])
-                vlan = re.search(r"vlan-id=([^,]+)", session_details["other_attr_string"])
+            if ap:
+                res["associated_access_point"] = DhcpHook.normalize_mac(ap.group(1))
 
-                if ap:
-                    res["associated_access_point"] = DhcpHook.normalize_mac(ap.group(1))
+            if ssid:
+                res["associated_ssid"] = ssid.group(1)
 
-                if ssid:
-                    res["associated_ssid"] = ssid.group(1)
+            if vlan:
+                res["connected_vlan"] = vlan.group(1)
 
-                if vlan:
-                    res["connected_vlan"] = vlan.group(1)
-
-            return res
-
-        return None
+        return res
 
 
 def register_webhook(spark: Sparker) -> str:
