@@ -25,7 +25,7 @@ import CLEUCreds  # type: ignore
 from cleu.config import Config as C  # type: ignore
 
 SPARK_ROOM = "KBYG Queries"
-CALLBACK_URL = "https://cleur-dhcp-hook.ciscolive.network/kbyg"
+CALLBACK_URL = "https://cleur-kbyg-hook.ciscolive.network/chat"
 BOT_NAME = "KBYG Bot"
 ME = "livenocbot@sparkbot.io"
 
@@ -117,7 +117,7 @@ def handle_message(msg: str, person: Dict[str, str]) -> None:
     spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, response)
 
 
-@app.route("/kbyg", methods=["POST"])
+@app.route("/chat", methods=["POST"])
 def receive_callback():
     global rid, spark, SPARK_ROOM, ME
     """Receive a callback from the Webex service."""
