@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 from typing import Tuple
-import base64
 import sys
 from langchain_community.document_loaders import UnstructuredPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -11,9 +10,6 @@ from langchain.prompts import ChatPromptTemplate, PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 from langchain.retrievers.multi_query import MultiQueryRetriever
-
-import CLEUCreds  # type: ignore
-from cleu.config import Config as C  # type: ignore
 
 COLLECTION_NAME = "kbyg-rag"
 CHROMA_PATH = "/home/jclarke/kbyg-chroma"
