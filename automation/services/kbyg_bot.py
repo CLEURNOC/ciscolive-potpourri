@@ -43,13 +43,13 @@ logging.getLogger().setLevel(log_level)
 
 
 def handle_message(msg: str, person: Dict[str, str]) -> None:
-    res = run(split(f"ssh -t dc1-ollama-node-6.ciscolive.network ./kbyg.sh '{msg}'"), text=True, capture_output=True)
+    res = run(split(f"ssh -t dc1-ollama-node-6.ciscolive.network ./kbyg.sh '{msg}'"), capture_output=True)
     if res.returncode != 0:
         spark.post_to_spark(
             C.WEBEX_TEAM, SPARK_ROOM, "Sorry, %s.  I couldn't find anything regarding your question 🥺" % person["nickName"]
         )
     else:
-        spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, res.stdout.strip())
+        spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, res.stdout.decode("utf-8").strip())
 
 
 @app.route("/chat", methods=["POST"])
