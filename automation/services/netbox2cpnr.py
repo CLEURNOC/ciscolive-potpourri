@@ -487,7 +487,8 @@ def check_cnames(
                     if rr["rrType"] == "CNAME" and rr["rdata"] == f"{dns_name}.{primary_domain}":
                         # The existing CNAME record points to the correct A record, so we don't need a change.
                         found_match = True
-                        break
+                        # Allfor for multiple CNAME targets.
+                        # break
 
                 if not found_match:
                     # CNAME exists but was not consistent, so remove the old one and add a new one.
