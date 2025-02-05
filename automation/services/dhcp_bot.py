@@ -695,14 +695,18 @@ class DhcpHook(object):
         session_details = xmltodict.parse(response.text)["sessionParameters"]
 
         res = {
-            "username": username,
             "client_ipv4": session_details["framed_ip_address"],
             "network_access_server": session_details["nas_ip_address"],
             "client_mac": DhcpHook.normalize_mac(session_details["calling_station_id"]),
         }
 
+        if username:
+            res["username"] = username
+        else:
+            res["username"] = session_details["user_name"]
+
         if "framed_ipv6_address" in session_details and "ipv6_address" in session_details["framed_ipv6_address"]:
-            res["client_ipv6"] = session_details["framed_ipv6_address"]["ipv6_address"]
+            res["client_ipv6"] = [addr for addr in session_details["framed_ipv6_address"]["ipv6_address"] if addr]
         else:
             res["client_ipv6"] = []
 
