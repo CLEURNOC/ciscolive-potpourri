@@ -545,7 +545,7 @@ class DhcpHook(object):
             dna_obj["ap"] = detail["clientConnection"]
 
         if "frequency" in detail:
-            dna_obj["band"] = detail["frequency"]
+            dna_obj["band"] = detail["frequency"] + " GHz"
 
         return dna_obj
 
