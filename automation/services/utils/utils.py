@@ -116,10 +116,10 @@ def restart_dns_servers(edns: ElementalDns, cdnses: list) -> None:
     logger.info(f"🏁 Reloaded server {edns.base_url}")
 
     # Restart each applicable CDNS server.
-    for cdns in cdnses:
-        ecdns = ElementalCdns(url=f"https://{cdns}:8443/")
-        ecdns.reload_server()
-        logger.info(f"🏁 Reloaded CDNS server {ecdns.base_url}")
+    # for cdns in cdnses:
+    #     ecdns = ElementalCdns(url=f"https://{cdns}:8443/")
+    #     ecdns.reload_server()
+    #     logger.info(f"🏁 Reloaded CDNS server {ecdns.base_url}")
 
 
 def get_reverse_zone(ip: str, prefix_size: int = 48, rzone_dict: dict[str, str] | None = None) -> str:
