@@ -79,6 +79,11 @@ if __name__ == "__main__":
                 except Exception as e:
                     sys.stderr.write("Error setting password policy for user {}: {}".format(m.group(1), e))
                     traceback.print_exc()
+                try:
+                    new_user.set_user_account_control_setting("PASSWD_NOTREQD", False)
+                except Exception as e:
+                    sys.stderr.write("Error setting user account settings {}: {}".format(m.group(1), e))
+                    traceback.print_exc()
                 def_group = adgroup.ADGroup.from_cn(DEFAULT_GROUP)
                 def_group.add_members([new_user])
                 print("Added user {}".format(m.group(1)))
