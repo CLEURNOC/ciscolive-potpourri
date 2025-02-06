@@ -55,11 +55,14 @@ excluded_devices = [r"^VHS-"]
 additional_devices = []
 
 
-def check_prev(dev_dic, prev_devs, pstate="REACHABLE"):
+def check_prev(dev_dic, prev_devs, pstate="REACHABLE", isv6=False):
     send_msg = False
+    prop = "reachability"
+    if isv6:
+        prop += "_v6"
     for pd in prev_devs:
         if pd["name"] == dev_dic["name"]:
-            if pd["reachability"] != pstate:
+            if prop in pd and pd[prop] != pstate:
                 send_msg = True
             break
     return send_msg
@@ -88,6 +91,7 @@ def ping_device(dev):
     # print('Pinging {}'.format(dev_dic['name']))
     msg_tag = "BAD"
     send_msg = True
+    send_msg_v6 = True
     if not dev["Reachable"]:
         send_msg = know_device(dev_dic, prev_devs)
     for _ in range(2):
@@ -104,12 +108,36 @@ def ping_device(dev):
         msg_tag = "GOOD"
         send_msg = check_prev(dev_dic, prev_devs)
 
+    if "IPv6Address" in dev:
+        dev_dic["ipv6"] = dev["IPv6Address"]
+        for _ in range(2):
+            res = call(["/usr/local/sbin/fping", "-q", "-r0", dev_dic["ipv6"]])
+            if res == 0:
+                break
+
+            time.sleep(0.5)
+
+        if res != 0:
+            dev_dic["reachability_v6"] = "UNREACHABLE"
+            send_msg_v6 = check_prev(dev_dic, prev_devs, "UNREACHABLE", True)
+        else:
+            dev_dic["reachability_v6"] = "REACHABLE"
+            msg_tag = "GOOD"
+            send_msg_v6 = check_prev(dev_dic, prev_devs, "REACHABLE", True)
+
+    loc = ""
     if send_msg:
-        loc = ""
         if "LocationDetail" in dev:
             loc = " (Location: {})".format(dev["LocationDetail"])
         message = MESSAGES[msg_tag]["msg"] % (dev_dic["name"], dev_dic["ip"], loc)
         spark.post_to_spark(C.WEBEX_TEAM, ROOM_NAME, message, MESSAGES[msg_tag]["type"])
+
+    if send_msg_v6:
+        if loc == "":
+            if "LocationDetail" in dev:
+                loc = " (Location: {})".format(dev["LocationDetail"])
+            message = MESSAGES[msg_tag]["msg"] % (dev_dic["name"], dev_dic["ipv6"], loc)
+            spark.post_to_spark(C.WEBEX_TEAM, ROOM_NAME, message, MESSAGES[msg_tag]["type"])
 
     return dev_dic
 
@@ -131,10 +159,17 @@ def get_devs(p):
             ip = dev
             try:
                 ip = socket.gethostbyname(dev)
+                addr_info = socket.getaddrinfo(dev, 0)
             except Exception as e:
                 spark.post_to_spark(C.WEBEX_TEAM, ROOM_NAME, "Failed to resolve {}: {}".format(dev, e), MessageType.WARNING)
                 continue
-            j.append({"Hostname": dev, "IPAddress": ip, "Reachable": True})
+            else:
+                drec = {"Hostname": dev, "IPAddress": ip, "Reachable": True}
+                v6_addrs = list(filter(lambda x: x[0] == socket.AF_INET6, addr_info))
+                if len(v6_addrs) > 0:
+                    drec["IPv6Address"] = v6_addrs[0][4][0]
+
+                j.append(drec)
 
         results = [p.apply_async(ping_device, [d]) for d in j]
         for res in results:
