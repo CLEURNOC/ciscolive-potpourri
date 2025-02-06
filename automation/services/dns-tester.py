@@ -77,7 +77,7 @@ targets = ["cl-freebsd.ciscolive.network", "google.com"]
 dns64_targets = ["github.com", "slack.com"]
 
 
-curr_state = {{{}}}
+curr_state = {}
 
 prev_state = {}
 if os.path.exists(CACHE_FILE):
@@ -92,7 +92,10 @@ for ds in dns_servers + dns64_servers:
     resolv.lifetime = 2
     resolv.nameservers = [ds]
 
+    curr_state[ds] = {}
+
     for addr in targets:
+        curr_state[ds][addr] = {}
         try:
             for q in ("A", "AAAA"):
                 ans = resolv.query(addr, q)
