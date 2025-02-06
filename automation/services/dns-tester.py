@@ -97,8 +97,8 @@ for ds in dns_servers + dns64_servers:
 
     for addr in targets:
         curr_state[ds][addr] = {}
-        try:
-            for q in ("A", "AAAA"):
+        for q in ("A", "AAAA"):
+            try:
                 ans = resolv.resolve(addr, q)
                 if ans.response.rcode() != dns.rcode.NOERROR:
                     curr_state[ds][addr][q] = False
@@ -108,10 +108,10 @@ for ds in dns_servers + dns64_servers:
                     curr_state[ds][addr][q] = True
                     if ds in prev_state and addr in prev_state[ds] and q in prev_state[ds][addr] and not prev_state[ds][addr][q]:
                         report_good("{} is now resolving a {} record for {} correctly".format(ds, q, addr))
-        except Exception as e:
-            curr_state[ds][addr][q] = False
-            if ds in prev_state and addr in prev_state[ds] and q in prev_state[ds][addr] and prev_state[ds][addr][q]:
-                report_error(ds, e)
+            except Exception as e:
+                curr_state[ds][addr][q] = False
+                if ds in prev_state and addr in prev_state[ds] and q in prev_state[ds][addr] and prev_state[ds][addr][q]:
+                    report_error(ds, addr, q, e)
 
 for ds in dns64_servers:
     resolv = dns.resolver.Resolver()
@@ -121,8 +121,8 @@ for ds in dns64_servers:
 
     for addr in dns64_targets:
         curr_state[ds][addr] = {}
-        try:
-            for q in ("AAAA",):
+        for q in ("AAAA",):
+            try:
                 ans = resolv.resolve(addr, q)
                 if ans.response.rcode() != dns.rcode.NOERROR:
                     curr_state[ds][addr][q] = False
@@ -132,10 +132,10 @@ for ds in dns64_servers:
                     curr_state[ds][addr][q] = True
                     if ds in prev_state and addr in prev_state[ds] and q in prev_state[ds][addr] and not prev_state[ds][addr][q]:
                         report_good("{} is now resolving a {} record for {} correctly".format(ds, q, addr))
-        except Exception as e:
-            curr_state[ds][addr][q] = False
-            if ds in prev_state and addr in prev_state[ds] and q in prev_state[ds][addr] and prev_state[ds][addr][q]:
-                report_error(ds, e)
+            except Exception as e:
+                curr_state[ds][addr][q] = False
+                if ds in prev_state and addr in prev_state[ds] and q in prev_state[ds][addr] and prev_state[ds][addr][q]:
+                    report_error(ds, addr, q, e)
 
 fd = open(CACHE_FILE, "w")
 json.dump(curr_state, fd, indent=4)
