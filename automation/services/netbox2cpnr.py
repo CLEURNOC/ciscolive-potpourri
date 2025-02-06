@@ -152,37 +152,40 @@ def get_dns_name(ip: IpAddresses) -> str | None:
         :str: DNS name if one is found else None
     """
     dns_name = None
-    if ip.family.value == 4:
-        if ip.assigned_object:
-            atype = ip.assigned_object_type
-            aobj = ip.assigned_object
-            if atype == "virtualization.vminterface":
-                if aobj.virtual_machine.primary_ip4 == ip:
-                    dns_name = aobj.virtual_machine.name.lower()
-                elif ip.dns_name and ip.dns_name != "":
-                    dns_name = ip.dns_name.strip().lower()
-            elif atype == "dcim.interface":
-                if aobj.device.primary_ip4 == ip:
-                    dns_name = aobj.device.name.lower()
-                elif ip.dns_name and ip.dns_name != "":
-                    dns_name = ip.dns_name.strip().lower()
-        elif ip.dns_name and ip.dns_name != "":
-            dns_name = ip.dns_name.strip().lower()
-    elif ip.family.value == 6:
-        # atype = ip.assigned_object_type
-        # aobj = ip.assigned_object
-        # if atype == "virtualization.vminterface":
-        #     if aobj.virtual_machine.primary_ip6 == ip:
-        #         dns_name = aobj.virtual_machine.name.lower()
-        #     elif ip.dns_name and ip.dns_name != "":
-        #         dns_name = ip.dns_name.strip().lower()
-        # elif atype == "dcim.interface":
-        #     if aobj.device.primary_ip6 == ip:
-        #         dns_name = aobj.device.name.lower()
-        #     elif ip.dns_name and ip.dns_name != "":
-        #         dns_name = ip.dns_name.strip().lower()
-        if ip.dns_name and ip.dns_name != "":
-            dns_name = ip.dns_name.strip().lower()
+    try:
+        if ip.family.value == 4:
+            if ip.assigned_object:
+                atype = ip.assigned_object_type
+                aobj = ip.assigned_object
+                if atype == "virtualization.vminterface":
+                    if aobj.virtual_machine.primary_ip4 == ip:
+                        dns_name = aobj.virtual_machine.name.lower()
+                    elif ip.dns_name and ip.dns_name != "":
+                        dns_name = ip.dns_name.strip().lower()
+                elif atype == "dcim.interface":
+                    if aobj.device.primary_ip4 == ip:
+                        dns_name = aobj.device.name.lower()
+                    elif ip.dns_name and ip.dns_name != "":
+                        dns_name = ip.dns_name.strip().lower()
+            elif ip.dns_name and ip.dns_name != "":
+                dns_name = ip.dns_name.strip().lower()
+        elif ip.family.value == 6:
+            # atype = ip.assigned_object_type
+            # aobj = ip.assigned_object
+            # if atype == "virtualization.vminterface":
+            #     if aobj.virtual_machine.primary_ip6 == ip:
+            #         dns_name = aobj.virtual_machine.name.lower()
+            #     elif ip.dns_name and ip.dns_name != "":
+            #         dns_name = ip.dns_name.strip().lower()
+            # elif atype == "dcim.interface":
+            #     if aobj.device.primary_ip6 == ip:
+            #         dns_name = aobj.device.name.lower()
+            #     elif ip.dns_name and ip.dns_name != "":
+            #         dns_name = ip.dns_name.strip().lower()
+            if ip.dns_name and ip.dns_name != "":
+                dns_name = ip.dns_name.strip().lower()
+    except Exception:
+        pass
 
     return dns_name
 
