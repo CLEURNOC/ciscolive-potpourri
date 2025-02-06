@@ -132,7 +132,7 @@ def ping_device(dev):
         message = MESSAGES[msg_tag]["msg"] % (dev_dic["name"], dev_dic["ip"], loc)
         spark.post_to_spark(C.WEBEX_TEAM, ROOM_NAME, message, MESSAGES[msg_tag]["type"])
 
-    if send_msg_v6:
+    if send_msg_v6 and "ipv6" in dev_dic:
         if loc == "":
             if "LocationDetail" in dev:
                 loc = " (Location: {})".format(dev["LocationDetail"])
