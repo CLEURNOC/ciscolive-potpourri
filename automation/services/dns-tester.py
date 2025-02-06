@@ -31,6 +31,7 @@ from sparker import Sparker  # type: ignore
 import os
 import json
 from cleu.config import Config as C  # type: ignore
+import CLEUCreds  # type: ignore
 
 SPARK_ROOM = "DNS Alarms"
 CACHE_FILE = "/home/jclarke/dns_cache.dat"
@@ -38,7 +39,7 @@ CACHE_FILE = "/home/jclarke/dns_cache.dat"
 
 def report_error(server, addr, q, obj):
     global SPARK_ROOM
-    spark = Sparker()
+    spark = Sparker(token=CLEUCreds.SPARK_TOKEN)
 
     msg = "DNS failure to {} for {} query for {}\n\n"
     msg += "```\n"
@@ -52,7 +53,7 @@ def report_error(server, addr, q, obj):
 
 def report_good(msg):
     global SPARK_ROOM
-    spark = Sparker()
+    spark = Sparker(CLEUCreds.SPARK_TOKEN)
 
     res = spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, msg)
     if not res:
@@ -121,7 +122,7 @@ for ds in dns64_servers:
     for addr in dns64_targets:
         curr_state[ds][addr] = {}
         try:
-            for q in "AAAA":
+            for q in ("AAAA",):
                 ans = resolv.resolve(addr, q)
                 if ans.response.rcode() != dns.rcode.NOERROR:
                     curr_state[ds][addr][q] = False
