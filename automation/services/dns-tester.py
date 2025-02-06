@@ -1,6 +1,6 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 #
-# Copyright (c) 2017-2018  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2025  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,90 +27,111 @@
 
 import dns
 import dns.resolver
-from sparker import Sparker
+from sparker import Sparker  # type: ignore
 import os
-from subprocess import Popen, PIPE
-import shlex
 import json
+from cleu.config import Config as C  # type: ignore
 
-SPARK_ROOM = 'Core Alarms'
-SPARK_TEAM = 'CL17-Infra_team'
-CACHE_FILE = '/home/jclarke/dns_cache.dat'
+SPARK_ROOM = "DNS Alarms"
+CACHE_FILE = "/home/jclarke/dns_cache.dat"
 
 
-def report_error(server, obj):
-    global SPARK_ROOM, SPARK_TEAM
+def report_error(server, addr, q, obj):
+    global SPARK_ROOM
     spark = Sparker()
 
-    msg = 'DNS failure to {}\n\n'
-    msg += '```\n'
-    msg += '{}\n'
-    msg += '```'
+    msg = "DNS failure to {} for {} query for {}\n\n"
+    msg += "```\n"
+    msg += "{}\n"
+    msg += "```"
 
-    res = spark.post_to_spark(SPARK_TEAM, SPARK_ROOM, msg.format(server, obj))
+    res = spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, msg.format(server, q, addr, obj))
     if not res:
-        print('Error posting to Spark!')
+        print("Error posting to Spark!")
 
 
 def report_good(msg):
-    global SPARK_ROOM, SPARK_TEAM
+    global SPARK_ROOM
     spark = Sparker()
 
-    res = spark.post_to_spark(SPARK_TEAM, SPARK_ROOM, msg)
+    res = spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, msg)
     if not res:
-        print('Error posting to Spark!')
+        print("Error posting to Spark!")
 
 
-dns_servers = ['10.100.253.6', '10.100.253.106']
-rdns = '2a01:4f8:120:7261:216:3eff:fe44:2015'
+dns_servers = [
+    "10.100.253.6",
+    "10.100.254.6",
+    "2a11:d940:2:64fd::6",
+    "2a11:d940:2:64fe::6",
+]
 
-curr_state = {}
+dns64_servers = [
+    "10.100.253.64",
+    "10.100.254.64",
+    "2a11:d940:2:64fd::100",
+    "2a11:d940:2:64fe::100",
+]
+
+targets = ["cl-freebsd.ciscolive.network", "google.com"]
+dns64_targets = ["github.com", "slack.com"]
+
+
+curr_state = {{{}}}
 
 prev_state = {}
 if os.path.exists(CACHE_FILE):
-    fd = open(CACHE_FILE, 'r')
+    fd = open(CACHE_FILE, "r")
     prev_state = json.load(fd)
     fd.close()
 
-res = os.system('/usr/local/sbin/fping6 -q -r0 {}'.format(rdns))
-if res != 0:
-    if rdns in prev_state and prev_state[rdns]:
-        proc = Popen(shlex.split(
-            '/usr/sbin/traceroute6 -q 1 -n -m 30 {}'.format(rdns)), stdout=PIPE, stderr=PIPE)
-        out, err = proc.communicate()
-        report_error(
-            rdns, 'Remote DNS server is not pingable; current traceroute:\n{}'.format(out))
-    curr_state[rdns] = False
-else:
-    curr_state[rdns] = True
-    if rdns in prev_state and not prev_state[rdns]:
-        proc = Popen(shlex.split(
-            '/usr/sbin/traceroute6 -q 1 -n -m 30 {}'.format(rdns)), stdout=PIPE, stderr=PIPE)
-        out, err = proc.communicate()
-        report_good('{} is pingable again; current traceroute:\n```\n{}\n```'.format(rdns, out))
 
-
-for ds in dns_servers:
+for ds in dns_servers + dns64_servers:
     resolv = dns.resolver.Resolver()
     resolv.timeout = 2
     resolv.lifetime = 2
     resolv.nameservers = [ds]
 
-    try:
-        ans = resolv.query('ciscolive-test.local', 'AAAA')
-        if ans.response.rcode() != dns.rcode.NOERROR:
-            curr_state[ds] = False
-            if ds in prev_state and prev_state[ds]:
-                report_error(ds, ans.response)
-        else:
-            curr_state[ds] = True
-            if ds in prev_state and not prev_state[ds]:
-                report_good('{} is now resolving fine'.format(ds, ds))
-    except Exception as e:
-        curr_state[ds] = False
-        if ds in prev_state and prev_state[ds]:
-            report_error(ds, e)
+    for addr in targets:
+        try:
+            for q in ("A", "AAAA"):
+                ans = resolv.query(addr, q)
+                if ans.response.rcode() != dns.rcode.NOERROR:
+                    curr_state[ds][addr][q] = False
+                    if ds in prev_state and addr in prev_state[ds] and q in prev_state[ds][addr] and prev_state[ds][addr][q]:
+                        report_error(ds, addr, q, ans.response)
+                else:
+                    curr_state[ds][addr][q] = True
+                    if ds in prev_state and addr in prev_state[ds] and q in prev_state[ds][addr] and not prev_state[ds][addr][q]:
+                        report_good("{} is now resolving a {} record for {} correctly".format(ds, q, addr))
+        except Exception as e:
+            curr_state[ds][addr][q] = False
+            if ds in prev_state and addr in prev_state[ds] and q in prev_state[ds][addr] and prev_state[ds][addr][q]:
+                report_error(ds, e)
 
-fd = open(CACHE_FILE, 'w')
+for ds in dns64_servers:
+    resolv = dns.resolver.Resolver()
+    resolv.timeout = 2
+    resolv.lifetime = 2
+    resolv.nameservers = [ds]
+
+    for addr in dns64_targets:
+        try:
+            for q in "AAAA":
+                ans = resolv.query(addr, q)
+                if ans.response.rcode() != dns.rcode.NOERROR:
+                    curr_state[ds][addr][q] = False
+                    if ds in prev_state and addr in prev_state[ds] and q in prev_state[ds][addr] and prev_state[ds][addr][q]:
+                        report_error(ds, addr, q, ans.response)
+                else:
+                    curr_state[ds][addr][q] = True
+                    if ds in prev_state and addr in prev_state[ds] and q in prev_state[ds][addr] and not prev_state[ds][addr][q]:
+                        report_good("{} is now resolving a {} record for {} correctly".format(ds, q, addr))
+        except Exception as e:
+            curr_state[ds][addr][q] = False
+            if ds in prev_state and addr in prev_state[ds] and q in prev_state[ds][addr] and prev_state[ds][addr][q]:
+                report_error(ds, e)
+
+fd = open(CACHE_FILE, "w")
 json.dump(curr_state, fd, indent=4)
 fd.close()
