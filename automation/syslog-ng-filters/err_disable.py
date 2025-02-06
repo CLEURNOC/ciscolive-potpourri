@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2017-2023  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2025  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -85,7 +85,7 @@ if __name__ == "__main__":
             if m:
                 if f"{host}:{m.group(1)}" in curr_ports:
                     # Only send an up if we haven't seen another down for 5 seconds.
-                    if int(time.time() * 1000) - curr_ports[f"{host}:{m.group(1)}"] >= 5000:
+                    if int(time.time() * 1000) - curr_ports[f"{host}:{m.group(1)}"] >= 30000:
                         spark.post_to_spark(
                             C.WEBEX_TEAM,
                             SPARK_ROOM,
