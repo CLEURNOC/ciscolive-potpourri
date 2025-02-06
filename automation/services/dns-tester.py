@@ -27,7 +27,7 @@
 
 import dns
 import dns.resolver
-from sparker import Sparker  # type: ignore
+from sparker import Sparker, MessageType  # type: ignore
 import os
 import json
 from cleu.config import Config as C  # type: ignore
@@ -46,16 +46,16 @@ def report_error(server, addr, q, obj):
     msg += "{}\n"
     msg += "```"
 
-    res = spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, msg.format(server, q, addr, obj))
+    res = spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, msg.format(server, q, addr, obj), MessageType.BAD)
     if not res:
         print("Error posting to Spark!")
 
 
 def report_good(msg):
     global SPARK_ROOM
-    spark = Sparker(CLEUCreds.SPARK_TOKEN)
+    spark = Sparker(token=CLEUCreds.SPARK_TOKEN)
 
-    res = spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, msg)
+    res = spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, msg, MessageType.GOOD)
     if not res:
         print("Error posting to Spark!")
 
