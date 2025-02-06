@@ -34,6 +34,7 @@ import sys
 import time
 import re
 import traceback
+import argparse
 import CLEUCreds  # type: ignore
 from cleu.config import Config as C  # type: ignore
 
@@ -85,10 +86,16 @@ if __name__ == "__main__":
     devs = {}
     force = False
     changed_devs = False
+    do_log = False
 
-    if len(sys.argv) == 2:
-        if sys.argv[1] == "-f":
-            force = True
+    parser = argparse.ArgumentParser(sys.argv[0], "Add devices from the Tool to LibreNMS")
+    parser.add_argument("--force", "-f", default=False, help="Force adding devices", action="store_true")
+    parser.add_argument("--log", "-l", default=False, help="Log progress (default: False)", action="store_true")
+
+    args = parser.parse_args()
+    force = args.force
+    do_log = args.log
+
     try:
         with open(CACHE_FILE, "r") as fd:
             devs = json.load(fd)
@@ -101,24 +108,28 @@ if __name__ == "__main__":
     for tdev in tdevs:
         i += 1
         if tdev["AssetTag"] in list(devs.keys()) and devs[tdev["AssetTag"]] != tdev["Hostname"]:
-            print("=== Deleting device {} from LibreNMS ({} / {}) ===".format(tdev["Hostname"], i, len(tdevs)))
+            if do_log:
+                print("=== Deleting device {} from LibreNMS ({} / {}) ===".format(tdev["Hostname"], i, len(tdevs)))
             res = delete_device(devs[tdev["AssetTag"]])
             if res.status_code > 299:
                 print("\n\n***WARNING: Failed to remove LibreNMS device {}: response='{}'".format(devs[tdev["AssetTag"]], res.text))
 
-            print("=== DONE. ===")
+            if do_log:
+                print("=== DONE. ===")
             changed_devs = True
             del devs[tdev["AssetTag"]]
             time.sleep(3)
 
         if tdev["AssetTag"] not in list(devs.keys()) or force:
             if force:
-                print("=== Deleting device {} from LibreNMS ({} / {}) ===".format(tdev["Hostname"], i, len(tdevs)))
+                if do_log:
+                    print("=== Deleting device {} from LibreNMS ({} / {}) ===".format(tdev["Hostname"], i, len(tdevs)))
                 res = delete_device(tdev["Hostname"])
                 if res.status_code > 299:
                     print("\n\n***WARNING: Failed to remove LibreNMS device {}: response='{}'".format(tdev["Hostname"], res.text))
 
-                print("=== DONE. ===")
+                if do_log:
+                    print("=== DONE. ===")
                 time.sleep(3)
 
             url = f"https://librenms.{C.DNS_DOMAIN}/api/v0/inventory/{tdev['Hostname']}"
@@ -137,7 +148,8 @@ if __name__ == "__main__":
                 print(f"Error retrieving device status for {tdev['Hostname']} from LibreNMS")
                 traceback.print_exc()
 
-            print("=== Adding device {} to LibreNMS ({} / {}) ===".format(tdev["Hostname"], i, len(tdevs)))
+            if do_log:
+                print("=== Adding device {} to LibreNMS ({} / {}) ===".format(tdev["Hostname"], i, len(tdevs)))
             url = f"https://librenms.{C.DNS_DOMAIN}/api/v0/devices"
             payload = {
                 "hostname": tdev["Hostname"],
@@ -154,7 +166,8 @@ if __name__ == "__main__":
                 print("\n\n***ERROR: Failed to add {} to LibreNMS: response='{}'".format(tdev["Hostname"], res.text))
                 continue
 
-            print("=== DONE. ===")
+            if do_log:
+                print("=== DONE. ===")
 
             changed_devs = True
             devs[tdev["AssetTag"]] = tdev["Hostname"]
