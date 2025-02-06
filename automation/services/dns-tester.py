@@ -98,7 +98,7 @@ for ds in dns_servers + dns64_servers:
         curr_state[ds][addr] = {}
         try:
             for q in ("A", "AAAA"):
-                ans = resolv.query(addr, q)
+                ans = resolv.resolve(addr, q)
                 if ans.response.rcode() != dns.rcode.NOERROR:
                     curr_state[ds][addr][q] = False
                     if ds in prev_state and addr in prev_state[ds] and q in prev_state[ds][addr] and prev_state[ds][addr][q]:
@@ -119,9 +119,10 @@ for ds in dns64_servers:
     resolv.nameservers = [ds]
 
     for addr in dns64_targets:
+        curr_state[ds][addr] = {}
         try:
             for q in "AAAA":
-                ans = resolv.query(addr, q)
+                ans = resolv.resolve(addr, q)
                 if ans.response.rcode() != dns.rcode.NOERROR:
                     curr_state[ds][addr][q] = False
                     if ds in prev_state and addr in prev_state[ds] and q in prev_state[ds][addr] and prev_state[ds][addr][q]:
