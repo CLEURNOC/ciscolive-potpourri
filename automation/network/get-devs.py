@@ -90,10 +90,13 @@ def ping_device(dev):
             return None
     # print('Pinging {}'.format(dev_dic['name']))
     msg_tag = "BAD"
+    msg_tag_v6 = "BAD"
     send_msg = True
     send_msg_v6 = True
     if not dev["Reachable"]:
         send_msg = know_device(dev_dic, prev_devs)
+    if "Reachable_v6" in dev and not dev["Reachable_v6"]:
+        send_msg_v6 = know_device(dev_dic, prev_devs)
     for _ in range(2):
         res = call(["/usr/local/sbin/fping", "-q", "-r0", dev_dic["ip"]])
         if res == 0:
@@ -122,7 +125,7 @@ def ping_device(dev):
             send_msg_v6 = check_prev(dev_dic, prev_devs, "UNREACHABLE", True)
         else:
             dev_dic["reachability_v6"] = "REACHABLE"
-            msg_tag = "GOOD"
+            msg_tag_v6 = "GOOD"
             send_msg_v6 = check_prev(dev_dic, prev_devs, "REACHABLE", True)
 
     loc = ""
@@ -137,7 +140,7 @@ def ping_device(dev):
             if "LocationDetail" in dev:
                 loc = " (Location: {})".format(dev["LocationDetail"])
         message = MESSAGES[msg_tag]["msg"] % (dev_dic["name"], dev_dic["ipv6"], loc)
-        spark.post_to_spark(C.WEBEX_TEAM, ROOM_NAME, message, MESSAGES[msg_tag]["type"])
+        spark.post_to_spark(C.WEBEX_TEAM, ROOM_NAME, message, MESSAGES[msg_tag_v6]["type"])
 
     return dev_dic
 
@@ -168,13 +171,14 @@ def get_devs(p):
                 v6_addrs = list(filter(lambda x: x[0] == socket.AF_INET6, addr_info))
                 if len(v6_addrs) > 0:
                     drec["IPv6Address"] = v6_addrs[0][4][0]
+                    drec["Reachable_v6"] = True
 
                 j.append(drec)
 
         results = [p.apply_async(ping_device, [d]) for d in j]
         for res in results:
             retval = res.get()
-            if retval is not None:
+            if retval:
                 devices.append(retval)
 
     return devices
