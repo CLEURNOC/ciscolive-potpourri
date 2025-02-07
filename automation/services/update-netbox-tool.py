@@ -36,6 +36,7 @@ import sys
 import re
 import os
 import argparse
+import traceback
 import CLEUCreds  # type: ignore
 from cleu.config import Config as C  # type: ignore
 
@@ -136,6 +137,7 @@ def delete_netbox_device(enb: ElementalNetbox, dname: str) -> None:
             dev_obj.delete()
     except Exception as e:
         sys.stderr.write("WARNING: Failed to delete NetBox device for %s: %s\n" % (dname, str(e)))
+        traceback.print_exc(file=sys.stderr)
 
 
 def populate_objects(enb: ElementalNetbox) -> None:
@@ -213,6 +215,7 @@ if __name__ == "__main__":
 
     # script arguments
     parser.add_argument("--purge", help="Purge previous records", action="store_true")
+    parser.add_argument("--log", "-l", help="Print info output", default=False, action="store_true")
     args = parser.parse_args()
 
     enb = ElementalNetbox()
@@ -253,7 +256,8 @@ if __name__ == "__main__":
                 cur_entry = ip_obj.assigned_object.device
 
             if cur_entry:
-                print(f"INFO: Found old entry for IP {dev['ip']} => {cur_entry.name}")
+                if args.log:
+                    print(f"INFO: Found old entry for IP {dev['ip']} => {cur_entry.name}")
 
                 delete_netbox_device(enb, cur_entry.name)
 
@@ -274,13 +278,14 @@ if __name__ == "__main__":
                     create_new = False
 
             if create_new:
-                print(f"INFO: Deleting entry for {hname}")
-                delete_netbox_device(enb, hname)
+                if args.log:
+                    print(f"INFO: Deleting entry for {hname}")
 
+                delete_netbox_device(enb, hname)
                 add_netbox_device(enb, dev)
             else:
                 # print("Not creating a new entry for {} as it already exists".format(dev["name"]))
                 pass
 
     with open(CACHE_FILE, "w") as fd:
-        json.dump(records, fd, indent=4)
+        json.dump(records, fd, indent=2)
