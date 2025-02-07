@@ -49,6 +49,7 @@ IDF_OVERRIDES = {}
 SCOPE_BASE = C.DHCP_BASE + "/Scope"
 
 DHCP_TEMPLATE = {"optionList": {"OptionItem": []}}
+SCOPE_WATCH = "Scope Watch"
 
 HEADERS = {"accept": "application/json", "content-type": "application/json"}
 
@@ -135,6 +136,7 @@ if __name__ == "__main__":
                 "embeddedPolicy": template,
                 "name": scope,
                 "policy": prefix.role.name,
+                "freeAddressConfig": SCOPE_WATCH,
                 "rangeList": rlist,
                 "subnet": f"{ip}/{cidr}",
                 "tenantId": "0",
