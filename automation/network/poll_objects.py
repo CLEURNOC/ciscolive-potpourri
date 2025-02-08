@@ -120,7 +120,7 @@ def get_metrics(pool):
     for res in results:
         retval = res.get()
         if retval:
-            response | retval
+            response = response | retval
 
     cores = [
         "core1-core",
@@ -143,7 +143,7 @@ def get_metrics(pool):
     for res in results:
         retval = res.get()
         if retval:
-            response | retval
+            response = response | retval
 
     return response
 
