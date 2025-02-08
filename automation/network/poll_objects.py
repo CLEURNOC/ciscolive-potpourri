@@ -101,7 +101,7 @@ def get_results(dev, command, cache):
             if m.group(6):
                 metrics.append(metric_header + m.group(6).replace("-", "_").lower())
                 values.append(int(m.group(7)))
-            for metric, i in enumerate(metrics):
+            for i, metric in enumerate(metrics):
                 if metric and metric != "total_objects":
                     value = values[i]
                     if dev in cache and metric in cache[dev] and cache[dev][metric] < value and value > 0:
