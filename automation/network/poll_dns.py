@@ -91,7 +91,7 @@ def get_umbrella_activity(api):
 
     j = response.json()
 
-    return f'umbrellaTotalQueries{{server="umbrella"}} {j["data"][0]["count"]}'
+    return f'umbrellaTotalQueries{{server="umbrella"}} {j["data"][-1]["count"]}'
 
 
 def get_metrics():
