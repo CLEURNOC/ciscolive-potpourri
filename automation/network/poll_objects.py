@@ -103,7 +103,7 @@ def get_results(dev, command, cache):
                 values.append(int(m.group(7)))
             for metric, i in enumerate(metrics):
                 if metric and metric != "total_objects":
-                    value = values(i)
+                    value = values[i]
                     if dev in cache and metric in cache[dev] and cache[dev][metric] < value and value > 0:
                         msg = f"Metric **{metric}** has changed from {cache[dev][metric]} to {value} on **{dev}**"
                         spark.post_to_spark(C.WEBEX_TEAM, ROOM_NAME, msg, MessageType.BAD)
