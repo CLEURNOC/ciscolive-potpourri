@@ -61,7 +61,7 @@ def send_command(chan, command):
     return output
 
 
-def get_results(dev, cache):
+def get_results(dev):
     global ROOM_NAME, spark
     commands = ["show platform hardware fed switch active fwd-asic resource tcam utilization"]
 
@@ -90,8 +90,7 @@ def get_results(dev, cache):
         sys.stderr.write("Failed to connect to {}: {}\n".format(dev, e))
 
     ssh_client.close()
-
-    cache[dev] = {}
+    cache = {"device": dev}
 
     for line in output.split("\n"):
         # IP Route Table         TCAM         I        8192     6876   83.94%
@@ -106,9 +105,9 @@ def get_results(dev, cache):
                 msg = "IP Route Table TCAM on {} is {}% used (max: {}, used: {})".format(dev, perc, max, used)
                 spark.post_to_spark(C.WEBEX_TEAM, ROOM_NAME, msg, MessageType.BAD)
 
-            cache[dev]["max"] = max
-            cache[dev]["used"] = used
-            cache[dev]["perc"] = perc
+            cache["max"] = max
+            cache["used"] = used
+            cache["perc"] = perc
 
             break
 
