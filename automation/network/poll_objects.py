@@ -90,16 +90,25 @@ def get_results(dev, command, cache):
     dev_obj = {dev: {}}
 
     for line in output.split("\n"):
-        if m := re.search(r"([^\s]+):\s(\d+)", line):
+        if m := re.search(r"^(([^:]+):\s+)?([^\s]+):\s(\d+)(,([^:]+):\s(\d+))?", line):
+            metric_header = ""
+            values = []
+            metrics = []
+            if m.group(2):
+                metric_header = m.group(2).replace("-", "_").replace(" ", "_").lower() + "_"
+            metrics.append(metric_header + m.group(3).replace("-", "_").lower())
+            values.append(int(m.group(2)))
+            if m.group(6):
+                metrics.append(metric_header + m.group(6).replace("-", "_").lower())
+                values.append(int(m.group(7)))
+            for metric, i in enumerate(metrics):
+                if metric and metric != "total_objects":
+                    value = values(i)
+                    if dev in cache and metric in cache[dev] and cache[dev][metric] < value and value > 0:
+                        msg = f"Metric **{metric}** has changed from {cache[dev][metric]} to {value} on **{dev}**"
+                        spark.post_to_spark(C.WEBEX_TEAM, ROOM_NAME, msg, MessageType.BAD)
 
-            metric = m.group(1).replace("-", "_").lower()
-            value = int(m.group(2))
-            if metric != "total_objects":
-                if dev in cache and metric in cache[dev] and cache[dev][metric] < value and value > 0:
-                    msg = f"Metric **{metric}** has changed from {cache[dev][metric]} to {value} on **{dev}**"
-                    spark.post_to_spark(C.WEBEX_TEAM, ROOM_NAME, msg, MessageType.BAD)
-
-            dev_obj[dev][metric] = value
+                dev_obj[dev][metric] = value
 
     return dev_obj
 
