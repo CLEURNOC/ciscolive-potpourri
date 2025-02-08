@@ -1,4 +1,4 @@
-#!/usr/local/bin/bash
+#!/usr/bin/env python
 #
 # Copyright (c) 2017-2025  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
@@ -24,11 +24,37 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-# Start each Prometheus exporter in its own screen instance
-declare -A EXPORTERS=(["cpnr_metrics"]="cpnr_metrics.py" ["mac_metrics"]="mac_metrics.py" ["dhcp_metrics"]="dhcp_metrics.py" ["dns_metrics"]="dns_metrics.py" ["tcam_metrics"]="tcam_metrics.py" ["netapp_gw"]="netapp-rest-gw.py")
+from flask import Flask
+from flask import Response
+import json
+from gevent.pywsgi import WSGIServer
+from cleu.config import Config as C  # type: ignore
 
-for sname in "${!EXPORTERS[@]}"; do
-  if ! screen -ls ${sname} >/dev/null 2>&1; then
-    screen -d -m -S ${sname} ./${EXPORTERS[$sname]}
-  fi
-done
+
+CACHE_FILE = "/home/jclarke/dns_metrics.dat"
+PORT = 8093
+
+app = Flask("DNS Stats Fetcher")
+
+
+@app.route("/metrics")
+def get_metrics():
+    global CACHE_FILE
+
+    with open(CACHE_FILE, "r") as fd:
+        macs = json.load(fd)
+
+    response = []
+
+    for line in macs:
+        line = line.rstrip()
+        if line != "":
+            response.append(line)
+
+    return Response("\n".join(response) + "\n", mimetype="text/plain")
+
+
+if __name__ == "__main__":
+    #    app.run(host='10.100.253.13', port=8081, threaded=True)
+    http_server = WSGIServer((C.WSGI_SERVER, PORT), app)
+    http_server.serve_forever()
