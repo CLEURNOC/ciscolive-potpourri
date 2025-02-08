@@ -97,7 +97,7 @@ def get_results(dev, command, cache):
             if m.group(2):
                 metric_header = m.group(2).replace("-", "_").replace(" ", "_").lower() + "_"
             metrics.append(metric_header + m.group(3).replace("-", "_").lower())
-            values.append(int(m.group(2)))
+            values.append(int(m.group(4)))
             if m.group(6):
                 metrics.append(metric_header + m.group(6).replace("-", "_").lower())
                 values.append(int(m.group(7)))
