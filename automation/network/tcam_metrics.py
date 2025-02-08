@@ -50,7 +50,7 @@ def get_metrics():
     for dev in tcam:
         for metric in ("used", "max"):
             if metric in dev:
-                response.append(f'{metric}{{device="{dev["device"]}"}} {dev[metric]}')
+                response.append(f'{metric}{{device="{dev["device"]}"}} {int(dev[metric])}')
 
     return Response("\n".join(response) + "\n", mimetype="text/plain")
 
