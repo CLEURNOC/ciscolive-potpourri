@@ -108,7 +108,7 @@ def get_results(dev, command, cache):
                         msg = f"Metric **{metric}** has changed from {cache[dev][metric]} to {value} on **{dev}**"
                         spark.post_to_spark(C.WEBEX_TEAM, ROOM_NAME, msg, MessageType.BAD)
 
-                dev_obj[dev][metric] = value
+                    dev_obj[dev][metric] = value
 
     return dev_obj
 
