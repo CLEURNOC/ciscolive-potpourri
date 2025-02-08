@@ -107,10 +107,16 @@ def get_results(dev, command, cache):
 def get_metrics(pool):
     response = {}
 
+    try:
+        with open(CACHE_FILE, "r") as fd:
+            cache = json.load(fd)
+    except Exception:
+        cache = {}
+
     with open(IDF_FILE, "r") as fd:
         idfs = json.load(fd)
 
-    results = [pool.apply_async(get_results, [d, "show platform software object-manager switch active f0 statistics"]) for d in idfs]
+    results = [pool.apply_async(get_results, [d, "show platform software object-manager switch active f0 statistics", cache]) for d in idfs]
     for res in results:
         retval = res.get()
         if retval:
@@ -133,7 +139,7 @@ def get_metrics(pool):
         "mer4-dist-b",
     ]
 
-    results = [pool.apply_async(get_results, [d, "show platform software object-manager f0 statistics"]) for d in cores]
+    results = [pool.apply_async(get_results, [d, "show platform software object-manager f0 statistics", cache]) for d in cores]
     for res in results:
         retval = res.get()
         if retval:
