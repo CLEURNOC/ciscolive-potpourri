@@ -82,7 +82,7 @@ def refreshToken(decorated):
 def get_umbrella_activity(api):
     try:
         response = requests.get(
-            f"https://reports.api.umbrella.com/v2/organizations/{C.UMBRELLA_ORGID}/requests-by-timerange?from={START_TIME}&to=now&limit=100",
+            f"https://reports.api.umbrella.com/v2/organizations/{C.UMBRELLA_ORGID}/requests-by-timerange?from={START_TIME}&to=now&limit=168",
             headers={"Authorization": f"Bearer {api.access_token}"},
         )
         response.raise_for_status()
