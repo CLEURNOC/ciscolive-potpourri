@@ -101,7 +101,7 @@ def get_results(dev, cache):
             # if metric == 'Directly or indirectly connected routes':
             #    perc = 76.0
             if perc >= 90.0:
-                msg = "IP Route Table TCAM on {} is {}% used".format(dev, perc)
+                msg = "IP Route Table TCAM on {} is {}% used (max: {}, used: {})".format(dev, perc, max, used)
                 spark.post_to_spark(C.WEBEX_TEAM, ROOM_NAME, msg, MessageType.BAD)
 
             cache[dev]["max"] = max
