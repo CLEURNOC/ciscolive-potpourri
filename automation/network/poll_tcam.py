@@ -30,6 +30,8 @@ import sys
 import time
 import json
 import paramiko
+import random
+from multiprocessing import Pool
 from sparker import Sparker, MessageType  # type: ignore
 import traceback
 import CLEUCreds  # type: ignore
@@ -110,18 +112,31 @@ def get_results(dev, cache):
 
             break
 
+    return cache
 
-if __name__ == "__main__":
-    spark = Sparker(token=CLEUCreds.SPARK_TOKEN)
 
-    cache = {}
+def get_metrics(pool):
+    response = []
 
     with open(IDF_FILE, "r") as fd:
         devices = json.load(fd)
 
-    for dev in devices:
-        get_results(dev, cache)
+    results = [pool.apply_async(get_results, [d]) for d in devices]
+    for res in results:
+        retval = res.get()
+        if retval:
+            response += retval
+
+    return response
+
+
+if __name__ == "__main__":
+    time.sleep(random.randrange(90))
+
+    pool = Pool(20)
+    response = get_metrics(pool)
+    spark = Sparker(token=CLEUCreds.SPARK_TOKEN)
 
     fd = open(CACHE_FILE, "w")
-    json.dump(cache, fd, indent=4)
+    json.dump(response, fd, indent=2)
     fd.close()
