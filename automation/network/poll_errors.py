@@ -31,6 +31,8 @@ import json
 import argparse
 import sys
 import re
+import time
+import calendar
 from sparker import Sparker, MessageType  # type: ignore
 import CLEUCreds  # type: ignore
 from cleu.config import Config as C  # type: ignore
@@ -44,6 +46,8 @@ IF_UP = 1
 
 prev_state = {}
 curr_state = {}
+
+SUPPRESS_TIMER = 15
 
 
 def main():
@@ -94,6 +98,7 @@ def main():
             sys.exit(1)
 
     cache_file = CACHE_FILE + "_" + args.name + ".dat"
+    suppress_seconds = SUPPRESS_TIMER * 60
 
     if os.path.exists(cache_file):
         with open(cache_file, "r") as fd:
@@ -136,6 +141,7 @@ def main():
                 swent[var.iid] = {}
                 swent[var.iid]["count"] = 0
                 swent[var.iid]["suppressed"] = False
+                swent[var.iid]["suppressed_when"] = 0
 
             swent[var.iid][var.tag] = var.val
 
@@ -156,7 +162,16 @@ def main():
                 curr_state[device][ins]["count"] = prev_state[device][ins]["count"]
 
             if "suppressed" in prev_state[device][ins]:
-                curr_state[device][ins]["suppressed"] = prev_state[device][ins]["suppressed"]
+                now = int(calendar.timegm(time.gmtime()))
+                if (
+                    "suppressed_when" in prev_state[device][ins]
+                    and prev_state[device][ins]["suppressed"]
+                    and now - prev_state[device][ins]["suppressed_when"] >= suppress_seconds
+                ):
+                    curr_state[device][ins]["suppressed"] = False
+                    curr_state[device][ins]["suppressed_when"] = 0
+                else:
+                    curr_state[device][ins]["suppressed"] = prev_state[device][ins]["suppressed"]
             if_descr = vard["ifDescr"]
             if_alias = vard["ifAlias"]
             if device in ignore_interfaces and if_descr in ignore_interfaces[device]:
@@ -165,7 +180,7 @@ def main():
                 continue
             found_error = False
             for k, v in list(vard.items()):
-                if k == "ifDescr" or k == "ifAlias" or k == "count" or k == "suppressed":
+                if k == "ifDescr" or k == "ifAlias" or k == "count" or k == "suppressed" or k == "suppressed_when":
                     continue
                 if k in prev_state[device][ins]:
                     diff = int(v) - int(prev_state[device][ins][k])
@@ -175,17 +190,20 @@ def main():
                             spark.post_to_spark(
                                 C.WEBEX_TEAM,
                                 args.webex_room,
-                                "Interface **{}** ({}) on device _{}_ has seen an increase of **{}** {} since the last poll (previous: {}, current: {}).".format(
+                                "Interface **{}** ({}) on device _{}_ has seen an increase of **{}** {} (previous: {}, current: {}).".format(
                                     if_descr, if_alias, device, diff, k, prev_state[device][ins][k], v
                                 ),
                                 MessageType.WARNING,
                             )
                         elif not curr_state[device][ins]["suppressed"]:
                             curr_state[device][ins]["suppressed"] = True
+                            curr_state[device][ins]["suppressed_when"] = int(calendar.timegm(time.gmtime()))
                             spark.post_to_spark(
                                 C.WEBEX_TEAM,
                                 args.webex_room,
-                                "Suppressing alarms for interface **{}** ({}) on device _{}_".format(if_descr, if_alias, device),
+                                "Suppressing alarms for interface **{}** ({}) on device _{}_ for {} minutes".format(
+                                    if_descr, if_alias, device, SUPPRESS_TIMER
+                                ),
                             )
             if not found_error:
                 if curr_state[device][ins]["count"] > 0:
