@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright (c) 2017-2024  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2025  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,6 @@
 # SUCH DAMAGE.
 
 from __future__ import division
-from past.utils import old_div  # type: ignore
 import re
 import sys
 import time
@@ -37,7 +36,7 @@ import CLEUCreds  # type: ignore
 from cleu.config import Config as C  # type: ignore
 
 
-devices = ["CORE1-WA", "CORE2-WA"]
+IDF_FILE = "/home/jclarke/idf-devices.json"
 ROOM_NAME = "Core Alarms"
 CACHE_FILE = "/home/jclarke/tcam_util.json"
 
@@ -62,7 +61,7 @@ def send_command(chan, command):
 
 def get_results(dev, cache):
     global ROOM_NAME, spark
-    commands = ["show platform hardware fed active fwd-asic resource tcam utilization"]
+    commands = ["show platform hardware fed switch active fwd-asic resource tcam utilization"]
 
     ssh_client = paramiko.SSHClient()
     ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -90,53 +89,35 @@ def get_results(dev, cache):
 
     ssh_client.close()
 
-    ready = False
-
     cache[dev] = {}
 
-    cached_elements = None
-
     for line in output.split("\n"):
-        line = line.strip()
-        if re.search(r"^-+$", line):
-            ready = True
-            continue
-        if not ready:
-            continue
-        if len(line) == 0:
+        # IP Route Table         TCAM         I        8192     6876   83.94%
+        if m := re.search(r"IP Route Table\s+TCAM\s+IO?\s+(\d+)\s+(\d+)\s+([\d.]+)%", line):
+
+            max = float(m.group(1))
+            used = float(m.group(2))
+            perc = float(m.group(3))
+            # if metric == 'Directly or indirectly connected routes':
+            #    perc = 76.0
+            if perc >= 90.0:
+                msg = "IP Route Table TCAM on {} is {}% used".format(dev, perc)
+                spark.post_to_spark(C.WEBEX_TEAM, ROOM_NAME, msg, MessageType.BAD)
+
+            cache[dev]["max"] = max
+            cache[dev]["used"] = used
+            cache[dev]["perc"] = perc
+
             break
-        line = re.sub(r"\s+", " ", line)
-        elements = line.split(" ")
-        if len(elements) < 9:
-            cached_elements = elements
-            continue
-
-        if cached_elements:
-            elements = cached_elements + elements
-            cached_elements = None
-
-        used = elements[-6]
-        max = elements[-7]
-        metric = " ".join(elements[0:-7])
-        metric = metric.strip()
-        m = re.search(r"(\d+)(/\d+)?", used)
-        used = float(m.group(1))
-        m = re.search(r"(\d+)(/\d+)?", max)
-        max = float(m.group(1))
-        perc = float(old_div(used, max)) * 100.0
-        # if metric == 'Directly or indirectly connected routes':
-        #    perc = 76.0
-        if perc >= 75.0:
-            msg = "{} on {} is {}% used".format(metric, dev, perc)
-            spark.post_to_spark(C.WEBEX_TEAM, ROOM_NAME, msg, MessageType.BAD)
-
-        cache[dev][metric] = perc
 
 
 if __name__ == "__main__":
     spark = Sparker(token=CLEUCreds.SPARK_TOKEN)
 
     cache = {}
+
+    with open(IDF_FILE, "r") as fd:
+        devices = json.load(fd)
 
     for dev in devices:
         get_results(dev, cache)
