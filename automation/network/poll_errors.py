@@ -170,6 +170,7 @@ def main():
                 ):
                     curr_state[device][ins]["suppressed"] = False
                     curr_state[device][ins]["suppressed_when"] = 0
+                    curr_state[device][ins]["count"] = 0
                 else:
                     curr_state[device][ins]["suppressed"] = prev_state[device][ins]["suppressed"]
             if_descr = vard["ifDescr"]
