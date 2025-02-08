@@ -90,7 +90,7 @@ def get_results(dev, command, cache):
     dev_obj = {dev: {}}
 
     for line in output.split("\n"):
-        if m := re.search(r"([^\s]):\s(\d+)", line):
+        if m := re.search(r"([^\s]+):\s(\d+)", line):
 
             metric = m.group(1).replace("-", "_").lower()
             value = int(m.group(2))
@@ -150,10 +150,10 @@ def get_metrics(pool):
 
 if __name__ == "__main__":
     time.sleep(random.randrange(90))
+    spark = Sparker(token=CLEUCreds.SPARK_TOKEN)
 
     pool = Pool(20)
     response = get_metrics(pool)
-    spark = Sparker(token=CLEUCreds.SPARK_TOKEN)
 
     with open(CACHE_FILE, "w") as fd:
         json.dump(response, fd, indent=2)

@@ -131,10 +131,10 @@ def get_metrics(pool):
 
 if __name__ == "__main__":
     time.sleep(random.randrange(90))
+    spark = Sparker(token=CLEUCreds.SPARK_TOKEN)
 
     pool = Pool(20)
     response = get_metrics(pool)
-    spark = Sparker(token=CLEUCreds.SPARK_TOKEN)
 
     with open(CACHE_FILE, "w") as fd:
         json.dump(response, fd, indent=2)
