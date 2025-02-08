@@ -99,6 +99,7 @@ def main():
 
     cache_file = CACHE_FILE + "_" + args.name + ".dat"
     suppress_seconds = SUPPRESS_TIMER * 60
+    now = int(calendar.timegm(time.gmtime()))
 
     if os.path.exists(cache_file):
         with open(cache_file, "r") as fd:
@@ -162,7 +163,6 @@ def main():
                 curr_state[device][ins]["count"] = prev_state[device][ins]["count"]
 
             if "suppressed" in prev_state[device][ins]:
-                now = int(calendar.timegm(time.gmtime()))
                 if (
                     "suppressed_when" in prev_state[device][ins]
                     and prev_state[device][ins]["suppressed"]
@@ -219,6 +219,7 @@ def main():
                             MessageType.GOOD,
                         )
                         curr_state[device][ins]["suppressed"] = False
+                        curr_state[device][ins]["suppressed_when"] = 0
             else:
                 curr_state[device][ins]["count"] += 1
 
