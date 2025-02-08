@@ -96,7 +96,7 @@ def get_results(dev, command, cache):
             value = int(m.group(2))
             if metric != "total_objects":
                 if dev in cache and metric in cache[dev] and cache[dev][metric] < value and value > 0:
-                    msg = f"Metric {metric} has changed from {cache[dev][metric]} to {value} on {dev}"
+                    msg = f"Metric **{metric}** has changed from {cache[dev][metric]} to {value} on **{dev}**"
                     spark.post_to_spark(C.WEBEX_TEAM, ROOM_NAME, msg, MessageType.BAD)
 
             dev_obj[dev][metric] = value
