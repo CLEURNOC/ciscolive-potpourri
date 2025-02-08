@@ -102,7 +102,7 @@ def get_results(dev):
             # if metric == 'Directly or indirectly connected routes':
             #    perc = 76.0
             if perc >= 90.0:
-                msg = "IP Route Table TCAM on {} is {}% used (max: {}, used: {})".format(dev, perc, max, used)
+                msg = f"IP Route Table TCAM on {dev} is {perc}% used (max: {max}, used: {used})"
                 spark.post_to_spark(C.WEBEX_TEAM, ROOM_NAME, msg, MessageType.BAD)
 
             cache["max"] = max
@@ -124,7 +124,7 @@ def get_metrics(pool):
     for res in results:
         retval = res.get()
         if retval:
-            response += retval
+            response.append(retval)
 
     return response
 
@@ -136,6 +136,5 @@ if __name__ == "__main__":
     response = get_metrics(pool)
     spark = Sparker(token=CLEUCreds.SPARK_TOKEN)
 
-    fd = open(CACHE_FILE, "w")
-    json.dump(response, fd, indent=2)
-    fd.close()
+    with open(CACHE_FILE, "w") as fd:
+        json.dump(response, fd, indent=2)
