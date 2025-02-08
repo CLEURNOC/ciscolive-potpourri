@@ -79,7 +79,7 @@ def refreshToken(decorated):
 
 
 @refreshToken
-def get_umbrella_activity():
+def get_umbrella_activity(api):
     try:
         response = requests.get(
             f"https://reports.api.umbrella.com/v2/organizations/{C.UMBRELLA_ORGID}/requests-by-timerange?from={START_TIME}&to=now&limit=100",
@@ -116,13 +116,13 @@ def get_metrics():
             if type(j[key]) is not dict:
                 res.append('{}{{server="{}"}} {}'.format(key, server, j[key]))
 
-    res.append(get_umbrella_activity())
+    api = UmbrellaAPI()
+    res.append(get_umbrella_activity(api))
 
     return res
 
 
 if __name__ == "__main__":
-    api = UmbrellaAPI()
     response = get_metrics()
 
     with open(CACHE_FILE_TMP, "w") as fd:
