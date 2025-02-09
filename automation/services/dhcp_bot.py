@@ -750,7 +750,7 @@ class DhcpHook(object):
         if res.returncode == 0:
             return {"password": res.stdout}
 
-        return {"password": None}
+        return {"error": res.stderr}
 
 
 def register_webhook(spark: Sparker) -> str:
