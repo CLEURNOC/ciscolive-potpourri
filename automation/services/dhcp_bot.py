@@ -752,6 +752,63 @@ class DhcpHook(object):
 
         return {"error": res.stderr}
 
+    def get_webex_device_info(self, mac: Union[str, None] = None, ip: Union[str, None] = None) -> Union[Dict[str, str], None]:
+        """
+        Retrieve Webex device details including name, product, type, MAC address, IP address, serial number, workspace name,
+        workspace temperature, and workspace humidity given a device's MAC address or IP address.
+
+        Args:
+          mac (Union[str, None], optional): MAC address of the device (at least one of mac or ip must be specified)
+          ip (Union[str, None], optional): IP address of the device (at least one of mac or ip must be specified)
+
+        Returns:
+          Union[Dict[str, str], None]: A dict of device properties or None if the device is not found
+        """
+
+        if not mac and not ip:
+            raise ValueError("One of mac or ip is required")
+
+        if mac:
+            key = "mac"
+            val = DhcpHook.normalize_mac(mac)
+        else:
+            key = "ip"
+            val = ip
+
+        dev_spark = Sparker(token=CLEUCreds.COLLAB_WEBEX_TOKEN, logit=True)
+
+        devices = dev_spark.get_webex_devices()
+        if not devices:
+            return None
+
+        ret_dev = {}
+
+        for device in devices:
+            if device[key].lower() == val.lower():
+                ret_dev["product"] = device["product"]
+                ret_dev["ip"] = device["ip"]
+                ret_dev["mac"] = device["mac"]
+                ret_dev["serial_number"] = device["serial"]
+                ret_dev["software"] = device["software"]
+                ret_dev["name"] = device["displayName"]
+                ret_dev["connection_status"] = device["connectionStatus"]
+                ret_dev["connected_interface"] = device["activeInterface"]
+                ret_dev["device_type"] = device["type"]
+
+                workspace = dev_spark.get_workspace(device["workspaceId"])
+                if workspace:
+                    ret_dev["location"] = workspace["displayName"]
+
+                    for metric, units in {"temperature": "degrees C", "humidity": "%"}.items():
+                        details = dev_spark.get_workspace_metric(device["workspaceId"], metric)
+                        if details and len(details) > 0:
+                            if "mean" in details[0]:
+                                ret_dev[f"mean_room_{metric}"] = f"{details[0]["mean"]} {units}"
+
+                return ret_dev
+
+        return None
+
 
 def register_webhook(spark: Sparker) -> str:
     """Register a callback URL for our bot."""

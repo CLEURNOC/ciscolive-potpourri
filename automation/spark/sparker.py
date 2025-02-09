@@ -583,6 +583,53 @@ class Sparker(object):
 
         return True
 
+    def get_webex_devices(self):
+        url = self.SPARK_API + "devices"
+        try:
+            items = Sparker._get_items_pages("GET", url, headers=self._headers)
+        except Exception as e:
+            msg = "Error getting devices: {}".format(getattr(e, "message", repr(e)))
+            if self._logit:
+                logging.exception(msg)
+            else:
+                print(msg)
+            return None
+
+        return items
+
+    def get_workspace(self, workspace_id):
+        url = self.SPARK_API + f"workspaces/{workspace_id}"
+        try:
+            workspaces = Sparker._get_items_pages("GET", url, headers=self._headers)
+        except Exception as e:
+            msg = "Error getting workspaces: {}".format(getattr(e, "message", repr(e)))
+            if self._logit:
+                logging.exception(msg)
+            else:
+                print(msg)
+            return None
+
+        return workspaces
+
+    def get_workspace_metric(self, workspace_id, metric="temperature"):
+        url = self.SPARK_API + "workspaceMetrics"
+        if metric not in ("soundLevel", "ambientNoise", "temperature", "humidity", "tvoc", "peopleCount"):
+            raise Exception("Unsupported metric: %s" % metric)
+
+        try:
+            details = Sparker._get_items_pages(
+                "GET", url, headers=self._headers, params={"workspaceId": workspace_id, "metricName": metric}
+            )
+        except Exception as e:
+            msg = "Error getting workspace metrics: {}".format(getattr(e, "message", repr(e)))
+            if self._logit:
+                logging.exception(msg)
+            else:
+                print(msg)
+            return None
+
+        return details
+
     def post_to_spark_with_attach(self, team, room, msg, attach, fname, ftype, mtype=MessageType.NEUTRAL):
         if not self.check_token():
             return False
