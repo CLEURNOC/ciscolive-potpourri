@@ -741,7 +741,7 @@ class DhcpHook(object):
         Returns:
           Dict[str, str]: The generated password in a dict with a password key.
         """
-        sys.argv = ["", "--num-words", words]
+        sys.argv = ["", "--num-words", str(words)]
         if add_symbol:
             sys.argv.append("--add-symbol")
 
