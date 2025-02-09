@@ -776,7 +776,7 @@ class DhcpHook(object):
         Args:
           mac (Union[str, None], optional): MAC address of the device (at least one of mac, ip, or device_name must be specified)
           ip (Union[str, None], optional): IP address of the device (at least one of mac, ip or device_name must be specified)
-          device_name (Union[str, None], optional): Name of the device
+          device_name (Union[str, None], optional): Name of the device (at least one of mac, ip or device_name must be specified)
 
         Returns:
           Union[Dict[str, str], None]: A dict of device properties or None if the device is not found
