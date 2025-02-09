@@ -803,7 +803,7 @@ class DhcpHook(object):
                         details = dev_spark.get_workspace_metric(device["workspaceId"], metric)
                         if details and len(details) > 0:
                             if "mean" in details[0]:
-                                ret_dev[f"mean_room_{metric}"] = f"{details[0]["mean"]} {units}"
+                                ret_dev[f"mean_room_{metric}"] = f"{details[0]['mean']} {units}"
 
                 return ret_dev
 
