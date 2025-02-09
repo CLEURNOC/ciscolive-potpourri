@@ -59,6 +59,8 @@ class Sparker(object):
         self._headers = {}
         if "logit" in kwargs:
             self._logit = kwargs["logit"]
+        else:
+            self._logit = False
         if "token" in kwargs:
             self._headers["authorization"] = "Bearer " + kwargs["token"]
         self._team_cache = {}

@@ -756,7 +756,7 @@ class DhcpHook(object):
     def get_webex_device_info(self, mac: Union[str, None] = None, ip: Union[str, None] = None) -> Union[Dict[str, str], None]:
         """
         Retrieve Webex device details including name, product, type, MAC address, IP address, serial number, workspace name,
-        workspace temperature, and workspace humidity given a device's MAC address or IP address.
+        workspace location, workspace temperature, and workspace humidity given a device's MAC address or IP address.
 
         Args:
           mac (Union[str, None], optional): MAC address of the device (at least one of mac or ip must be specified)
