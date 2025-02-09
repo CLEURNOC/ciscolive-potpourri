@@ -735,7 +735,8 @@ class DhcpHook(object):
         Generate a random password containing a specified number of words and an optional symbol.
 
         Args:
-          words (int, optional): The number of words to include (default: 3)
+          words (int, optional): The number of words to include (default: 3).  Number of words must
+                                 be between 3 and 6 (inclusive).
           add_symbol (bool, optional): Whether to include a symbol in the password (default: False)
 
         Returns:
