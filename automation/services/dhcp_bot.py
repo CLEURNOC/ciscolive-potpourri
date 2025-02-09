@@ -766,28 +766,38 @@ class DhcpHook(object):
 
         return int((degrees_celsius * 1.8) + 32)
 
-    def get_webex_device_info(self, mac: Union[str, None] = None, ip: Union[str, None] = None) -> Union[Dict[str, str], None]:
+    def get_webex_device_info(
+        self, mac: Union[str, None] = None, ip: Union[str, None] = None, device_name: Union[str, None] = None
+    ) -> Union[Dict[str, str], None]:
         """
         Retrieve Webex device details including name, product, type, MAC address, IP address, serial number, workspace name,
         workspace location, workspace temperature, and workspace humidity given a device's MAC address or IP address.
 
         Args:
-          mac (Union[str, None], optional): MAC address of the device (at least one of mac or ip must be specified)
-          ip (Union[str, None], optional): IP address of the device (at least one of mac or ip must be specified)
+          mac (Union[str, None], optional): MAC address of the device (at least one of mac, ip, or device_name must be specified)
+          ip (Union[str, None], optional): IP address of the device (at least one of mac, ip or device_name must be specified)
+          device_name (Union[str, None], optional): Name of the device
 
         Returns:
           Union[Dict[str, str], None]: A dict of device properties or None if the device is not found
         """
 
-        if not mac and not ip:
-            raise ValueError("One of mac or ip is required")
+        if not mac and not ip and not device_name:
+            raise ValueError("One of mac, ip, or device_name is required")
 
         if mac:
             key = "mac"
             val = DhcpHook.normalize_mac(mac)
-        else:
+        elif ip:
             key = "ip"
             val = ip
+        else:
+            if device_name.lower().startswith("sep"):
+                val = DhcpHook.normalize_mac(device_name.lower().replace("sep", ""))
+                key = "mac"
+            else:
+                key = "displayName"
+                val = device_name
 
         dev_spark = Sparker(token=CLEUCreds.COLLAB_WEBEX_TOKEN, logit=True)
 
@@ -860,7 +870,8 @@ def handle_message(msg: str, person: Dict[str, str]) -> None:
             "If you choose to call a function ONLY respond in the JSON format:"
             '{"name": function name, "parameters": dictionary of argument names and their values}. Do not use variables.  If looking for real time'
             "information use relevant functions before falling back to brave_search.  Function calls MUST follow the specified format.  Required parameters MUST always be specified in the response."
-            "Put the entire function call reply on one line.  Call all possible functions given the available arguments.",
+            "Put the entire function call reply on one line.  Call all possible functions given the available arguments."
+            "Reply with ALL data that each tool responds with.",
         },
         {"role": "user", "content": f"Hi! My name is {person['nickName']} and my username is {person['username']}."},
         {"role": "user", "content": msg},
