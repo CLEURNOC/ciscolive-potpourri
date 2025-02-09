@@ -56,6 +56,7 @@ class Sparker(object):
     MAX_MSG_LEN = 7435
 
     def __init__(self, **kwargs):
+        self._headers = {}
         if "logit" in kwargs:
             self._logit = kwargs["logit"]
         if "token" in kwargs:
