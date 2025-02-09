@@ -31,10 +31,12 @@ import logging
 from sparker import Sparker, MessageType  # type: ignore
 from typing import Dict, List, Union, Tuple
 import re
+import sys
 from hashlib import sha1
 import hmac
 import requests
 import xmltodict
+from hankify_pw import hanky_pass
 from collections import OrderedDict
 from requests.packages.urllib3.exceptions import InsecureRequestWarning  # type: ignore
 
@@ -727,6 +729,23 @@ class DhcpHook(object):
                 res["connected_vlan"] = vlan.group(1)
 
         return res
+
+    def generate_password(self, words: int = 3, add_symbol: bool = False) -> Dict[str, str]:
+        """
+        Generate a random password containing a specified number of words and an optional symbol.
+
+        Args:
+          words (int, optional): The number of words to include (default: 3)
+          add_symbol (bool, optional): Whether to include a symbol in the password (default: False)
+
+        Returns:
+          Dict[str, str]: The generated password in a dict with a password key.
+        """
+        sys.argv = ["", "--num-words", words]
+        if add_symbol:
+            sys.argv.append("--add-symbol")
+
+        return {"password": hanky_pass()}
 
 
 def register_webhook(spark: Sparker) -> str:
