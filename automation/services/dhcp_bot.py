@@ -753,6 +753,19 @@ class DhcpHook(object):
 
         return {"error": res.stderr}
 
+    def convert_celsius_to_fahrenheit(self, degrees_celsius: int) -> int:
+        """
+        Convert temperature in degrees Celsius to degree Fahrenheit.
+
+        Args:
+          degrees_celsius (int): Temperature in degrees Celsius.
+
+        Returns:
+          int: Temperature in degrees Fahrenheit
+        """
+
+        return int((degrees_celsius * 1.8) + 32)
+
     def get_webex_device_info(self, mac: Union[str, None] = None, ip: Union[str, None] = None) -> Union[Dict[str, str], None]:
         """
         Retrieve Webex device details including name, product, type, MAC address, IP address, serial number, workspace name,
@@ -804,7 +817,7 @@ class DhcpHook(object):
                         details = dev_spark.get_workspace_metric(device["workspaceId"], metric)
                         if details and len(details) > 0:
                             if "mean" in details[0]:
-                                ret_dev[f"mean_room_{metric}"] = f"{details[0]['mean']} {units}"
+                                ret_dev[f"room_{metric}"] = f"{int(details[0]['mean'])} {units}"
 
                 return ret_dev
 
