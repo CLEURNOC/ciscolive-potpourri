@@ -31,12 +31,12 @@ import logging
 from sparker import Sparker, MessageType  # type: ignore
 from typing import Dict, List, Union, Tuple
 import re
-import sys
+from subprocess import run
+from shlex import split
 from hashlib import sha1
 import hmac
 import requests
 import xmltodict
-from hankify_pw import hanky_pass
 from collections import OrderedDict
 from requests.packages.urllib3.exceptions import InsecureRequestWarning  # type: ignore
 
@@ -741,11 +741,15 @@ class DhcpHook(object):
         Returns:
           Dict[str, str]: The generated password in a dict with a password key.
         """
-        sys.argv = ["", "--num-words", str(words)]
+        cmd = split(f"hankify-pw --num-words {words}")
         if add_symbol:
-            sys.argv.append("--add-symbol")
+            cmd.append("--add-symbol")
 
-        return {"password": hanky_pass()}
+        res = run(cmd, capture_output=True, text=True)
+        if res.returncode == 0:
+            return {"password": res.stdout}
+
+        return {"password": None}
 
 
 def register_webhook(spark: Sparker) -> str:
