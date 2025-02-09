@@ -55,10 +55,6 @@ class Sparker(object):
     MAX_CARD_LEN = 22737
     MAX_MSG_LEN = 7435
 
-    _headers = {"authorization": None, "content-type": "application/json"}
-
-    _logit = False
-
     def __init__(self, **kwargs):
         if "logit" in kwargs:
             self._logit = kwargs["logit"]
