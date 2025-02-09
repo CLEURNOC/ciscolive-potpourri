@@ -597,7 +597,8 @@ class Sparker(object):
     def get_workspace(self, workspace_id):
         url = self.SPARK_API + f"workspaces/{workspace_id}"
         try:
-            workspace = Sparker._request_with_retry("GET", url, headers=self._headers)
+            response = Sparker._request_with_retry("GET", url, headers=self._headers)
+            response.raise_for_status()
         except Exception as e:
             msg = "Error getting workspaces: {}".format(getattr(e, "message", repr(e)))
             if self._logit:
@@ -606,7 +607,7 @@ class Sparker(object):
                 print(msg)
             return None
 
-        return workspace
+        return response.json()
 
     def get_workspace_metric(self, workspace_id, metric="temperature"):
         url = self.SPARK_API + "workspaceMetrics"
