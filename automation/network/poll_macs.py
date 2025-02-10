@@ -68,6 +68,11 @@ commands = {
         "pattern": r"Total number of translations: (\d+)",
         "metric": "natTranslations",
     },
+    "nat64Trans": {
+        "command": "show nat64 statistics global",
+        "pattern": r"Total active translations: (\d+)",
+        "metric": "nat64Translation",
+    },
     # "umbrella1Trans": {
     #     "command": "show platform hardware qfp active feature nat datapath limit",
     #     "pattern": r"limit_type 5 limit_id 0xa64fd06.*curr_count (\d+)",
@@ -196,6 +201,7 @@ devices = [
         "range": {"min": 1, "max": 2},
         "commands": [
             "qfpUtil",
+            "nat64Trans",
         ],
     },
 ]
