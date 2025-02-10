@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017-2023  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2025  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -23,7 +23,6 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-from builtins import object
 import requests
 from requests_toolbelt import MultipartEncoder
 from io import BytesIO
@@ -56,7 +55,7 @@ class Sparker(object):
     MAX_MSG_LEN = 7435
 
     def __init__(self, **kwargs):
-        self._headers = {}
+        self._headers = {"authorization": None}
         if "logit" in kwargs:
             self._logit = kwargs["logit"]
         else:
@@ -123,15 +122,20 @@ class Sparker(object):
 
         return result
 
-    def set_token(self, token):
+    @property
+    def token(self):
+        return self._headers["authorization"]
+
+    @token.setter
+    def token(self, token):
         self._headers["authorization"] = "Bearer " + token
 
     def check_token(self):
-        if self._headers["authorization"] is None:
+        if not self.token:
             if self._logit:
-                logging.error("Spark token is not set!")
+                logging.error("Webex token is not set!")
             else:
-                print("Spark token is not set!")
+                print("Webex token is not set!")
 
             return False
 
