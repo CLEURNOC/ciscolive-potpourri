@@ -71,7 +71,7 @@ commands = {
     "nat64Trans": {
         "command": "show nat64 statistics global",
         "pattern": r"Total active translations: (\d+)",
-        "metric": "nat64Translation",
+        "metric": "nat64Translations",
     },
     # "umbrella1Trans": {
     #     "command": "show platform hardware qfp active feature nat datapath limit",
