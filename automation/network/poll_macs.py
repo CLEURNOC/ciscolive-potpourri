@@ -35,8 +35,11 @@ import json
 import paramiko
 from multiprocessing import Pool
 import traceback
+from sparker import Sparker, MessageType  # type: ignore
 import CLEUCreds  # type: ignore
+from cleu.config import Config as C  # type: ignore
 
+WEBEX_ROOM = "Core Alarms"
 
 CACHE_FILE = "/home/jclarke/mac_counts.dat"
 CACHE_FILE_TMP = CACHE_FILE + ".tmp"
@@ -72,6 +75,7 @@ commands = {
         "command": "show nat64 statistics global",
         "pattern": r"Total active translations: (\d+)",
         "metric": "nat64Translations",
+        "threshold": "> 0",
     },
     # "umbrella1Trans": {
     #     "command": "show platform hardware qfp active feature nat datapath limit",
@@ -264,11 +268,35 @@ def get_results(dev):
                 if m:
                     if metric:
                         response.append('{}{{idf="{}"}} {}'.format(metric, dev["device"], m.group(1)))
+                        if "threshold" in commands[command] and (
+                            commands[command]["threshold"].startswith("==")
+                            or commands[command]["threshold"].startswith("<")
+                            or commands[command]["threshold"].startswith(">")
+                        ):
+                            if eval(f"{m.group(1)} {commands[command]['threshold']}"):
+                                spark.post_to_spark(
+                                    C.WEBEX_TEAM,
+                                    WEBEX_ROOM,
+                                    f"Metric {metric} has violated threshold {commands[command]['threshold']}, currently {m.group(1)}",
+                                    MessageType.WARNING,
+                                )
                     else:
                         metrics = commands[command]["metrics"]
                         i = 1
                         for metric in metrics:
                             response.append('{}{{idf="{}"}} {}'.format(metric, dev["device"], m.group(i)))
+                            if "thresholds" in commands[command] and (
+                                commands[command]["thresholds"][i].startswith("==")
+                                or commands[command]["threshold"][i].startswith("<")
+                                or commands[command]["threshold"][i].startswith(">")
+                            ):
+                                if eval(f"{m.group(i)} {commands[command]['thresholds'][i]}"):
+                                    spark.post_to_spark(
+                                        C.WEBEX_TEAM,
+                                        WEBEX_ROOM,
+                                        f"Metric {metric} has violated threshold {commands[command]['thresholds'][i]}, currently {m.group(i)}",
+                                        MessageType.WARNING,
+                                    )
                             i += 1
                 else:
                     # sys.stderr.write(
@@ -337,6 +365,7 @@ def get_metrics(pool):
 if __name__ == "__main__":
     # Add some jitter.
     time.sleep(random.randrange(90))
+    spark = Sparker(token=CLEUCreds.SPARK_TOKEN)
 
     pool = Pool(20)
     response = get_metrics(pool)
