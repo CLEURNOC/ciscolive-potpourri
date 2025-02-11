@@ -5,6 +5,7 @@ from subprocess import Popen, PIPE, DEVNULL
 from shlex import split
 from influxdb import InfluxDBClient
 import datetime
+import traceback
 from cleu.config import Config as C  # type: ignore
 import CLEUCreds  # type: ignore
 
@@ -12,7 +13,11 @@ import CLEUCreds  # type: ignore
 def print_client_mac(pkt):
     global client
 
-    print(f"Got packet from {pkt.dhcp.hw.mac_addr}")
+    try:
+        print(f"Got packet from {pkt.dhcp.hw.mac_addr}")
+    except Exception:
+        traceback.print_exec()
+        return
 
     is_v6mostly = False
 
