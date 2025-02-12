@@ -76,6 +76,12 @@ commands = {
         "pattern": r"Total active translations: (\d+)",
         "metric": "nat64Translations",
     },
+    "nat64Exhaustions": {
+        "command": "show nat64 statistics mapping dynamic pool nat64-pool",
+        "pattern": r"address exhaustion packet count (\d+)",
+        "metric": "nat64Exhaustions",
+        "threshold": "> 0",
+    },
     # "umbrella1Trans": {
     #     "command": "show platform hardware qfp active feature nat datapath limit",
     #     "pattern": r"limit_type 5 limit_id 0xa64fd06.*curr_count (\d+)",
@@ -286,8 +292,8 @@ def get_results(dev):
                             response.append('{}{{idf="{}"}} {}'.format(metric, dev["device"], m.group(i)))
                             if "thresholds" in commands[command] and (
                                 commands[command]["thresholds"][i].startswith("==")
-                                or commands[command]["threshold"][i].startswith("<")
-                                or commands[command]["threshold"][i].startswith(">")
+                                or commands[command]["thresholds"][i].startswith("<")
+                                or commands[command]["thresholds"][i].startswith(">")
                             ):
                                 if eval(f"{m.group(i)} {commands[command]['thresholds'][i]}"):
                                     spark.post_to_spark(
