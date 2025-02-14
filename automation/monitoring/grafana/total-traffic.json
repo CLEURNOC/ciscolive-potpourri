@@ -1,0 +1,1085 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_PROMETHEUS",
+      "label": "Prometheus",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "prometheus",
+      "pluginName": "Prometheus"
+    },
+    {
+      "name": "VAR_ZEROPOINT",
+      "type": "constant",
+      "label": "ZeroPoint",
+      "value": "0.0",
+      "description": ""
+    },
+    {
+      "name": "VAR_IPV4ZEROPOINT",
+      "type": "constant",
+      "label": "IPv4ZeroPoint",
+      "value": "0.0",
+      "description": ""
+    },
+    {
+      "name": "VAR_IPV6ZEROPOINT",
+      "type": "constant",
+      "label": "IPv6ZeroPoint",
+      "value": "0.0",
+      "description": ""
+    }
+  ],
+  "__elements": {},
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "11.4.0"
+    },
+    {
+      "type": "datasource",
+      "id": "prometheus",
+      "name": "Prometheus",
+      "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "stat",
+      "name": "Stat",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "timeseries",
+      "name": "Time series",
+      "version": ""
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 2,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "unit": "decbytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 5,
+        "x": 0,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.4.0",
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "sum(ipIfStatsHCInOctets{instance=~\"core[1-2]-(edge|nat64).ciscolive.network\",ifAlias=\"RAI BGP PEER LINK\",ipIfStatsIPVersion=\"ipv4\"} + ipIfStatsHCOutOctets{instance=~\"core[1-2]-(edge|nat64).ciscolive.network\",ifAlias=\"RAI BGP PEER LINK\",ipIfStatsIPVersion=\"ipv4\"})",
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          }
+        }
+      ],
+      "title": "Total IPv4 Volume",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 2,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "super-light-yellow",
+                "value": null
+              }
+            ]
+          },
+          "unit": "decbytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 6,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "text": {
+          "titleSize": 50,
+          "valueSize": 140
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.4.0",
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "sum(ipIfStatsHCInOctets{instance=~\"core[1-2]-(edge|nat64).ciscolive.network\",ifAlias=\"RAI BGP PEER LINK\"}) + sum(ipIfStatsHCOutOctets{instance=~\"core[1-2]-(edge|nat64).ciscolive.network\",ifAlias=\"RAI BGP PEER LINK\"})",
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          }
+        }
+      ],
+      "title": "Total Internet Volume since Core Power-on",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 2,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "decbytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 5,
+        "x": 18,
+        "y": 0
+      },
+      "id": 5,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.4.0",
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "sum(ipIfStatsHCInOctets{instance=~\"core[1-2]-(edge|nat64).ciscolive.network\",ifAlias=\"RAI BGP PEER LINK\",ipIfStatsIPVersion=\"ipv6\"} + ipIfStatsHCOutOctets{instance=~\"core[1-2]-(edge|nat64).ciscolive.network\",ifAlias=\"RAI BGP PEER LINK\",ipIfStatsIPVersion=\"ipv6\"})",
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          }
+        }
+      ],
+      "title": "Total IPv6 Volume",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#52b9c8",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 5,
+        "x": 0,
+        "y": 3
+      },
+      "id": 10,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.4.0",
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "sum(ipIfStatsHCInOctets{instance=~\"core[1-2]-(edge|nat64).ciscolive.network\",ifAlias!=\"RAI BGP PEER LINK\",ipIfStatsIPVersion=\"ipv6\"} + ipIfStatsHCOutOctets{instance=~\"core[1-2]-(edge|nat64).ciscolive.network\",ifAlias!=\"RAI BGP PEER LINK\",ipIfStatsIPVersion=\"ipv6\"}) / \n(sum(ipIfStatsHCInOctets{instance=~\"core[1-2]-(edge|nat64).ciscolive.network\",ifAlias!=\"RAI BGP PEER LINK\",ipIfStatsIPVersion=\"ipv4\"} + ipIfStatsHCOutOctets{instance=~\"core[1-2]-(edge|nat64).ciscolive.network\",ifAlias!=\"RAI BGP PEER LINK\",ipIfStatsIPVersion=\"ipv4\"}) + sum(ipIfStatsHCInOctets{instance=~\"core[1-2]-(edge|nat64).ciscolive.network\",ifAlias!=\"RAI BGP PEER LINK\",ipIfStatsIPVersion=\"ipv6\"} + ipIfStatsHCOutOctets{instance=~\"core[1-2]-(edge|nat64).ciscolive.network\",ifAlias!=\"RAI BGP PEER LINK\",ipIfStatsIPVersion=\"ipv6\"})) * 100",
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          }
+        }
+      ],
+      "title": "Percent of Total Intra-Network Traffic That Is IPv6",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 5,
+        "x": 18,
+        "y": 3
+      },
+      "id": 9,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.4.0",
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "sum(ipIfStatsHCInOctets{instance=~\"core[1-2]-(edge|nat64).ciscolive.network\",ifAlias=\"RAI BGP PEER LINK\",ipIfStatsIPVersion=\"ipv6\"} + ipIfStatsHCOutOctets{instance=~\"core[1-2]-(edge|nat64).ciscolive.network\",ifAlias=\"RAI BGP PEER LINK\",ipIfStatsIPVersion=\"ipv6\"}) / \n(sum(ipIfStatsHCInOctets{instance=~\"core[1-2]-(edge|nat64).ciscolive.network\",ifAlias=\"RAI BGP PEER LINK\",ipIfStatsIPVersion=\"ipv4\"} + ipIfStatsHCOutOctets{instance=~\"core[1-2]-(edge|nat64).ciscolive.network\",ifAlias=\"RAI BGP PEER LINK\",ipIfStatsIPVersion=\"ipv4\"}) + sum(ipIfStatsHCInOctets{instance=~\"core[1-2]-(edge|nat64).ciscolive.network\",ifAlias=\"RAI BGP PEER LINK\",ipIfStatsIPVersion=\"ipv6\"} + ipIfStatsHCOutOctets{instance=~\"core[1-2]-(edge|nat64).ciscolive.network\",ifAlias=\"RAI BGP PEER LINK\",ipIfStatsIPVersion=\"ipv6\"})) * 100",
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          }
+        }
+      ],
+      "title": "Percent of Total Internet Traffic That Is IPv6",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": true,
+            "axisColorMode": "text",
+            "axisGridShow": true,
+            "axisLabel": "",
+            "axisPlacement": "right",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 25,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "bps"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "B"
+            },
+            "properties": [
+              {
+                "id": "custom.transform",
+                "value": "negative-Y"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "D"
+            },
+            "properties": [
+              {
+                "id": "custom.transform",
+                "value": "negative-Y"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 12,
+        "x": 0,
+        "y": 6
+      },
+      "id": 6,
+      "interval": "2m",
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "11.4.0",
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "sum (irate(ipIfStatsHCInOctets{instance=~\"core[12]-edge.ciscolive.network\",ifAlias=\"RAI BGP PEER LINK\",ipIfStatsIPVersion=\"ipv4\"}[2m])*8)",
+          "legendFormat": "Native IPv4 Download (not NAT64)",
+          "range": true,
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          }
+        },
+        {
+          "editorMode": "code",
+          "expr": "sum (irate(ipIfStatsHCOutOctets{instance=~\"core[12]-edge.ciscolive.network\",ifAlias=\"RAI BGP PEER LINK\",ipIfStatsIPVersion=\"ipv4\"}[2m])*8)",
+          "hide": false,
+          "legendFormat": "Native IPv4 Upload (not NAT64)",
+          "range": true,
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          }
+        },
+        {
+          "editorMode": "code",
+          "expr": "sum (irate(ipIfStatsHCInOctets{instance=~\"core[12]-(edge|nat64).ciscolive.network\",ifAlias=\"RAI BGP PEER LINK\",ipIfStatsIPVersion=\"ipv6\"}[2m])*8)",
+          "hide": false,
+          "legendFormat": "{{instance}} IPv6 Download",
+          "range": true,
+          "refId": "C",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          }
+        },
+        {
+          "editorMode": "code",
+          "expr": "sum (irate(ipIfStatsHCOutOctets{instance=~\"core[12]-(edge|nat64).ciscolive.network\",ifAlias=\"RAI BGP PEER LINK\",ipIfStatsIPVersion=\"ipv6\"}[2m])*8)",
+          "hide": false,
+          "legendFormat": "{{instance}} IPv6 Upload",
+          "range": true,
+          "refId": "D",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          }
+        }
+      ],
+      "title": "Total Internet Rate of Change over Time",
+      "transparent": true,
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisGridShow": true,
+            "axisLabel": "",
+            "axisPlacement": "right",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "decbytes"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/Upload/"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 12,
+        "x": 12,
+        "y": 6
+      },
+      "id": 3,
+      "interval": "2m",
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.4.0",
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "sum(avg_over_time(ipIfStatsHCInOctets{instance=~\"core[12]-(edge|nat64).ciscolive.network\",ifAlias=\"RAI BGP PEER LINK\"}[2m]))",
+          "legendFormat": "Download",
+          "range": true,
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          }
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "sum(avg_over_time(ipIfStatsHCOutOctets{instance=~\"core[12]-(edge|nat64).ciscolive.network\",ifAlias=\"RAI BGP PEER LINK\"}[2m]))",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "Upload",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Total Internet Volume Growth over Time",
+      "transparent": true,
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": true,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "bps"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/.*Upload/"
+            },
+            "properties": [
+              {
+                "id": "custom.transform",
+                "value": "negative-Y"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 13,
+        "w": 12,
+        "x": 0,
+        "y": 18
+      },
+      "id": 7,
+      "interval": "1m",
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.4.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "disableTextWrap": false,
+          "editorMode": "code",
+          "expr": "sum(irate(ipIfStatsHCInOctets{ipIfStatsIPVersion=\"ipv4\", instance=~\"core[12]-nat64.ciscolive.network\",ifAlias=\"RAI BGP PEER LINK\"}[2m])*8)",
+          "fullMetaSearch": false,
+          "includeNullMetadata": true,
+          "instant": false,
+          "legendFormat": "NAT64 Download",
+          "range": true,
+          "refId": "A",
+          "useBackend": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "disableTextWrap": false,
+          "editorMode": "code",
+          "expr": "sum(irate(ipIfStatsHCOutOctets{ipIfStatsIPVersion=\"ipv4\", instance=~\"core[12]-nat64.ciscolive.network\",ifAlias=\"RAI BGP PEER LINK\"}[2m])*8)",
+          "fullMetaSearch": false,
+          "hide": false,
+          "includeNullMetadata": true,
+          "instant": false,
+          "legendFormat": "NAT64 Upload",
+          "range": true,
+          "refId": "B",
+          "useBackend": false
+        }
+      ],
+      "title": "NAT64 Traffic to IPv4-Only Hosts ",
+      "transparent": true,
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": true,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "bps"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/.*Upload/"
+            },
+            "properties": [
+              {
+                "id": "custom.transform",
+                "value": "negative-Y"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 13,
+        "w": 12,
+        "x": 12,
+        "y": 18
+      },
+      "id": 8,
+      "interval": "1m",
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.4.0",
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "sum (irate(ipIfStatsHCInOctets{instance=~\"core[12]-(edge|nat64).ciscolive.network\",ifAlias!=\"RAI BGP PEER LINK\",ipIfStatsIPVersion=\"ipv4\"}[2m])*8)",
+          "legendFormat": "Intra-network IPv4 Upload",
+          "range": true,
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          }
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "sum (irate(ipIfStatsHCOutOctets{instance=~\"core[12]-(edge|nat64).ciscolive.network\",ifAlias!=\"RAI BGP PEER LINK\",ipIfStatsIPVersion=\"ipv4\"}[2m])*8)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "Intra-network IPv4 Download",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "sum (irate(ipIfStatsHCInOctets{instance=~\"core[12]-(edge|nat64).ciscolive.network\",ifAlias!=\"RAI BGP PEER LINK\",ipIfStatsIPVersion=\"ipv6\"}[2m])*8)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "Intra-network IPv6 Upload",
+          "range": true,
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "sum (irate(ipIfStatsHCOutOctets{instance=~\"core[12]-(edge|nat64).ciscolive.network\",ifAlias!=\"RAI BGP PEER LINK\",ipIfStatsIPVersion=\"ipv6\"}[2m])*8)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "Intra-network IPv6 Download",
+          "range": true,
+          "refId": "D"
+        }
+      ],
+      "title": "Intra-Network Traffic Rate Over Time",
+      "transparent": true,
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 40,
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "description": "Zero point for starting internet data values - Eg. to reset from 812G prep, set the value to 812000000000.0",
+        "hide": 2,
+        "name": "ZeroPoint",
+        "query": "${VAR_ZEROPOINT}",
+        "skipUrlSync": true,
+        "type": "constant",
+        "current": {
+          "value": "${VAR_ZEROPOINT}",
+          "text": "${VAR_ZEROPOINT}",
+          "selected": false
+        },
+        "options": [
+          {
+            "value": "${VAR_ZEROPOINT}",
+            "text": "${VAR_ZEROPOINT}",
+            "selected": false
+          }
+        ]
+      },
+      {
+        "description": "Zero point for starting internet data values - Eg. to reset from 812G prep, set the value to 812000000000.0",
+        "hide": 2,
+        "name": "IPv4ZeroPoint",
+        "query": "${VAR_IPV4ZEROPOINT}",
+        "skipUrlSync": true,
+        "type": "constant",
+        "current": {
+          "value": "${VAR_IPV4ZEROPOINT}",
+          "text": "${VAR_IPV4ZEROPOINT}",
+          "selected": false
+        },
+        "options": [
+          {
+            "value": "${VAR_IPV4ZEROPOINT}",
+            "text": "${VAR_IPV4ZEROPOINT}",
+            "selected": false
+          }
+        ]
+      },
+      {
+        "description": "Zero point for starting internet data values - Eg. to reset from 812G prep, set the value to 812000000000.0",
+        "hide": 2,
+        "name": "IPv6ZeroPoint",
+        "query": "${VAR_IPV6ZEROPOINT}",
+        "skipUrlSync": true,
+        "type": "constant",
+        "current": {
+          "value": "${VAR_IPV6ZEROPOINT}",
+          "text": "${VAR_IPV6ZEROPOINT}",
+          "selected": false
+        },
+        "options": [
+          {
+            "value": "${VAR_IPV6ZEROPOINT}",
+            "text": "${VAR_IPV6ZEROPOINT}",
+            "selected": false
+          }
+        ]
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "Europe/Amsterdam",
+  "title": "Internet Stats",
+  "uid": "mnDZoRrnk",
+  "version": 41,
+  "weekStart": ""
+}

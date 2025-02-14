@@ -1,761 +1,1615 @@
 {
+  "__inputs": [
+    {
+      "name": "DS_PROMETHEUS",
+      "label": "Prometheus",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "prometheus",
+      "pluginName": "Prometheus"
+    }
+  ],
+  "__elements": {},
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "11.4.0"
+    },
+    {
+      "type": "datasource",
+      "id": "prometheus",
+      "name": "Prometheus",
+      "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "timeseries",
+      "name": "Time series",
+      "version": ""
+    }
+  ],
   "annotations": {
     "list": [
       {
         "builtIn": 1,
-        "datasource": "-- Grafana --",
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
         "type": "dashboard"
       }
     ]
   },
   "editable": true,
-  "gnetId": null,
+  "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 19,
+  "id": null,
   "links": [],
   "panels": [
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "Prometheus",
-      "fill": 1,
-      "fillGradient": 0,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": true,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "bps"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/ OUT$/"
+            },
+            "properties": [
+              {
+                "id": "custom.transform",
+                "value": "negative-Y"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byValue",
+              "options": {
+                "op": "gte",
+                "reducer": "allIsZero",
+                "value": 0
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": true
+                }
+              }
+            ]
+          }
+        ]
+      },
       "gridPos": {
         "h": 8,
         "w": 12,
         "x": 0,
         "y": 0
       },
-      "hiddenSeries": false,
-      "id": 1,
-      "legend": {
-        "avg": true,
-        "current": true,
-        "hideZero": true,
-        "max": true,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 1,
-      "links": [],
-      "nullPointMode": "null",
+      "id": 8,
+      "interval": "2m",
       "options": {
-        "dataLinks": []
+        "legend": {
+          "calcs": [
+            "mean",
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
-      "percentage": false,
-      "pointradius": 5,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
+      "pluginVersion": "11.4.0",
       "targets": [
         {
-          "expr": "delta(ifHCInOctets{ifDescr=~\"TenGig[^.]+\",instance=\"core1-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "irate(ifHCInOctets{ifDescr=~\"(Ten|Forty|Hundred)Gig[^.]+\",ifAlias!~\"DISABLED-PORT|SPAN-DESTINATION-PORT\",instance=\"core1-edge.ciscolive.network\",job=\"snmp\"}[2m])*8",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 2,
           "legendFormat": "{{ifName}} : {{ifAlias}} IN",
+          "range": true,
           "refId": "A"
         },
         {
-          "expr": "delta(ifHCOutOctets{ifDescr=~\"TenGig[^.]+\",instance=\"core1-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "irate(ifHCOutOctets{ifDescr=~\"(Ten|Forty|Hundred)Gig[^.]+\",ifAlias!~\"DISABLED-PORT|SPAN-DESTINATION-PORT\",instance=\"core1-edge.ciscolive.network\",job=\"snmp\"}[2m])*8",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "{{ifName}} : {{ifAlias}} OUT",
+          "range": true,
           "refId": "C"
         }
       ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "CORE1_EDGE_Interfaces",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "bps",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": false
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
+      "title": "CORE1-EDGE_Interfaces",
+      "transparent": true,
+      "type": "timeseries"
     },
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": null,
-      "fill": 1,
-      "fillGradient": 0,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": true,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "bps"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/ OUT$/"
+            },
+            "properties": [
+              {
+                "id": "custom.transform",
+                "value": "negative-Y"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byValue",
+              "options": {
+                "op": "gte",
+                "reducer": "allIsZero",
+                "value": 0
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": true
+                }
+              }
+            ]
+          }
+        ]
+      },
       "gridPos": {
         "h": 8,
         "w": 12,
         "x": 12,
         "y": 0
       },
-      "hiddenSeries": false,
-      "id": 3,
-      "legend": {
-        "avg": true,
-        "current": true,
-        "hideZero": true,
-        "max": true,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 1,
-      "links": [],
-      "nullPointMode": "null",
+      "id": 9,
+      "interval": "2m",
       "options": {
-        "dataLinks": []
+        "legend": {
+          "calcs": [
+            "mean",
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
-      "percentage": false,
-      "pointradius": 5,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
+      "pluginVersion": "11.4.0",
       "targets": [
         {
-          "expr": "delta(ifHCInOctets{ifDescr=~\"TenGig[^.]+\",instance=\"core2-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "irate(ifHCInOctets{ifDescr=~\"(Ten|Forty|Hundred)Gig[^.]+\",ifAlias!~\"DISABLED-PORT|SPAN-DESTINATION-PORT\",instance=\"core2-edge.ciscolive.network\",job=\"snmp\"}[2m])*8",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 2,
           "legendFormat": "{{ifName}} : {{ifAlias}} IN",
+          "range": true,
           "refId": "A"
         },
         {
-          "expr": "delta(ifHCOutOctets{ifDescr=~\"TenGig[^.]+\",instance=\"core2-edge.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "irate(ifHCOutOctets{ifDescr=~\"(Ten|Forty|Hundred)Gig[^.]+\",ifAlias!~\"DISABLED-PORT|SPAN-DESTINATION-PORT\",instance=\"core2-edge.ciscolive.network\",job=\"snmp\"}[2m])*8",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "{{ifName}} : {{ifAlias}} OUT",
+          "range": true,
           "refId": "C"
         }
       ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "CORE2_EDGE_Interfaces",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "bps",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
+      "title": "CORE2-EDGE_Interfaces",
+      "transparent": true,
+      "type": "timeseries"
     },
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "Prometheus",
-      "fill": 1,
-      "fillGradient": 0,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": true,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "bps"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/ OUT$/"
+            },
+            "properties": [
+              {
+                "id": "custom.transform",
+                "value": "negative-Y"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byValue",
+              "options": {
+                "op": "gte",
+                "reducer": "allIsZero",
+                "value": 0
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": true
+                }
+              }
+            ]
+          }
+        ]
+      },
       "gridPos": {
         "h": 7,
         "w": 12,
         "x": 0,
         "y": 8
       },
-      "hiddenSeries": false,
       "id": 2,
-      "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
-      },
-      "lines": true,
-      "linewidth": 1,
-      "links": [],
-      "nullPointMode": "null",
+      "interval": "2m",
       "options": {
-        "dataLinks": []
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
-      "percentage": false,
-      "pointradius": 5,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
+      "pluginVersion": "11.4.0",
       "targets": [
         {
-          "expr": "delta(ifHCInOctets{ifDescr=~\"(Twenty|Hundred)Gig[^.]+\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "irate(ifHCInOctets{ifDescr=~\"(Twenty|Hundred|FourHundred)Gig[^0-9]+[0-9]+/[0-9]+/[0-9]+\",ifAlias!~\"DISABLED-PORT|SPAN-DESTINATION-PORT\",instance=\"core1-core.ciscolive.network\",job=\"snmp\"}[2m])*8",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 2,
           "legendFormat": "{{ifName}} : {{ifAlias}} IN",
+          "range": true,
           "refId": "A"
         },
         {
-          "expr": "delta(ifHCOutOctets{ifDescr=~\"(Twenty|Hundred)Gig[^.]+\",instance=\"core1-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "irate(ifHCOutOctets{ifDescr=~\"(Twenty|Hundred|FourHundred)Gig[^0-9]+[0-9]+/[0-9]+/[0-9]+\",ifAlias!~\"DISABLED-PORT|SPAN-DESTINATION-PORT\",instance=\"core1-core.ciscolive.network\",job=\"snmp\"}[2m])*8",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "{{ifName}} : {{ifAlias}} OUT",
+          "range": true,
           "refId": "C"
         }
       ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "CORE1-L3C",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "bps",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
+      "title": "CORE1-CORE",
+      "transparent": true,
+      "type": "timeseries"
     },
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "Prometheus",
-      "fill": 1,
-      "fillGradient": 0,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": true,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "bps"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/ OUT$/"
+            },
+            "properties": [
+              {
+                "id": "custom.transform",
+                "value": "negative-Y"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byValue",
+              "options": {
+                "op": "gte",
+                "reducer": "allIsZero",
+                "value": 0
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": true
+                }
+              }
+            ]
+          }
+        ]
+      },
       "gridPos": {
         "h": 7,
         "w": 12,
         "x": 12,
         "y": 8
       },
-      "hiddenSeries": false,
       "id": 4,
-      "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
-      },
-      "lines": true,
-      "linewidth": 1,
-      "links": [],
-      "nullPointMode": "null",
+      "interval": "2m",
       "options": {
-        "dataLinks": []
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
-      "percentage": false,
-      "pointradius": 5,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
+      "pluginVersion": "11.4.0",
       "targets": [
         {
-          "expr": "delta(ifHCInOctets{ifDescr=~\"(Twenty|Hundred)Gig[^.]+\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "irate(ifHCInOctets{ifDescr=~\"(Twenty|Hundred|FourHundred)Gig[^0-9]+[0-9]+/[0-9]+/[0-9]+\",ifAlias!~\"DISABLED-PORT|SPAN-DESTINATION-PORT\",instance=\"core2-core.ciscolive.network\",job=\"snmp\"}[2m])*8",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 2,
           "legendFormat": "{{ifName}} : {{ifAlias}} IN",
+          "range": true,
           "refId": "A"
         },
         {
-          "expr": "delta(ifHCOutOctets{ifDescr=~\"(Twenty|Hundred)Gig[^.]+\",instance=\"core2-l3c.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "irate(ifHCOutOctets{ifDescr=~\"(Twenty|Hundred|FourHundred)Gig[^0-9]+[0-9]+/[0-9]+/[0-9]+\",ifAlias!~\"DISABLED-PORT|SPAN-DESTINATION-PORT\",instance=\"core2-core.ciscolive.network\",job=\"snmp\"}[2m])*8",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "{{ifName}} : {{ifAlias}} OUT",
+          "range": true,
           "refId": "C"
         }
       ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "CORE2-L3C",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "bps",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
+      "title": "CORE2-CORE",
+      "transparent": true,
+      "type": "timeseries"
     },
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": null,
-      "fill": 1,
-      "fillGradient": 0,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": true,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "bps"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/_OUT$/"
+            },
+            "properties": [
+              {
+                "id": "custom.transform",
+                "value": "negative-Y"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byValue",
+              "options": {
+                "op": "gte",
+                "reducer": "allIsZero",
+                "value": 0
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": true
+                }
+              }
+            ]
+          }
+        ]
+      },
       "gridPos": {
         "h": 7,
-        "w": 12,
+        "w": 8,
         "x": 0,
         "y": 15
       },
-      "hiddenSeries": false,
       "id": 5,
-      "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
-      },
-      "lines": true,
-      "linewidth": 1,
-      "links": [],
-      "nullPointMode": "null",
+      "interval": "2m",
       "options": {
-        "dataLinks": []
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
-      "percentage": false,
-      "pointradius": 5,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
+      "pluginVersion": "11.4.0",
       "targets": [
         {
-          "expr": "delta(ifHCInOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"003-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "irate(ifHCInOctets{ifDescr=\"HundredGigE1/0/51\",instance=\"mer1-dist-a.ciscolive.network\",job=\"snmp\"}[2m])*8",
           "format": "time_series",
           "intervalFactor": 2,
-          "legendFormat": "003-Tw1/0/48_IN",
+          "legendFormat": "MER1-DIST-a-Hu1/0/51_IN",
+          "range": true,
           "refId": "A"
         },
         {
-          "expr": "delta(ifHCOutOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"003-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "irate(ifHCOutOctets{ifDescr=\"HundredGigE1/0/51\",instance=\"mer1-dist-a.ciscolive.network\",job=\"snmp\"}[2m])*8",
           "format": "time_series",
           "intervalFactor": 2,
-          "legendFormat": "003-Tw1/0/48_OUT",
+          "legendFormat": "MER1-DIST-a-Hu1/0/51_OUT",
+          "range": true,
           "refId": "B"
         },
         {
-          "expr": "delta(ifHCInOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"004-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "irate(ifHCInOctets{ifDescr=\"HundredGigE1/0/51\",instance=\"mer1-dist-b.ciscolive.network\",job=\"snmp\"}[2m])*8",
           "format": "time_series",
+          "hide": false,
           "intervalFactor": 2,
-          "legendFormat": "004-Tw1/0/48_IN",
-          "refId": "C"
-        },
-        {
-          "expr": "delta(ifHCOutOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"004-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-          "format": "time_series",
-          "intervalFactor": 2,
-          "legendFormat": "004-Tw1/0/48_OUT",
-          "refId": "D"
-        },
-        {
-          "expr": "delta(ifHCInOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"005-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-          "format": "time_series",
-          "intervalFactor": 2,
-          "legendFormat": "005-Tw1/0/48_IN",
-          "refId": "E"
-        },
-        {
-          "expr": "delta(ifHCOutOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"005-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-          "format": "time_series",
-          "intervalFactor": 2,
-          "legendFormat": "005-Tw1/0/48_OUT",
-          "refId": "F"
-        },
-        {
-          "expr": "delta(ifHCInOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"006-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-          "format": "time_series",
-          "interval": "",
-          "intervalFactor": 2,
-          "legendFormat": "006-Tw1/0/48_IN",
+          "legendFormat": "MER1-DIST-b-Hu1/0/51_IN",
+          "range": true,
           "refId": "G"
         },
         {
-          "expr": "delta(ifHCOutOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"006-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "irate(ifHCOutOctets{ifDescr=\"HundredGigE1/0/51\",instance=\"mer1-dist-b.ciscolive.network\",job=\"snmp\"}[2m])*8",
           "format": "time_series",
+          "hide": false,
           "intervalFactor": 2,
-          "legendFormat": "006-Tw1/0/48_OUT",
+          "legendFormat": "MER1-DIST-b-Hu1/0/51_OUT",
+          "range": true,
           "refId": "H"
         },
         {
-          "expr": "delta(ifHCInOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"007-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "irate(ifHCInOctets{ifDescr=\"HundredGigE1/0/51\",instance=\"mer2-dist-a.ciscolive.network\",job=\"snmp\"}[2m])*8",
           "format": "time_series",
-          "interval": "",
+          "hide": false,
           "intervalFactor": 2,
-          "legendFormat": "007-Tw1/0/48_IN",
+          "legendFormat": "MER2-DIST-a-Hu1/0/51_IN",
+          "range": true,
           "refId": "I"
         },
         {
-          "expr": "delta(ifHCOutOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"007-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "irate(ifHCOutOctets{ifDescr=\"HundredGigE1/0/51\",instance=\"mer2-dist-a.ciscolive.network\",job=\"snmp\"}[2m])*8",
           "format": "time_series",
+          "hide": false,
           "intervalFactor": 2,
-          "legendFormat": "007-Tw1/0/48_OUT",
+          "legendFormat": "MER2-DIST-a-Hu1/0/51_OUT",
+          "range": true,
           "refId": "J"
         },
         {
-          "expr": "delta(ifHCInOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"008-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "irate(ifHCInOctets{ifDescr=\"HundredGigE1/0/51\",instance=\"mer2-dist-b.ciscolive.network\",job=\"snmp\"}[2m])*8",
           "format": "time_series",
-          "interval": "",
           "intervalFactor": 2,
-          "legendFormat": "008-Tw1/0/48_IN",
+          "legendFormat": "MER2-DIST-b-Hu1/0/51_IN",
+          "range": true,
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "irate(ifHCOutOctets{ifDescr=\"HundredGigE1/0/51\",instance=\"mer2-dist-b.ciscolive.network\",job=\"snmp\"}[2m])*8",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "MER2-DIST-b-Hu1/0/51_OUT",
+          "range": true,
+          "refId": "D"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "irate(ifHCInOctets{ifDescr=\"HundredGigE1/0/51\",instance=\"mer4-dist-a.ciscolive.network\",job=\"snmp\"}[2m])*8",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "MER4-DIST-a-Hu1/0/51_IN",
+          "range": true,
+          "refId": "E"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "irate(ifHCOutOctets{ifDescr=\"HundredGigE1/0/51\",instance=\"mer4-dist-a.ciscolive.network\",job=\"snmp\"}[2m])*8",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "MER4-DIST-a-Hu1/0/51_OUT",
+          "range": true,
+          "refId": "F"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "irate(ifHCInOctets{ifDescr=\"HundredGigE1/0/51\",instance=\"mer4-dist-b.ciscolive.network\",job=\"snmp\"}[2m])*8",
+          "format": "time_series",
+          "hide": false,
+          "intervalFactor": 2,
+          "legendFormat": "MER4-DIST-b-Hu1/0/51_IN",
+          "range": true,
           "refId": "K"
         },
         {
-          "expr": "delta(ifHCOutOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"008-mdf-a.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "irate(ifHCOutOctets{ifDescr=\"HundredGigE1/0/51\",instance=\"mer4-dist-b.ciscolive.network\",job=\"snmp\"}[2m])*8",
           "format": "time_series",
+          "hide": false,
           "intervalFactor": 2,
-          "legendFormat": "008-Tw1/0/48_OUT",
+          "legendFormat": "MER4-DIST-b-Hu1/0/51_OUT",
+          "range": true,
           "refId": "L"
         }
       ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "00x-MDF-a UPLinks to CORE1-L3C",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "bps",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
+      "title": "MERx-DIST-x UPLinks to CORE1-CORE",
+      "transparent": true,
+      "type": "timeseries"
     },
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": null,
-      "fill": 1,
-      "fillGradient": 0,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": true,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "bps"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/_OUT$/"
+            },
+            "properties": [
+              {
+                "id": "custom.transform",
+                "value": "negative-Y"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byValue",
+              "options": {
+                "op": "gte",
+                "reducer": "allIsZero",
+                "value": 0
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": true
+                }
+              }
+            ]
+          }
+        ]
+      },
       "gridPos": {
         "h": 7,
-        "w": 12,
-        "x": 12,
+        "w": 8,
+        "x": 8,
         "y": 15
       },
-      "hiddenSeries": false,
-      "id": 6,
-      "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
-      },
-      "lines": true,
-      "linewidth": 1,
-      "links": [],
-      "nullPointMode": "null",
+      "id": 7,
+      "interval": "2m",
       "options": {
-        "dataLinks": []
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
-      "percentage": false,
-      "pointradius": 5,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
+      "pluginVersion": "11.4.0",
       "targets": [
         {
-          "expr": "delta(ifHCInOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"003-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "irate(ifHCInOctets{ifDescr=\"HundredGigE1/0/29\",instance=\"core1-core.ciscolive.network\",job=\"snmp\"}[2m])*8",
           "format": "time_series",
           "intervalFactor": 2,
-          "legendFormat": "003-Tw1/0/48_IN",
+          "legendFormat": "CORE1-CORE-Hu1/0/29_IN",
+          "range": true,
           "refId": "A"
         },
         {
-          "expr": "delta(ifHCOutOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"003-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "irate(ifHCOutOctets{ifDescr=\"HundredGigE1/0/29\",instance=\"core1-core.ciscolive.network\",job=\"snmp\"}[2m])*8",
           "format": "time_series",
           "intervalFactor": 2,
-          "legendFormat": "003-Tw1/0/48_OUT",
+          "legendFormat": "CORE1-CORE-Hu1/0/29_OUT",
+          "range": true,
           "refId": "B"
         },
         {
-          "expr": "delta(ifHCInOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"004-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "irate(ifHCInOctets{ifDescr=\"HundredGigE1/0/29\",instance=\"core2-core.ciscolive.network\",job=\"snmp\"}[2m])*8",
           "format": "time_series",
+          "hide": false,
           "intervalFactor": 2,
-          "legendFormat": "004-Tw1/0/48_IN",
+          "legendFormat": "CORE2-CORE-Hu1/0/29_IN",
+          "range": true,
           "refId": "C"
         },
         {
-          "expr": "delta(ifHCOutOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"004-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "irate(ifHCOutOctets{ifDescr=\"HundredGigE1/0/29\",instance=\"core2-core.ciscolive.network\",job=\"snmp\"}[2m])*8",
           "format": "time_series",
+          "hide": false,
           "intervalFactor": 2,
-          "legendFormat": "004-Tw1/0/48_OUT",
+          "legendFormat": "CORE2-CORE-Hu1/0/29_OUT",
+          "range": true,
           "refId": "D"
+        }
+      ],
+      "title": "COREx-CORE DOWNLinks to NOC Server Room L3A",
+      "transparent": true,
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": true,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "bps"
         },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/_OUT$/"
+            },
+            "properties": [
+              {
+                "id": "custom.transform",
+                "value": "negative-Y"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byValue",
+              "options": {
+                "op": "gte",
+                "reducer": "allIsZero",
+                "value": 0
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": true
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 16,
+        "y": 15
+      },
+      "id": 6,
+      "interval": "2m",
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.4.0",
+      "targets": [
         {
-          "expr": "delta(ifHCInOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"005-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "irate(ifHCInOctets{ifDescr=\"HundredGigE1/0/52\",instance=\"mer1-dist-a.ciscolive.network\",job=\"snmp\"}[2m])*8",
           "format": "time_series",
           "intervalFactor": 2,
-          "legendFormat": "005-Tw1/0/48_IN",
-          "refId": "E"
+          "legendFormat": "MER1-DIST-a-Hu1/0/52_IN",
+          "range": true,
+          "refId": "A"
         },
         {
-          "expr": "delta(ifHCOutOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"005-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "irate(ifHCOutOctets{ifDescr=\"HundredGigE1/0/52\",instance=\"mer1-dist-a.ciscolive.network\",job=\"snmp\"}[2m])*8",
           "format": "time_series",
+          "hide": false,
           "intervalFactor": 2,
-          "legendFormat": "005-Tw1/0/48_OUT",
-          "refId": "F"
-        },
-        {
-          "expr": "delta(ifHCInOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"006-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
-          "format": "time_series",
-          "interval": "",
-          "intervalFactor": 2,
-          "legendFormat": "006-Tw1/0/48_IN",
+          "legendFormat": "MER1-DIST-a-Hu1/0/52_OUT",
+          "range": true,
           "refId": "G"
         },
         {
-          "expr": "delta(ifHCOutOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"006-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "irate(ifHCInOctets{ifDescr=\"HundredGigE1/0/52\",instance=\"mer1-dist-b.ciscolive.network\",job=\"snmp\"}[2m])*8",
           "format": "time_series",
           "intervalFactor": 2,
-          "legendFormat": "006-Tw1/0/48_OUT",
+          "legendFormat": "MER1-DIST-b-Hu1/0/52_IN",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "irate(ifHCOutOctets{ifDescr=\"HundredGigE1/0/52\",instance=\"mer1-dist-b.ciscolive.network\",job=\"snmp\"}[2m])*8",
+          "format": "time_series",
+          "hide": false,
+          "intervalFactor": 2,
+          "legendFormat": "MER1-DIST-b-Hu1/0/52_OUT",
+          "range": true,
           "refId": "H"
         },
         {
-          "expr": "delta(ifHCInOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"007-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "irate(ifHCInOctets{ifDescr=\"HundredGigE1/0/52\",instance=\"mer2-dist-a.ciscolive.network\",job=\"snmp\"}[2m])*8",
           "format": "time_series",
-          "interval": "",
           "intervalFactor": 2,
-          "legendFormat": "007-Tw1/0/48_IN",
+          "legendFormat": "MER2-DIST-a-Hu1/0/52_IN",
+          "range": true,
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "irate(ifHCOutOctets{ifDescr=\"HundredGigE1/0/52\",instance=\"mer2-dist-a.ciscolive.network\",job=\"snmp\"}[2m])*8",
+          "format": "time_series",
+          "hide": false,
+          "intervalFactor": 2,
+          "legendFormat": "MER2-DIST-a-Hu1/0/52_OUT",
+          "range": true,
           "refId": "I"
         },
         {
-          "expr": "delta(ifHCOutOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"007-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "irate(ifHCInOctets{ifDescr=\"HundredGigE1/0/52\",instance=\"mer2-dist-b.ciscolive.network\",job=\"snmp\"}[2m])*8",
           "format": "time_series",
           "intervalFactor": 2,
-          "legendFormat": "007-Tw1/0/48_OUT",
+          "legendFormat": "MER2-DIST-b-Hu1/0/52_IN",
+          "range": true,
+          "refId": "D"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "irate(ifHCOutOctets{ifDescr=\"HundredGigE1/0/52\",instance=\"mer2-dist-b.ciscolive.network\",job=\"snmp\"}[2m])*8",
+          "format": "time_series",
+          "hide": false,
+          "intervalFactor": 2,
+          "legendFormat": "MER2-DIST-b-Hu1/0/52_OUT",
+          "range": true,
           "refId": "J"
         },
         {
-          "expr": "delta(ifHCInOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"008-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "irate(ifHCInOctets{ifDescr=\"HundredGigE1/0/52\",instance=\"mer4-dist-a.ciscolive.network\",job=\"snmp\"}[2m])*8",
           "format": "time_series",
-          "interval": "",
           "intervalFactor": 2,
-          "legendFormat": "008-Tw1/0/48_IN",
+          "legendFormat": "MER4-DIST-a-Hu1/0/52_IN",
+          "range": true,
+          "refId": "E"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "irate(ifHCOutOctets{ifDescr=\"HundredGigE1/0/52\",instance=\"mer4-dist-a.ciscolive.network\",job=\"snmp\"}[2m])*8",
+          "format": "time_series",
+          "hide": false,
+          "intervalFactor": 2,
+          "legendFormat": "MER4-DIST-a-Hu1/0/52_OUT",
+          "range": true,
           "refId": "K"
         },
         {
-          "expr": "delta(ifHCOutOctets{ifDescr=\"TwentyFiveGigE1/0/48\",instance=\"008-mdf-b.ciscolive.network\",job=\"snmp\"}[5m])*8/300",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "irate(ifHCInOctets{ifDescr=\"HundredGigE1/0/52\",instance=\"mer4-dist-b.ciscolive.network\",job=\"snmp\"}[2m])*8",
           "format": "time_series",
           "intervalFactor": 2,
-          "legendFormat": "008-Tw1/0/48_OUT",
+          "legendFormat": "MER4-DIST-b-Hu1/0/52_IN",
+          "range": true,
+          "refId": "F"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "irate(ifHCOutOctets{ifDescr=\"HundredGigE1/0/52\",instance=\"mer4-dist-b.ciscolive.network\",job=\"snmp\"}[2m])*8",
+          "format": "time_series",
+          "hide": false,
+          "intervalFactor": 2,
+          "legendFormat": "MER4-DIST-b-Hu1/0/52_OUT",
+          "range": true,
           "refId": "L"
         }
       ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "00x-MDF-b UPLinks to CORE2-L3C",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
+      "title": "MERx-DIST-x UPLinks to CORE2-CORE",
+      "transparent": true,
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": true,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "bps"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/ OUT$/"
+            },
+            "properties": [
+              {
+                "id": "custom.transform",
+                "value": "negative-Y"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byValue",
+              "options": {
+                "op": "gte",
+                "reducer": "allIsZero",
+                "value": 0
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": true
+                }
+              }
+            ]
+          }
+        ]
       },
-      "yaxes": [
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 7,
+        "y": 22
+      },
+      "id": 10,
+      "interval": "2m",
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.4.0",
+      "targets": [
         {
-          "format": "bps",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "irate(ifHCInOctets{ifAlias=~\"RAI BGP PEER LINK\",instance=\"core1-edge.ciscolive.network\",job=\"snmp\"}[2m])*8",
+          "format": "time_series",
+          "hide": false,
+          "intervalFactor": 2,
+          "legendFormat": "CORE1-EDGE {{ifName}} : {{ifAlias}} IN",
+          "range": true,
+          "refId": "A"
         },
         {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "irate(ifHCOutOctets{ifAlias=~\"RAI BGP PEER LINK.*\",instance=\"core2-edge.ciscolive.network\",job=\"snmp\"}[2m])*8",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "CORE1-EDGE {{ifName}} : {{ifAlias}} OUT",
+          "range": true,
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "irate(ifHCOutOctets{ifAlias=~\"RAI BGP PEER LINK.*\",instance=\"core1-edge.ciscolive.network\",job=\"snmp\"}[2m])*8",
+          "format": "time_series",
+          "hide": false,
+          "intervalFactor": 2,
+          "legendFormat": "CORE2-EDGE {{ifName}} : {{ifAlias}} OUT",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "irate(ifHCInOctets{ifAlias=~\"RAI BGP PEER LINK\",instance=\"core2-edge.ciscolive.network\",job=\"snmp\"}[2m])*8",
+          "format": "time_series",
+          "hide": false,
+          "intervalFactor": 2,
+          "legendFormat": "CORE2-EDGE {{ifName}} : {{ifAlias}} IN",
+          "range": true,
+          "refId": "D"
         }
       ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
+      "title": "CORE_EDGE_UPLINKS",
+      "transparent": true,
+      "type": "timeseries"
     }
   ],
-  "refresh": "5s",
-  "schemaVersion": 21,
-  "style": "dark",
+  "refresh": "",
+  "schemaVersion": 40,
   "tags": [],
   "templating": {
     "list": []
@@ -764,33 +1618,10 @@
     "from": "now-6h",
     "to": "now"
   },
-  "timepicker": {
-    "refresh_intervals": [
-      "5s",
-      "10s",
-      "30s",
-      "1m",
-      "5m",
-      "15m",
-      "30m",
-      "1h",
-      "2h",
-      "1d"
-    ],
-    "time_options": [
-      "5m",
-      "15m",
-      "1h",
-      "6h",
-      "12h",
-      "24h",
-      "2d",
-      "7d",
-      "30d"
-    ]
-  },
+  "timepicker": {},
   "timezone": "",
-  "title": "CLEUR20_CORE-NETWORK",
-  "uid": "bhjwb4yZz",
-  "version": 3
+  "title": "CLEUR25 - CORE",
+  "uid": "d3789ad0-161d-4f36-a82c-65308042651d",
+  "version": 48,
+  "weekStart": ""
 }

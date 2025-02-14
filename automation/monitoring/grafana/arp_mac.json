@@ -1,1656 +1,4027 @@
 {
+  "__inputs": [
+    {
+      "name": "DS_PROMETHEUS",
+      "label": "Prometheus",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "prometheus",
+      "pluginName": "Prometheus"
+    }
+  ],
+  "__elements": {},
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "11.4.0"
+    },
+    {
+      "type": "datasource",
+      "id": "prometheus",
+      "name": "Prometheus",
+      "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "timeseries",
+      "name": "Time series",
+      "version": ""
+    }
+  ],
   "annotations": {
-    "list": [{
-      "builtIn": 1,
-      "datasource": "-- Grafana --",
-      "enable": true,
-      "hide": true,
-      "iconColor": "rgba(0, 211, 255, 1)",
-      "name": "Annotations & Alerts",
-      "type": "dashboard"
-    }]
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
   },
   "editable": true,
-  "gnetId": null,
+  "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 11,
+  "id": null,
   "links": [],
-  "panels": [{
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": null,
-      "fill": 1,
-      "fillGradient": 0,
+  "panels": [
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
       "gridPos": {
         "h": 8,
-        "w": 6,
+        "w": 8,
         "x": 0,
         "y": 0
       },
-      "hiddenSeries": false,
-      "id": 3,
-      "legend": {
-        "avg": true,
-        "current": true,
-        "hideZero": true,
-        "max": true,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 1,
-      "links": [],
-      "nullPointMode": "null",
-      "options": {
-        "dataLinks": []
-      },
-      "percentage": false,
-      "pointradius": 5,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [{
-          "expr": "arpEntries{idf=\"CORE1-L3C\"}",
-          "format": "time_series",
-          "intervalFactor": 2,
-          "legendFormat": "CORE1-L3C",
-          "refId": "A"
-        },
-        {
-          "expr": "arpEntries{idf=\"CORE2-L3C\"}",
-          "format": "time_series",
-          "intervalFactor": 2,
-          "legendFormat": "CORE2-L3C",
-          "refId": "B"
-        }
-      ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "Core ARP Entries",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [{
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": false
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
-    },
-    {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "Prometheus",
-      "fill": 1,
-      "fillGradient": 0,
-      "gridPos": {
-        "h": 8,
-        "w": 6,
-        "x": 6,
-        "y": 0
-      },
-      "hiddenSeries": false,
-      "id": 8,
-      "legend": {
-        "avg": true,
-        "current": true,
-        "hideZero": true,
-        "max": true,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 1,
-      "links": [],
-      "nullPointMode": "null",
-      "options": {
-        "dataLinks": []
-      },
-      "percentage": false,
-      "pointradius": 5,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [{
-          "expr": "ndEntries{idf=\"CORE1-L3C\"}",
-          "format": "time_series",
-          "intervalFactor": 2,
-          "legendFormat": "CORE1-L3C",
-          "refId": "A"
-        },
-        {
-          "expr": "ndEntries{idf=\"CORE2-L3C\"}",
-          "format": "time_series",
-          "intervalFactor": 2,
-          "legendFormat": "CORE2-L3C",
-          "refId": "B"
-        }
-      ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "Core ND Entries",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [{
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": false
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
-    },
-    {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": null,
-      "fill": 1,
-      "fillGradient": 0,
-      "gridPos": {
-        "h": 8,
-        "w": 6,
-        "x": 12,
-        "y": 0
-      },
-      "hiddenSeries": false,
       "id": 10,
-      "legend": {
-        "avg": false,
-        "current": true,
-        "max": true,
-        "min": true,
-        "show": true,
-        "total": false,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 1,
-      "links": [],
-      "nullPointMode": "null",
+      "interval": "10m",
       "options": {
-        "dataLinks": []
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "min"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
-      "percentage": false,
-      "pointradius": 5,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [{
+      "pluginVersion": "11.4.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
           "expr": "qfpUtil{idf=\"CORE1-EDGE\"}",
-          "format": "time_series",
-          "intervalFactor": 2,
+          "hide": false,
           "legendFormat": "CORE1-EDGE QFP Utilization",
+          "range": true,
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "qfpUtil{idf=\"CORE2-EDGE\"}",
+          "hide": false,
+          "legendFormat": "CORE2-EDGE QFP Utilization",
+          "range": true,
+          "refId": "D"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "qfpUtil{idf=\"CORE1-NAT64\"}",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "CORE1-NAT64 QFP Utilization",
+          "range": true,
           "refId": "A"
         },
         {
-          "expr": "qfpUtil{idf=\"CORE2-EDGE\"}",
-          "format": "time_series",
-          "intervalFactor": 2,
-          "legendFormat": "CORE2-EDGE QFP Utilization",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "qfpUtil{idf=\"CORE2-NAT64\"}",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "CORE2-NAT64 QFP Utilization",
+          "range": true,
           "refId": "B"
         }
       ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
       "title": "Edge QFP Utilization",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [{
-          "format": "percent",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": false
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
+      "type": "timeseries"
     },
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": null,
-      "fill": 1,
-      "fillGradient": 0,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
       "gridPos": {
         "h": 8,
-        "w": 6,
-        "x": 18,
+        "w": 16,
+        "x": 8,
         "y": 0
       },
-      "hiddenSeries": false,
       "id": 11,
-      "legend": {
-        "avg": false,
-        "current": true,
-        "max": true,
-        "min": true,
-        "show": true,
-        "total": false,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 1,
-      "links": [],
-      "nullPointMode": "null",
+      "interval": "10m",
       "options": {
-        "dataLinks": []
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "min"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
-      "percentage": false,
-      "pointradius": 5,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [{
+      "pluginVersion": "11.4.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
           "expr": "natTranslations{idf=\"CORE1-EDGE\"}",
-          "format": "time_series",
-          "intervalFactor": 2,
+          "hide": false,
           "legendFormat": "CORE1-EDGE NAT Translations",
-          "refId": "A"
+          "range": true,
+          "refId": "C"
         },
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
           "expr": "natTranslations{idf=\"CORE2-EDGE\"}",
-          "format": "time_series",
-          "intervalFactor": 2,
-          "legendFormat": "CORE2-EDGE NAT Tranlsations",
-          "refId": "B"
+          "hide": false,
+          "legendFormat": "CORE2-EDGE NAT Translations",
+          "range": true,
+          "refId": "D"
         }
       ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
       "title": "Edge NAT Translations",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [{
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": false
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
+      "type": "timeseries"
     },
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": null,
-      "fill": 1,
-      "fillGradient": 0,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
       "gridPos": {
         "h": 7,
         "w": 8,
         "x": 0,
         "y": 8
       },
-      "hiddenSeries": false,
       "id": 5,
-      "legend": {
-        "avg": true,
-        "current": true,
-        "hideZero": true,
-        "max": true,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 1,
-      "links": [],
-      "nullPointMode": "null",
+      "interval": "10m",
       "options": {
-        "dataLinks": []
+        "legend": {
+          "calcs": [
+            "mean",
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
-      "percentage": false,
-      "pointradius": 5,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [{
+      "pluginVersion": "11.4.0",
+      "targets": [
+        {
           "expr": "totalMacs{idf=\"CORE1-WA\"}",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "CORE1-WA",
-          "refId": "A"
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          }
         },
         {
           "expr": "totalMacs{idf=\"CORE2-WA\"}",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "CORE2-WA",
-          "refId": "B"
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          }
         }
       ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
       "title": "WA MAC Counts",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [{
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": false
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
+      "type": "timeseries"
     },
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": null,
-      "fill": 1,
-      "fillGradient": 0,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
       "gridPos": {
         "h": 7,
         "w": 8,
         "x": 8,
         "y": 8
       },
-      "hiddenSeries": false,
       "id": 6,
-      "legend": {
-        "avg": true,
-        "current": true,
-        "hideZero": true,
-        "max": true,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 1,
-      "links": [],
-      "nullPointMode": "null",
+      "interval": "10m",
       "options": {
-        "dataLinks": []
+        "legend": {
+          "calcs": [
+            "mean",
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
-      "percentage": false,
-      "pointradius": 5,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [{
+      "pluginVersion": "11.4.0",
+      "targets": [
+        {
           "expr": "arpEntries{idf=\"CORE1-WA\"}",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "CORE1-WA",
-          "refId": "A"
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          }
         },
         {
           "expr": "arpEntries{idf=\"CORE2-WA\"}",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "CORE2-WA",
-          "refId": "B"
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          }
         }
       ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
       "title": "WA ARP Entries",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [{
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": false
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
+      "type": "timeseries"
     },
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "Prometheus",
-      "fill": 1,
-      "fillGradient": 0,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
       "gridPos": {
         "h": 7,
         "w": 8,
         "x": 16,
         "y": 8
       },
-      "hiddenSeries": false,
       "id": 7,
-      "legend": {
-        "avg": true,
-        "current": true,
-        "hideZero": true,
-        "max": true,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 1,
-      "links": [],
-      "nullPointMode": "null",
+      "interval": "10m",
       "options": {
-        "dataLinks": []
+        "legend": {
+          "calcs": [
+            "mean",
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
-      "percentage": false,
-      "pointradius": 5,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [{
+      "pluginVersion": "11.4.0",
+      "targets": [
+        {
           "expr": "ndEntries{idf=\"CORE1-WA\"}",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "CORE1-WA",
-          "refId": "A"
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          }
         },
         {
           "expr": "ndEntries{idf=\"CORE2-WA\"}",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "CORE2-WA",
-          "refId": "B"
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          }
         }
       ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
       "title": "WA ND Entries",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [{
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": false
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
+      "type": "timeseries"
     },
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "Prometheus",
-      "fill": 1,
-      "fillGradient": 0,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Dynamic MAC Addresses",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
       "gridPos": {
         "h": 7,
         "w": 8,
         "x": 0,
         "y": 15
       },
-      "hiddenSeries": false,
       "id": 13,
-      "legend": {
-        "avg": true,
-        "current": true,
-        "hideZero": true,
-        "max": true,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 1,
-      "nullPointMode": "null",
+      "interval": "10m",
       "options": {
-        "dataLinks": []
+        "legend": {
+          "calcs": [
+            "mean",
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
-      "percentage": false,
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [{
-          "expr": "totalMacs{idf=\"008-x42.ciscolive.network\"}",
-          "legendFormat": "008-X42",
+      "pluginVersion": "11.4.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H01-X007-S0673\"}",
+          "legendFormat": "H01-X007-S0673",
+          "range": true,
           "refId": "1"
         },
         {
-          "expr": "totalMacs{idf=\"007-x11.ciscolive.network\"}",
-          "legendFormat": "007-X11",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H01-X008-S0710\"}",
+          "legendFormat": "H01-X008-S0710",
+          "range": true,
           "refId": "2"
         },
         {
-          "expr": "totalMacs{idf=\"007-x13.ciscolive.network\"}",
-          "legendFormat": "007-X13",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H01-X009-S0711\"}",
+          "legendFormat": "H01-X009-S0711",
+          "range": true,
           "refId": "3"
         },
         {
-          "expr": "totalMacs{idf=\"008-x49.ciscolive.network\"}",
-          "legendFormat": "008-X49",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H01-X010-S0657\"}",
+          "legendFormat": "H01-X010-S0657",
+          "range": true,
           "refId": "4"
         },
         {
-          "expr": "totalMacs{idf=\"008-x53.ciscolive.network\"}",
-          "legendFormat": "008-X53",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H01-X011-S0691\"}",
+          "legendFormat": "H01-X011-S0691",
+          "range": true,
           "refId": "5"
         },
         {
-          "expr": "totalMacs{idf=\"003-x33.ciscolive.network\"}",
-          "legendFormat": "003-X33",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H01-X012-S0685\"}",
+          "legendFormat": "H01-X012-S0685",
+          "range": true,
           "refId": "6"
         },
         {
-          "expr": "totalMacs{idf=\"008-x36.ciscolive.network\"}",
-          "legendFormat": "008-X36",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H01-X013-S0696\"}",
+          "legendFormat": "H01-X013-S0696",
+          "range": true,
           "refId": "7"
         },
         {
-          "expr": "totalMacs{idf=\"008-x37.ciscolive.network\"}",
-          "legendFormat": "008-X37",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H01-X014-S0689\"}",
+          "legendFormat": "H01-X014-S0689",
+          "range": true,
           "refId": "8"
         },
         {
-          "expr": "totalMacs{idf=\"006-x23.ciscolive.network\"}",
-          "legendFormat": "006-X23",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H01-X015-S0713\"}",
+          "legendFormat": "H01-X015-S0713",
+          "range": true,
           "refId": "9"
         },
         {
-          "expr": "totalMacs{idf=\"008-x52.ciscolive.network\"}",
-          "legendFormat": "008-X52",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H01-X080-S0883\"}",
+          "legendFormat": "H01-X080-S0883",
+          "range": true,
           "refId": "10"
         },
         {
-          "expr": "totalMacs{idf=\"003-x02.ciscolive.network\"}",
-          "legendFormat": "003-X02",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H01-X081-S0881\"}",
+          "legendFormat": "H01-X081-S0881",
+          "range": true,
           "refId": "11"
         },
         {
-          "expr": "totalMacs{idf=\"003-x55.ciscolive.network\"}",
-          "legendFormat": "003-X55",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H01-X082-S0882\"}",
+          "legendFormat": "H01-X082-S0882",
+          "range": true,
           "refId": "12"
         },
         {
-          "expr": "totalMacs{idf=\"007-x09.ciscolive.network\"}",
-          "legendFormat": "007-X09",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H01-X083-S0886\"}",
+          "legendFormat": "H01-X083-S0886",
+          "range": true,
           "refId": "13"
         },
         {
-          "expr": "totalMacs{idf=\"006-x20.ciscolive.network\"}",
-          "legendFormat": "006-X20",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H01-X084-S0884\"}",
+          "legendFormat": "H01-X084-S0884",
+          "range": true,
           "refId": "14"
         },
         {
-          "expr": "totalMacs{idf=\"008-x39.ciscolive.network\"}",
-          "legendFormat": "008-X39",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H01-X085-S0885\"}",
+          "legendFormat": "H01-X085-S0885",
+          "range": true,
           "refId": "15"
         },
         {
-          "expr": "totalMacs{idf=\"008-x41.ciscolive.network\"}",
-          "legendFormat": "008-X41",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H01-X086-S0873\"}",
+          "legendFormat": "H01-X086-S0873",
+          "range": true,
           "refId": "16"
         },
         {
-          "expr": "totalMacs{idf=\"003-x54.ciscolive.network\"}",
-          "legendFormat": "003-X54",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H01-X087-S0879\"}",
+          "legendFormat": "H01-X087-S0879",
+          "range": true,
           "refId": "17"
         },
         {
-          "expr": "totalMacs{idf=\"004-x07.ciscolive.network\"}",
-          "legendFormat": "004-X07",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H01-X088-S0887\"}",
+          "legendFormat": "H01-X088-S0887",
+          "range": true,
           "refId": "18"
         },
         {
-          "expr": "totalMacs{idf=\"006-x22.ciscolive.network\"}",
-          "legendFormat": "006-X22",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H01-X089-S0681\"}",
+          "legendFormat": "H01-X089-S0681",
+          "range": true,
           "refId": "19"
         },
         {
-          "expr": "totalMacs{idf=\"006-x27.ciscolive.network\"}",
-          "legendFormat": "006-X27",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H01-X090-S0888\"}",
+          "legendFormat": "H01-X090-S0888",
+          "range": true,
           "refId": "20"
         },
         {
-          "expr": "totalMacs{idf=\"008-x47.ciscolive.network\"}",
-          "legendFormat": "008-X47",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H01-X091-S0699\"}",
+          "legendFormat": "H01-X091-S0699",
+          "range": true,
           "refId": "21"
         },
         {
-          "expr": "totalMacs{idf=\"006-x19.ciscolive.network\"}",
-          "legendFormat": "006-X19",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H01-X092-S0701\"}",
+          "legendFormat": "H01-X092-S0701",
+          "range": true,
           "refId": "22"
         },
         {
-          "expr": "totalMacs{idf=\"008-x46.ciscolive.network\"}",
-          "legendFormat": "008-X46",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H01-X093-S0880\"}",
+          "legendFormat": "H01-X093-S0880",
+          "range": true,
           "refId": "23"
         },
         {
-          "expr": "totalMacs{idf=\"008-x38.ciscolive.network\"}",
-          "legendFormat": "008-X38",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H01-X094-S0653\"}",
+          "legendFormat": "H01-X094-S0653",
+          "range": true,
           "refId": "24"
         },
         {
-          "expr": "totalMacs{idf=\"008-x40.ciscolive.network\"}",
-          "legendFormat": "008-X40",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H02-X002-S0795\"}",
+          "legendFormat": "H02-X002-S0795",
+          "range": true,
           "refId": "25"
         },
         {
-          "expr": "totalMacs{idf=\"008-x43.ciscolive.network\"}",
-          "legendFormat": "008-X43",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H02-X079-S0878\"}",
+          "legendFormat": "H02-X079-S0878",
+          "range": true,
           "refId": "26"
         },
         {
-          "expr": "totalMacs{idf=\"007-x15.ciscolive.network\"}",
-          "legendFormat": "007-X15",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H03-X016-S0692\"}",
+          "legendFormat": "H03-X016-S0692",
+          "range": true,
           "refId": "27"
         },
         {
-          "expr": "totalMacs{idf=\"006-x18.ciscolive.network\"}",
-          "legendFormat": "006-X18",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H04-X017-S0663\"}",
+          "legendFormat": "H04-X017-S0663",
+          "range": true,
           "refId": "28"
         },
         {
-          "expr": "totalMacs{idf=\"006-x29.ciscolive.network\"}",
-          "legendFormat": "006-X29",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H04-X018-S0757\"}",
+          "legendFormat": "H04-X018-S0757",
+          "range": true,
           "refId": "29"
         },
         {
-          "expr": "totalMacs{idf=\"006-x24.ciscolive.network\"}",
-          "legendFormat": "006-X24",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H04-X019-S0665\"}",
+          "legendFormat": "H04-X019-S0665",
+          "range": true,
           "refId": "30"
         },
         {
-          "expr": "totalMacs{idf=\"007-x12.ciscolive.network\"}",
-          "legendFormat": "007-X12",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H05-X020-S0727\"}",
+          "legendFormat": "H05-X020-S0727",
+          "range": true,
           "refId": "31"
         },
         {
-          "expr": "totalMacs{idf=\"008-x45.ciscolive.network\"}",
-          "legendFormat": "008-X45",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H05-X021-S0683\"}",
+          "legendFormat": "H05-X021-S0683",
+          "range": true,
           "refId": "32"
         },
         {
-          "expr": "totalMacs{idf=\"006-x28.ciscolive.network\"}",
-          "legendFormat": "006-X28",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H05-X077-S0787\"}",
+          "legendFormat": "H05-X077-S0787",
+          "range": true,
           "refId": "33"
         },
         {
-          "expr": "totalMacs{idf=\"007-x16.ciscolive.network\"}",
-          "legendFormat": "007-X16",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H06-X022-S0715\"}",
+          "legendFormat": "H06-X022-S0715",
+          "range": true,
           "refId": "34"
         },
         {
-          "expr": "totalMacs{idf=\"006-x25.ciscolive.network\"}",
-          "legendFormat": "006-X25",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H07-X023-S0720\"}",
+          "legendFormat": "H07-X023-S0720",
+          "range": true,
           "refId": "35"
         },
         {
-          "expr": "totalMacs{idf=\"006-x30.ciscolive.network\"}",
-          "legendFormat": "006-X30",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H07-X024-S0721\"}",
+          "legendFormat": "H07-X024-S0721",
+          "range": true,
           "refId": "36"
         },
         {
-          "expr": "totalMacs{idf=\"007-x10.ciscolive.network\"}",
-          "legendFormat": "007-X10",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H07-X025-S0694\"}",
+          "legendFormat": "H07-X025-S0694",
+          "range": true,
           "refId": "37"
         },
         {
-          "expr": "totalMacs{idf=\"008-x44.ciscolive.network\"}",
-          "legendFormat": "008-X44",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H07-X026-S0722\"}",
+          "legendFormat": "H07-X026-S0722",
+          "range": true,
           "refId": "38"
         },
         {
-          "expr": "totalMacs{idf=\"003-x35.ciscolive.network\"}",
-          "legendFormat": "003-X35",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H07-X027-S0706\"}",
+          "legendFormat": "H07-X027-S0706",
+          "range": true,
           "refId": "39"
         },
         {
-          "expr": "totalMacs{idf=\"006-x21.ciscolive.network\"}",
-          "legendFormat": "006-X21",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H07-X028-S0704\"}",
+          "legendFormat": "H07-X028-S0704",
+          "range": true,
           "refId": "40"
         },
         {
-          "expr": "totalMacs{idf=\"006-x26.ciscolive.network\"}",
-          "legendFormat": "006-X26",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H07-X029-S0670\"}",
+          "legendFormat": "H07-X029-S0670",
+          "range": true,
           "refId": "41"
         },
         {
-          "expr": "totalMacs{idf=\"006-x31.ciscolive.network\"}",
-          "legendFormat": "006-X31",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H08-X030-S0671\"}",
+          "legendFormat": "H08-X030-S0671",
+          "range": true,
           "refId": "42"
         },
         {
-          "expr": "totalMacs{idf=\"007-x14.ciscolive.network\"}",
-          "legendFormat": "007-X14",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H08-X031-S0652\"}",
+          "legendFormat": "H08-X031-S0652",
+          "range": true,
           "refId": "43"
         },
         {
-          "expr": "totalMacs{idf=\"003-x17.ciscolive.network\"}",
-          "legendFormat": "003-X17",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H08-X068-S0933\"}",
+          "legendFormat": "H08-X068-S0933",
+          "range": true,
           "refId": "44"
-        }
-      ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "IDF MAC Counts",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [{
-          "format": "short",
-          "label": "Dynamic MAC Addresses",
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
         },
         {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H08-X069-S0931\"}",
+          "hide": false,
+          "legendFormat": "H08-X069-S0931",
+          "range": true,
+          "refId": "45"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H08-X070-S0932\"}",
+          "hide": false,
+          "legendFormat": "H08-X070-S0932",
+          "range": true,
+          "refId": "46"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H08-X071-S0929\"}",
+          "hide": false,
+          "legendFormat": "H08-X071-S0929",
+          "range": true,
+          "refId": "47"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H08-X073-S0927\"}",
+          "hide": false,
+          "legendFormat": "H08-X073-S0927",
+          "range": true,
+          "refId": "48"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H08-X072-S0930\"}",
+          "hide": false,
+          "legendFormat": "H08-X072-S0930",
+          "range": true,
+          "refId": "49"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H08-X074-S0928\"}",
+          "hide": false,
+          "legendFormat": "H08-X074-S0928",
+          "range": true,
+          "refId": "50"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H08-X075-S0926\"}",
+          "hide": false,
+          "legendFormat": "H08-X075-S0926",
+          "range": true,
+          "refId": "51"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H09-X032-S0686\"}",
+          "hide": false,
+          "legendFormat": "H09-X032-S0686",
+          "range": true,
+          "refId": "52"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H10-X050-S0682\"}",
+          "hide": false,
+          "legendFormat": "H10-X050-S0682",
+          "range": true,
+          "refId": "53"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H10-X051-S0708\"}",
+          "hide": false,
+          "legendFormat": "H10-X051-S0708",
+          "range": true,
+          "refId": "54"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H10-X052-S0678\"}",
+          "hide": false,
+          "legendFormat": "H10-X052-S0678",
+          "range": true,
+          "refId": "55"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H10-X053-S0690\"}",
+          "hide": false,
+          "legendFormat": "H10-X053-S0690",
+          "range": true,
+          "refId": "56"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H10-X054-S0680\"}",
+          "hide": false,
+          "legendFormat": "H10-X054-S0680",
+          "range": true,
+          "refId": "57"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H10-X055-S0703\"}",
+          "hide": false,
+          "legendFormat": "H10-X055-S0703",
+          "range": true,
+          "refId": "58"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H10-X056-S0702\"}",
+          "hide": false,
+          "legendFormat": "H10-X056-S0702",
+          "range": true,
+          "refId": "59"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H10-X057-S0714\"}",
+          "hide": false,
+          "legendFormat": "H10-X057-S0714",
+          "range": true,
+          "refId": "60"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H10-X058-S0675\"}",
+          "hide": false,
+          "legendFormat": "H10-X058-S0675",
+          "range": true,
+          "refId": "61"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H10-X059-S0697\"}",
+          "hide": false,
+          "legendFormat": "H10-X059-S0697",
+          "range": true,
+          "refId": "62"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H10-X060-S0804\"}",
+          "hide": false,
+          "legendFormat": "H10-X060-S0804",
+          "range": true,
+          "refId": "63"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H10-X061-S0806\"}",
+          "hide": false,
+          "legendFormat": "H10-X061-S0806",
+          "range": true,
+          "refId": "64"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"H10-X062-S0805\"}",
+          "hide": false,
+          "legendFormat": "H10-X062-S0805",
+          "range": true,
+          "refId": "65"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"ELI-X033-S0718\"}",
+          "hide": false,
+          "legendFormat": "ELI-X033-S0718",
+          "range": true,
+          "refId": "66"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"ELI-X034-S0658\"}",
+          "hide": false,
+          "legendFormat": "ELI-X034-S0658",
+          "range": true,
+          "refId": "67"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"ELI-X064-S0918\"}",
+          "hide": false,
+          "legendFormat": "ELI-X064-S0918",
+          "range": true,
+          "refId": "68"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"ELI-X065-S0919\"}",
+          "hide": false,
+          "legendFormat": "ELI-X065-S0919",
+          "range": true,
+          "refId": "69"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"ELI-X066-S0916\"}",
+          "hide": false,
+          "legendFormat": "ELI-X066-S0916",
+          "range": true,
+          "refId": "70"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"ELI-X067-S0917\"}",
+          "hide": false,
+          "legendFormat": "ELI-X067-S0917",
+          "range": true,
+          "refId": "71"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"AUD-X039-S0661\"}",
+          "hide": false,
+          "legendFormat": "AUD-X039-S0661",
+          "range": true,
+          "refId": "72"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"AUD-X040-S0655\"}",
+          "hide": false,
+          "legendFormat": "AUD-X040-S0655",
+          "range": true,
+          "refId": "73"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"AUD-X041-S0679\"}",
+          "hide": false,
+          "legendFormat": "AUD-X041-S0679",
+          "range": true,
+          "refId": "74"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"FOR-X035-S0672\"}",
+          "hide": false,
+          "legendFormat": "FOR-X035-S0672",
+          "range": true,
+          "refId": "75"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"FOR-X036-S0666\"}",
+          "hide": false,
+          "legendFormat": "FOR-X036-S0666",
+          "range": true,
+          "refId": "76"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"FOR-X037-S0676\"}",
+          "hide": false,
+          "legendFormat": "FOR-X037-S0676",
+          "range": true,
+          "refId": "77"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"FOR-X038-S0712\"}",
+          "hide": false,
+          "legendFormat": "FOR-X038-S0712",
+          "range": true,
+          "refId": "78"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"HAL-X042-S0709\"}",
+          "hide": false,
+          "legendFormat": "HAL-X042-S0709",
+          "range": true,
+          "refId": "79"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"HAL-X043-S0660\"}",
+          "hide": false,
+          "legendFormat": "HAL-X043-S0660",
+          "range": true,
+          "refId": "80"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"HAL-X044-S0698\"}",
+          "hide": false,
+          "legendFormat": "HAL-X044-S0698",
+          "range": true,
+          "refId": "81"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"HAL-X045-S0719\"}",
+          "hide": false,
+          "legendFormat": "HAL-X045-S0719",
+          "range": true,
+          "refId": "82"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"HAL-X046-S0667\"}",
+          "hide": false,
+          "legendFormat": "HAL-X046-S0667",
+          "range": true,
+          "refId": "83"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"HAL-X047-S0656\"}",
+          "hide": false,
+          "legendFormat": "HAL-X047-S0656",
+          "range": true,
+          "refId": "84"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"HAL-X048-S0662\"}",
+          "hide": false,
+          "legendFormat": "HAL-X048-S0662",
+          "range": true,
+          "refId": "85"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"HAL-X049-S0654\"}",
+          "hide": false,
+          "legendFormat": "HAL-X049-S0654",
+          "range": true,
+          "refId": "86"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"HAL-X063-S0920\"}",
+          "hide": false,
+          "legendFormat": "HAL-X063-S0920",
+          "range": true,
+          "refId": "87"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"HAL-X076-S0664\"}",
+          "hide": false,
+          "legendFormat": "HAL-X076-S0664",
+          "range": true,
+          "refId": "88"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "totalMacs{idf=\"HAL-X078-S0796\"}",
+          "hide": false,
+          "legendFormat": "HAL-X078-S0796",
+          "range": true,
+          "refId": "89"
         }
       ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
+      "title": "IDF MAC Counts",
+      "type": "timeseries"
     },
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": null,
-      "fill": 1,
-      "fillGradient": 0,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "links": [],
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
       "gridPos": {
         "h": 7,
         "w": 8,
         "x": 8,
         "y": 15
       },
-      "hiddenSeries": false,
       "id": 2,
-      "legend": {
-        "avg": true,
-        "current": true,
-        "hideZero": true,
-        "max": true,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 1,
-      "links": [],
-      "nullPointMode": "null",
+      "interval": "10m",
       "options": {
-        "dataLinks": []
+        "legend": {
+          "calcs": [
+            "mean",
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
-      "percentage": false,
-      "pointradius": 5,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [{
-          "expr": "arpEntries{idf=\"008-x42.ciscolive.network\"}",
-          "legendFormat": "008-X42",
+      "pluginVersion": "11.4.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H01-X007-S0673\"}",
+          "legendFormat": "H01-X007-S0673",
+          "range": true,
           "refId": "1"
         },
         {
-          "expr": "arpEntries{idf=\"007-x11.ciscolive.network\"}",
-          "legendFormat": "007-X11",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H01-X008-S0710\"}",
+          "legendFormat": "H01-X008-S0710",
+          "range": true,
           "refId": "2"
         },
         {
-          "expr": "arpEntries{idf=\"007-x13.ciscolive.network\"}",
-          "legendFormat": "007-X13",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H01-X009-S0711\"}",
+          "legendFormat": "H01-X009-S0711",
+          "range": true,
           "refId": "3"
         },
         {
-          "expr": "arpEntries{idf=\"008-x49.ciscolive.network\"}",
-          "legendFormat": "008-X49",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H01-X010-S0657\"}",
+          "legendFormat": "H01-X010-S0657",
+          "range": true,
           "refId": "4"
         },
         {
-          "expr": "arpEntries{idf=\"008-x53.ciscolive.network\"}",
-          "legendFormat": "008-X53",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H01-X011-S0691\"}",
+          "legendFormat": "H01-X011-S0691",
+          "range": true,
           "refId": "5"
         },
         {
-          "expr": "arpEntries{idf=\"003-x33.ciscolive.network\"}",
-          "legendFormat": "003-X33",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H01-X012-S0685\"}",
+          "legendFormat": "H01-X012-S0685",
+          "range": true,
           "refId": "6"
         },
         {
-          "expr": "arpEntries{idf=\"008-x36.ciscolive.network\"}",
-          "legendFormat": "008-X36",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H01-X013-S0696\"}",
+          "legendFormat": "H01-X013-S0696",
+          "range": true,
           "refId": "7"
         },
         {
-          "expr": "arpEntries{idf=\"008-x37.ciscolive.network\"}",
-          "legendFormat": "008-X37",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H01-X014-S0689\"}",
+          "legendFormat": "H01-X014-S0689",
+          "range": true,
           "refId": "8"
         },
         {
-          "expr": "arpEntries{idf=\"006-x23.ciscolive.network\"}",
-          "legendFormat": "006-X23",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H01-X015-S0713\"}",
+          "legendFormat": "H01-X015-S0713",
+          "range": true,
           "refId": "9"
         },
         {
-          "expr": "arpEntries{idf=\"008-x52.ciscolive.network\"}",
-          "legendFormat": "008-X52",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H01-X080-S0883\"}",
+          "legendFormat": "H01-X080-S0883",
+          "range": true,
           "refId": "10"
         },
         {
-          "expr": "arpEntries{idf=\"003-x02.ciscolive.network\"}",
-          "legendFormat": "003-X02",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H01-X081-S0881\"}",
+          "legendFormat": "H01-X081-S0881",
+          "range": true,
           "refId": "11"
         },
         {
-          "expr": "arpEntries{idf=\"003-x55.ciscolive.network\"}",
-          "legendFormat": "003-X55",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H01-X082-S0882\"}",
+          "legendFormat": "H01-X082-S0882",
+          "range": true,
           "refId": "12"
         },
         {
-          "expr": "arpEntries{idf=\"007-x09.ciscolive.network\"}",
-          "legendFormat": "007-X09",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H01-X083-S0886\"}",
+          "legendFormat": "H01-X083-S0886",
+          "range": true,
           "refId": "13"
         },
         {
-          "expr": "arpEntries{idf=\"006-x20.ciscolive.network\"}",
-          "legendFormat": "006-X20",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H01-X084-S0884\"}",
+          "legendFormat": "H01-X084-S0884",
+          "range": true,
           "refId": "14"
         },
         {
-          "expr": "arpEntries{idf=\"008-x39.ciscolive.network\"}",
-          "legendFormat": "008-X39",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H01-X085-S0885\"}",
+          "legendFormat": "H01-X085-S0885",
+          "range": true,
           "refId": "15"
         },
         {
-          "expr": "arpEntries{idf=\"008-x41.ciscolive.network\"}",
-          "legendFormat": "008-X41",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H01-X086-S0873\"}",
+          "legendFormat": "H01-X086-S0873",
+          "range": true,
           "refId": "16"
         },
         {
-          "expr": "arpEntries{idf=\"003-x54.ciscolive.network\"}",
-          "legendFormat": "003-X54",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H01-X087-S0879\"}",
+          "legendFormat": "H01-X087-S0879",
+          "range": true,
           "refId": "17"
         },
         {
-          "expr": "arpEntries{idf=\"004-x07.ciscolive.network\"}",
-          "legendFormat": "004-X07",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H01-X088-S0887\"}",
+          "legendFormat": "H01-X088-S0887",
+          "range": true,
           "refId": "18"
         },
         {
-          "expr": "arpEntries{idf=\"006-x22.ciscolive.network\"}",
-          "legendFormat": "006-X22",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H01-X089-S0681\"}",
+          "legendFormat": "H01-X089-S0681",
+          "range": true,
           "refId": "19"
         },
         {
-          "expr": "arpEntries{idf=\"006-x27.ciscolive.network\"}",
-          "legendFormat": "006-X27",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H01-X090-S0888\"}",
+          "legendFormat": "H01-X090-S0888",
+          "range": true,
           "refId": "20"
         },
         {
-          "expr": "arpEntries{idf=\"008-x47.ciscolive.network\"}",
-          "legendFormat": "008-X47",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H01-X091-S0699\"}",
+          "legendFormat": "H01-X091-S0699",
+          "range": true,
           "refId": "21"
         },
         {
-          "expr": "arpEntries{idf=\"006-x19.ciscolive.network\"}",
-          "legendFormat": "006-X19",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H01-X092-S0701\"}",
+          "legendFormat": "H01-X092-S0701",
+          "range": true,
           "refId": "22"
         },
         {
-          "expr": "arpEntries{idf=\"008-x46.ciscolive.network\"}",
-          "legendFormat": "008-X46",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H01-X093-S0880\"}",
+          "legendFormat": "H01-X093-S0880",
+          "range": true,
           "refId": "23"
         },
         {
-          "expr": "arpEntries{idf=\"008-x38.ciscolive.network\"}",
-          "legendFormat": "008-X38",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H01-X094-S0653\"}",
+          "legendFormat": "H01-X094-S0653",
+          "range": true,
           "refId": "24"
         },
         {
-          "expr": "arpEntries{idf=\"008-x40.ciscolive.network\"}",
-          "legendFormat": "008-X40",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H02-X002-S0795\"}",
+          "legendFormat": "H02-X002-S0795",
+          "range": true,
           "refId": "25"
         },
         {
-          "expr": "arpEntries{idf=\"008-x43.ciscolive.network\"}",
-          "legendFormat": "008-X43",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H02-X079-S0878\"}",
+          "legendFormat": "H02-X079-S0878",
+          "range": true,
           "refId": "26"
         },
         {
-          "expr": "arpEntries{idf=\"007-x15.ciscolive.network\"}",
-          "legendFormat": "007-X15",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H03-X016-S0692\"}",
+          "legendFormat": "H03-X016-S0692",
+          "range": true,
           "refId": "27"
         },
         {
-          "expr": "arpEntries{idf=\"006-x18.ciscolive.network\"}",
-          "legendFormat": "006-X18",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H04-X017-S0663\"}",
+          "legendFormat": "H04-X017-S0663",
+          "range": true,
           "refId": "28"
         },
         {
-          "expr": "arpEntries{idf=\"006-x29.ciscolive.network\"}",
-          "legendFormat": "006-X29",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H04-X018-S0757\"}",
+          "legendFormat": "H04-X018-S0757",
+          "range": true,
           "refId": "29"
         },
         {
-          "expr": "arpEntries{idf=\"006-x24.ciscolive.network\"}",
-          "legendFormat": "006-X24",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H04-X019-S0665\"}",
+          "legendFormat": "H04-X019-S0665",
+          "range": true,
           "refId": "30"
         },
         {
-          "expr": "arpEntries{idf=\"007-x12.ciscolive.network\"}",
-          "legendFormat": "007-X12",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H05-X020-S0727\"}",
+          "legendFormat": "H05-X020-S0727",
+          "range": true,
           "refId": "31"
         },
         {
-          "expr": "arpEntries{idf=\"008-x45.ciscolive.network\"}",
-          "legendFormat": "008-X45",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H05-X021-S0683\"}",
+          "legendFormat": "H05-X021-S0683",
+          "range": true,
           "refId": "32"
         },
         {
-          "expr": "arpEntries{idf=\"006-x28.ciscolive.network\"}",
-          "legendFormat": "006-X28",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H05-X077-S0787\"}",
+          "legendFormat": "H05-X077-S0787",
+          "range": true,
           "refId": "33"
         },
         {
-          "expr": "arpEntries{idf=\"007-x16.ciscolive.network\"}",
-          "legendFormat": "007-X16",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H06-X022-S0715\"}",
+          "legendFormat": "H06-X022-S0715",
+          "range": true,
           "refId": "34"
         },
         {
-          "expr": "arpEntries{idf=\"006-x25.ciscolive.network\"}",
-          "legendFormat": "006-X25",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H07-X023-S0720\"}",
+          "legendFormat": "H07-X023-S0720",
+          "range": true,
           "refId": "35"
         },
         {
-          "expr": "arpEntries{idf=\"006-x30.ciscolive.network\"}",
-          "legendFormat": "006-X30",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H07-X024-S0721\"}",
+          "legendFormat": "H07-X024-S0721",
+          "range": true,
           "refId": "36"
         },
         {
-          "expr": "arpEntries{idf=\"007-x10.ciscolive.network\"}",
-          "legendFormat": "007-X10",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H07-X025-S0694\"}",
+          "legendFormat": "H07-X025-S0694",
+          "range": true,
           "refId": "37"
         },
         {
-          "expr": "arpEntries{idf=\"008-x44.ciscolive.network\"}",
-          "legendFormat": "008-X44",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H07-X026-S0722\"}",
+          "legendFormat": "H07-X026-S0722",
+          "range": true,
           "refId": "38"
         },
         {
-          "expr": "arpEntries{idf=\"003-x35.ciscolive.network\"}",
-          "legendFormat": "003-X35",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H07-X027-S0706\"}",
+          "legendFormat": "H07-X027-S0706",
+          "range": true,
           "refId": "39"
         },
         {
-          "expr": "arpEntries{idf=\"006-x21.ciscolive.network\"}",
-          "legendFormat": "006-X21",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H07-X028-S0704\"}",
+          "legendFormat": "H07-X028-S0704",
+          "range": true,
           "refId": "40"
         },
         {
-          "expr": "arpEntries{idf=\"006-x26.ciscolive.network\"}",
-          "legendFormat": "006-X26",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H07-X029-S0670\"}",
+          "legendFormat": "H07-X029-S0670",
+          "range": true,
           "refId": "41"
         },
         {
-          "expr": "arpEntries{idf=\"006-x31.ciscolive.network\"}",
-          "legendFormat": "006-X31",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H08-X030-S0671\"}",
+          "legendFormat": "H08-X030-S0671",
+          "range": true,
           "refId": "42"
         },
         {
-          "expr": "arpEntries{idf=\"007-x14.ciscolive.network\"}",
-          "legendFormat": "007-X14",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H08-X031-S0652\"}",
+          "legendFormat": "H08-X031-S0652",
+          "range": true,
           "refId": "43"
         },
         {
-          "expr": "arpEntries{idf=\"003-x17.ciscolive.network\"}",
-          "legendFormat": "003-X17",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H08-X068-S0933\"}",
+          "legendFormat": "H08-X068-S0933",
+          "range": true,
           "refId": "44"
         },
         {
-          "expr": "",
-          "legendFormat": "CORE1-L3C",
-          "refId": "A"
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H08-X069-S0931\"}",
+          "hide": false,
+          "legendFormat": "H08-X069-S0931",
+          "range": true,
+          "refId": "45"
         },
         {
-          "expr": "",
-          "refId": "B"
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H08-X070-S0932\"}",
+          "hide": false,
+          "legendFormat": "H08-X070-S0932",
+          "range": true,
+          "refId": "46"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H08-X071-S0929\"}",
+          "hide": false,
+          "legendFormat": "H08-X071-S0929",
+          "range": true,
+          "refId": "47"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H08-X073-S0927\"}",
+          "hide": false,
+          "legendFormat": "H08-X073-S0927",
+          "range": true,
+          "refId": "48"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H08-X072-S0930\"}",
+          "hide": false,
+          "legendFormat": "H08-X072-S0930",
+          "range": true,
+          "refId": "49"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H08-X074-S0928\"}",
+          "hide": false,
+          "legendFormat": "H08-X074-S0928",
+          "range": true,
+          "refId": "50"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H08-X075-S0926\"}",
+          "hide": false,
+          "legendFormat": "H08-X075-S0926",
+          "range": true,
+          "refId": "51"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H09-X032-S0686\"}",
+          "hide": false,
+          "legendFormat": "H09-X032-S0686",
+          "range": true,
+          "refId": "52"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H10-X050-S0682\"}",
+          "hide": false,
+          "legendFormat": "H10-X050-S0682",
+          "range": true,
+          "refId": "53"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H10-X051-S0708\"}",
+          "hide": false,
+          "legendFormat": "H10-X051-S0708",
+          "range": true,
+          "refId": "54"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H10-X052-S0678\"}",
+          "hide": false,
+          "legendFormat": "H10-X052-S0678",
+          "range": true,
+          "refId": "55"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H10-X053-S0690\"}",
+          "hide": false,
+          "legendFormat": "H10-X053-S0690",
+          "range": true,
+          "refId": "56"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H10-X054-S0680\"}",
+          "hide": false,
+          "legendFormat": "H10-X054-S0680",
+          "range": true,
+          "refId": "57"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H10-X055-S0703\"}",
+          "hide": false,
+          "legendFormat": "H10-X055-S0703",
+          "range": true,
+          "refId": "58"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H10-X056-S0702\"}",
+          "hide": false,
+          "legendFormat": "H10-X056-S0702",
+          "range": true,
+          "refId": "59"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H10-X057-S0714\"}",
+          "hide": false,
+          "legendFormat": "H10-X057-S0714",
+          "range": true,
+          "refId": "60"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H10-X058-S0675\"}",
+          "hide": false,
+          "legendFormat": "H10-X058-S0675",
+          "range": true,
+          "refId": "61"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H10-X059-S0697\"}",
+          "hide": false,
+          "legendFormat": "H10-X059-S0697",
+          "range": true,
+          "refId": "62"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H10-X060-S0804\"}",
+          "hide": false,
+          "legendFormat": "H10-X060-S0804",
+          "range": true,
+          "refId": "63"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H10-X061-S0806\"}",
+          "hide": false,
+          "legendFormat": "H10-X061-S0806",
+          "range": true,
+          "refId": "64"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"H10-X062-S0805\"}",
+          "hide": false,
+          "legendFormat": "H10-X062-S0805",
+          "range": true,
+          "refId": "65"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"ELI-X033-S0718\"}",
+          "hide": false,
+          "legendFormat": "ELI-X033-S0718",
+          "range": true,
+          "refId": "66"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"ELI-X034-S0658\"}",
+          "hide": false,
+          "legendFormat": "ELI-X034-S0658",
+          "range": true,
+          "refId": "67"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"ELI-X064-S0918\"}",
+          "hide": false,
+          "legendFormat": "ELI-X064-S0918",
+          "range": true,
+          "refId": "68"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"ELI-X065-S0919\"}",
+          "hide": false,
+          "legendFormat": "ELI-X065-S0919",
+          "range": true,
+          "refId": "69"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"ELI-X066-S0916\"}",
+          "hide": false,
+          "legendFormat": "ELI-X066-S0916",
+          "range": true,
+          "refId": "70"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"ELI-X067-S0917\"}",
+          "hide": false,
+          "legendFormat": "ELI-X067-S0917",
+          "range": true,
+          "refId": "71"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"AUD-X039-S0661\"}",
+          "hide": false,
+          "legendFormat": "AUD-X039-S0661",
+          "range": true,
+          "refId": "72"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"AUD-X040-S0655\"}",
+          "hide": false,
+          "legendFormat": "AUD-X040-S0655",
+          "range": true,
+          "refId": "73"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"AUD-X041-S0679\"}",
+          "hide": false,
+          "legendFormat": "AUD-X041-S0679",
+          "range": true,
+          "refId": "74"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"FOR-X035-S0672\"}",
+          "hide": false,
+          "legendFormat": "FOR-X035-S0672",
+          "range": true,
+          "refId": "75"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"FOR-X036-S0666\"}",
+          "hide": false,
+          "legendFormat": "FOR-X036-S0666",
+          "range": true,
+          "refId": "76"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"FOR-X037-S0676\"}",
+          "hide": false,
+          "legendFormat": "FOR-X037-S0676",
+          "range": true,
+          "refId": "77"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"FOR-X038-S0712\"}",
+          "hide": false,
+          "legendFormat": "FOR-X038-S0712",
+          "range": true,
+          "refId": "78"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"HAL-X042-S0709\"}",
+          "hide": false,
+          "legendFormat": "HAL-X042-S0709",
+          "range": true,
+          "refId": "79"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"HAL-X043-S0660\"}",
+          "hide": false,
+          "legendFormat": "HAL-X043-S0660",
+          "range": true,
+          "refId": "80"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"HAL-X044-S0698\"}",
+          "hide": false,
+          "legendFormat": "HAL-X044-S0698",
+          "range": true,
+          "refId": "81"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"HAL-X045-S0719\"}",
+          "hide": false,
+          "legendFormat": "HAL-X045-S0719",
+          "range": true,
+          "refId": "82"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"HAL-X046-S0667\"}",
+          "hide": false,
+          "legendFormat": "HAL-X046-S0667",
+          "range": true,
+          "refId": "83"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"HAL-X047-S0656\"}",
+          "hide": false,
+          "legendFormat": "HAL-X047-S0656",
+          "range": true,
+          "refId": "84"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"HAL-X048-S0662\"}",
+          "hide": false,
+          "legendFormat": "HAL-X048-S0662",
+          "range": true,
+          "refId": "85"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"HAL-X049-S0654\"}",
+          "hide": false,
+          "legendFormat": "HAL-X049-S0654",
+          "range": true,
+          "refId": "86"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"HAL-X063-S0920\"}",
+          "hide": false,
+          "legendFormat": "HAL-X063-S0920",
+          "range": true,
+          "refId": "87"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"HAL-X076-S0664\"}",
+          "hide": false,
+          "legendFormat": "HAL-X076-S0664",
+          "range": true,
+          "refId": "88"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "arpEntries{idf=\"HAL-X078-S0796\"}",
+          "hide": false,
+          "legendFormat": "HAL-X078-S0796",
+          "range": true,
+          "refId": "89"
         }
       ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
       "title": "IDF ARP Entries",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [{
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": "0",
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": false
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
+      "type": "timeseries"
     },
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "Prometheus",
-      "fill": 1,
-      "fillGradient": 0,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
       "gridPos": {
         "h": 7,
         "w": 8,
         "x": 16,
         "y": 15
       },
-      "hiddenSeries": false,
       "id": 9,
-      "legend": {
-        "avg": true,
-        "current": true,
-        "hideZero": true,
-        "max": true,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 1,
-      "links": [],
-      "nullPointMode": "null",
+      "interval": "10m",
       "options": {
-        "dataLinks": []
+        "legend": {
+          "calcs": [
+            "mean",
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
-      "percentage": false,
-      "pointradius": 5,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [{
-          "expr": "ndEntries{idf=\"008-x42.ciscolive.network\"}",
-          "legendFormat": "008-X42",
+      "pluginVersion": "11.4.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H01-X007-S0673\"}",
+          "legendFormat": "H01-X007-S0673",
+          "range": true,
           "refId": "1"
         },
         {
-          "expr": "ndEntries{idf=\"007-x11.ciscolive.network\"}",
-          "legendFormat": "007-X11",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H01-X008-S0710\"}",
+          "legendFormat": "H01-X008-S0710",
+          "range": true,
           "refId": "2"
         },
         {
-          "expr": "ndEntries{idf=\"007-x13.ciscolive.network\"}",
-          "legendFormat": "007-X13",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H01-X009-S0711\"}",
+          "legendFormat": "H01-X009-S0711",
+          "range": true,
           "refId": "3"
         },
         {
-          "expr": "ndEntries{idf=\"008-x49.ciscolive.network\"}",
-          "legendFormat": "008-X49",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H01-X010-S0657\"}",
+          "legendFormat": "H01-X010-S0657",
+          "range": true,
           "refId": "4"
         },
         {
-          "expr": "ndEntries{idf=\"008-x53.ciscolive.network\"}",
-          "legendFormat": "008-X53",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H01-X011-S0691\"}",
+          "legendFormat": "H01-X011-S0691",
+          "range": true,
           "refId": "5"
         },
         {
-          "expr": "ndEntries{idf=\"003-x33.ciscolive.network\"}",
-          "legendFormat": "003-X33",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H01-X012-S0685\"}",
+          "legendFormat": "H01-X012-S0685",
+          "range": true,
           "refId": "6"
         },
         {
-          "expr": "ndEntries{idf=\"008-x36.ciscolive.network\"}",
-          "legendFormat": "008-X36",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H01-X013-S0696\"}",
+          "legendFormat": "H01-X013-S0696",
+          "range": true,
           "refId": "7"
         },
         {
-          "expr": "ndEntries{idf=\"008-x37.ciscolive.network\"}",
-          "legendFormat": "008-X37",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H01-X014-S0689\"}",
+          "legendFormat": "H01-X014-S0689",
+          "range": true,
           "refId": "8"
         },
         {
-          "expr": "ndEntries{idf=\"006-x23.ciscolive.network\"}",
-          "legendFormat": "006-X23",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H01-X015-S0713\"}",
+          "legendFormat": "H01-X015-S0713",
+          "range": true,
           "refId": "9"
         },
         {
-          "expr": "ndEntries{idf=\"008-x52.ciscolive.network\"}",
-          "legendFormat": "008-X52",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H01-X080-S0883\"}",
+          "legendFormat": "H01-X080-S0883",
+          "range": true,
           "refId": "10"
         },
         {
-          "expr": "ndEntries{idf=\"003-x02.ciscolive.network\"}",
-          "legendFormat": "003-X02",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H01-X081-S0881\"}",
+          "legendFormat": "H01-X081-S0881",
+          "range": true,
           "refId": "11"
         },
         {
-          "expr": "ndEntries{idf=\"003-x55.ciscolive.network\"}",
-          "legendFormat": "003-X55",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H01-X082-S0882\"}",
+          "legendFormat": "H01-X082-S0882",
+          "range": true,
           "refId": "12"
         },
         {
-          "expr": "ndEntries{idf=\"007-x09.ciscolive.network\"}",
-          "legendFormat": "007-X09",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H01-X083-S0886\"}",
+          "legendFormat": "H01-X083-S0886",
+          "range": true,
           "refId": "13"
         },
         {
-          "expr": "ndEntries{idf=\"006-x20.ciscolive.network\"}",
-          "legendFormat": "006-X20",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H01-X084-S0884\"}",
+          "legendFormat": "H01-X084-S0884",
+          "range": true,
           "refId": "14"
         },
         {
-          "expr": "ndEntries{idf=\"008-x39.ciscolive.network\"}",
-          "legendFormat": "008-X39",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H01-X085-S0885\"}",
+          "legendFormat": "H01-X085-S0885",
+          "range": true,
           "refId": "15"
         },
         {
-          "expr": "ndEntries{idf=\"008-x41.ciscolive.network\"}",
-          "legendFormat": "008-X41",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H01-X086-S0873\"}",
+          "legendFormat": "H01-X086-S0873",
+          "range": true,
           "refId": "16"
         },
         {
-          "expr": "ndEntries{idf=\"003-x54.ciscolive.network\"}",
-          "legendFormat": "003-X54",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H01-X087-S0879\"}",
+          "legendFormat": "H01-X087-S0879",
+          "range": true,
           "refId": "17"
         },
         {
-          "expr": "ndEntries{idf=\"004-x07.ciscolive.network\"}",
-          "legendFormat": "004-X07",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H01-X088-S0887\"}",
+          "legendFormat": "H01-X088-S0887",
+          "range": true,
           "refId": "18"
         },
         {
-          "expr": "ndEntries{idf=\"006-x22.ciscolive.network\"}",
-          "legendFormat": "006-X22",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H01-X089-S0681\"}",
+          "legendFormat": "H01-X089-S0681",
+          "range": true,
           "refId": "19"
         },
         {
-          "expr": "ndEntries{idf=\"006-x27.ciscolive.network\"}",
-          "legendFormat": "006-X27",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H01-X090-S0888\"}",
+          "legendFormat": "H01-X090-S0888",
+          "range": true,
           "refId": "20"
         },
         {
-          "expr": "ndEntries{idf=\"008-x47.ciscolive.network\"}",
-          "legendFormat": "008-X47",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H01-X091-S0699\"}",
+          "legendFormat": "H01-X091-S0699",
+          "range": true,
           "refId": "21"
         },
         {
-          "expr": "ndEntries{idf=\"006-x19.ciscolive.network\"}",
-          "legendFormat": "006-X19",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H01-X092-S0701\"}",
+          "legendFormat": "H01-X092-S0701",
+          "range": true,
           "refId": "22"
         },
         {
-          "expr": "ndEntries{idf=\"008-x46.ciscolive.network\"}",
-          "legendFormat": "008-X46",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H01-X093-S0880\"}",
+          "legendFormat": "H01-X093-S0880",
+          "range": true,
           "refId": "23"
         },
         {
-          "expr": "ndEntries{idf=\"008-x38.ciscolive.network\"}",
-          "legendFormat": "008-X38",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H01-X094-S0653\"}",
+          "legendFormat": "H01-X094-S0653",
+          "range": true,
           "refId": "24"
         },
         {
-          "expr": "ndEntries{idf=\"008-x40.ciscolive.network\"}",
-          "legendFormat": "008-X40",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H02-X002-S0795\"}",
+          "legendFormat": "H02-X002-S0795",
+          "range": true,
           "refId": "25"
         },
         {
-          "expr": "ndEntries{idf=\"008-x43.ciscolive.network\"}",
-          "legendFormat": "008-X43",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H02-X079-S0878\"}",
+          "legendFormat": "H02-X079-S0878",
+          "range": true,
           "refId": "26"
         },
         {
-          "expr": "ndEntries{idf=\"007-x15.ciscolive.network\"}",
-          "legendFormat": "007-X15",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H03-X016-S0692\"}",
+          "legendFormat": "H03-X016-S0692",
+          "range": true,
           "refId": "27"
         },
         {
-          "expr": "ndEntries{idf=\"006-x18.ciscolive.network\"}",
-          "legendFormat": "006-X18",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H04-X017-S0663\"}",
+          "legendFormat": "H04-X017-S0663",
+          "range": true,
           "refId": "28"
         },
         {
-          "expr": "ndEntries{idf=\"006-x29.ciscolive.network\"}",
-          "legendFormat": "006-X29",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H04-X018-S0757\"}",
+          "legendFormat": "H04-X018-S0757",
+          "range": true,
           "refId": "29"
         },
         {
-          "expr": "ndEntries{idf=\"006-x24.ciscolive.network\"}",
-          "legendFormat": "006-X24",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H04-X019-S0665\"}",
+          "legendFormat": "H04-X019-S0665",
+          "range": true,
           "refId": "30"
         },
         {
-          "expr": "ndEntries{idf=\"007-x12.ciscolive.network\"}",
-          "legendFormat": "007-X12",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H05-X020-S0727\"}",
+          "legendFormat": "H05-X020-S0727",
+          "range": true,
           "refId": "31"
         },
         {
-          "expr": "ndEntries{idf=\"008-x45.ciscolive.network\"}",
-          "legendFormat": "008-X45",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H05-X021-S0683\"}",
+          "legendFormat": "H05-X021-S0683",
+          "range": true,
           "refId": "32"
         },
         {
-          "expr": "ndEntries{idf=\"006-x28.ciscolive.network\"}",
-          "legendFormat": "006-X28",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H05-X077-S0787\"}",
+          "legendFormat": "H05-X077-S0787",
+          "range": true,
           "refId": "33"
         },
         {
-          "expr": "ndEntries{idf=\"007-x16.ciscolive.network\"}",
-          "legendFormat": "007-X16",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H06-X022-S0715\"}",
+          "legendFormat": "H06-X022-S0715",
+          "range": true,
           "refId": "34"
         },
         {
-          "expr": "ndEntries{idf=\"006-x25.ciscolive.network\"}",
-          "legendFormat": "006-X25",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H07-X023-S0720\"}",
+          "legendFormat": "H07-X023-S0720",
+          "range": true,
           "refId": "35"
         },
         {
-          "expr": "ndEntries{idf=\"006-x30.ciscolive.network\"}",
-          "legendFormat": "006-X30",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H07-X024-S0721\"}",
+          "legendFormat": "H07-X024-S0721",
+          "range": true,
           "refId": "36"
         },
         {
-          "expr": "ndEntries{idf=\"007-x10.ciscolive.network\"}",
-          "legendFormat": "007-X10",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H07-X025-S0694\"}",
+          "legendFormat": "H07-X025-S0694",
+          "range": true,
           "refId": "37"
         },
         {
-          "expr": "ndEntries{idf=\"008-x44.ciscolive.network\"}",
-          "legendFormat": "008-X44",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H07-X026-S0722\"}",
+          "legendFormat": "H07-X026-S0722",
+          "range": true,
           "refId": "38"
         },
         {
-          "expr": "ndEntries{idf=\"003-x35.ciscolive.network\"}",
-          "legendFormat": "003-X35",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H07-X027-S0706\"}",
+          "legendFormat": "H07-X027-S0706",
+          "range": true,
           "refId": "39"
         },
         {
-          "expr": "ndEntries{idf=\"006-x21.ciscolive.network\"}",
-          "legendFormat": "006-X21",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H07-X028-S0704\"}",
+          "legendFormat": "H07-X028-S0704",
+          "range": true,
           "refId": "40"
         },
         {
-          "expr": "ndEntries{idf=\"006-x26.ciscolive.network\"}",
-          "legendFormat": "006-X26",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H07-X029-S0670\"}",
+          "legendFormat": "H07-X029-S0670",
+          "range": true,
           "refId": "41"
         },
         {
-          "expr": "ndEntries{idf=\"006-x31.ciscolive.network\"}",
-          "legendFormat": "006-X31",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H08-X030-S0671\"}",
+          "legendFormat": "H08-X030-S0671",
+          "range": true,
           "refId": "42"
         },
         {
-          "expr": "ndEntries{idf=\"007-x14.ciscolive.network\"}",
-          "legendFormat": "007-X14",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H08-X031-S0652\"}",
+          "legendFormat": "H08-X031-S0652",
+          "range": true,
           "refId": "43"
         },
         {
-          "expr": "ndEntries{idf=\"003-x17.ciscolive.network\"}",
-          "legendFormat": "003-X17",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H08-X068-S0933\"}",
+          "legendFormat": "H08-X068-S0933",
+          "range": true,
           "refId": "44"
         },
         {
-          "expr": "",
-          "format": "time_series",
-          "intervalFactor": 2,
-          "legendFormat": "CORE1-L3C",
-          "refId": "A"
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H08-X069-S0931\"}",
+          "hide": false,
+          "legendFormat": "H08-X069-S0931",
+          "range": true,
+          "refId": "45"
         },
         {
-          "expr": "",
-          "format": "time_series",
-          "intervalFactor": 2,
-          "refId": "B"
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H08-X070-S0932\"}",
+          "hide": false,
+          "legendFormat": "H08-X070-S0932",
+          "range": true,
+          "refId": "46"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H08-X071-S0929\"}",
+          "hide": false,
+          "legendFormat": "H08-X071-S0929",
+          "range": true,
+          "refId": "47"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H08-X073-S0927\"}",
+          "hide": false,
+          "legendFormat": "H08-X073-S0927",
+          "range": true,
+          "refId": "48"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H08-X072-S0930\"}",
+          "hide": false,
+          "legendFormat": "H08-X072-S0930",
+          "range": true,
+          "refId": "49"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H08-X074-S0928\"}",
+          "hide": false,
+          "legendFormat": "H08-X074-S0928",
+          "range": true,
+          "refId": "50"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H08-X075-S0926\"}",
+          "hide": false,
+          "legendFormat": "H08-X075-S0926",
+          "range": true,
+          "refId": "51"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H09-X032-S0686\"}",
+          "hide": false,
+          "legendFormat": "H09-X032-S0686",
+          "range": true,
+          "refId": "52"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H10-X050-S0682\"}",
+          "hide": false,
+          "legendFormat": "H10-X050-S0682",
+          "range": true,
+          "refId": "53"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H10-X051-S0708\"}",
+          "hide": false,
+          "legendFormat": "H10-X051-S0708",
+          "range": true,
+          "refId": "54"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H10-X052-S0678\"}",
+          "hide": false,
+          "legendFormat": "H10-X052-S0678",
+          "range": true,
+          "refId": "55"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H10-X053-S0690\"}",
+          "hide": false,
+          "legendFormat": "H10-X053-S0690",
+          "range": true,
+          "refId": "56"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H10-X054-S0680\"}",
+          "hide": false,
+          "legendFormat": "H10-X054-S0680",
+          "range": true,
+          "refId": "57"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H10-X055-S0703\"}",
+          "hide": false,
+          "legendFormat": "H10-X055-S0703",
+          "range": true,
+          "refId": "58"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H10-X056-S0702\"}",
+          "hide": false,
+          "legendFormat": "H10-X056-S0702",
+          "range": true,
+          "refId": "59"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H10-X057-S0714\"}",
+          "hide": false,
+          "legendFormat": "H10-X057-S0714",
+          "range": true,
+          "refId": "60"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H10-X058-S0675\"}",
+          "hide": false,
+          "legendFormat": "H10-X058-S0675",
+          "range": true,
+          "refId": "61"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H10-X059-S0697\"}",
+          "hide": false,
+          "legendFormat": "H10-X059-S0697",
+          "range": true,
+          "refId": "62"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H10-X060-S0804\"}",
+          "hide": false,
+          "legendFormat": "H10-X060-S0804",
+          "range": true,
+          "refId": "63"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H10-X061-S0806\"}",
+          "hide": false,
+          "legendFormat": "H10-X061-S0806",
+          "range": true,
+          "refId": "64"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"H10-X062-S0805\"}",
+          "hide": false,
+          "legendFormat": "H10-X062-S0805",
+          "range": true,
+          "refId": "65"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"ELI-X033-S0718\"}",
+          "hide": false,
+          "legendFormat": "ELI-X033-S0718",
+          "range": true,
+          "refId": "66"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"ELI-X034-S0658\"}",
+          "hide": false,
+          "legendFormat": "ELI-X034-S0658",
+          "range": true,
+          "refId": "67"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"ELI-X064-S0918\"}",
+          "hide": false,
+          "legendFormat": "ELI-X064-S0918",
+          "range": true,
+          "refId": "68"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"ELI-X065-S0919\"}",
+          "hide": false,
+          "legendFormat": "ELI-X065-S0919",
+          "range": true,
+          "refId": "69"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"ELI-X066-S0916\"}",
+          "hide": false,
+          "legendFormat": "ELI-X066-S0916",
+          "range": true,
+          "refId": "70"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"ELI-X067-S0917\"}",
+          "hide": false,
+          "legendFormat": "ELI-X067-S0917",
+          "range": true,
+          "refId": "71"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"AUD-X039-S0661\"}",
+          "hide": false,
+          "legendFormat": "AUD-X039-S0661",
+          "range": true,
+          "refId": "72"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"AUD-X040-S0655\"}",
+          "hide": false,
+          "legendFormat": "AUD-X040-S0655",
+          "range": true,
+          "refId": "73"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"AUD-X041-S0679\"}",
+          "hide": false,
+          "legendFormat": "AUD-X041-S0679",
+          "range": true,
+          "refId": "74"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"FOR-X035-S0672\"}",
+          "hide": false,
+          "legendFormat": "FOR-X035-S0672",
+          "range": true,
+          "refId": "75"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"FOR-X036-S0666\"}",
+          "hide": false,
+          "legendFormat": "FOR-X036-S0666",
+          "range": true,
+          "refId": "76"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"FOR-X037-S0676\"}",
+          "hide": false,
+          "legendFormat": "FOR-X037-S0676",
+          "range": true,
+          "refId": "77"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"FOR-X038-S0712\"}",
+          "hide": false,
+          "legendFormat": "FOR-X038-S0712",
+          "range": true,
+          "refId": "78"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"HAL-X042-S0709\"}",
+          "hide": false,
+          "legendFormat": "HAL-X042-S0709",
+          "range": true,
+          "refId": "79"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"HAL-X043-S0660\"}",
+          "hide": false,
+          "legendFormat": "HAL-X043-S0660",
+          "range": true,
+          "refId": "80"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"HAL-X044-S0698\"}",
+          "hide": false,
+          "legendFormat": "HAL-X044-S0698",
+          "range": true,
+          "refId": "81"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"HAL-X045-S0719\"}",
+          "hide": false,
+          "legendFormat": "HAL-X045-S0719",
+          "range": true,
+          "refId": "82"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"HAL-X046-S0667\"}",
+          "hide": false,
+          "legendFormat": "HAL-X046-S0667",
+          "range": true,
+          "refId": "83"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"HAL-X047-S0656\"}",
+          "hide": false,
+          "legendFormat": "HAL-X047-S0656",
+          "range": true,
+          "refId": "84"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"HAL-X048-S0662\"}",
+          "hide": false,
+          "legendFormat": "HAL-X048-S0662",
+          "range": true,
+          "refId": "85"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"HAL-X049-S0654\"}",
+          "hide": false,
+          "legendFormat": "HAL-X049-S0654",
+          "range": true,
+          "refId": "86"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"HAL-X063-S0920\"}",
+          "hide": false,
+          "legendFormat": "HAL-X063-S0920",
+          "range": true,
+          "refId": "87"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"HAL-X076-S0664\"}",
+          "hide": false,
+          "legendFormat": "HAL-X076-S0664",
+          "range": true,
+          "refId": "88"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ndEntries{idf=\"HAL-X078-S0796\"}",
+          "hide": false,
+          "legendFormat": "HAL-X078-S0796",
+          "range": true,
+          "refId": "89"
         }
       ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
       "title": "IDF ND Entries",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [{
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": false
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
+      "type": "timeseries"
     }
   ],
-  "refresh": "1m",
-  "schemaVersion": 21,
-  "style": "dark",
+  "refresh": "10s",
+  "schemaVersion": 40,
   "tags": [],
   "templating": {
     "list": []
   },
   "time": {
-    "from": "now-5m",
+    "from": "now-24h",
     "to": "now"
   },
-  "timepicker": {
-    "refresh_intervals": [
-      "5s",
-      "10s",
-      "30s",
-      "1m",
-      "5m",
-      "15m",
-      "30m",
-      "1h",
-      "2h",
-      "1d"
-    ],
-    "time_options": [
-      "5m",
-      "15m",
-      "1h",
-      "6h",
-      "12h",
-      "24h",
-      "2d",
-      "7d",
-      "30d"
-    ]
-  },
+  "timepicker": {},
   "timezone": "",
-  "title": "MAC, ARP, ND, NAT, QFP Counts",
-  "uid": "XV4FTGsZk",
-  "version": 3
+  "title": "MAC, ARP, ND, NAT, QFP Counts - CORE",
+  "uid": "dad9e2b6-37de-4659-930d-f93a6dc46cec",
+  "version": 15,
+  "weekStart": ""
 }
