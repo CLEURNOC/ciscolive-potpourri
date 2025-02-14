@@ -51,6 +51,7 @@ SUPPRESS_TIMER = 15
 
 
 def main():
+    global prev_state, curr_state
     spark = Sparker(token=CLEUCreds.SPARK_TOKEN)
 
     parser = argparse.ArgumentParser(prog=sys.argv[0], description="Poll errors from network devices")
