@@ -448,7 +448,12 @@ class DhcpHook(object):
         if ipa:
             ipa.full_details()
             if ipa.assigned_object_type == "virtualization.vminterface":
-                return [{"type": "VM", "name": str(ipa.assigned_object.virtual_machine), "ip": str(ipa)}]
+                ret = {"type": "VM", "name": str(ipa.assigned_object.virtual_machine), "ip": str(ipa)}
+                vm_obj = ipa.assigned_object.virtual_machine
+                if "Contact" in vm_obj.custom_fields and vm_obj.custom_fields["Contact"]:
+                    ret["responsible_people"] = vm_obj.custom_fields["Contact"]
+
+                return [ret]
             elif ipa.assigned_object_type == "dcim.interface":
                 return [{"type": "device", "name": str(ipa.assigned_object.device), "ip": str(ipa)}]
 
