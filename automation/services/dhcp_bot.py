@@ -433,7 +433,11 @@ class DhcpHook(object):
                 vms = list(self.pnb.virtualization.virtual_machines.filter(name__ic=name))
                 if len(vms) > 0:
                     for vm in vms:
-                        res.append({"name": vm.name, "type": "VM", "ip": vm.primary_ip4})
+                        ret = {"name": vm.name, "type": "VM", "ip": vm.primary_ip4}
+                        if "Contact" in vm.custom_fields and vm.custom_fields["Contact"]:
+                            ret["responsible_people"] = vm.custom_fields["Contact"]
+
+                        res.append(ret)
 
             if len(res) > 0:
                 return res
