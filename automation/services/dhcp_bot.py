@@ -435,7 +435,7 @@ class DhcpHook(object):
                     for vm in vms:
                         ret = {"name": vm.name, "type": "VM", "ip": vm.primary_ip4}
                         if "Contact" in vm.custom_fields and vm.custom_fields["Contact"]:
-                            ret["responsible_people"] = vm.custom_fields["Contact"]
+                            ret["responsible_people"] = vm.custom_fields["Contact"].spit(",")
 
                         res.append(ret)
 
@@ -455,7 +455,7 @@ class DhcpHook(object):
                 ret = {"type": "VM", "name": str(ipa.assigned_object.virtual_machine), "ip": str(ipa)}
                 vm_obj = ipa.assigned_object.virtual_machine
                 if "Contact" in vm_obj.custom_fields and vm_obj.custom_fields["Contact"]:
-                    ret["responsible_people"] = vm_obj.custom_fields["Contact"]
+                    ret["responsible_people"] = vm_obj.custom_fields["Contact"].split(",")
 
                 return [ret]
             elif ipa.assigned_object_type == "dcim.interface":
