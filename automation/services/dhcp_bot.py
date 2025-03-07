@@ -435,7 +435,7 @@ class DhcpHook(object):
                     for vm in vms:
                         ret = {"name": vm.name, "type": "VM", "ip": vm.primary_ip4}
                         if "Contact" in vm.custom_fields and vm.custom_fields["Contact"]:
-                            ret["responsible_people"] = vm.custom_fields["Contact"].spit(",")
+                            ret["responsible_people"] = vm.custom_fields["Contact"].split(",")
 
                         res.append(ret)
 
