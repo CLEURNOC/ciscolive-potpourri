@@ -890,6 +890,7 @@ def handle_message(msg: str, person: Dict[str, str]) -> None:
 
     response: ChatResponse = ollama_client.chat(MODEL, messages=messages, tools=available_functions)
     output = OrderedDict()
+    final_response = None
 
     if response.message.tool_calls:
         for tool in response.message.tool_calls:
@@ -918,7 +919,7 @@ def handle_message(msg: str, person: Dict[str, str]) -> None:
         final_response = ollama_client.chat(MODEL, messages=messages)
 
     fresponse = []
-    if final_response.message.content:
+    if final_response and final_response.message.content:
         for line in final_response.message.content.split("\n"):
             try:
                 # The LLM may still choose to try and call an unavailable tool.
