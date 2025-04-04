@@ -124,7 +124,6 @@ class DhcpHook(object):
         Returns:
           Dict[str, str]: Dict with the port, vlan, and switch values decoded as ASCII strings (if possible)
         """
-        global DEFAULT_INT_TYPE
 
         res = {"vlan": "N/A", "port": "N/A", "switch": "N/A"}
         if "relayAgentCircuitId" in outd:
@@ -163,7 +162,6 @@ class DhcpHook(object):
         Raises:
           ValueError: If both ip and mac were not specified
         """
-        global CNR_HEADERS, BASIC_AUTH, REST_TIMEOUT
 
         if not ip and not mac:
             raise ValueError("At least one of ip or mac must be specified")
@@ -207,7 +205,6 @@ class DhcpHook(object):
         Returns:
           Dict[str, Union[str, bool]]: A dict with keys "success" (bool) if the reservation was created successfully and "error" if the success is False
         """
-        global CNR_HEADERS, BASIC_AUTH, AT_MACADDR, REST_TIMEOUT
 
         if not ip:
             return {"success": False, "error": "Both ip and mac must be specified"}
@@ -252,7 +249,6 @@ class DhcpHook(object):
         Returns:
           Dict[str, Union[str, bool]]: A dict with keys "success" (bool) if the reservation was deleted successfully and "error" if the success is False
         """
-        global CNR_HEADERS, BASIC_AUTH, REST_TIMEOUT
 
         if not ip:
             return {"success": False, "error": "ip must be specified"}
@@ -284,7 +280,6 @@ class DhcpHook(object):
     #                            (port client is connected to)), and "is-reserved" (True if the lease is reserved) or None if the lease was not found in CPNR
 
     #     """
-    #     global CNR_HEADERS, BASIC_AUTH, REST_TIMEOUT
 
     #     if not ip:
     #         return None
@@ -339,7 +334,6 @@ class DhcpHook(object):
                                     "relay-info" (DHCP relay details which is a dict with key "switch" (switch client is connected to), "vlan" (VLAN the client is on), and "port"
                                     (port client is connected to)), and "is-reserved" (True if the lease is reserved) or None if the lease was not found in CPNR
         """
-        global CNR_HEADERS, BASIC_AUTH, REST_TIMEOUT
 
         if not mac and not ip:
             raise ValueError("At least one of mac or ip must be specified")
@@ -467,7 +461,6 @@ class DhcpHook(object):
     def _get_request_from_cat_center(
         curl: str, cheaders: Dict[str, str], params: Dict[str, str], client: str, dnac: str
     ) -> Tuple[Union[Dict[str, str], None]]:
-        global REST_TIMEOUT
         try:
             response = requests.request("GET", curl, headers=cheaders, params=params, verify=False, timeout=REST_TIMEOUT)
             response.raise_for_status()
@@ -479,7 +472,6 @@ class DhcpHook(object):
 
     @staticmethod
     def _get_token_from_cat_center(dnac: str) -> Union[str, None]:
-        global BASIC_AUTH, REST_TIMEOUT
 
         turl = f"https://{dnac}/dna/system/api/v1/auth/token"
         theaders = {"content-type": "application/json"}
@@ -679,7 +671,6 @@ class DhcpHook(object):
             Union[Dict[str,str], None]: A dict with parameters client username, client MAC address, network access server IP,
             client IP address, authentication timestamp, client IPv6 address(es), associated AP, VLAN ID, associated SSID
         """
-        global REST_TIMEOUT
 
         if not username and not mac and not ip:
             raise ValueError("One of username, mac, or ip is required")
@@ -847,7 +838,6 @@ class DhcpHook(object):
 
 def register_webhook(spark: Sparker) -> str:
     """Register a callback URL for our bot."""
-    global CALLBACK_URL, BOT_NAME
     webhook = spark.get_webhook_for_url(CALLBACK_URL)
     if webhook:
         spark.unregister_webhook(webhook["id"])
@@ -863,7 +853,6 @@ def register_webhook(spark: Sparker) -> str:
 
 def handle_message(msg: str, person: Dict[str, str]) -> None:
     """Handle the Webex message using GenAI."""
-    global spark, SPARK_ROOM, ollama_client, MODEL, pnb
 
     final_response = None
 
@@ -937,7 +926,6 @@ def handle_message(msg: str, person: Dict[str, str]) -> None:
 
 @app.route("/chat", methods=["POST"])
 def receive_callback():
-    global rid, spark, SPARK_ROOM, ME
     """Receive a callback from the Webex service."""
     """
     Payload will look like:
@@ -1034,7 +1022,6 @@ def receive_callback():
 
 def cleanup() -> None:
     """Cleanup on exit."""
-    global webhook_id, spark
 
     if webhook_id:
         spark.unregister_webhook(webhook_id)
