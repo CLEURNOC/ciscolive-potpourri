@@ -1,0 +1,27 @@
+---
+version: '3.7'
+
+services:
+  ollama:
+    image: ollama/ollama
+    ports:
+      - 11434:11434
+    pull_policy: always
+    environment:
+      OLLAMA_KEEP_ALIVE: -1
+      OLLAMA_CONTEXT_LENGTH: 16384
+    restart: unless-stopped
+    container_name: ollama
+    volumes:
+      - ./ollama/ollama:/root/.ollama
+      - ./entrypoint.sh:/entrypoint.sh
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - driver: nvidia
+            capabilities: ["gpu"]
+            count: all
+    entrypoint: ["/usr/bin/bash", "/entrypoint.sh"]
+
+    
