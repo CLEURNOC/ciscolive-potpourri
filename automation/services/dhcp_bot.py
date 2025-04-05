@@ -745,7 +745,12 @@ class DhcpHook(object):
         Returns:
           Dict[str, str]: The generated password in a dict with a password key.
         """
-        cmd = split(f"hankify-pw --num-words {words}")
+        try:
+            num_words = int(words)
+        except ValueError:
+            return {"error": "Words is not an integer"}
+
+        cmd = split(f"hankify-pw --num-words {num_words}")
         if add_symbol:
             cmd.append("--add-symbol")
 
