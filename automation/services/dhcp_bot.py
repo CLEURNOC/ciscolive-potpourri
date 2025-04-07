@@ -693,6 +693,7 @@ class DhcpHook(object):
                 auth=(CLEUCreds.ISE_API_USER, CLEUCreds.ISE_API_PASS),
                 headers={"Accept": "application/xml"},
                 timeout=REST_TIMEOUT,
+                verify=tls_verify,
             )
             response.raise_for_status()
         except Exception as e:
