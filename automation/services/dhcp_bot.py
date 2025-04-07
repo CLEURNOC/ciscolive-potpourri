@@ -1038,8 +1038,10 @@ def cleanup() -> None:
 
 spark = Sparker(token=CLEUCreds.SPARK_TOKEN, logit=True)
 pnb = pynetbox.api(C.NETBOX_SERVER, CLEUCreds.NETBOX_API_TOKEN)
+tls_verify = os.getenv("DHCP_BOT_TLS_VERIFY", "True").lower() == "true"
+pnb.http_session.verify = tls_verify
 
-ollama_client = Client(host=C.LLAMA_URL, auth=(CLEUCreds.LLAMA_USER, CLEUCreds.LLAMA_PASSWORD))
+ollama_client = Client(host=C.LLAMA_URL, auth=(CLEUCreds.LLAMA_USER, CLEUCreds.LLAMA_PASSWORD), verify=tls_verify)
 
 tid = spark.get_team_id(C.WEBEX_TEAM)
 if not tid:
