@@ -52,18 +52,18 @@ AT_MACADDR = 9
 
 CNR_HEADERS = {"Accept": "application/json"}
 BASIC_AUTH = (CLEUCreds.CPNR_USERNAME, CLEUCreds.CPNR_PASSWORD)
-REST_TIMEOUT = 10
+REST_TIMEOUT = int(os.getenv("DHCP_BOT_REST_TIMEOUT", 10))
 
 DEFAULT_INT_TYPE = "Ethernet"
 
 ALLOWED_TO_DELETE = ["jclarke@cisco.com", "josterfe@cisco.com", "anjesani@cisco.com"]
 
-SPARK_ROOM = "DHCP Queries"
-CALLBACK_URL = "https://cleur-dhcp-hook.ciscolive.network/chat"
-BOT_NAME = "DHCP Bot"
-ME = "livenocbot@sparkbot.io"
+SPARK_ROOM = os.getenv("DHCP_BOT_SPARK_ROOM", "DHCP Queries")
+CALLBACK_URL = os.getenv("DHCP_BOT_CALLBACK_URL", "https://cleur-dhcp-hook.ciscolive.network/chat")
+BOT_NAME = os.getenv("DHCP_BOT_NAME", "DHCP Bot")
+ME = os.getenv("DHCP_BOT_ME", "livenocbot@sparkbot.io")
 
-MODEL = "llama3.3"
+MODEL = os.getenv("DHCP_BOT_MODEL", "llama3.3")
 
 webhook_id = None
 app = Flask(BOT_NAME)
@@ -430,6 +430,8 @@ class DhcpHook(object):
                         ret = {"name": vm.name, "type": "VM", "ip": vm.primary_ip4}
                         if "Contact" in vm.custom_fields and vm.custom_fields["Contact"]:
                             ret["responsible_people"] = vm.custom_fields["Contact"].split(",")
+                        if "Notes" in vm.custom_fields and vm.custom_fields["Notes"]:
+                            ret["usage_notes"] = vm.custom_fields["Notes"]
 
                         res.append(ret)
 
@@ -450,6 +452,8 @@ class DhcpHook(object):
                 vm_obj = ipa.assigned_object.virtual_machine
                 if "Contact" in vm_obj.custom_fields and vm_obj.custom_fields["Contact"]:
                     ret["responsible_people"] = vm_obj.custom_fields["Contact"].split(",")
+                if "Notes" in vm_obj.custom_fields and vm_obj.custom_fields["Notes"]:
+                    ret["usage_notes"] = vm_obj.custom_fields["Notes"]
 
                 return [ret]
             elif ipa.assigned_object_type == "dcim.interface":
