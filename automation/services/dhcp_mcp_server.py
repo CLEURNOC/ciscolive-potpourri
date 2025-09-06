@@ -29,12 +29,13 @@ import logging
 import os
 import re
 from enum import StrEnum
-from typing import Annotated, Literal
+from typing import Annotated, Literal, List, Dict
 
 # import httpx
 import pynetbox
 from fastmcp import FastMCP
 from fastmcp.exceptions import ToolError
+
 # from mcp.shared.exceptions import McpError
 # from mcp.types import METHOD_NOT_FOUND
 from pydantic import BaseModel, Field
@@ -173,7 +174,7 @@ def normalize_mac(mac: str) -> MACAddress:
     return MACAddress(mac_addr.lower())
 
 
-def parse_relay_info(outd: dict[str, str]) -> dict[str, str]:
+def parse_relay_info(outd: Dict[str, str]) -> Dict[str, str]:
     """
     Parse DHCP relay information and produce a string for the connected switch and port.
 
@@ -235,74 +236,98 @@ def parse_relay_info(outd: dict[str, str]) -> dict[str, str]:
         "readOnlyHint": True,
     }
 )
-async def get_object_info_from_netbox(inp: NetBoxInput | dict) -> list[NetBoxResponse]:
+async def get_object_info_from_netbox(inp: NetBoxInput | dict) -> List[NetBoxResponse]:
     """
     Get a list of objects from the NetBox network source of truth given an IP address or a name.
+    Args:
+        inp (NetBoxInput | dict): Input data, either a validated NetBoxInput or a dict (for LLM compatibility).
     """
-    ip = None
-    name = None
     try:
-        # XXX The dict usage is a workaround for some LLMs that pass a JSON string
-        # representation of the argument object.
+        # Handle dict input for LLMs that pass JSON objects
         if isinstance(inp, dict):
-            if inp["type"] == "ip":
+            if inp.get("type") == InputTypeEnum.ip_address:
                 inp = IPAddressClass(**inp)
-            elif inp["type"] == "hostname":
+            elif inp.get("type") == InputTypeEnum.hostname:
                 inp = HostnameClass(**inp)
             else:
-                raise ValueError(f"Invalid annotation type: {inp['type']}. Must be one of 'ip' or 'hostname'.")
+                raise ValueError(f"Invalid annotation type: {inp.get('type')}. Must be 'ip' or 'hostname'.")
 
+        # Determine query type
         if isinstance(inp, IPAddressClass):
-            ip = inp
+            ip = inp.ip
+            name = None
         elif isinstance(inp, HostnameClass):
-            name = inp
+            name = inp.hostname
+            ip = None
         else:
             raise ValueError("Invalid input type. Must be IPAddressClass or HostnameClass.")
 
+        # Query by hostname
         if name:
-            res = []
-            devs = list(pnb.dcim.devices.filter(name__ic=str(name.hostname)))
-            if len(devs) > 0:
-                for dev in devs:
-                    res.append({"name": dev.name, "type": "device", "ip": dev.primary_ip4})
-            else:
-                vms = list(pnb.virtualization.virtual_machines.filter(name__ic=str(name.hostname)))
-                if len(vms) > 0:
-                    for vm in vms:
-                        ret = {"name": vm.name, "type": "VM", "ip": vm.primary_ip4}
-                        if "Contact" in vm.custom_fields and vm.custom_fields["Contact"]:
-                            ret["responsible_people"] = vm.custom_fields["Contact"].split(",")
-                        if "Notes" in vm.custom_fields and vm.custom_fields["Notes"]:
-                            ret["usage_notes"] = vm.custom_fields["Notes"]
+            responses = []
+            # Search devices by hostname (case-insensitive)
+            devs = list(pnb.dcim.devices.filter(name__ic=name))
+            for dev in devs:
+                responses.append(
+                    NetBoxResponse(
+                        name=dev.name,
+                        type=NetBoxTypeEnum.device,
+                        ip=str(dev.primary_ip4) if dev.primary_ip4 else None,
+                        responsible_people=None,
+                        usage_notes=None,
+                    )
+                )
+            # If no devices, search VMs by hostname
+            if not responses:
+                vms = list(pnb.virtualization.virtual_machines.filter(name__ic=name))
+                for vm in vms:
+                    responses.append(
+                        NetBoxResponse(
+                            name=vm.name,
+                            type=NetBoxTypeEnum.vm,
+                            ip=str(vm.primary_ip4) if vm.primary_ip4 else None,
+                            responsible_people=vm.custom_fields.get("Contact", "").split(",") if vm.custom_fields.get("Contact") else None,
+                            usage_notes=vm.custom_fields.get("Notes") if vm.custom_fields.get("Notes") else None,
+                        )
+                    )
+            if responses:
+                return responses
+            raise ValueError(f"No objects found in NetBox matching hostname {name}")
 
-                        res.append(ret)
-
-            if len(res) > 0:
-                return res
-
-            raise ValueError(f"No objects found in NetBox matching hostname {name.hostname}")
-
-        ipa = None
-        for prefix in ("24", "31", "32", "16", "64", "128"):
-            ipa = pnb.ipam.ip_addresses.get(address=f"{str(ip.ip)}/{prefix}")
+        # Query by IP address
+        if ip:
+            ipa = None
+            # Try common subnet sizes for IP lookup (NetBox requires prefix)
+            for prefix in ("32", "31", "24", "128", "64", "16"):
+                ipa = pnb.ipam.ip_addresses.get(address=f"{ip}/{prefix}")
+                if ipa:
+                    break
             if ipa:
-                break
+                ipa.full_details()  # Ensure all fields are populated
+                # VM interface assignment
+                if ipa.assigned_object_type == "virtualization.vminterface":
+                    vm_obj = ipa.assigned_object.virtual_machine
+                    return [
+                        NetBoxResponse(
+                            name=str(vm_obj),
+                            type=NetBoxTypeEnum.vm,
+                            ip=str(ipa),
+                            responsible_people=(
+                                vm_obj.custom_fields.get("Contact", "").split(",") if vm_obj.custom_fields.get("Contact") else None
+                            ),
+                            usage_notes=vm_obj.custom_fields.get("Notes") if vm_obj.custom_fields.get("Notes") else None,
+                        )
+                    ]
+                # Device interface assignment
+                elif ipa.assigned_object_type == "dcim.interface":
+                    dev_obj = ipa.assigned_object.device
+                    return [
+                        NetBoxResponse(
+                            name=str(dev_obj), type=NetBoxTypeEnum.device, ip=str(ipa), responsible_people=None, usage_notes=None
+                        )
+                    ]
+            raise ValueError(f"No objects found in NetBox matching IP address {ip}")
 
-        if ipa:
-            ipa.full_details()
-            if ipa.assigned_object_type == "virtualization.vminterface":
-                ret = {"type": "VM", "name": str(ipa.assigned_object.virtual_machine), "ip": str(ipa)}
-                vm_obj = ipa.assigned_object.virtual_machine
-                if "Contact" in vm_obj.custom_fields and vm_obj.custom_fields["Contact"]:
-                    ret["responsible_people"] = vm_obj.custom_fields["Contact"].split(",")
-                if "Notes" in vm_obj.custom_fields and vm_obj.custom_fields["Notes"]:
-                    ret["usage_notes"] = vm_obj.custom_fields["Notes"]
-
-                return [ret]
-            elif ipa.assigned_object_type == "dcim.interface":
-                return [{"type": "device", "name": str(ipa.assigned_object.device), "ip": str(ipa)}]
-
-        raise ValueError(f"No objects found in NetBox matching IP address {ip.ip}")
     except Exception as e:
         logger.error(f"Error getting object info from NetBox: {e}", exc_info=True)
         raise ToolError(e)
