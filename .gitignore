@@ -7,3 +7,4 @@ gs_token.pickle
 gs_token.json
 venv
 .eggs/
+.env

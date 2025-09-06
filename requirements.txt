@@ -54,3 +54,5 @@ future
 pyshark
 influxdb
 hankify_pw
+fastmcp
+httpx
