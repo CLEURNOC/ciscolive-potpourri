@@ -92,6 +92,10 @@ def cleanup(app: FastAPI):
 
 app = FastAPI(title=BOT_NAME, lifespan=cleanup)
 
+if not CALLBACK_URL.endswith("/chat"):
+    logging.error("CALLBACK_URL must end with /chat")
+    exit(1)
+
 tid = spark.get_team_id(C.WEBEX_TEAM)
 if not tid:
     logging.error("Failed to get Spark Team ID")
