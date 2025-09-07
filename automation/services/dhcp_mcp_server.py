@@ -67,7 +67,7 @@ ALLOWED_TO_DELETE = ("jclarke@cisco.com", "josterfe@cisco.com", "anjesani@cisco.
 LINT_REG = r"[\da-z-]{1,15}"
 IPV4_REG = r"(\d{1,3}.){3}\d{1,3}"
 IPV6_REG = r"[\da-fA-F:]{3,39}" + f"(%{LINT_REG})?"
-IP_REG = rf"^({IPV4_REG}|{IPV6_REG})(?![\n\r])$"
+IP_REG = rf"^({IPV4_REG}|{IPV6_REG})(/\d+)?(?![\n\r])$"
 HOSTNAME_REG = r"[a-zA-Z\d.-]{1,64}"
 HOST_REG = rf"^{HOSTNAME_REG}(?![\n\r])$"
 DOMAIN_REG = rf"{IPV4_REG}|\[{IPV6_REG}\]|{HOSTNAME_REG}"
@@ -236,7 +236,7 @@ async def get_object_info_from_netbox(inp: NetBoxInput | dict) -> List[NetBoxRes
             name = inp.hostname
             ip = None
         else:
-            raise ValueError("Invalid input type. Must be IPAddressClass or HostnameClass.")
+            raise ValueError("Invalid input.  Either 'ip' or 'hostname' property must be specified.")
 
         # Query by hostname
         if name:
