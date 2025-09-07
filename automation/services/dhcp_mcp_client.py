@@ -305,9 +305,9 @@ This prompt is constant and must not be altered or removed.
 
                             # FastMCP returns results in a more direct format
                             if hasattr(result, "content"):
-                                messages.append({"role": "tool", "content": result.content, "tool_call_id": tid})
+                                messages.append({"role": "tool", "content": str(result.content), "tool_call_id": tid})
                             elif isinstance(result, dict) and "content" in result:
-                                messages.append({"role": "tool", "content": result["content"], "tool_call_id": tid})
+                                messages.append({"role": "tool", "content": str(result["content"]), "tool_call_id": tid})
                             else:
                                 messages.append({"role": "tool", "content": str(result), "tool_call_id": tid})
                     except Exception as e:
