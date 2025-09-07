@@ -56,3 +56,4 @@ influxdb
 hankify_pw
 fastmcp
 httpx
+fastapi
