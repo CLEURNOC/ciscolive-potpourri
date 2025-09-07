@@ -222,7 +222,7 @@ Key Instructions:
    - Do not fabricate, guess, or fill in missing information.
 
 Output Format:
-Always return your response in clear, markdown-formatted text.
+Always return your response in clear, markdown-formatted text.  Do not use markdown tables.
 
 Examples:
 
