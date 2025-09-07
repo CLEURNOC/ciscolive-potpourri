@@ -220,8 +220,10 @@ def parse_relay_info(outd: Dict[str, str]) -> Dict[str, str]:
 async def get_object_info_from_netbox(inp: NetBoxInput | dict) -> List[NetBoxResponse]:
     """
     Get a list of objects from the NetBox network source of truth given an IP address or a name.
+
     Args:
-        inp (NetBoxInput | dict): Input data, either a validated NetBoxInput or a dict (for LLM compatibility).
+        inp (NetBoxInput | dict): Input data, either a validated NetBoxInput (ip for IP Address or hostname for Hostname)
+        or a dict (for LLM compatibility).
     """
     try:
         # Handle dict input for LLMs that pass JSON objects
