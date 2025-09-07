@@ -98,12 +98,12 @@ if not CALLBACK_URL.endswith("/chat"):
 
 tid = spark.get_team_id(C.WEBEX_TEAM)
 if not tid:
-    logging.error("Failed to get Spark Team ID")
+    logging.error("Failed to get Webex Team ID")
     exit(1)
 
 rid = spark.get_room_id(tid, SPARK_ROOM)
 if not rid:
-    logging.error("Failed to get Spark Room ID")
+    logging.error("Failed to get Webex Room ID")
     exit(1)
 
 try:
