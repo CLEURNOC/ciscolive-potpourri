@@ -25,7 +25,7 @@
 # SUCH DAMAGE.
 
 import re
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from typing import Any, Dict, List
 import json
@@ -404,7 +404,7 @@ async def receive_callback(request: Request) -> JSONResponse:
 
     if sender == ME:
         logging.debug("Person email is our bot")
-        return JSONResponse(content="", status_code=204)
+        return Response(status_code=204)
 
     if rid != record["data"]["roomId"]:
         logging.error("Webex Room ID is not the same as in the message (%s vs. %s)" % (rid, record["data"]["roomId"]))
@@ -437,7 +437,7 @@ async def receive_callback(request: Request) -> JSONResponse:
         )
         return JSONResponse(content={"error": "Failed to handle message"}, status_code=500)
 
-    return JSONResponse(content="", status_code=204)
+    return Response(status_code=204)
 
 
 uvicorn.run(app, port=9999)

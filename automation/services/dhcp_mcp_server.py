@@ -129,7 +129,7 @@ class HostnameClass(BaseModel, extra="forbid"):
 NetBoxInput = Annotated[
     IPAddressClass | HostnameClass,
     Field(
-        description="The input arguments to fetching data from Netbox.",
+        description="The input arguments to fetching data from NetBox.",
         discriminator="type",
     ),
 ]
@@ -250,7 +250,7 @@ async def get_object_info_from_netbox(inp: NetBoxInput | dict) -> List[NetBoxRes
             elif inp.get("type") == InputTypeEnum.hostname:
                 inp = HostnameClass(**inp)
             else:
-                raise ValueError(f"Invalid annotation type: {inp.get('type')}. Must be 'ip' or 'hostname'.")
+                raise ValueError(f"Invalid 'type' property: {inp.get('type')}. Must be 'ip' or 'hostname'.")
 
         # Determine query type
         if isinstance(inp, IPAddressClass):
