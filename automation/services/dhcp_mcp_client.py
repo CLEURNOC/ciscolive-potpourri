@@ -170,7 +170,7 @@ transport = StdioTransport(
     args=[
         "run",
         "--project",
-        "/home/jclarke/dhcp-agent",
+        "/home/jclarke/dhcp_agent",
         "--with",
         "fastapi",
         "--with",
@@ -181,7 +181,7 @@ transport = StdioTransport(
         "pynetbox",
         "fastmcp",
         "run",
-        "/home/jclarke/dhcp-agent/dhcp_mcp_server.py:server_mcp",
+        "/home/jclarke/dhcp_agent/dhcp_mcp_server.py:server_mcp",
     ],
     env=mcp_server_env,
 )
