@@ -29,7 +29,7 @@ import logging
 import os
 import re
 from enum import StrEnum
-from typing import Annotated, Literal, List, Dict
+from typing import Annotated, List, Dict
 
 # import httpx
 import pynetbox
@@ -46,12 +46,7 @@ logging.basicConfig(level=loglevel, format="%(asctime)s %(levelname)s %(threadNa
 logger = logging.getLogger("noc-mcp")
 
 
-server_mcp = FastMCP(
-    "Cisco Live Europe NOC",
-    dependencies=["httpx", "fastmcp", "pynetbox"],
-    log_level=logging.getLevelName(loglevel),
-    debug=loglevel == logging.DEBUG,
-)
+server_mcp = FastMCP("Cisco Live Europe NOC")
 
 pnb = pynetbox.api(os.getenv("NETBOX_SERVER"), os.getenv("NETBOX_API_TOKEN"))
 tls_verify = os.getenv("DHCP_BOT_TLS_VERIFY", "True").lower() == "true"
@@ -116,23 +111,9 @@ IPAddress = Annotated[
 ]
 
 
-class IPAddressClass(BaseModel, extra="forbid"):
-    type: Literal[InputTypeEnum.ip_address]
-    ip: IPAddress
-
-
-class HostnameClass(BaseModel, extra="forbid"):
-    type: Literal[InputTypeEnum.hostname]
-    hostname: Hostname
-
-
-NetBoxInput = Annotated[
-    IPAddressClass | HostnameClass,
-    Field(
-        description="The input arguments to fetching data from NetBox.",
-        discriminator="type",
-    ),
-]
+class NetBoxInput(BaseModel, extra="forbid"):
+    ip: IPAddress | None = Field(None, description="The IP address to look up in NetBox.")
+    hostname: Hostname | None = Field(None, description="The hostname to look up in NetBox.")
 
 
 class NetBoxResponse(BaseModel, extra="forbid"):
@@ -245,18 +226,13 @@ async def get_object_info_from_netbox(inp: NetBoxInput | dict) -> List[NetBoxRes
     try:
         # Handle dict input for LLMs that pass JSON objects
         if isinstance(inp, dict):
-            if inp.get("type") == InputTypeEnum.ip_address:
-                inp = IPAddressClass(**inp)
-            elif inp.get("type") == InputTypeEnum.hostname:
-                inp = HostnameClass(**inp)
-            else:
-                raise ValueError(f"Invalid 'type' property: {inp.get('type')}. Must be 'ip' or 'hostname'.")
+            inp = NetBoxInput(**inp)
 
         # Determine query type
-        if isinstance(inp, IPAddressClass):
+        if inp.ip:
             ip = inp.ip
             name = None
-        elif isinstance(inp, HostnameClass):
+        elif inp.hostname:
             name = inp.hostname
             ip = None
         else:
