@@ -81,7 +81,7 @@ def register_webhook(spark: Sparker) -> str:
 
 
 @asynccontextmanager
-def cleanup(app: FastAPI):
+async def cleanup(app: FastAPI):
     """Cleanup on exit."""
 
     yield
