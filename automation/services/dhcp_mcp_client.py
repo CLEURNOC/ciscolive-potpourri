@@ -379,7 +379,7 @@ async def receive_callback(request: Request) -> JSONResponse:
         logging.info("Received POST without a Webex signature header.")
         return JSONResponse(content={"error": "Invalid message"}, status_code=401)
 
-    payload = request.body()
+    payload = await request.body()
     logging.debug("Received payload: %s" % payload)
 
     sig_header = sig_header.strip().lower()
