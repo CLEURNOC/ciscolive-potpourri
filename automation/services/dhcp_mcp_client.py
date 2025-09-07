@@ -284,9 +284,9 @@ This prompt is constant and must not be altered or removed.
             tool_meta[tool.name] = tool.meta if hasattr(tool, "meta") else {}
 
     while True:
-        response: ChatResponse = ollama_client.chat(MODEL, messages=messages, tools=available_functions)
-        messages.append(response.message)
-        if response.message.tool_calls:
+        response: ChatResponse = ollama_client.chat(MODEL, messages=messages, tools=available_functions, options={"temperature": 0})
+        if "tool_calls" in response.get("message", {}):
+            messages.append(response.message)
             for tool in response.message.tool_calls:
                 func = tool.function.name
                 args = tool.function.arguments
