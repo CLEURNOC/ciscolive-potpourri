@@ -397,11 +397,11 @@ async def check_for_reservation(input: CPNRReservationInput | dict) -> CPNRReser
     Check for a DHCP lease by IP or MAC address within CPNR.  Only one of IP address or MAC address is required.
 
     Args:
-      ip (Union[str, None], optional): IP address of the lease to check (at least ip or mac must be specified)
-      mac (Union[str, None], optional): MAC address of the lease to check (at least ip or mac must be specified)
+      CPNRReservationInput | dict: Input data, either a validated CPNRReservationInput (ip or mac)
+            or a dict (for certain LLM compatibility).
 
     Returns:
-      Union[Dict[str, str], None]: A dict containing the MAC address and lease scope if a lease is found or None if the lease is not found or an error occurs
+      CPNRReservationResponse | None: A dict containing the MAC address and lease scope if a lease is found or None if the lease is not found or an error occurs
 
     Raises:
       ValueError: If both ip and mac were not specified
