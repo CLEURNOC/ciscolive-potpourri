@@ -302,7 +302,7 @@ async def get_request_from_cat_center(
             response = await hclient.get(curl, headers=cheaders, params=params)
             response.raise_for_status()
     except Exception as e:
-        logging.exception("Failed to find client %s in Catalyst Center %s: %s" % (client, dnac, getattr(e, "message", repr(e))))
+        logger.exception("Failed to find client %s in Catalyst Center %s: %s" % (client, dnac, getattr(e, "message", repr(e))))
         return (None, None)
 
     return (response.json(), response)
@@ -317,12 +317,12 @@ async def get_token_from_cat_center(dnac: str) -> str | None:
             response = await client.post(turl, headers=theaders, auth=BASIC_AUTH)
             response.raise_for_status()
     except Exception as e:
-        logging.exception("Unable to get an auth token from Catalyst Center: %s" % getattr(e, "message", repr(e)))
+        logger.exception("Unable to get an auth token from Catalyst Center: %s" % getattr(e, "message", repr(e)))
         return None
 
     j = response.json()
     if "Token" not in j:
-        logging.warning("Failed to get a Token element from Catalyst Center %s: %s" % (dnac, response.text))
+        logger.warning("Failed to get a Token element from Catalyst Center %s: %s" % (dnac, response.text))
         return None
 
     return j["Token"]
@@ -330,7 +330,7 @@ async def get_token_from_cat_center(dnac: str) -> str | None:
 
 def process_cat_center_user(j: Dict[str, str], response: object, dnac: str) -> Dict[str, str] | None:
     if len(j) == 0 or "userDetails" not in j[0]:
-        logging.warning("Got an unknown response from Catalyst Center %s: '%s'" % (dnac, response.text))
+        logger.warning("Got an unknown response from Catalyst Center %s: '%s'" % (dnac, response.text))
         return None
 
     if len(j[0]["userDetails"].keys()) == 0:
@@ -341,7 +341,7 @@ def process_cat_center_user(j: Dict[str, str], response: object, dnac: str) -> D
 
 def process_cat_center_mac(j: Dict[str, str], dnac: str) -> Dict[str, str] | None:
     if "detail" not in j:
-        logging.warning("Got an unknown response from Catalyst Center %s: '%s'" % (dnac, str(j)))
+        logger.warning("Got an unknown response from Catalyst Center %s: '%s'" % (dnac, str(j)))
         return None
 
     if "errorCode" in j["detail"] or len(j["detail"].keys()) == 0:
@@ -1007,6 +1007,94 @@ async def get_dhcp_lease_info_from_cpnr(input: CPNRLeaseInput | dict) -> List[CP
         return leases
 
     raise ToolError("No DHCP lease information found in CPNR")
+
+
+@server_mcp.tool(
+    annotations={
+        "title": "Delete DHCP Reservation from CPNR",
+        "readOnlyHint": False,
+        "destructiveHint": True,
+    },
+    enabled=False,
+    meta={"auth_list": ALLOWED_TO_DELETE},
+)
+async def delete_dhcp_reservation_from_cpnr(ip: IPAddress) -> bool:
+    """
+    Delete a DHCP reservation from CPNR.
+
+    Args:
+      ip (IPAddress): IP address that is reserved in CPNR
+    """
+
+    if not ip:
+        raise ToolError("IP address is required")
+
+    url = f"{os.getenv('DHCP_BASE')}/Reservation/{ip}"
+    try:
+        async with httpx.AsyncClient(verify=False, timeout=REST_TIMEOUT) as client:
+            response = await client.delete(url, auth=BASIC_AUTH, headers=CNR_HEADERS)
+            response.raise_for_status()
+    except Exception as e:
+        msg = "Failed to delete reservation for %s: %s" % (ip, str(e))
+        logger.exception(msg)
+        raise ToolError(msg)
+
+    return True
+
+
+@server_mcp.tool(
+    annotations={
+        "title": "Create DHCP Reservation in CPNR",
+        "readOnlyHint": False,
+    },
+    enabled=False,
+)
+async def create_dhcp_reservation_in_cpnr(ip: IPAddress) -> bool:
+    """
+    Create a new DHCP reservation in CPNR.
+
+    Args:
+      ip (IPAddress): IP address that is leased to the client
+    """
+
+    if not ip:
+        raise ToolError("IP address is required")
+
+    # Check if reservation already exists
+    rsvp = await check_for_reservation({"ip": ip})
+    if rsvp:
+        raise ToolError(f"IP {ip} is already reserved for {rsvp.mac}")
+
+    # Get DHCP lease info for the IP
+    leases = await _get_dhcp_lease_info_from_cpnr({"ip": ip})
+    if not leases or len(leases) == 0:
+        raise ToolError(f"IP {ip} is not currently leased")
+
+    # Find the lease with state 'LEASED' if multiple, else use the first
+    lease: CPNRLeaseResponse
+    if len(leases) > 1:
+        lease = next((le for le in leases if le.state.lower() == "leased"), leases[0])
+    else:
+        lease = leases[0]
+
+    mac_addr = str(normalize_mac(lease.mac))
+
+    url = f"{os.getenv('DHCP_BASE')}/Reservation"
+    payload = {
+        "ipaddr": ip,
+        "lookupKey": f"01:06:{mac_addr}",
+        "lookupKeyType": AT_MACADDR,
+    }
+    try:
+        async with httpx.AsyncClient(verify=False, timeout=REST_TIMEOUT) as client:
+            response = await client.post(url, auth=BASIC_AUTH, headers=CNR_HEADERS, json=payload)
+            response.raise_for_status()
+    except Exception as e:
+        msg = f"Failed to create DHCP reservation for {ip} => {mac_addr}: {e}"
+        logger.exception(msg)
+        raise ToolError(msg)
+
+    return True
 
 
 if __name__ == "__main__":
