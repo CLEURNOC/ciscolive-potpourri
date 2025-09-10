@@ -38,6 +38,8 @@ import pynetbox
 import xmltodict
 from fastmcp import FastMCP
 from fastmcp.exceptions import ToolError
+import dns.asyncresolver
+import dns.reversename
 
 # from mcp.shared.exceptions import McpError
 # from mcp.types import METHOD_NOT_FOUND
@@ -148,6 +150,11 @@ class CPNRLeaseInput(BaseModel, extra="forbid"):
     mac: MACAddress | None = Field(None, description="The MAC address of the lease to look up in CPNR.")
 
 
+class DNSInput(BaseModel, extra="forbid"):
+    ip: IPAddress | None = Field(None, description="The IP address to perform a reverse DNS lookup on.")
+    hostname: Hostname | None = Field(None, description="The hostname to perform a forward DNS lookup on.")
+
+
 class NetBoxResponse(BaseModel, extra="forbid"):
     name: str = Field(..., description="The name of the object in NetBox.")
     type: NetBoxTypeEnum = Field(..., description="The type of the NetBox object.")
@@ -208,6 +215,12 @@ class CPNRLeaseResponse(BaseModel, extra="forbid"):
     state: str = Field(..., description="The state of the lease (e.g., ACTIVE, EXPIRED).")
     relay_info: Dict[str, str] = Field(..., description="DHCP relay information including switch, VLAN, and port.")
     is_reserved: bool = Field(..., description="Indicates if the lease is reserved.")
+
+
+class DNSResponse(BaseModel, extra="forbid"):
+    query: str = Field(..., description="The original query string (IP or hostname).")
+    record_type: str = Field(..., description="The type of DNS record (A, AAAA, PTR).")
+    results: List[str] = Field(..., description="List of resolved DNS records.")
 
 
 # UTILITIES
@@ -1095,6 +1108,79 @@ async def create_dhcp_reservation_in_cpnr(ip: IPAddress) -> bool:
         raise ToolError(msg)
 
     return True
+
+
+@server_mcp.tool(
+    annotations={
+        "title": "Perform DNS Lookup",
+        "readOnlyHint": True,
+    }
+)
+async def perform_dns_lookup(input: DNSInput | dict) -> DNSResponse:
+    """
+    Perform a DNS lookup for the given IP address or hostname.
+
+    Args:
+        input (DNSInput | dict): Input data, either a validated DNSInput (ip or hostname)
+            or a dict (for certain LLM compatibility).
+    """
+
+    if isinstance(input, dict):
+        input = DNSInput(**input)
+
+    ip = input.ip
+    hostname = input.hostname
+    target = ip or hostname
+    if not target:
+        raise ToolError("Either ip or hostname must be provided")
+
+    record_type = ""
+    results: List[str] = []
+
+    try:
+        if ip:
+            # Reverse DNS lookup (PTR record)
+            rev_name = dns.reversename.from_address(ip)
+            try:
+                answer = await dns.asyncresolver.resolve(rev_name, "PTR")
+                record_type = "PTR"
+                results = [str(r) for r in answer]
+            except Exception:
+                record_type = "PTR"
+                results = []
+        else:
+            # Forward DNS lookup (A and AAAA records)
+            try:
+                answer = await dns.asyncresolver.resolve(hostname, "A")
+                record_type = "A"
+                results = [str(r) for r in answer]
+            except Exception:
+                pass
+            if not results:
+                try:
+                    answer = await dns.asyncresolver.resolve(hostname, "AAAA")
+                    record_type = "AAAA"
+                    results = [str(r) for r in answer]
+                except Exception:
+                    pass
+            # Try CNAME if no A/AAAA
+            if not results:
+                try:
+                    answer = await dns.asyncresolver.resolve(hostname, "CNAME")
+                    record_type = "CNAME"
+                    results = [str(r.target) for r in answer]
+                except Exception:
+                    record_type = "CNAME"
+                    results = [hostname]
+
+    except Exception as e:
+        raise ToolError(f"DNS lookup failed: {e}")
+
+    return DNSResponse(
+        query=target,
+        record_type=record_type,
+        results=results,
+    )
 
 
 if __name__ == "__main__":
