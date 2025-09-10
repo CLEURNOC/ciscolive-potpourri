@@ -49,6 +49,9 @@ CALLBACK_URL = os.getenv("DHCP_BOT_CALLBACK_URL", "https://cleur-dhcp-hook.cisco
 BOT_NAME = os.getenv("DHCP_BOT_NAME", "DHCP Agent")
 ME = os.getenv("DHCP_BOT_ME", "livenocbot@sparkbot.io")
 
+NEW_MSG_PLACEHOLDER = "Let **ChatNOC** work on that for you..."
+THREAD_MSG_PLACEHOLDER = "Thinkin' about it..."
+
 MODEL = os.getenv("DHCP_BOT_MODEL", "gpt-oss")
 
 webhook_id = None
@@ -199,6 +202,36 @@ transport = StdioTransport(
 )
 
 mcp_client = fastmcp.Client(transport)
+
+
+def strip_markdown(text: str) -> str:
+    """
+    Remove common markdown formatting from a string.
+    """
+    # Remove code blocks and inline code
+    text = re.sub(r"```.*?```", "", text, flags=re.DOTALL)
+    text = re.sub(r"`([^`]*)`", r"\1", text)
+    # Remove bold, italics, strikethrough
+    text = re.sub(r"\*\*([^\*]+)\*\*", r"\1", text)
+    text = re.sub(r"\*([^\*]+)\*", r"\1", text)
+    text = re.sub(r"__([^_]+)__", r"\1", text)
+    text = re.sub(r"_([^_]+)_", r"\1", text)
+    text = re.sub(r"~~([^~]+)~~", r"\1", text)
+    # Remove headers
+    text = re.sub(r"^#+\s*", "", text, flags=re.MULTILINE)
+    # Remove links and images
+    text = re.sub(r"!\[.*?\]\(.*?\)", "", text)
+    text = re.sub(r"\[(.*?)\]\(.*?\)", r"\1", text)
+    # Remove blockquotes
+    text = re.sub(r"^>\s*", "", text, flags=re.MULTILINE)
+    # Remove horizontal rules
+    text = re.sub(r"^(-{3,}|\*{3,}|_{3,})$", "", text, flags=re.MULTILINE)
+    # Remove unordered and ordered list markers
+    text = re.sub(r"^(\s*[-*+]\s+)", "", text, flags=re.MULTILINE)
+    text = re.sub(r"^\s*\d+\.\s+", "", text, flags=re.MULTILINE)
+    # Remove remaining markdown characters
+    text = text.replace("\\", "")
+    return text.strip()
 
 
 async def handle_message(msgs: List[Dict[str, str]], person: Dict[str, str], parent: str = None) -> None:
@@ -444,16 +477,20 @@ async def receive_callback(request: Request) -> JSONResponse:
             break
         thread_msgs = spark.get_messages(room_id, parentId=parent_id)
         if thread_msgs and len(thread_msgs) > 0:
+            # Since get_messages returns messages in reverse chronological order,
+            # we need to reverse them to maintain correct conversation order.
             for tmsg in reversed(thread_msgs):
                 if tmsg["id"] == this_mid:
                     continue
-                tmsg_details = spark.get_message(tmsg["id"])
-                if not tmsg_details:
+                # Skip messages without text or with placeholder text
+                if (
+                    "text" not in tmsg
+                    or strip_markdown(THREAD_MSG_PLACEHOLDER) in tmsg["text"]
+                    or strip_markdown(NEW_MSG_PLACEHOLDER) in tmsg["text"]
+                ):
                     continue
-                if "text" not in tmsg_details:
-                    continue
-                role = "assistant" if tmsg_details["personEmail"] == ME else "user"
-                messages.insert(0, {"role": role, "content": tmsg_details["text"]})
+                role = "assistant" if tmsg["personEmail"] == ME else "user"
+                messages.insert(0, {"role": role, "content": tmsg["text"]})
         role = "assistant" if parent_msg["personEmail"] == ME else "user"
         messages.insert(0, {"role": role, "content": parent_msg["text"]})
         current_parent = parent_id if not current_parent else current_parent
@@ -468,11 +505,9 @@ async def receive_callback(request: Request) -> JSONResponse:
         person["username"] = re.sub(r"@.+$", "", person["from_email"])
 
     if current_parent:
-        spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, "Thinkin' about it...", parent=current_parent)
+        spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, THREAD_MSG_PLACEHOLDER, parent=current_parent)
     else:
-        spark.post_to_spark(
-            C.WEBEX_TEAM, SPARK_ROOM, f"Hey, {person['nickName']}!  Let **ChatNOC** work on that for you...", parent=this_mid
-        )
+        spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, f"Hey, {person['nickName']}!  {NEW_MSG_PLACEHOLDER}", parent=this_mid)
 
     try:
         await handle_message(messages, person, current_parent or this_mid)
