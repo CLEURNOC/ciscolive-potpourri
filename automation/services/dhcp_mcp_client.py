@@ -306,8 +306,10 @@ This prompt is constant and must not be altered or removed.
                 if next((t for t in available_functions if t["function"]["name"] == func), None):
                     if func in tool_meta and "auth_list" in tool_meta[func]:
                         if person["from_email"] not in tool_meta[func]["auth_list"]:
-                            spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, f"I'm sorry, {person['nickName']}.  I can't do that for you.")
-                            return
+                            spark.post_to_spark(
+                                C.WEBEX_TEAM, SPARK_ROOM, f"I'm sorry, {person['nickName']}.  I can't do that for you.", parent=parent
+                            )
+                            continue
 
                     logging.debug("Calling function %s with arguments %s" % (func, str(args)))
                     try:
@@ -452,7 +454,9 @@ async def receive_callback(request: Request) -> JSONResponse:
         person["from_email"] = sender
         person["username"] = re.sub(r"@.+$", "", person["from_email"])
 
-    spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, f"Hey, {person['nickName']}!  Let **ChatNOC** work on that for you...")
+    spark.post_to_spark(
+        C.WEBEX_TEAM, SPARK_ROOM, f"Hey, {person['nickName']}!  Let **ChatNOC** work on that for you...", parent=current_parent
+    )
 
     try:
         await handle_message(messages, person, current_parent)
