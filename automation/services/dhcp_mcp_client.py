@@ -433,19 +433,17 @@ async def receive_callback(request: Request) -> JSONResponse:
     messages = [{"role": "user", "content": msg["text"]}]
     current_parent = None
 
-    while True:
-        if "parentId" in msg and msg["parentId"] != mid:
-            if not current_parent:
-                current_parent = msg["parentId"]
-            mid = msg["parentId"]
-            msg = spark.get_message(mid)
-            if msg:
-                if msg["personEmail"] == ME:
-                    messages.insert(0, {"role": "assistant", "content": msg["text"]})
-                else:
-                    messages.insert(0, {"role": "user", "content": msg["text"]})
-        else:
+    # Build conversation history by traversing parent messages
+    while "parentId" in msg and msg["parentId"] != mid:
+        parent_id = msg["parentId"]
+        parent_msg = spark.get_message(parent_id)
+        if not parent_msg:
             break
+        role = "assistant" if parent_msg["personEmail"] == ME else "user"
+        messages.insert(0, {"role": role, "content": parent_msg["text"]})
+        current_parent = parent_id if not current_parent else current_parent
+        mid = parent_id
+        msg = parent_msg
 
     person = spark.get_person(record["data"]["personId"])
     if not person:
@@ -454,14 +452,16 @@ async def receive_callback(request: Request) -> JSONResponse:
         person["from_email"] = sender
         person["username"] = re.sub(r"@.+$", "", person["from_email"])
 
-    spark.post_to_spark(
-        C.WEBEX_TEAM, SPARK_ROOM, f"Hey, {person['nickName']}!  Let **ChatNOC** work on that for you...", parent=current_parent
-    )
+    if current_parent:
+        spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, "Thinkin' about it...", parent=current_parent)
+    else:
+        spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, f"Hey, {person['nickName']}!  Let **ChatNOC** work on that for you...")
 
     try:
         await handle_message(messages, person, current_parent)
     except Exception as e:
         logging.exception("Failed to handle message from %s: %s" % (person["nickName"], str(e)))
+        # Don't send this to the parent as it's a bug in the transaction.
         spark.post_to_spark(
             C.WEBEX_TEAM, SPARK_ROOM, "Whoops, I encountered an error:<br>\n```\n%s\n```" % traceback.format_exc(), MessageType.BAD
         )
