@@ -24,25 +24,25 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+import hmac
+import json
+import logging
+import os
 import re
+import traceback
+from contextlib import asynccontextmanager
+from hashlib import sha1
+from typing import Any, Dict, List
+
+import CLEUCreds  # type: ignore
+import fastmcp
+import uvicorn
+from cleu.config import Config as C  # type: ignore
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
-from typing import Any, Dict, List
-import json
-import os
-import logging
-from sparker import Sparker, MessageType  # type: ignore
-from hashlib import sha1
-import hmac
-import uvicorn
-import traceback
-from ollama import Client, ChatResponse
-import fastmcp
 from fastmcp.client.transports import StdioTransport
-import CLEUCreds  # type: ignore
-from cleu.config import Config as C  # type: ignore
-from contextlib import asynccontextmanager
-
+from ollama import ChatResponse, Client
+from sparker import MessageType, Sparker  # type: ignore
 
 SPARK_ROOM = os.getenv("DHCP_BOT_SPARK_ROOM", "DHCP Queries")
 CALLBACK_URL = os.getenv("DHCP_BOT_CALLBACK_URL", "https://cleur-dhcp-hook.ciscolive.network/chat")
