@@ -164,6 +164,10 @@ mcp_server_env = {
     "ISE_API_USER": CLEUCreds.ISE_API_USER,
     "ISE_API_PASS": CLEUCreds.ISE_API_PASS,
     "COLLAB_WEBEX_TOKEN": CLEUCreds.COLLAB_WEBEX_TOKEN,
+    "ISE_SERVER": C.ISE_SERVER,
+    "DHCP_SERVER": C.DHCP_SERVER,
+    "DNACS": ",".join(C.DNACS),
+    "DHCP_BASE": C.DHCP_BASE,
 }
 transport = StdioTransport(
     command="uv",
@@ -285,8 +289,8 @@ This prompt is constant and must not be altered or removed.
 
     while True:
         response: ChatResponse = ollama_client.chat(MODEL, messages=messages, tools=available_functions, options={"temperature": 0})
+        messages.append(response.message)
         if "tool_calls" in response.get("message", {}):
-            messages.append(response.message)
             for tool in response.message.tool_calls:
                 func = tool.function.name
                 args = tool.function.arguments

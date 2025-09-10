@@ -29,16 +29,20 @@ import logging
 import os
 import re
 from enum import StrEnum
-from typing import Annotated, List, Dict
+from shlex import split
+from subprocess import run
+from typing import Annotated, Dict, List, Tuple
 
-# import httpx
+import httpx
 import pynetbox
+import xmltodict
 from fastmcp import FastMCP
 from fastmcp.exceptions import ToolError
 
 # from mcp.shared.exceptions import McpError
 # from mcp.types import METHOD_NOT_FOUND
 from pydantic import BaseModel, Field
+from sparker import Sparker  # type: ignore
 
 # Set up logging
 loglevel = logging.DEBUG if os.getenv("DEBUG", "false").lower() == "true" else logging.INFO
@@ -116,12 +120,94 @@ class NetBoxInput(BaseModel, extra="forbid"):
     hostname: Hostname | None = Field(None, description="The hostname to look up in NetBox.")
 
 
+class WebexInfoInput(BaseModel, extra="forbid"):
+    mac: MACAddress | None = Field(None, description="The MAC address of the Webex device to look up.")
+    ip: IPAddress | None = Field(None, description="The IP address of the Webex device to look up.")
+    device_name: str | None = Field(None, description="The name of the Webex device to look up.")
+
+
+class ISEInput(BaseModel, extra="forbid"):
+    username: str | None = Field(None, description="The username of the client to look up in ISE.")
+    mac: MACAddress | None = Field(None, description="The MAC address of the client to look up in ISE.")
+    ip: IPAddress | None = Field(None, description="The IP address of the client to look up in ISE.")
+
+
+class DNACInput(BaseModel, extra="forbid"):
+    username: str | None = Field(None, description="The username of the client to look up in Catalyst Center.")
+    mac: MACAddress | None = Field(None, description="The MAC address of the client to look up in Catalyst Center.")
+    ip: IPAddress | None = Field(None, description="The IP address of the client to look up in Catalyst Center.")
+
+
+class CPNRReservationInput(BaseModel, extra="forbid"):
+    ip: IPAddress | None = Field(None, description="The IP address of the reservation to look up in CPNR.")
+    mac: MACAddress | None = Field(None, description="The MAC address of the reservation to look up in CPNR.")
+
+
+class CPNRLeaseInput(BaseModel, extra="forbid"):
+    ip: IPAddress | None = Field(None, description="The IP address of the lease to look up in CPNR.")
+    mac: MACAddress | None = Field(None, description="The MAC address of the lease to look up in CPNR.")
+
+
 class NetBoxResponse(BaseModel, extra="forbid"):
     name: str = Field(..., description="The name of the object in NetBox.")
     type: NetBoxTypeEnum = Field(..., description="The type of the NetBox object.")
     ip: IPAddress | None = Field(None, description="The primary IP address of the object, if available.")
     responsible_people: list[str] | None = Field(None, description="List of people responsible for the object.")
     usage_notes: str | None = Field(None, description="Any usage notes associated with the object.")
+
+
+class WebexInfoResponse(BaseModel, extra="forbid"):
+    name: str = Field(..., description="The name of the Webex device.")
+    product: str = Field(..., description="The product type of the Webex device.")
+    device_type: str = Field(..., description="The type of the Webex device.")
+    mac: MACAddress = Field(..., description="The MAC address of the Webex device.")
+    ip: IPAddress = Field(..., description="The IP address of the Webex device.")
+    serial_number: str = Field(..., description="The serial number of the Webex device.")
+    software: str = Field(..., description="The software version of the Webex device.")
+    connection_status: str = Field(..., description="The connection status of the Webex device.")
+    connected_interface: str = Field(..., description="The currently active interface of the Webex device.")
+    location: str | None = Field(None, description="The location of the Webex device's workspace.")
+    room_temperature: str | None = Field(None, description="The temperature of the workspace in degrees C.")
+    room_humidity: str | None = Field(None, description="The humidity of the workspace in percentage.")
+
+
+class ISEResponse(BaseModel, extra="forbid"):
+    username: str = Field(..., description="The username of the client.")
+    client_mac: MACAddress = Field(..., description="The MAC address of the client.")
+    network_access_server: IPAddress = Field(..., description="The IP address of the network access server (NAS).")
+    client_ipv4: IPAddress | None = Field(None, description="The IPv4 address of the client, if available.")
+    client_ipv6: list[IPAddress] | None = Field(None, description="List of IPv6 addresses of the client, if available.")
+    authentication_timestamp: str = Field(..., description="The timestamp of the client's authentication.")
+    associated_access_point: MACAddress | None = Field(None, description="The MAC address of the associated access point, if available.")
+    connected_vlan: str | None = Field(None, description="The VLAN ID the client is connected to, if available.")
+    associated_ssid: str | None = Field(None, description="The SSID the client is associated with, if available.")
+
+
+class DNACResponse(BaseModel, extra="forbid"):
+    user: str | None = Field(None, description="The username of the client.")
+    mac: MACAddress | None = Field(None, description="The MAC address of the client.")
+    type: str | None = Field(None, description="The type of the client device.")
+    ostype: str | None = Field(None, description="The operating system type of the client device.")
+    health: int | None = Field(None, description="The overall health score of the client device.")
+    reason: str | None = Field(None, description="The reason for the health score, if available.")
+    onboard: int | None = Field(None, description="The onboarding health score of the client device.")
+    connect: int | None = Field(None, description="The connectivity health score of the client device.")
+    ssid: str | None = Field(None, description="The SSID the client is connected to, if available.")
+
+
+class CPNRReservationResponse(BaseModel, extra="forbid"):
+    mac: MACAddress = Field(..., description="The MAC address of the reservation.")
+    scope: str = Field(..., description="The scope name of the reservation.")
+
+
+class CPNRLeaseResponse(BaseModel, extra="forbid"):
+    ip: IPAddress = Field(..., description="The IP address of the lease.")
+    name: str = Field(..., description="The hostname of the client.")
+    mac: MACAddress = Field(..., description="The MAC address of the client.")
+    scope: str = Field(..., description="The scope name of the lease.")
+    state: str = Field(..., description="The state of the lease (e.g., ACTIVE, EXPIRED).")
+    relay_info: Dict[str, str] = Field(..., description="DHCP relay information including switch, VLAN, and port.")
+    is_reserved: bool = Field(..., description="Indicates if the lease is reserved.")
 
 
 # UTILITIES
@@ -208,6 +294,237 @@ def parse_relay_info(outd: Dict[str, str]) -> Dict[str, str]:
     return res
 
 
+async def get_request_from_cat_center(
+    curl: str, cheaders: Dict[str, str], params: Dict[str, str], client: str, dnac: str
+) -> Tuple[Dict[str, str] | None]:
+    try:
+        async with httpx.AsyncClient(verify=tls_verify, timeout=REST_TIMEOUT) as hclient:
+            response = await hclient.get(curl, headers=cheaders, params=params)
+            response.raise_for_status()
+    except Exception as e:
+        logging.exception("Failed to find client %s in Catalyst Center %s: %s" % (client, dnac, getattr(e, "message", repr(e))))
+        return (None, None)
+
+    return (response.json(), response)
+
+
+async def get_token_from_cat_center(dnac: str) -> str | None:
+
+    turl = f"https://{dnac}/dna/system/api/v1/auth/token"
+    theaders = {"content-type": "application/json"}
+    try:
+        async with httpx.AsyncClient(verify=tls_verify, timeout=REST_TIMEOUT) as client:
+            response = await client.post(turl, headers=theaders, auth=BASIC_AUTH)
+            response.raise_for_status()
+    except Exception as e:
+        logging.exception("Unable to get an auth token from Catalyst Center: %s" % getattr(e, "message", repr(e)))
+        return None
+
+    j = response.json()
+    if "Token" not in j:
+        logging.warning("Failed to get a Token element from Catalyst Center %s: %s" % (dnac, response.text))
+        return None
+
+    return j["Token"]
+
+
+def process_cat_center_user(j: Dict[str, str], response: object, dnac: str) -> Dict[str, str] | None:
+    if len(j) == 0 or "userDetails" not in j[0]:
+        logging.warning("Got an unknown response from Catalyst Center %s: '%s'" % (dnac, response.text))
+        return None
+
+    if len(j[0]["userDetails"].keys()) == 0:
+        return None
+
+    return j[0]["userDetails"]
+
+
+def process_cat_center_mac(j: Dict[str, str], dnac: str) -> Dict[str, str] | None:
+    if "detail" not in j:
+        logging.warning("Got an unknown response from Catalyst Center %s: '%s'" % (dnac, str(j)))
+        return None
+
+    if "errorCode" in j["detail"] or len(j["detail"].keys()) == 0:
+        return None
+
+    return j["detail"]
+
+
+def build_dna_obj(dna_obj: Dict[str, str], detail: Dict[str, str]) -> Dict[str, str]:
+    if "hostType" in detail:
+        dna_obj["type"] = detail["hostType"]
+
+    if "userId" in detail:
+        dna_obj["user"] = detail["userId"]
+
+    if "hostMac" in detail:
+        dna_obj["mac"] = detail["hostMac"]
+
+    if "hostOs" in detail and detail["hostOs"]:
+        dna_obj["ostype"] = detail["hostOs"]
+    elif "subType" in detail:
+        dna_obj["ostype"] = detail["subType"]
+
+    if "healthScore" in detail:
+        for hscore in detail["healthScore"]:
+            if hscore["healthType"] == "OVERALL":
+                dna_obj["health"] = hscore["score"]
+                if hscore["reason"] != "":
+                    dna_obj["reason"] = hscore["reason"]
+            elif hscore["healthType"] == "ONBOARDED":
+                dna_obj["onboard"] = hscore["score"]
+            elif hscore["healthType"] == "CONNECTED":
+                dna_obj["connect"] = hscore["score"]
+
+    if "ssid" in detail:
+        dna_obj["ssid"] = detail["ssid"]
+
+    if "location" in detail:
+        dna_obj["location"] = detail["location"]
+
+    if "clientConnection" in detail:
+        dna_obj["ap"] = detail["clientConnection"]
+
+    if "frequency" in detail:
+        if detail["frequency"]:
+            dna_obj["band"] = detail["frequency"] + " GHz"
+
+    return dna_obj
+
+
+async def check_for_reservation(input: CPNRReservationInput | dict) -> CPNRReservationResponse | None:
+    """
+    Check for a DHCP lease by IP or MAC address within CPNR.  Only one of IP address or MAC address is required.
+
+    Args:
+      ip (Union[str, None], optional): IP address of the lease to check (at least ip or mac must be specified)
+      mac (Union[str, None], optional): MAC address of the lease to check (at least ip or mac must be specified)
+
+    Returns:
+      Union[Dict[str, str], None]: A dict containing the MAC address and lease scope if a lease is found or None if the lease is not found or an error occurs
+
+    Raises:
+      ValueError: If both ip and mac were not specified
+    """
+
+    if isinstance(input, dict):
+        input = CPNRReservationInput(**input)
+
+    if not input.ip and not input.mac:
+        raise ValueError("At least one of ip or mac must be specified")
+
+    url: str
+    params: Dict[str, str]
+    mac_addr: str | None = None
+
+    if input.ip:
+        url = f"{os.getenv('DHCP_BASE')}/Reservation/{input.ip}"
+        params = {}
+    else:
+        mac_addr = str(normalize_mac(input.mac))
+        url = f"{os.getenv('DHCP_BASE')}/Reservation"
+        params = {"lookupKey": mac_addr}
+
+    try:
+        async with httpx.AsyncClient(verify=False, timeout=REST_TIMEOUT) as client:
+            response = await client.get(url, auth=BASIC_AUTH, params=params, headers=CNR_HEADERS)
+            response.raise_for_status()
+    except httpx.HTTPError as he:
+        if he.response.status_code != 404:
+            logger.exception(f"Did not get a good response from CPNR for reservation {input.ip or input.mac}: {he}")
+        return None
+    except Exception as e:
+        logger.exception(f"Did not get a good response from CPNR for reservation {input.ip or input.mac}: {e}")
+        return None
+
+    rsvp = response.json()
+    # Extract MAC address from lookupKey (last 6 octets)
+    mac_value = ":".join(rsvp["lookupKey"].split(":")[-6:])
+    scope_value = rsvp["scope"]
+
+    return CPNRReservationResponse(mac=mac_value, scope=scope_value)
+
+
+async def _get_dhcp_lease_info_from_cpnr(input: CPNRLeaseInput | dict) -> CPNRLeaseResponse | None:
+    """
+    Get a list of DHCP leases with hostname of the client, MAC address of the client, scope for the lease, state of the lease,
+    DHCP relay information (switch, VLAN, and port), and whether the lease is reserved for a given MAC address
+    or IP address from CPNR.
+
+    Args:
+        input (CPNRLeaseInput | dict): Input data, either a validated CPNRLeaseInput (ip or mac)
+            or a dict (for certain LLM compatibility).
+    """
+
+    if isinstance(input, dict):
+        input = CPNRLeaseInput(**input)
+
+    if not input.mac and not input.ip:
+        raise ValueError("At least one of mac or ip must be specified")
+
+    url: str
+    params: Dict[str, str]
+    mac_addr: str | None = None
+
+    if input.mac:
+        mac_addr = str(normalize_mac(input.mac))
+        url = f"{os.getenv('DHCP_BASE')}/Lease"
+        params = {"clientMacAddr": mac_addr}
+        client_id = mac_addr
+    else:
+        url = f"{os.getenv('DHCP_BASE')}/Lease/{input.ip}"
+        params = {}
+        client_id = str(input.ip)
+
+    try:
+        async with httpx.AsyncClient(verify=False, timeout=REST_TIMEOUT) as client:
+            response = await client.get(url, auth=BASIC_AUTH, headers=CNR_HEADERS, params=params)
+            response.raise_for_status()
+    except httpx.HTTPError as he:
+        if he.response.status_code != 404:
+            logger.exception(f"Did not get a good response from CPNR for client {client_id}: {he}")
+        return None
+    except Exception as e:
+        logger.exception(f"Did not get a good response from CPNR for client {client_id}: {e}")
+        return None
+
+    data = response.json()
+    leases_data = data if input.mac else [data]
+
+    leases: List[CPNRLeaseResponse] = []
+    for lease in leases_data:
+        if "address" not in lease or "clientMacAddr" not in lease:
+            continue
+
+        relay_info = parse_relay_info(lease)
+        ip_addr = lease["address"]
+        name = lease.get("clientHostName") or lease.get("clientDnsName") or "UNKNOWN"
+        # Extract MAC address (after last comma)
+        mac_field = lease["clientMacAddr"]
+        mac_value = mac_field[mac_field.rfind(",") + 1 :]
+        scope = lease["scopeName"]
+        state = lease["state"]
+        is_reserved = False
+
+        rsvp = await check_for_reservation({"ip": ip_addr})
+        if rsvp and rsvp.mac == mac_value:
+            is_reserved = True
+
+        leases.append(
+            CPNRLeaseResponse(
+                ip=ip_addr,
+                name=name,
+                mac=mac_value,
+                scope=scope,
+                state=state,
+                relay_info=relay_info,
+                is_reserved=is_reserved,
+            )
+        )
+
+    return leases if leases else None
+
+
 # TOOLS
 
 
@@ -223,7 +540,7 @@ async def get_object_info_from_netbox(inp: NetBoxInput | dict) -> List[NetBoxRes
 
     Args:
         inp (NetBoxInput | dict): Input data, either a validated NetBoxInput (ip for IP Address or hostname for Hostname)
-        or a dict (for LLM compatibility).
+        or a dict (for certain LLM compatibility).
     """
     try:
         # Handle dict input for LLMs that pass JSON objects
@@ -232,10 +549,10 @@ async def get_object_info_from_netbox(inp: NetBoxInput | dict) -> List[NetBoxRes
 
         # Determine query type
         if inp.ip:
-            ip = inp.ip
+            ip = str(inp.ip)
             name = None
         elif inp.hostname:
-            name = inp.hostname
+            name = str(inp.hostname)
             ip = None
         else:
             raise ValueError("Invalid input.  Either 'ip' or 'hostname' property must be specified.")
@@ -276,10 +593,13 @@ async def get_object_info_from_netbox(inp: NetBoxInput | dict) -> List[NetBoxRes
         if ip:
             ipa = None
             # Try common subnet sizes for IP lookup (NetBox requires prefix)
-            for prefix in ("32", "31", "24", "128", "64", "16"):
-                ipa = pnb.ipam.ip_addresses.get(address=f"{ip}/{prefix}")
-                if ipa:
-                    break
+            if "/" not in ip:
+                for prefix in ("32", "31", "24", "128", "64", "16"):
+                    ipa = pnb.ipam.ip_addresses.get(address=f"{ip}/{prefix}")
+                    if ipa:
+                        break
+            else:
+                ipa = pnb.ipam.ip_addresses.get(address=ip)
             if ipa:
                 ipa.full_details()  # Ensure all fields are populated
                 # VM interface assignment
@@ -309,6 +629,384 @@ async def get_object_info_from_netbox(inp: NetBoxInput | dict) -> List[NetBoxRes
     except Exception as e:
         logger.error(f"Error getting object info from NetBox: {e}", exc_info=True)
         raise ToolError(e)
+
+
+@server_mcp.tool(
+    annotations={
+        "title": "Get Webex Device Info",
+        "readOnlyHint": True,
+    },
+    enabled=False,
+)
+async def get_webex_device_info(inp: WebexInfoInput | dict) -> WebexInfoResponse:
+    """
+    Retrieve Webex device details including name, product, type, MAC address, IP address, serial number, workspace name,
+    workspace location, workspace temperature, and workspace humidity given a device's MAC address or IP address.
+
+    Args:
+      inp (WebexInfoInput | dict): Input data, either a validated WebexInfoInput (mac, ip, or device_name)
+        or a dict (for certain LLM compatibility).
+    """
+
+    if isinstance(inp, dict):
+        inp = WebexInfoInput(**inp)
+
+    if inp.mac:
+        key = "mac"
+        val = str(normalize_mac(inp.mac))
+    elif inp.ip:
+        key = "ip"
+        val = str(inp.ip)
+    else:
+        if inp.device_name.lower().startswith("sep"):
+            val = str(normalize_mac(inp.device_name.lower().replace("sep", "")))
+            key = "mac"
+        else:
+            key = "displayName"
+            val = inp.device_name
+
+    dev_spark = Sparker(token=os.getenv("COLLAB_WEBEX_TOKEN"), logit=True)
+
+    devices = dev_spark.get_webex_devices()
+    if not devices:
+        raise ToolError("No devices found")
+
+    for device in devices:
+        if device[key].lower() == val.lower():
+            workspace = dev_spark.get_workspace(device["workspaceId"])
+            location = workspace["displayName"] if workspace else None
+
+            room_temperature = None
+            room_humidity = None
+            for metric, units in {"temperature": "degrees C", "humidity": "%"}.items():
+                details = dev_spark.get_workspace_metric(device["workspaceId"], metric)
+                if details and len(details) > 0 and "mean" in details[0]:
+                    value = f"{int(details[0]['mean'])} {units}"
+                    if metric == "temperature":
+                        room_temperature = value
+                    elif metric == "humidity":
+                        room_humidity = value
+
+            return WebexInfoResponse(
+                name=device["displayName"],
+                product=device["product"],
+                device_type=device["type"],
+                mac=device["mac"],
+                ip=device["ip"],
+                serial_number=device["serial"],
+                software=device["software"],
+                connection_status=device["connectionStatus"],
+                connected_interface=device["activeInterface"],
+                location=location,
+                room_temperature=room_temperature,
+                room_humidity=room_humidity,
+            )
+
+    raise ToolError(f"No device found matching {key} {val}")
+
+
+@server_mcp.tool(
+    annotations={
+        "title": "Convert Celsius to Fahrenheit",
+        "readOnlyHint": True,
+        "openWorldHint": False,
+    }
+)
+async def convert_celsius_to_fahrenheit(degrees_celsius: int) -> int:
+    """
+    Convert temperature in degrees Celsius to degree Fahrenheit.
+
+    Args:
+      degrees_celsius (int): Temperature in degrees Celsius.
+    """
+
+    return int((degrees_celsius * 1.8) + 32.0)
+
+
+@server_mcp.tool(
+    annotations={
+        "title": "Generate Random Password",
+        "readOnlyHint": True,
+        "openWorldHint": False,
+    }
+)
+async def generate_password(words: int = 3, add_symbol: bool = False) -> Annotated[str, Field(description="The generated password.")]:
+    """
+    Generate a random password containing a specified number of words and an optional symbol.
+
+    Args:
+      words (int, optional): The number of words to include (default: 3).  Number of words must
+                             be between 3 and 6 (inclusive).
+      add_symbol (bool, optional): Whether to include a symbol in the password (default: False)
+    """
+    try:
+        num_words = int(words)
+    except ValueError:
+        raise ToolError("num_words is not an integer")
+
+    cmd = split(f"hankify-pw --num-words {num_words}")
+    if add_symbol:
+        cmd.append("--add-symbol")
+
+    res = run(cmd, capture_output=True, text=True)
+    if res.returncode == 0:
+        return res.stdout
+
+    raise ToolError(f"Error generating password: {res.stderr}")
+
+
+@server_mcp.tool(
+    annotations={
+        "title": "Get Client Details from ISE",
+        "readOnlyHint": True,
+    },
+    enabled=False,
+)
+async def get_user_details_from_ise(ise_input: ISEInput | dict) -> ISEResponse:
+    """
+    Get client username, client MAC address, NAS IP address, client IP address, authentication timestamp,
+    client IPv6 address(es), associated AP, VLAN ID, associated SSID for a client from ISE based on the client's username,
+    MAC address, or IP address.  At least one of username, MAC address, or IP address is required.
+
+    Args:
+        ISEInput | dict: Input data, either a validated ISEInput (username, mac, or ip)
+        or a dict (for certain LLM compatibility).
+    """
+
+    if isinstance(ise_input, dict):
+        ise_input = ISEInput(**ise_input)
+
+    username = ise_input.username
+    mac = ise_input.mac
+    ip = ise_input.ip
+
+    if not username and not mac and not ip:
+        raise ToolError("One of username, mac, or ip is required")
+
+    if mac:
+        mac_str = str(normalize_mac(mac)).upper()
+        url = f"https://{os.getenv('ISE_SERVER')}/admin/API/mnt/Session/MACAddress/{mac_str}"
+    elif ip:
+        url = f"https://{os.getenv('ISE_SERVER')}/admin/API/mnt/Session/EndPointIPAddress/{ip}"
+    else:
+        url = f"https://{os.getenv('ISE_SERVER')}/admin/API/mnt/Session/UserName/{username}"
+
+    try:
+        async with httpx.AsyncClient(verify=tls_verify, timeout=REST_TIMEOUT) as client:
+            response = await client.get(
+                url,
+                auth=(os.getenv("ISE_API_USER"), os.getenv("ISE_API_PASS")),
+                headers={"Accept": "application/xml"},
+            )
+            response.raise_for_status()
+    except httpx.HTTPStatusError as e:
+        logger.error(f"HTTP error getting client details from ISE: {e}", exc_info=True)
+        raise ToolError(f"HTTP error {e.response.status_code}: {e.response.text}")
+    except Exception as e:
+        logger.error(f"Unable to get client details from ISE: {e}", exc_info=True)
+        raise ToolError(e)
+
+    session_details = xmltodict.parse(response.text)["sessionParameters"]
+
+    # Required fields
+    network_access_server = session_details.get("nas_ip_address")
+    client_mac = str(normalize_mac(session_details.get("calling_station_id", "")))
+
+    # Optional fields
+    client_ipv4 = session_details.get("framed_ip_address")
+    auth_username = username if username else session_details.get("user_name", "")
+
+    # IPv6 addresses
+    client_ipv6 = None
+    framed_ipv6 = session_details.get("framed_ipv6_address")
+    if framed_ipv6 and "ipv6_address" in framed_ipv6:
+        ipv6_list = framed_ipv6["ipv6_address"]
+        if isinstance(ipv6_list, str):
+            client_ipv6 = [ipv6_list]
+        elif isinstance(ipv6_list, list):
+            client_ipv6 = [addr for addr in ipv6_list if addr]
+        else:
+            client_ipv6 = []
+    else:
+        client_ipv6 = None
+
+    authentication_timestamp = session_details.get("auth_acs_timestamp")
+
+    # Optional attributes from other_attr_string
+    associated_access_point = None
+    associated_ssid = None
+    connected_vlan = None
+    other_attr_string = session_details.get("other_attr_string", "")
+    if other_attr_string:
+        ap_match = re.search(r"Called-Station-ID=([a-fA-F0-9:-]+)", other_attr_string)
+        ssid_match = re.search(r"cisco-wlan-ssid=([^,]+)", other_attr_string)
+        vlan_match = re.search(r"vlan-id=([^,]+)", other_attr_string)
+
+        if ap_match:
+            associated_access_point = normalize_mac(ap_match.group(1))
+        if ssid_match:
+            associated_ssid = ssid_match.group(1)
+        if vlan_match:
+            connected_vlan = vlan_match.group(1)
+
+    return ISEResponse(
+        username=auth_username,
+        client_mac=client_mac,
+        network_access_server=network_access_server,
+        client_ipv4=client_ipv4,
+        client_ipv6=client_ipv6,
+        authentication_timestamp=authentication_timestamp,
+        associated_access_point=associated_access_point,
+        connected_vlan=connected_vlan,
+        associated_ssid=associated_ssid,
+    )
+
+
+@server_mcp.tool(
+    annotations={
+        "title": "Get Client Details from Catalyst Center",
+        "readOnlyHint": True,
+    },
+    enabled=False,
+)
+async def get_client_details_from_cat_center(
+    input_data: DNACInput | dict,
+) -> DNACResponse:
+    """
+    Get client connect and onboard health, location, OS type, associated AP and SSID, and type from Catalyst Center based on the client's username or MAC address.
+    At least one of the client's username, MAC address, or IP address is required.
+
+    Args:
+       DNACInput | dict: Input data, either a validated DNACInput (username, mac, or ip)
+       or a dict (for certain LLM compatibility).
+    """
+    # Validate input
+    if isinstance(input_data, dict):
+        input_data = DNACInput(**input_data)
+
+    username = input_data.username
+    mac = input_data.mac
+    ip = input_data.ip
+
+    if not username and not mac and not ip:
+        raise ToolError("At least one of username, mac, or ip must be specified")
+
+    dna_obj: Dict[str, str | int | None] = {
+        "user": None,
+        "mac": None,
+        "type": None,
+        "ostype": None,
+        "health": None,
+        "reason": None,
+        "onboard": None,
+        "connect": None,
+        "ssid": None,
+    }
+
+    macs: List[str] = []
+
+    # If only IP is provided, try to resolve MAC(s) via DHCP lease info
+    if ip and not mac and not username:
+        leases = await _get_dhcp_lease_info_from_cpnr({"ip": ip})
+        if leases and len(leases) > 0:
+            macs = [le["mac"] for le in leases if "mac" in le]
+        else:
+            raise ToolError("No MAC address found for given IP")
+    elif mac:
+        macs = [str(normalize_mac(mac))]
+
+    dnacs = [dnac.strip() for dnac in os.getenv("DNACS", "").split(",") if dnac.strip()]
+    if not dnacs:
+        raise ToolError("No Catalyst Center servers configured")
+
+    for dnac in dnacs:
+        token = await get_token_from_cat_center(dnac)
+        if not token:
+            continue
+
+        detail: Dict[str, str | int | None] = {}
+
+        if username:
+            curl = f"https://{dnac}/dna/intent/api/v1/client-enrichment-details"
+            cheaders = {
+                "accept": "application/json",
+                "x-auth-token": token,
+                "entity_type": "network_user_id",
+                "entity_value": username,
+            }
+            params: Dict[str, str] = {}
+            client = username
+
+            j, response = await get_request_from_cat_center(curl, cheaders, params, client, dnac)
+            if not j:
+                continue
+
+            detail = process_cat_center_user(j, response, dnac)
+            if not detail:
+                continue
+
+        else:
+            curl = f"https://{dnac}/dna/intent/api/v1/client-detail"
+            cheaders = {"accept": "application/json", "x-auth-token": token}
+            jsons: Dict[str, Dict[str, str]] = {}
+
+            for macaddr in macs:
+                params = {"macAddress": macaddr}
+                client = macaddr
+                j, response = await get_request_from_cat_center(curl, cheaders, params, client, dnac)
+                if j:
+                    jsons[macaddr] = j
+
+            if not jsons:
+                continue
+
+            for macaddr, j in jsons.items():
+                detail = process_cat_center_mac(j, dnac)
+                if detail:
+                    dna_obj["mac"] = macaddr
+                    break
+
+        if detail:
+            dna_obj = await build_dna_obj(dna_obj, detail)
+            # Map to DNACResponse using proper types
+            return DNACResponse(
+                user=dna_obj.get("user"),
+                mac=dna_obj.get("mac"),
+                type=dna_obj.get("type"),
+                ostype=dna_obj.get("ostype"),
+                health=int(dna_obj["health"]) if dna_obj.get("health") is not None else None,
+                reason=dna_obj.get("reason"),
+                onboard=int(dna_obj["onboard"]) if dna_obj.get("onboard") is not None else None,
+                connect=int(dna_obj["connect"]) if dna_obj.get("connect") is not None else None,
+                ssid=dna_obj.get("ssid"),
+            )
+
+    raise ToolError("No client details found in Catalyst Center")
+
+
+@server_mcp.tool(
+    annotations={
+        "title": "Get DHCP Lease Info from CPNR",
+        "readOnlyHint": True,
+    },
+    enabled=False,
+)
+async def get_dhcp_lease_info_from_cpnr(input: CPNRLeaseInput | dict) -> List[CPNRLeaseResponse]:
+    """
+    Get a list of DHCP leases with hostname of the client, MAC address of the client, scope for the lease, state of the lease,
+    DHCP relay information (switch, VLAN, and port), and whether the lease is reserved for a given MAC address
+    or IP address from CPNR.
+
+    Args:
+        input (CPNRLeaseInput | dict): Input data, either a validated CPNRLeaseInput (ip or mac)
+            or a dict (for certain LLM compatibility).
+    """
+
+    leases = await _get_dhcp_lease_info_from_cpnr(input)
+    if leases:
+        return leases
+
+    raise ToolError("No DHCP lease information found in CPNR")
 
 
 if __name__ == "__main__":
