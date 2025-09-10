@@ -240,8 +240,7 @@ class Sparker(object):
         try:
             params = {"roomId": room_id}
             params.update(kwargs)
-            response = Sparker._request_with_retry("GET", url, params=params, headers=self._headers)
-            response.raise_for_status()
+            items = Sparker._get_items_pages("GET", url, params=params, headers=self._headers)
         except Exception as e:
             msg = "Error getting messages for room ID {}: {}".format(room_id, getattr(e, "message", repr(e)))
             if self._logit:
@@ -250,7 +249,7 @@ class Sparker(object):
                 print(msg)
             return None
 
-        return response.json()
+        return items
 
     def get_card_response(self, did):
         if not self.check_token():
