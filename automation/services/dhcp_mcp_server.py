@@ -33,13 +33,13 @@ from shlex import split
 from subprocess import run
 from typing import Annotated, Dict, List, Tuple
 
+import dns.asyncresolver
+import dns.reversename
 import httpx
 import pynetbox
 import xmltodict
 from fastmcp import FastMCP
 from fastmcp.exceptions import ToolError
-import dns.asyncresolver
-import dns.reversename
 
 # from mcp.shared.exceptions import McpError
 # from mcp.types import METHOD_NOT_FOUND
