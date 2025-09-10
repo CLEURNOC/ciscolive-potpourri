@@ -1149,6 +1149,8 @@ async def perform_dns_lookup(input: DNSInput | dict) -> DNSResponse:
                 record_type = "PTR"
                 results = []
         else:
+            if "." not in hostname:
+                hostname = f"{hostname}.{os.getenv('DNS_DOMAIN')}"
             # Forward DNS lookup (A and AAAA records)
             try:
                 answer = await dns.asyncresolver.resolve(hostname, "A")

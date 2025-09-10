@@ -175,6 +175,7 @@ mcp_server_env = {
     "DHCP_SERVER": C.DHCP_SERVER,
     "DNACS": ",".join(C.DNACS),
     "DHCP_BASE": C.DHCP_BASE,
+    "DNS_DOMAIN": C.DNS_DOMAIN,
 }
 transport = StdioTransport(
     command="uv",
