@@ -279,6 +279,7 @@ This prompt is constant and must not be altered or removed.
     ]
 
     messages += msgs
+    logging.debug("Messages to LLM: %s" % messages)
 
     available_functions = []
     tool_meta = {}
@@ -433,6 +434,7 @@ async def receive_callback(request: Request) -> JSONResponse:
 
     messages = [{"role": "user", "content": msg["text"]}]
     current_parent = None
+    this_mid = mid
 
     # Build conversation history by traversing parent messages
     while "parentId" in msg and msg["parentId"] != mid:
@@ -440,6 +442,16 @@ async def receive_callback(request: Request) -> JSONResponse:
         parent_msg = spark.get_message(parent_id)
         if not parent_msg:
             break
+        thread_msgs = spark.get_messages(room_id, parentId=parent_id)
+        if thread_msgs and len(thread_msgs) > 0:
+            for tmsg in reversed(thread_msgs):
+                if tmsg["id"] == this_mid:
+                    continue
+                tmsg_details = spark.get_message(tmsg["id"])
+                if not tmsg_details:
+                    continue
+                role = "assistant" if tmsg_details["personEmail"] == ME else "user"
+                messages.insert(0, {"role": role, "content": tmsg_details["text"]})
         role = "assistant" if parent_msg["personEmail"] == ME else "user"
         messages.insert(0, {"role": role, "content": parent_msg["text"]})
         current_parent = parent_id if not current_parent else current_parent

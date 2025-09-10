@@ -231,6 +231,27 @@ class Sparker(object):
 
         return response.json()
 
+    def get_messages(self, room_id, **kwargs):
+        if not self.check_token():
+            return None
+
+        url = self.SPARK_API + "messages"
+
+        try:
+            params = {"roomId": room_id}
+            params.update(kwargs)
+            response = Sparker._request_with_retry("GET", url, params=params, headers=self._headers)
+            response.raise_for_status()
+        except Exception as e:
+            msg = "Error getting messages for room ID {}: {}".format(room_id, getattr(e, "message", repr(e)))
+            if self._logit:
+                logging.error(msg)
+            else:
+                print(msg)
+            return None
+
+        return response.json()
+
     def get_card_response(self, did):
         if not self.check_token():
             return None
