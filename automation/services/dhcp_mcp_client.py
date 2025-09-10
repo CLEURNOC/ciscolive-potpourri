@@ -86,6 +86,12 @@ async def cleanup(app: FastAPI):
 
     yield
 
+    if mcp_client:
+        try:
+            await mcp_client.close()
+        except Exception:
+            pass
+
     if webhook_id:
         spark.unregister_webhook(webhook_id)
 
