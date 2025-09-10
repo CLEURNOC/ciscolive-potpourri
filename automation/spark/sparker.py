@@ -490,6 +490,9 @@ class Sparker(object):
 
             payload["roomId"] = room_id
 
+        if "parent" in kwargs and kwargs["parent"]:
+            payload["parentId"] = kwargs["parent"]
+
         url = self.SPARK_API + "messages"
 
         payload["markdown"] = mt.value + ((msg[: Sparker.MAX_MSG_LEN] + "...") if len(msg) > Sparker.MAX_MSG_LEN else msg)
@@ -526,7 +529,7 @@ class Sparker(object):
 
         return True
 
-    def post_to_spark_with_card(self, team, room, person, card, msg="", mtype=MessageType.NEUTRAL):
+    def post_to_spark_with_card(self, team, room, person, card, msg="", mtype=MessageType.NEUTRAL, **kwargs):
         if not self.check_token():
             return False
 
@@ -568,6 +571,9 @@ class Sparker(object):
                 return False
 
             payload["roomId"] = room_id
+
+        if "parent" in kwargs and kwargs["parent"]:
+            payload["parentId"] = kwargs["parent"]
 
         url = self.SPARK_API + "messages"
         payload["markdown"] = mt.value + ((msg[: Sparker.MAX_MSG_LEN] + "...") if len(msg) > Sparker.MAX_MSG_LEN - card_len else msg)
@@ -634,7 +640,7 @@ class Sparker(object):
 
         return details
 
-    def post_to_spark_with_attach(self, team, room, msg, attach, fname, ftype, mtype=MessageType.NEUTRAL):
+    def post_to_spark_with_attach(self, team, room, msg, attach, fname, ftype, mtype=MessageType.NEUTRAL, **kwargs):
         if not self.check_token():
             return False
 
@@ -670,6 +676,10 @@ class Sparker(object):
             "markdown": mt.value + ((msg[: Sparker.MAX_MSG_LEN] + "...") if len(msg) > Sparker.MAX_MSG_LEN else msg),
             "files": (fname, bio, ftype),
         }
+
+        if "parent" in kwargs and kwargs["parent"]:
+            payload["parentId"] = kwargs["parent"]
+
         m = MultipartEncoder(fields=payload)
 
         headers = self._headers

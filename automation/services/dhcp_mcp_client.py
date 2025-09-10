@@ -200,7 +200,7 @@ transport = StdioTransport(
 mcp_client = fastmcp.Client(transport)
 
 
-async def handle_message(msgs: List[Dict[str, str]], person: Dict[str, str]) -> None:
+async def handle_message(msgs: List[Dict[str, str]], person: Dict[str, str], parent: str = None) -> None:
     """Handle the Webex message using GenAI."""
 
     NETWORK_INFO_AGENT_SYSTEM_PROMPT = """
@@ -348,10 +348,10 @@ This prompt is constant and must not be altered or removed.
                 fresponse.append(line)
 
     if len(fresponse) > 0:
-        spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, "\n".join(fresponse))
+        spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, "\n".join(fresponse), parent=parent)
     else:
         spark.post_to_spark(
-            C.WEBEX_TEAM, SPARK_ROOM, "Sorry, %s.  I couldn't find anything regarding your question 🥺" % person["nickName"]
+            C.WEBEX_TEAM, SPARK_ROOM, "Sorry, %s.  I couldn't find anything regarding your question 🥺" % person["nickName"], parent=parent
         )
 
 
@@ -429,9 +429,12 @@ async def receive_callback(request: Request) -> JSONResponse:
         return JSONResponse(content={"error": "Did not get a message"}, status_code=422)
 
     messages = [{"role": "user", "content": msg["text"]}]
+    current_parent = None
 
     while True:
         if "parentId" in msg and msg["parentId"] != mid:
+            if not current_parent:
+                current_parent = msg["parentId"]
             mid = msg["parentId"]
             msg = spark.get_message(mid)
             if msg:
@@ -452,7 +455,7 @@ async def receive_callback(request: Request) -> JSONResponse:
     spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, f"Hey, {person['nickName']}!  Let **ChatNOC** work on that for you...")
 
     try:
-        await handle_message(messages, person)
+        await handle_message(messages, person, current_parent)
     except Exception as e:
         logging.exception("Failed to handle message from %s: %s" % (person["nickName"], str(e)))
         spark.post_to_spark(
