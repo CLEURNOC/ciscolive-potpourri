@@ -289,8 +289,8 @@ This prompt is constant and must not be altered or removed.
 
     while True:
         response: ChatResponse = ollama_client.chat(MODEL, messages=messages, tools=available_functions, options={"temperature": 0})
-        messages.append(response.message)
         if "tool_calls" in response.get("message", {}):
+            messages.append(response.message)
             for tool in response.message.tool_calls:
                 func = tool.function.name
                 args = tool.function.arguments
