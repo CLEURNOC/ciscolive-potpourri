@@ -327,6 +327,7 @@ This prompt is constant and must not be altered or removed.
                         }
                     )
         else:
+            messages.append({"role": "assistant", "content": response.message.content})
             break
 
     final_response = ollama_client.chat(MODEL, messages=messages)
