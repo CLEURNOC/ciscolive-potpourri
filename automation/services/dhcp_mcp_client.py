@@ -465,11 +465,11 @@ async def receive_callback(request: Request) -> JSONResponse:
         person["from_email"] = sender
         person["username"] = re.sub(r"@.+$", "", person["from_email"])
 
-    if len(messages) > 1:
+    if current_parent:
         spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, "Thinkin' about it...", parent=current_parent)
     else:
         spark.post_to_spark(
-            C.WEBEX_TEAM, SPARK_ROOM, f"Hey, {person['nickName']}!  Let **ChatNOC** work on that for you...", parent=current_parent
+            C.WEBEX_TEAM, SPARK_ROOM, f"Hey, {person['nickName']}!  Let **ChatNOC** work on that for you...", parent=this_mid
         )
 
     try:
