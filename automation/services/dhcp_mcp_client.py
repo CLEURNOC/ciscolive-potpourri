@@ -96,19 +96,17 @@ async def cleanup(app: FastAPI):
         spark.unregister_webhook(webhook_id)
 
 
-app = FastAPI(title=BOT_NAME, lifespan=cleanup)
-
 if not CALLBACK_URL.endswith("/chat"):
     logging.error("CALLBACK_URL must end with /chat")
     exit(1)
 
-tid = spark.get_team_id(C.WEBEX_TEAM)
-if not tid:
+team_id = spark.get_team_id(C.WEBEX_TEAM)
+if not team_id:
     logging.error("Failed to get Webex Team ID")
     exit(1)
 
-rid = spark.get_room_id(tid, SPARK_ROOM)
-if not rid:
+room_id = spark.get_room_id(team_id, SPARK_ROOM)
+if not room_id:
     logging.error("Failed to get Webex Room ID")
     exit(1)
 
@@ -117,6 +115,8 @@ try:
 except Exception as e:
     logging.exception("Failed to register Webex webhook callback: %s" % str(e))
     exit(1)
+
+app = FastAPI(title=BOT_NAME, lifespan=cleanup)
 
 
 # This code borrowed from https://github.com/andreamoro/ollama-fastmcp-wrapper/blob/master/ollama_wrapper.py
@@ -415,8 +415,8 @@ async def receive_callback(request: Request) -> JSONResponse:
         logging.debug("Person email is our bot")
         return Response(status_code=204)
 
-    if rid != record["data"]["roomId"]:
-        logging.error("Webex Room ID is not the same as in the message (%s vs. %s)" % (rid, record["data"]["roomId"]))
+    if room_id != record["data"]["roomId"]:
+        logging.error("Webex Room ID is not the same as in the message (%s vs. %s)" % (room_id, record["data"]["roomId"]))
         return JSONResponse(content={"error": "Room ID is not what we expect"}, status_code=422)
 
     mid = record["data"]["id"]
