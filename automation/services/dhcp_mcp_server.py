@@ -1140,6 +1140,8 @@ async def perform_dns_lookup(input: DNSInput | dict) -> DNSResponse:
     try:
         if ip:
             # Reverse DNS lookup (PTR record)
+            if "/" in ip:
+                ip = ip.split("/")[0]
             rev_name = dns.reversename.from_address(ip)
             try:
                 answer = await dns.asyncresolver.resolve(rev_name, "PTR")
