@@ -473,7 +473,7 @@ async def receive_callback(request: Request) -> JSONResponse:
         )
 
     try:
-        await handle_message(messages, person, current_parent)
+        await handle_message(messages, person, current_parent or this_mid)
     except Exception as e:
         logging.exception("Failed to handle message from %s: %s" % (person["nickName"], str(e)))
         # Don't send this to the parent as it's a bug in the transaction.
