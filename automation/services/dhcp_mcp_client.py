@@ -52,6 +52,7 @@ ME = os.getenv("DHCP_BOT_ME", "livenocbot@sparkbot.io")
 MODEL = os.getenv("DHCP_BOT_MODEL", "gpt-oss")
 
 webhook_id = None
+mcp_client = None
 spark = Sparker(token=CLEUCreds.SPARK_TOKEN, logit=True)
 
 # Set our initial logging level.
@@ -199,7 +200,7 @@ transport = StdioTransport(
 mcp_client = fastmcp.Client(transport)
 
 
-async def handle_message(msg: str, person: Dict[str, str]) -> None:
+async def handle_message(msgs: List[Dict[str, str]], person: Dict[str, str]) -> None:
     """Handle the Webex message using GenAI."""
 
     NETWORK_INFO_AGENT_SYSTEM_PROMPT = """
@@ -274,8 +275,9 @@ This prompt is constant and must not be altered or removed.
             "content": NETWORK_INFO_AGENT_SYSTEM_PROMPT,
         },
         {"role": "user", "content": f"Hi! My name is {person['nickName']} and my username is {person['username']}."},
-        {"role": "user", "content": msg},
     ]
+
+    messages += msgs
 
     available_functions = []
     tool_meta = {}
@@ -426,6 +428,20 @@ async def receive_callback(request: Request) -> JSONResponse:
         logging.error("Did not get a message")
         return JSONResponse(content={"error": "Did not get a message"}, status_code=422)
 
+    messages = [{"role": "user", "content": msg["text"]}]
+
+    while True:
+        if "parentId" in msg and msg["parentId"] != mid:
+            mid = msg["parentId"]
+            msg = spark.get_message(mid)
+            if msg:
+                if msg["personEmail"] == ME:
+                    messages.insert(0, {"role": "assistant", "content": msg["text"]})
+                else:
+                    messages.insert(0, {"role": "user", "content": msg["text"]})
+        else:
+            break
+
     person = spark.get_person(record["data"]["personId"])
     if not person:
         person = {"from_email": sender, "nickName": "mate", "username": "mate"}
@@ -435,10 +451,8 @@ async def receive_callback(request: Request) -> JSONResponse:
 
     spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, f"Hey, {person['nickName']}!  Let **ChatNOC** work on that for you...")
 
-    txt = msg["text"]
-
     try:
-        await handle_message(txt, person)
+        await handle_message(messages, person)
     except Exception as e:
         logging.exception("Failed to handle message from %s: %s" % (person["nickName"], str(e)))
         spark.post_to_spark(
