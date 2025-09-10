@@ -330,11 +330,9 @@ This prompt is constant and must not be altered or removed.
             messages.append({"role": "assistant", "content": response.message.content})
             break
 
-    final_response = ollama_client.chat(MODEL, messages=messages)
-
     fresponse = []
-    if final_response and final_response.message.content:
-        for line in final_response.message.content.split("\n"):
+    if response and response.message.content:
+        for line in response.message.content.split("\n"):
             try:
                 # The LLM may still choose to try and call an unavailable tool.
                 json.loads(line)
