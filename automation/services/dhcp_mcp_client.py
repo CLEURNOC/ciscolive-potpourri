@@ -450,6 +450,8 @@ async def receive_callback(request: Request) -> JSONResponse:
                 tmsg_details = spark.get_message(tmsg["id"])
                 if not tmsg_details:
                     continue
+                if "text" not in tmsg_details:
+                    continue
                 role = "assistant" if tmsg_details["personEmail"] == ME else "user"
                 messages.insert(0, {"role": role, "content": tmsg_details["text"]})
         role = "assistant" if parent_msg["personEmail"] == ME else "user"

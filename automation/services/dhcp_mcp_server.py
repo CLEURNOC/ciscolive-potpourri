@@ -1151,29 +1151,24 @@ async def perform_dns_lookup(input: DNSInput | dict) -> DNSResponse:
         else:
             if "." not in hostname:
                 hostname = f"{hostname}.{os.getenv('DNS_DOMAIN')}"
-            # Forward DNS lookup (A and AAAA records)
-            try:
-                answer = await dns.asyncresolver.resolve(hostname, "A")
-                record_type = "A"
-                results = [str(r) for r in answer]
-            except Exception:
-                pass
-            if not results:
+            # Forward DNS lookup (A, AAAA, and CNAME records)
+            record_types = ["A", "AAAA", "CNAME"]
+            all_results = []
+            for rtype in record_types:
                 try:
-                    answer = await dns.asyncresolver.resolve(hostname, "AAAA")
-                    record_type = "AAAA"
-                    results = [str(r) for r in answer]
+                    answer = await dns.asyncresolver.resolve(hostname, rtype)
+                    if rtype == "CNAME":
+                        all_results.extend([str(r.target) for r in answer])
+                    else:
+                        all_results.extend([str(r) for r in answer])
                 except Exception:
-                    pass
-            # Try CNAME if no A/AAAA
-            if not results:
-                try:
-                    answer = await dns.asyncresolver.resolve(hostname, "CNAME")
-                    record_type = "CNAME"
-                    results = [str(r.target) for r in answer]
-                except Exception:
-                    record_type = "CNAME"
-                    results = [hostname]
+                    continue
+            if all_results:
+                record_type = ",".join([rtype for rtype in record_types if any(rtype in str(res) for res in all_results)])
+                results = all_results
+            else:
+                record_type = ",".join(record_types)
+                results = [hostname]
 
     except Exception as e:
         raise ToolError(f"DNS lookup failed: {e}")
