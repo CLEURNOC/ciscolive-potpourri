@@ -259,10 +259,10 @@ def parse_relay_info(outd: Dict[str, str]) -> Dict[str, str]:
     Parse DHCP relay information and produce a string for the connected switch and port.
 
     Args:
-        outd (dict[str, str]): Dict of the encoded relayAgentCircuitId and relayAgentRemoteId keys
+        outd (Dict[str, str]): Dict of the encoded relayAgentCircuitId and relayAgentRemoteId keys
 
     Returns:
-        dict[str, str]: Dict with the port, vlan, and switch values decoded as ASCII strings (if possible)
+        Dict[str, str]: Dict with the port, vlan, and switch values decoded as ASCII strings (if possible)
     """
     # Initialize result with default values
     res = {"vlan": "N/A", "port": "N/A", "switch": "N/A"}
@@ -980,7 +980,7 @@ async def get_client_details_from_cat_center(
                     break
 
         if detail:
-            dna_obj = await build_dna_obj(dna_obj, detail)
+            dna_obj = build_dna_obj(dna_obj, detail)
             # Map to DNACResponse using proper types
             return DNACResponse(
                 user=dna_obj.get("user"),
