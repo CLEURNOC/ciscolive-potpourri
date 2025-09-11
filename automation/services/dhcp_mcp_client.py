@@ -477,8 +477,6 @@ async def receive_callback(request: Request) -> JSONResponse:
             break
         thread_msgs = spark.get_messages(room_id, parentId=parent_id)
         if thread_msgs and len(thread_msgs) > 0:
-            # Since get_messages returns messages in reverse chronological order,
-            # we need to reverse them to maintain correct conversation order.
             for tmsg in thread_msgs:
                 if tmsg["id"] == this_mid:
                     continue
