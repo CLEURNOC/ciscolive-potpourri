@@ -24,7 +24,6 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-# import asyncio
 import logging
 import os
 import re
@@ -41,15 +40,13 @@ import xmltodict
 from fastmcp import FastMCP
 from fastmcp.exceptions import ToolError
 
-# from mcp.shared.exceptions import McpError
-# from mcp.types import METHOD_NOT_FOUND
 from pydantic import BaseModel, Field
 from sparker import Sparker  # type: ignore
 
 # Set up logging
 loglevel = logging.DEBUG if os.getenv("DEBUG", "false").lower() == "true" else logging.INFO
 logging.basicConfig(level=loglevel, format="%(asctime)s %(levelname)s %(threadName)s %(name)s: %(message)s")
-logger = logging.getLogger("noc-mcp")
+logger = logging.getLogger("noc-mcp-server")
 
 
 server_mcp = FastMCP("Cisco Live Europe NOC")

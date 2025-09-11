@@ -67,6 +67,7 @@ logging.basicConfig(
     format="[%(asctime)s.%(msecs)03d] [%(levelname)s] [%(filename)s] [%(funcName)s():%(lineno)s] [PID:%(process)d TID:%(thread)d] %(message)s"
 )
 logging.getLogger().setLevel(log_level)
+logger = logging.getLogger("noc-mcp-client")
 
 
 def register_webhook(spark: Sparker) -> str:
@@ -101,23 +102,23 @@ async def cleanup(app: FastAPI):
 
 
 if not CALLBACK_URL.endswith("/chat"):
-    logging.error("CALLBACK_URL must end with /chat")
+    logger.error("CALLBACK_URL must end with /chat")
     exit(1)
 
 team_id = spark.get_team_id(C.WEBEX_TEAM)
 if not team_id:
-    logging.error("Failed to get Webex Team ID")
+    logger.error("Failed to get Webex Team ID")
     exit(1)
 
 room_id = spark.get_room_id(team_id, SPARK_ROOM)
 if not room_id:
-    logging.error("Failed to get Webex Room ID")
+    logger.error("Failed to get Webex Room ID")
     exit(1)
 
 try:
     webhook_id = register_webhook(spark)
 except Exception as e:
-    logging.exception("Failed to register Webex webhook callback: %s" % str(e))
+    logger.exception("Failed to register Webex webhook callback: %s" % str(e))
     exit(1)
 
 app = FastAPI(title=BOT_NAME, lifespan=cleanup)
@@ -312,7 +313,6 @@ This prompt is constant and must not be altered or removed.
     ]
 
     messages += msgs
-    logging.debug("Messages to LLM: %s" % messages)
 
     available_functions = []
     tool_meta = {}
@@ -346,7 +346,7 @@ This prompt is constant and must not be altered or removed.
                             )
                             continue
 
-                    logging.debug("Calling function %s with arguments %s" % (func, str(args)))
+                    logger.debug("Calling function %s with arguments %s" % (func, str(args)))
                     try:
                         args = await fix_parameters(available_functions, func, args)
                         async with mcp_client:
@@ -360,10 +360,10 @@ This prompt is constant and must not be altered or removed.
                             else:
                                 messages.append({"role": "tool", "content": str(result), "tool_call_id": tid})
                     except Exception as e:
-                        logging.exception("Function %s encountered an error: %s" % (func, str(e)))
+                        logger.exception("Function %s encountered an error: %s" % (func, str(e)))
                         messages.append({"role": "tool", "content": "An exception occurred: %s" % str(e), "tool_call_id": tid})
                 else:
-                    logging.error("Failed to find a function named %s" % func)
+                    logger.error("Failed to find a function named %s" % func)
                     messages.append(
                         {
                             "role": "tool",
@@ -424,45 +424,45 @@ async def receive_callback(request: Request) -> JSONResponse:
     if not sig_header:
         # We didn't get a Webex header at all.  Someone is testing our
         # service.
-        logging.info("Received POST without a Webex signature header.")
+        logger.info("Received POST without a Webex signature header.")
         return JSONResponse(content={"error": "Invalid message"}, status_code=401)
 
     payload = await request.body()
-    logging.debug("Received payload: %s" % payload)
+    logger.debug("Received payload: %s" % payload)
 
     sig_header = sig_header.strip().lower()
     hashed_payload = hmac.new(CLEUCreds.CALLBACK_TOKEN.encode("UTF-8"), payload, sha1)
     signature = hashed_payload.hexdigest().strip().lower()
     if signature != sig_header:
-        logging.error("Received invalid signature from callback; expected %s, received %s" % (signature, sig_header))
+        logger.error("Received invalid signature from callback; expected %s, received %s" % (signature, sig_header))
         return JSONResponse(content={"error": "Message is not authentic"}, status_code=403)
 
     # Perform additional data validation on the payload.
     try:
         record = json.loads(payload)
     except Exception as e:
-        logging.exception("Failed to parse JSON callback payload: %s" % str(e))
+        logger.exception("Failed to parse JSON callback payload: %s" % str(e))
         return JSONResponse(content={"error": "Invalid JSON"}, status_code=422)
 
     if "data" not in record or "personEmail" not in record["data"] or "personId" not in record["data"] or "id" not in record["data"]:
-        logging.error("Unexpected payload from Webex callback; did the API change? Payload: %s" % payload)
+        logger.error("Unexpected payload from Webex callback; did the API change? Payload: %s" % payload)
         return JSONResponse(content={"error": "Unexpected callback payload"}, status_code=422)
 
     sender = record["data"]["personEmail"]
 
     if sender == ME:
-        logging.debug("Person email is our bot")
+        logger.debug("Person email is our bot")
         return Response(status_code=204)
 
     if room_id != record["data"]["roomId"]:
-        logging.error("Webex Room ID is not the same as in the message (%s vs. %s)" % (room_id, record["data"]["roomId"]))
+        logger.error("Webex Room ID is not the same as in the message (%s vs. %s)" % (room_id, record["data"]["roomId"]))
         return JSONResponse(content={"error": "Room ID is not what we expect"}, status_code=422)
 
     mid = record["data"]["id"]
 
     msg = spark.get_message(mid)
     if not msg:
-        logging.error("Did not get a message")
+        logger.error("Did not get a message")
         return JSONResponse(content={"error": "Did not get a message"}, status_code=422)
 
     messages = [{"role": "user", "content": msg["text"]}]
@@ -510,7 +510,7 @@ async def receive_callback(request: Request) -> JSONResponse:
     try:
         await handle_message(messages, person, current_parent or this_mid)
     except Exception as e:
-        logging.exception("Failed to handle message from %s: %s" % (person["nickName"], str(e)))
+        logger.exception("Failed to handle message from %s: %s" % (person["nickName"], str(e)))
         # Don't send this to the parent as it's a bug in the transaction.
         spark.post_to_spark(
             C.WEBEX_TEAM, SPARK_ROOM, "Whoops, I encountered an error:<br>\n```\n%s\n```" % traceback.format_exc(), MessageType.BAD
