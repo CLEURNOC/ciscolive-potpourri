@@ -479,7 +479,7 @@ async def receive_callback(request: Request) -> JSONResponse:
         if thread_msgs and len(thread_msgs) > 0:
             # Since get_messages returns messages in reverse chronological order,
             # we need to reverse them to maintain correct conversation order.
-            for tmsg in reversed(thread_msgs):
+            for tmsg in thread_msgs:
                 if tmsg["id"] == this_mid:
                     continue
                 # Skip messages without text or with placeholder text
