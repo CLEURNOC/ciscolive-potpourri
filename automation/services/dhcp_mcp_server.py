@@ -740,7 +740,9 @@ async def convert_celsius_to_fahrenheit(degrees_celsius: int) -> int:
         "openWorldHint": False,
     }
 )
-async def generate_password(words: int = 3, add_symbol: bool = False) -> Annotated[str, Field(description="The generated password.")]:
+async def generate_password(
+    words: Annotated[int, Field(description="Number of words in the password", ge=3, le=6)] = 3, add_symbol: bool = False
+) -> Annotated[str, Field(description="The generated password.")]:
     """
     Generate a random password containing a specified number of words and an optional symbol.
 

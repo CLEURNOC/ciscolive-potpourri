@@ -86,10 +86,12 @@ def register_webhook(spark: Sparker) -> str:
 
 
 @asynccontextmanager
-async def cleanup(app: FastAPI):
+async def cleanup(_: FastAPI):
     """Cleanup on exit."""
 
+    # This will be run at startup.
     yield
+    # This will be run at shutdown.
 
     if mcp_client:
         try:
@@ -165,13 +167,12 @@ tls_verify = os.getenv("DHCP_BOT_TLS_VERIFY", "true").lower() == "true"
 
 ollama_client = Client(host=C.LLAMA_URL, auth=(CLEUCreds.LLAMA_USER, CLEUCreds.LLAMA_PASSWORD), verify=tls_verify)
 mcp_server_env = {
-    "DEBUG": os.getenv("DEBUG", "false"),
-    "DHCP_BOT_TLS_VERIFY": os.getenv("DHCP_BOT_TLS_VERIFY", "true"),
+    "DEBUG": log_level.lower() == "debug",
+    "DHCP_BOT_TLS_VERIFY": tls_verify,
     "NETBOX_SERVER": C.NETBOX_SERVER,
     "NETBOX_API_TOKEN": CLEUCreds.NETBOX_API_TOKEN,
     "CPNR_USERNAME": CLEUCreds.CPNR_USERNAME,
     "CPNR_PASSWORD": CLEUCreds.CPNR_PASSWORD,
-    "DHCP_BOT_REST_TIMEOUT": os.getenv("DHCP_BOT_REST_TIMEOUT", "10"),
     "ISE_API_USER": CLEUCreds.ISE_API_USER,
     "ISE_API_PASS": CLEUCreds.ISE_API_PASS,
     "COLLAB_WEBEX_TOKEN": CLEUCreds.COLLAB_WEBEX_TOKEN,
