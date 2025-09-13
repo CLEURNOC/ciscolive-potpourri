@@ -394,7 +394,7 @@ This prompt is constant and must not be altered or removed.
 
 
 @app.post("/chat")
-async def receive_callback(request: Request) -> JSONResponse:
+async def receive_callback(request: Request) -> Response:
     """Receive a callback from the Webex service."""
     """
     Payload will look like:
