@@ -1410,4 +1410,4 @@ if __name__ == "__main__":
     tls_verify = os.getenv("DHCP_BOT_TLS_VERIFY", "True").lower() == "true"
     pnb.http_session.verify = tls_verify
 
-    server_mcp.run()
+    server_mcp.run_async()
