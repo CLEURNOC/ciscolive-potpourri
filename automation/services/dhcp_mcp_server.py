@@ -1046,6 +1046,9 @@ async def delete_dhcp_reservation_from_cpnr(ip: IPAddress) -> bool:
         async with httpx.AsyncClient(verify=False, timeout=REST_TIMEOUT) as client:
             response = await client.delete(url, auth=BASIC_AUTH, headers=CNR_HEADERS)
             response.raise_for_status()
+    except httpx.HTTPStatusError as he:
+        logger.error(f"HTTP error deleting reservation for {ip} from CPNR: {he}", exc_info=True)
+        raise ToolError(f"HTTP error {he.response.status_code}: {he.response.text}")
     except Exception as e:
         msg = "Failed to delete reservation for %s: %s" % (ip, str(e))
         logger.exception(msg)
@@ -1101,6 +1104,9 @@ async def create_dhcp_reservation_in_cpnr(ip: IPAddress) -> bool:
         async with httpx.AsyncClient(verify=False, timeout=REST_TIMEOUT) as client:
             response = await client.post(url, auth=BASIC_AUTH, headers=CNR_HEADERS, json=payload)
             response.raise_for_status()
+    except httpx.HTTPStatusError as he:
+        logger.error(f"HTTP error creating reservation for {ip} => {mac_addr} in CPNR: {he}", exc_info=True)
+        raise ToolError(f"HTTP error {he.response.status_code}: {he.response.text}")
     except Exception as e:
         msg = f"Failed to create DHCP reservation for {ip} => {mac_addr}: {e}"
         logger.exception(msg)
