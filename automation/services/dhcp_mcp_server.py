@@ -24,6 +24,8 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+
+import asyncio
 import logging
 import os
 import re
@@ -1410,4 +1412,4 @@ if __name__ == "__main__":
     tls_verify = os.getenv("DHCP_BOT_TLS_VERIFY", "True").lower() == "true"
     pnb.http_session.verify = tls_verify
 
-    server_mcp.run_async()
+    asyncio.run(server_mcp.run_async())
