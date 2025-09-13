@@ -51,15 +51,9 @@ logger = logging.getLogger("noc-mcp-server")
 
 server_mcp = FastMCP("Cisco Live Europe NOC")
 
-pnb = pynetbox.api(os.getenv("NETBOX_SERVER"), os.getenv("NETBOX_API_TOKEN"))
-tls_verify = os.getenv("DHCP_BOT_TLS_VERIFY", "True").lower() == "true"
-pnb.http_session.verify = tls_verify
-
 AT_MACADDR = 9
 
 CNR_HEADERS = {"Accept": "application/json"}
-BASIC_AUTH = (os.getenv("CPNR_USERNAME"), os.getenv("CPNR_PASSWORD"))
-REST_TIMEOUT = int(os.getenv("DHCP_BOT_REST_TIMEOUT", "10"))
 
 DEFAULT_INT_TYPE = "Ethernet"
 
@@ -428,11 +422,11 @@ async def check_for_reservation(input: CPNRReservationInput | dict) -> CPNRReser
     mac_addr: str | None = None
 
     if input.ip:
-        url = f"{os.getenv('DHCP_BASE')}/Reservation/{input.ip}"
+        url = f"{DHCP_BASE}/Reservation/{input.ip}"
         params = {}
     else:
         mac_addr = str(normalize_mac(input.mac))
-        url = f"{os.getenv('DHCP_BASE')}/Reservation"
+        url = f"{DHCP_BASE}/Reservation"
         params = {"lookupKey": mac_addr}
 
     try:
@@ -478,11 +472,11 @@ async def _get_dhcp_lease_info_from_cpnr(input: CPNRLeaseInput | dict) -> CPNRLe
 
     if input.mac:
         mac_addr = str(normalize_mac(input.mac))
-        url = f"{os.getenv('DHCP_BASE')}/Lease"
+        url = f"{DHCP_BASE}/Lease"
         params = {"clientMacAddr": mac_addr}
         client_id = mac_addr
     else:
-        url = f"{os.getenv('DHCP_BASE')}/Lease/{input.ip}"
+        url = f"{DHCP_BASE}/Lease/{input.ip}"
         params = {}
         client_id = str(input.ip)
 
@@ -675,7 +669,7 @@ async def get_webex_device_info(inp: WebexInfoInput | dict) -> WebexInfoResponse
             key = "displayName"
             val = inp.device_name
 
-    dev_spark = Sparker(token=os.getenv("COLLAB_WEBEX_TOKEN"), logit=True)
+    dev_spark = Sparker(token=COLLAB_WEBEX_TOKEN, logit=True)
 
     devices = dev_spark.get_webex_devices()
     if not devices:
@@ -713,6 +707,48 @@ async def get_webex_device_info(inp: WebexInfoInput | dict) -> WebexInfoResponse
             )
 
     raise ToolError(f"No device found matching {key} {val}")
+
+
+@server_mcp.tool(
+    annotations={
+        "title": "Get Webex Device Info",
+        "readOnlyHint": True,
+    },
+    enabled=True,
+)
+async def test_get_webex_device_info(inp: WebexInfoInput | dict) -> WebexInfoResponse:
+    """
+    Retrieve Webex device details including name, product, type, MAC address, IP address, serial number, workspace name,
+    workspace location, workspace temperature, and workspace humidity given a device's MAC address or IP address.
+
+    Args:
+      inp (WebexInfoInput | dict): Input data, either a validated WebexInfoInput (mac, ip, or device_name)
+        or a dict (for certain LLM compatibility).
+    """
+
+    if isinstance(inp, dict):
+        inp = WebexInfoInput(**inp)
+
+    # Validate input
+    if not (inp.mac or inp.ip or inp.device_name):
+        raise ToolError("At least one of mac, ip, or device_name must be specified")
+
+    # Return sample, but valid data for testing purposes
+    sample_response = WebexInfoResponse(
+        name=inp.device_name or "Test Webex Device",
+        product="Webex Room Kit",
+        device_type="Room Device",
+        mac=inp.mac or "00:11:22:33:44:55",
+        ip=inp.ip or "192.0.2.10",
+        serial_number="ABC123XYZ",
+        software="RoomOS 10.20.1",
+        connection_status="Connected",
+        connected_interface="Ethernet",
+        location="Test Room",
+        room_temperature="22 degrees C",
+        room_humidity="45 %",
+    )
+    return sample_response
 
 
 @server_mcp.tool(
@@ -797,17 +833,17 @@ async def get_user_details_from_ise(ise_input: ISEInput | dict) -> ISEResponse:
 
     if mac:
         mac_str = str(normalize_mac(mac)).upper()
-        url = f"https://{os.getenv('ISE_SERVER')}/admin/API/mnt/Session/MACAddress/{mac_str}"
+        url = f"https://{ISE_SERVER}/admin/API/mnt/Session/MACAddress/{mac_str}"
     elif ip:
-        url = f"https://{os.getenv('ISE_SERVER')}/admin/API/mnt/Session/EndPointIPAddress/{ip}"
+        url = f"https://{ISE_SERVER}/admin/API/mnt/Session/EndPointIPAddress/{ip}"
     else:
-        url = f"https://{os.getenv('ISE_SERVER')}/admin/API/mnt/Session/UserName/{username}"
+        url = f"https://{ISE_SERVER}/admin/API/mnt/Session/UserName/{username}"
 
     try:
         async with httpx.AsyncClient(verify=tls_verify, timeout=REST_TIMEOUT) as client:
             response = await client.get(
                 url,
-                auth=(os.getenv("ISE_API_USER"), os.getenv("ISE_API_PASS")),
+                auth=(ISE_API_USER, ISE_API_PASS),
                 headers={"Accept": "application/xml"},
             )
             response.raise_for_status()
@@ -876,6 +912,49 @@ async def get_user_details_from_ise(ise_input: ISEInput | dict) -> ISEResponse:
 
 @server_mcp.tool(
     annotations={
+        "title": "Get Client Details from ISE",
+        "readOnlyHint": True,
+    },
+    enabled=True,
+)
+async def test_get_user_details_from_ise(ise_input: ISEInput | dict) -> ISEResponse:
+    """
+    Get client username, client MAC address, NAS IP address, client IP address, authentication timestamp,
+    client IPv6 address(es), associated AP, VLAN ID, associated SSID for a client from ISE based on the client's username,
+    MAC address, or IP address.  At least one of username, MAC address, or IP address is required.
+
+    Args:
+        ISEInput | dict: Input data, either a validated ISEInput (username, mac, or ip)
+        or a dict (for certain LLM compatibility).
+    """
+
+    if isinstance(ise_input, dict):
+        ise_input = ISEInput(**ise_input)
+
+    username = ise_input.username
+    mac = ise_input.mac
+    ip = ise_input.ip
+
+    if not username and not mac and not ip:
+        raise ToolError("One of username, mac, or ip is required")
+
+    # Return sample, but valid data for testing purposes
+    sample_response = ISEResponse(
+        username=username or "testuser",
+        client_mac=mac or "00:11:22:33:44:55",
+        network_access_server=ip or "192.0.2.1",
+        client_ipv4=ip or "192.0.2.10",
+        client_ipv6=["2001:db8::1"],
+        authentication_timestamp="2025-01-01T12:00:00Z",
+        associated_access_point="aa:bb:cc:dd:ee:ff",
+        connected_vlan="100",
+        associated_ssid="TestSSID",
+    )
+    return sample_response
+
+
+@server_mcp.tool(
+    annotations={
         "title": "Get Client Details from Catalyst Center",
         "readOnlyHint": True,
     },
@@ -927,7 +1006,7 @@ async def get_client_details_from_cat_center(
     elif mac:
         macs = [str(normalize_mac(mac))]
 
-    dnacs = [dnac.strip() for dnac in os.getenv("DNACS", "").split(",") if dnac.strip()]
+    dnacs = [dnac.strip() for dnac in DNACS.split(",") if dnac.strip()]
     if not dnacs:
         raise ToolError("No Catalyst Center servers configured")
 
@@ -998,6 +1077,50 @@ async def get_client_details_from_cat_center(
 
 @server_mcp.tool(
     annotations={
+        "title": "Get Client Details from Catalyst Center",
+        "readOnlyHint": True,
+    },
+    enabled=True,
+)
+async def test_get_client_details_from_cat_center(
+    input_data: DNACInput | dict,
+) -> DNACResponse:
+    """
+    Get client connect and onboard health, location, OS type, associated AP and SSID, and type from Catalyst Center based on the client's username or MAC address.
+    At least one of the client's username, MAC address, or IP address is required.
+
+    Args:
+       DNACInput | dict: Input data, either a validated DNACInput (username, mac, or ip)
+       or a dict (for certain LLM compatibility).
+    """
+    # Validate input
+    if isinstance(input_data, dict):
+        input_data = DNACInput(**input_data)
+
+    username = input_data.username
+    mac = input_data.mac
+    ip = input_data.ip
+
+    if not username and not mac and not ip:
+        raise ToolError("At least one of username, mac, or ip must be specified")
+
+    # Return sample, but valid data for testing purposes
+    sample_response = DNACResponse(
+        user=username or "testuser",
+        mac=mac or "00:11:22:33:44:55",
+        type="Wireless",
+        ostype="Windows",
+        health=95,
+        reason="Good signal",
+        onboard=100,
+        connect=90,
+        ssid="TestSSID",
+    )
+    return sample_response
+
+
+@server_mcp.tool(
+    annotations={
         "title": "Get DHCP Lease Info from CPNR",
         "readOnlyHint": True,
     },
@@ -1023,6 +1146,46 @@ async def get_dhcp_lease_info_from_cpnr(input: CPNRLeaseInput | dict) -> List[CP
 
 @server_mcp.tool(
     annotations={
+        "title": "Get DHCP Lease Info from CPNR",
+        "readOnlyHint": True,
+    },
+    enabled=True,
+)
+async def test_get_dhcp_lease_info_from_cpnr(input: CPNRLeaseInput | dict) -> List[CPNRLeaseResponse]:
+    """
+    Get a list of DHCP leases with hostname of the client, MAC address of the client, scope for the lease, state of the lease,
+    DHCP relay information (switch, VLAN, and port), and whether the lease is reserved for a given MAC address
+    or IP address from CPNR.
+
+    Args:
+        input (CPNRLeaseInput | dict): Input data, either a validated CPNRLeaseInput (ip or mac)
+            or a dict (for certain LLM compatibility).
+    """
+
+    if isinstance(input, dict):
+        input = CPNRLeaseInput(**input)
+
+    if not input.mac and not input.ip:
+        raise ToolError("At least one of mac or ip must be specified")
+
+    # Return sample, but valid data for testing purposes
+    # Use input data for sample response
+    ip = input.ip or "192.0.2.10"
+    mac = input.mac or "00:11:22:33:44:55"
+    sample_lease = CPNRLeaseResponse(
+        ip=ip,
+        name="test-host",
+        mac=mac,
+        scope="TestScope",
+        state="LEASED",
+        relay_info={"vlan": "100", "port": "Ethernet1/0/1", "switch": "test-switch"},
+        is_reserved=False,
+    )
+    return [sample_lease]
+
+
+@server_mcp.tool(
+    annotations={
         "title": "Delete DHCP Reservation from CPNR",
         "readOnlyHint": False,
         "destructiveHint": True,
@@ -1041,7 +1204,7 @@ async def delete_dhcp_reservation_from_cpnr(ip: IPAddress) -> bool:
     if not ip:
         raise ToolError("IP address is required")
 
-    url = f"{os.getenv('DHCP_BASE')}/Reservation/{ip}"
+    url = f"{DHCP_BASE}/Reservation/{ip}"
     try:
         async with httpx.AsyncClient(verify=False, timeout=REST_TIMEOUT) as client:
             response = await client.delete(url, auth=BASIC_AUTH, headers=CNR_HEADERS)
@@ -1053,6 +1216,29 @@ async def delete_dhcp_reservation_from_cpnr(ip: IPAddress) -> bool:
         msg = "Failed to delete reservation for %s: %s" % (ip, str(e))
         logger.exception(msg)
         raise ToolError(msg)
+
+    return True
+
+
+@server_mcp.tool(
+    annotations={
+        "title": "Delete DHCP Reservation from CPNR",
+        "readOnlyHint": False,
+        "destructiveHint": True,
+    },
+    enabled=True,
+    meta={"auth_list": ALLOWED_TO_DELETE},
+)
+async def test_delete_dhcp_reservation_from_cpnr(ip: IPAddress) -> bool:
+    """
+    Delete a DHCP reservation from CPNR.
+
+    Args:
+      ip (IPAddress): IP address that is reserved in CPNR
+    """
+
+    if not ip:
+        raise ToolError("IP address is required")
 
     return True
 
@@ -1094,7 +1280,7 @@ async def create_dhcp_reservation_in_cpnr(ip: IPAddress) -> bool:
 
     mac_addr = str(normalize_mac(lease.mac))
 
-    url = f"{os.getenv('DHCP_BASE')}/Reservation"
+    url = f"{DHCP_BASE}/Reservation"
     payload = {
         "ipaddr": ip,
         "lookupKey": f"01:06:{mac_addr}",
@@ -1111,6 +1297,27 @@ async def create_dhcp_reservation_in_cpnr(ip: IPAddress) -> bool:
         msg = f"Failed to create DHCP reservation for {ip} => {mac_addr}: {e}"
         logger.exception(msg)
         raise ToolError(msg)
+
+    return True
+
+
+@server_mcp.tool(
+    annotations={
+        "title": "Create DHCP Reservation in CPNR",
+        "readOnlyHint": False,
+    },
+    enabled=True,
+)
+async def test_create_dhcp_reservation_in_cpnr(ip: IPAddress) -> bool:
+    """
+    Create a new DHCP reservation in CPNR.
+
+    Args:
+      ip (IPAddress): IP address that is leased to the client
+    """
+
+    if not ip:
+        raise ToolError("IP address is required")
 
     return True
 
@@ -1157,7 +1364,7 @@ async def perform_dns_lookup(input: DNSInput | dict) -> DNSResponse:
                 results = []
         else:
             if "." not in hostname:
-                hostname = f"{hostname}.{os.getenv('DNS_DOMAIN')}"
+                hostname = f"{hostname}.{DNS_DOMAIN}"
             # Forward DNS lookup (A, AAAA, and CNAME records)
             record_types = ["A", "AAAA", "CNAME"]
             all_results = []
@@ -1188,4 +1395,18 @@ async def perform_dns_lookup(input: DNSInput | dict) -> DNSResponse:
 
 
 if __name__ == "__main__":
+    DHCP_BASE = os.getenv("DHCP_BASE")
+    BASIC_AUTH = (os.getenv("CPNR_USERNAME"), os.getenv("CPNR_PASSWORD"))
+    REST_TIMEOUT = int(os.getenv("DHCP_BOT_REST_TIMEOUT", "10"))
+    COLLAB_WEBEX_TOKEN = os.getenv("COLLAB_WEBEX_TOKEN")
+    ISE_SERVER = os.getenv("ISE_SERVER")
+    ISE_API_USER = os.getenv("ISE_API_USER")
+    ISE_API_PASS = os.getenv("ISE_API_PASS")
+    DNACS = os.getenv("DNACS", "")
+    DNS_DOMAIN = os.getenv("DNS_DOMAIN")
+
+    pnb = pynetbox.api(os.getenv("NETBOX_SERVER"), os.getenv("NETBOX_API_TOKEN"))
+    tls_verify = os.getenv("DHCP_BOT_TLS_VERIFY", "True").lower() == "true"
+    pnb.http_session.verify = tls_verify
+
     server_mcp.run()
