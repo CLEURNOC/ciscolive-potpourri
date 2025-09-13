@@ -44,7 +44,7 @@ from pydantic import BaseModel, Field
 from sparker import Sparker  # type: ignore
 
 # Set up logging
-loglevel = logging.DEBUG if os.getenv("DEBUG", "false").lower() == "true" else logging.INFO
+loglevel = logging.DEBUG if os.getenv("DEBUG", "False").lower() == "true" else logging.INFO
 logging.basicConfig(level=loglevel, format="%(asctime)s %(levelname)s %(threadName)s %(name)s: %(message)s")
 logger = logging.getLogger("noc-mcp-server")
 
