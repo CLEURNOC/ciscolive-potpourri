@@ -183,23 +183,11 @@ mcp_server_env = {
     "DNS_DOMAIN": C.DNS_DOMAIN,
 }
 transport = StdioTransport(
-    command="uv",
+    command="python",
     args=[
-        "run",
-        "--project",
-        "/home/jclarke/dhcp_agent",
-        "--with",
-        "fastapi",
-        "--with",
-        "fastmcp",
-        "--with",
-        "httpx",
-        "--with",
-        "pynetbox",
-        "fastmcp",
-        "run",
-        "/home/jclarke/dhcp_agent/dhcp_mcp_server.py:server_mcp",
+        "dhcp_mcp_server.py",
     ],
+    cwd="/home/jclarke/dhcp_agent",
     env=mcp_server_env,
 )
 
