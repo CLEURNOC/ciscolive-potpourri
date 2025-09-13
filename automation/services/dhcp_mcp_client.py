@@ -167,8 +167,8 @@ tls_verify = os.getenv("DHCP_BOT_TLS_VERIFY", "true").lower() == "true"
 
 ollama_client = Client(host=C.LLAMA_URL, auth=(CLEUCreds.LLAMA_USER, CLEUCreds.LLAMA_PASSWORD), verify=tls_verify)
 mcp_server_env = {
-    "DEBUG": log_level.lower() == "debug",
-    "DHCP_BOT_TLS_VERIFY": tls_verify,
+    "DEBUG": str(log_level.lower() == "debug"),
+    "DHCP_BOT_TLS_VERIFY": str(tls_verify),
     "NETBOX_SERVER": C.NETBOX_SERVER,
     "NETBOX_API_TOKEN": CLEUCreds.NETBOX_API_TOKEN,
     "CPNR_USERNAME": CLEUCreds.CPNR_USERNAME,
