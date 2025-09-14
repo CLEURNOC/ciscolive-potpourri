@@ -67,9 +67,9 @@ ALLOWED_TO_DELETE = ("jclarke@cisco.com", "josterfe@cisco.com", "anjesani@cisco.
 LINT_REG = r"[\da-z-]{1,15}"
 IPV4_REG = r"(\d{1,3}.){3}\d{1,3}"
 IPV6_REG = r"[\da-fA-F:]{3,39}" + f"(%{LINT_REG})?"
-IP_REG = rf"^({IPV4_REG}|{IPV6_REG})(/\d+)?(?![\n\r])$"
+IP_REG = rf"^({IPV4_REG}|{IPV6_REG})(/\d+)?$"
 HOSTNAME_REG = r"[a-zA-Z\d.-]{1,64}"
-HOST_REG = rf"^{HOSTNAME_REG}(?![\n\r])$"
+HOST_REG = rf"^{HOSTNAME_REG}$"
 DOMAIN_REG = rf"{IPV4_REG}|\[{IPV6_REG}\]|{HOSTNAME_REG}"
 
 
@@ -88,7 +88,7 @@ class NetBoxTypeEnum(StrEnum):
 MACAddress = Annotated[
     str | None,
     Field(
-        pattern=re.compile(r"^[a-fA-F\d]{2}(:[a-fA-F\d]{2}){5}(?![\n\r])$"),
+        pattern=re.compile(r"^[a-fA-F\d]{2}(:[a-fA-F\d]{2}){5}$"),
         description="MAC address in Linux format.",
         examples=["00:11:22:33:44:55"],
     ),
