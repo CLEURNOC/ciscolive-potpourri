@@ -165,7 +165,7 @@ async def fix_parameters(tools: List[Dict[str, Any]], tool_name: str, parameters
 
 tls_verify = os.getenv("DHCP_BOT_TLS_VERIFY", "true").lower() == "true"
 
-ollama_client = Client(host=C.LLAMA_URL, auth=(CLEUCreds.LLAMA_USER, CLEUCreds.LLAMA_PASSWORD), verify=tls_verify)
+ollama_client = Client(host=C.LLAMA_URL, auth=(CLEUCreds.LLAMA_USER, CLEUCreds.LLAMA_PASSWORD), verify=tls_verify, timeout=240)
 mcp_server_env = {
     "DEBUG": str(log_level.lower() == "debug"),
     "DHCP_BOT_TLS_VERIFY": str(tls_verify),
