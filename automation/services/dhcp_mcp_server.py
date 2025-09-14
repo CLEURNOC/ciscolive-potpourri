@@ -555,6 +555,9 @@ async def get_object_info_from_netbox(inp: NetBoxInput | dict) -> List[NetBoxRes
             inp = NetBoxInput(**inp)
 
         # Determine query type
+        # Ensure only one of ip or hostname is specified
+        if inp.ip and inp.hostname:
+            raise ValueError("Only one of 'ip' or 'hostname' may be specified.")
         if inp.ip:
             ip = str(inp.ip)
             name = None
@@ -562,7 +565,7 @@ async def get_object_info_from_netbox(inp: NetBoxInput | dict) -> List[NetBoxRes
             name = str(inp.hostname)
             ip = None
         else:
-            raise ValueError("Invalid input.  Either 'ip' or 'hostname' property must be specified.")
+            raise ValueError("Invalid input. Either 'ip' or 'hostname' property must be specified.")
 
         # Query by hostname
         if name:
@@ -658,19 +661,27 @@ async def get_webex_device_info(inp: WebexInfoInput | dict) -> WebexInfoResponse
     if isinstance(inp, dict):
         inp = WebexInfoInput(**inp)
 
-    if inp.mac:
+    # Validate and parse input
+    provided = [(k, v) for k, v in [("mac", inp.mac), ("ip", inp.ip), ("device_name", inp.device_name)] if v]
+    if not provided:
+        raise ToolError("At least one of mac, ip, or device_name must be specified")
+    if len(provided) > 1:
+        raise ToolError("Only one of mac, ip, or device_name may be specified")
+
+    key, val = provided[0]
+    if key == "mac":
         key = "mac"
-        val = str(normalize_mac(inp.mac))
-    elif inp.ip:
+        val = str(normalize_mac(val))
+    elif key == "ip":
         key = "ip"
-        val = str(inp.ip)
-    else:
-        if inp.device_name.lower().startswith("sep"):
-            val = str(normalize_mac(inp.device_name.lower().replace("sep", "")))
+        val = str(val)
+    elif key == "device_name":
+        if val.lower().startswith("sep"):
             key = "mac"
+            val = str(normalize_mac(val.lower().replace("sep", "")))
         else:
             key = "displayName"
-            val = inp.device_name
+            val = val
 
     dev_spark = Sparker(token=COLLAB_WEBEX_TOKEN, logit=True)
 
@@ -735,6 +746,8 @@ async def test_get_webex_device_info(inp: WebexInfoInput | dict) -> WebexInfoRes
     # Validate input
     if not (inp.mac or inp.ip or inp.device_name):
         raise ToolError("At least one of mac, ip, or device_name must be specified")
+    if sum([inp.mac is not None, inp.ip is not None, inp.device_name is not None]) > 1:
+        raise ToolError("Only one of mac, ip, or device_name may be specified")
 
     # Return sample, but valid data for testing purposes
     sample_response = WebexInfoResponse(
@@ -833,6 +846,8 @@ async def get_user_details_from_ise(ise_input: ISEInput | dict) -> ISEResponse:
 
     if not username and not mac and not ip:
         raise ToolError("One of username, mac, or ip is required")
+    if sum([username is not None, mac is not None, ip is not None]) > 1:
+        raise ToolError("Only one of username, mac, or ip may be specified")
 
     if mac:
         mac_str = str(normalize_mac(mac)).upper()
@@ -940,6 +955,8 @@ async def test_get_user_details_from_ise(ise_input: ISEInput | dict) -> ISERespo
 
     if not username and not mac and not ip:
         raise ToolError("One of username, mac, or ip is required")
+    if sum([username is not None, mac is not None, ip is not None]) > 1:
+        raise ToolError("Only one of username, mac, or ip may be specified")
 
     # Return sample, but valid data for testing purposes
     sample_response = ISEResponse(
@@ -984,6 +1001,8 @@ async def get_client_details_from_cat_center(
 
     if not username and not mac and not ip:
         raise ToolError("At least one of username, mac, or ip must be specified")
+    if sum([username is not None, mac is not None, ip is not None]) > 1:
+        raise ToolError("Only one of username, mac, or ip may be specified")
 
     dna_obj: Dict[str, str | int | None] = {
         "user": None,
@@ -1106,6 +1125,8 @@ async def test_get_client_details_from_cat_center(
 
     if not username and not mac and not ip:
         raise ToolError("At least one of username, mac, or ip must be specified")
+    if sum([username is not None, mac is not None, ip is not None]) > 1:
+        raise ToolError("Only one of username, mac, or ip may be specified")
 
     # Return sample, but valid data for testing purposes
     sample_response = DNACResponse(
@@ -1170,6 +1191,8 @@ async def test_get_dhcp_lease_info_from_cpnr(input: CPNRLeaseInput | dict) -> Li
 
     if not input.mac and not input.ip:
         raise ToolError("At least one of mac or ip must be specified")
+    if input.mac is not None and input.ip is not None:
+        raise ToolError("Only one of mac or ip may be specified")
 
     # Return sample, but valid data for testing purposes
     # Use input data for sample response
@@ -1348,6 +1371,8 @@ async def perform_dns_lookup(input: DNSInput | dict) -> DNSResponse:
     target = ip or hostname
     if not target:
         raise ToolError("Either ip or hostname must be provided")
+    if ip is not None and hostname is not None:
+        raise ToolError("Only one of ip or hostname may be specified")
 
     record_type = ""
     results: List[str] = []
