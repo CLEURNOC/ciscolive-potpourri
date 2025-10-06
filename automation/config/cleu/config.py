@@ -33,13 +33,13 @@ class Config:
     DHCP_SERVER = "dc1-dhcp." + DNS_DOMAIN
     # PI = "cl-pi." + DNS_DOMAIN
 
-    def DNACS(dom, dnacs=[f"dc{x}-cat-center" for x in range(1, 2)]):
+    def _DNACS(dom, dnacs=[f"dc{x}-cat-center" for x in range(1, 2)]):
         return [f"{d}.{dom}" for d in dnacs]
 
     # Remove DNACs for now until they are up.
     # def DNACS(dom):
     #    return []
-    DNACS = DNACS(DNS_DOMAIN)
+    DNACS = _DNACS(DNS_DOMAIN)
     # SDA_BASE = "https://sdacleur20." + DNS_DOMAIN
     CMX_GW = "http://cl-freebsd.{}:8002/api/v0.1/cmx".format(DNS_DOMAIN)
     CMX = "https://cl-cmx." + DNS_DOMAIN
