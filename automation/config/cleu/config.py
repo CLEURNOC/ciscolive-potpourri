@@ -1,6 +1,6 @@
 class Config:
-    WEBEX_TEAM = "CLEUR 25 NOC"
-    CISCOLIVE_YEAR = "2025"
+    WEBEX_TEAM = "CLEUR 26 NOC"
+    CISCOLIVE_YEAR = "2026"
     DNS_DOMAIN = "ciscolive.network"
     SMTP_SERVER = "10.100.252.13"
     VPN_SERVER_IP = "45.157.175.59"
@@ -8,6 +8,7 @@ class Config:
     WSGI_SERVER = "10.100.252.13"
     DNS_SERVER = "10.100.253.21"
     CDNS_SERVERS = ["10.100.253.9", "10.100.254.9"]
+    DNS_SERVERS = ["10.100.253.21", "10.100.254.21"]
     NETBOX_SERVER = "https://cl-netbox.ciscolive.network"
 
     IPV6_PREFIX_SIZE = 48
@@ -24,13 +25,15 @@ class Config:
     PRIMARY_DNS = "dc1-dns"
     SECONDARY_DNS = "dc2-dns"
 
+    ISE_SERVER = "dc1-ise.ciscolive.network"
+
     DNS_BASE = "https://dc1-dns.{}:8443/web-services/rest/resource".format(DNS_DOMAIN)
     DHCP_BASE = "https://dc1-dhcp.{}:8443/web-services/rest/resource".format(DNS_DOMAIN)
     MONITORING = "cl-monitoring." + DNS_DOMAIN
     DHCP_SERVER = "dc1-dhcp." + DNS_DOMAIN
     # PI = "cl-pi." + DNS_DOMAIN
 
-    def DNACS(dom, dnacs=[f"dnac-0{x}" for x in range(1, 2)]):
+    def DNACS(dom, dnacs=[f"dc{x}-cat-center" for x in range(1, 2)]):
         return [f"{d}.{dom}" for d in dnacs]
 
     # Remove DNACs for now until they are up.
