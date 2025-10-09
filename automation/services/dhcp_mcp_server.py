@@ -1393,7 +1393,7 @@ async def perform_dns_lookup(input: DNSInput | dict) -> DNSResponse:
                 ip = ip.split("/")[0]
             rev_name = dns.reversename.from_address(ip)
             try:
-                answer = await dns.asyncresolver.resolve(rev_name, "PTR")
+                answer = await dns.asyncresolver.resolve(rev_name, "PTR", lifetime=DNS_TIMEOUT)
                 record_type = "PTR"
                 results = [str(r) for r in answer]
             except Exception:
@@ -1407,7 +1407,7 @@ async def perform_dns_lookup(input: DNSInput | dict) -> DNSResponse:
             all_results = []
             for rtype in record_types:
                 try:
-                    answer = await dns.asyncresolver.resolve(hostname, rtype)
+                    answer = await dns.asyncresolver.resolve(hostname, rtype, lifetime=DNS_TIMEOUT)
                     if rtype == "CNAME":
                         all_results.extend([str(r.target) for r in answer])
                     else:
@@ -1435,6 +1435,7 @@ if __name__ == "__main__":
     DHCP_BASE = os.getenv("DHCP_BASE")
     BASIC_AUTH = (os.getenv("CPNR_USERNAME"), os.getenv("CPNR_PASSWORD"))
     REST_TIMEOUT = int(os.getenv("DHCP_BOT_REST_TIMEOUT", "10"))
+    DNS_TIMEOUT = float(os.getenv("DHCP_BOT_DNS_TIMEOUT", "5.0"))
     COLLAB_WEBEX_TOKEN = os.getenv("COLLAB_WEBEX_TOKEN")
     ISE_SERVER = os.getenv("ISE_SERVER")
     ISE_API_USER = os.getenv("ISE_API_USER")
