@@ -243,9 +243,16 @@ def normalize_mac(mac: str) -> MACAddress:
     Returns:
         MACAddress: The normalized MAC address
     """
-    mac_addr = "".join(l + ":" * (n % 2 == 1) for n, l in enumerate(list(re.sub(r"[:.-]", "", mac)))).strip(":")
+    # Remove all separators and convert to lowercase
+    clean_mac = re.sub(r"[:.-]", "", mac).lower()
 
-    return MACAddress(mac_addr.lower())
+    # Validate length
+    if len(clean_mac) != 12:
+        raise ValueError(f"Invalid MAC address length: {mac}")
+
+    # Insert colons every 2 characters
+    formatted_mac = ":".join(clean_mac[i : i + 2] for i in range(0, 12, 2))
+    return MACAddress(formatted_mac)
 
 
 def parse_relay_info(outd: Dict[str, str]) -> Dict[str, str]:
