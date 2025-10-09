@@ -160,9 +160,8 @@ class BotState(object):
 
     def _create_mcp_client(self, tls_verify: bool) -> fastmcp.Client:
         """Create MCP client with proper environment setup"""
-        log_level = os.getenv("LOG_LEVEL", "INFO")
         mcp_server_env = {
-            "DEBUG": str(log_level.lower() == "debug"),
+            "DEBUG": str(self.config.log_level.lower() == "debug"),
             "DHCP_BOT_TLS_VERIFY": str(tls_verify),
             "NETBOX_SERVER": C.NETBOX_SERVER,
             "NETBOX_API_TOKEN": CLEUCreds.NETBOX_API_TOKEN,
@@ -180,7 +179,7 @@ class BotState(object):
         transport = StdioTransport(
             command="python",
             args=["dhcp_mcp_server.py"],
-            cwd="/home/jclarke/dhcp_agent",
+            cwd=os.getcwd(),
             env=mcp_server_env,
         )
         return fastmcp.Client(transport)
