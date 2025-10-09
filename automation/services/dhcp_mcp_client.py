@@ -67,7 +67,7 @@ class BotConfig(object):
     model: str
     log_level: str
     tls_verify: bool
-    logger: logging.Logger
+    logger: logging.Logger | None
 
     @classmethod
     def from_env(cls) -> "BotConfig":
@@ -80,14 +80,12 @@ class BotConfig(object):
             model=os.getenv("DHCP_BOT_MODEL", "gpt-oss"),
             log_level=os.getenv("LOG_LEVEL", "INFO"),
             tls_verify=os.getenv("DHCP_BOT_TLS_VERIFY", "true").lower() == "true",
+            logger=None,
         )
 
         # Validate required configuration
         if not config.callback_url.endswith("/chat"):
             raise ValueError("CALLBACK_URL must end with /chat")
-
-        if not config.log_level:
-            config.log_level = "INFO"
 
         logging.basicConfig(
             format="[%(asctime)s.%(msecs)03d] [%(levelname)s] [%(filename)s] [%(funcName)s():%(lineno)s] [PID:%(process)d TID:%(thread)d] %(message)s"
