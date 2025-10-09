@@ -788,6 +788,8 @@ async def convert_celsius_to_fahrenheit(degrees_celsius: int) -> int:
     Args:
       degrees_celsius (int): Temperature in degrees Celsius.
     """
+    if degrees_celsius < -273:
+        raise ToolError("degrees_celsius must be greater than or equal to -273")
 
     return int((degrees_celsius * 1.8) + 32.0)
 
