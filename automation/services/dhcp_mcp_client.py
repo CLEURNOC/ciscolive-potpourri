@@ -32,7 +32,8 @@ import re
 import traceback
 from contextlib import asynccontextmanager
 from hashlib import sha1
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
+from dataclasses import dataclass
 
 import CLEUCreds  # type: ignore
 import fastmcp
@@ -54,76 +55,189 @@ THREAD_MSG_PLACEHOLDER = "Thinkin' about it..."
 
 MODEL = os.getenv("DHCP_BOT_MODEL", "gpt-oss")
 
-webhook_id = None
-mcp_client = None
-spark = Sparker(token=CLEUCreds.SPARK_TOKEN, logit=True)
 
-# Set our initial logging level.
-log_level = os.getenv("LOG_LEVEL")
-if not log_level:
-    log_level = "INFO"
+@dataclass
+class BotConfig(object):
+    """Centralized configuration management"""
 
-logging.basicConfig(
-    format="[%(asctime)s.%(msecs)03d] [%(levelname)s] [%(filename)s] [%(funcName)s():%(lineno)s] [PID:%(process)d TID:%(thread)d] %(message)s"
-)
-logging.getLogger().setLevel(log_level)
-logger = logging.getLogger("noc-mcp-client")
+    spark_room: str
+    callback_url: str
+    bot_name: str
+    bot_email: str
+    model: str
+    log_level: str
+    tls_verify: bool
+    logger: logging.Logger
+
+    @classmethod
+    def from_env(cls) -> "BotConfig":
+        """Create BotConfig from environment variables"""
+        config = cls(
+            spark_room=os.getenv("DHCP_BOT_SPARK_ROOM", "DHCP Queries"),
+            callback_url=os.getenv("DHCP_BOT_CALLBACK_URL", "https://cleur-dhcp-hook.ciscolive.network/chat"),
+            bot_name=os.getenv("DHCP_BOT_NAME", "DHCP Agent"),
+            bot_email=os.getenv("DHCP_BOT_ME", "livenocbot@sparkbot.io"),
+            model=os.getenv("DHCP_BOT_MODEL", "gpt-oss"),
+            log_level=os.getenv("LOG_LEVEL", "INFO"),
+            tls_verify=os.getenv("DHCP_BOT_TLS_VERIFY", "true").lower() == "true",
+        )
+
+        # Validate required configuration
+        if not config.callback_url.endswith("/chat"):
+            raise ValueError("CALLBACK_URL must end with /chat")
+
+        if not config.log_level:
+            config.log_level = "INFO"
+
+        logging.basicConfig(
+            format="[%(asctime)s.%(msecs)03d] [%(levelname)s] [%(filename)s] [%(funcName)s():%(lineno)s] [PID:%(process)d TID:%(thread)d] %(message)s"
+        )
+        logging.getLogger().setLevel(config.log_level)
+        config.logger = logging.getLogger("noc-mcp-client")
+
+        return config
 
 
-def register_webhook(spark: Sparker) -> str:
-    """Register a callback URL for our bot."""
-    webhook = spark.get_webhook_for_url(CALLBACK_URL)
-    if webhook:
-        spark.unregister_webhook(webhook["id"])
+class BotState(object):
+    """Manages bot state and resources"""
 
-    webhook = spark.register_webhook(
-        name=f"{BOT_NAME} Webhook", callback_url=CALLBACK_URL, resource="messages", event="created", secret=CLEUCreds.CALLBACK_TOKEN
-    )
-    if not webhook:
-        raise Exception("Failed to register the webhook callback.")
+    def __init__(self):
+        self.webhook_id: Optional[str] = None
+        self.mcp_client: Optional[fastmcp.Client] = None
+        self.spark: Optional[Sparker] = None
+        self.room_id: Optional[str] = None
+        self.ollama_client: Optional[Client] = None
+        self.config: Optional[BotConfig] = None
 
-    return webhook["id"]
+    async def initialize(self) -> None:
+        """Initialize all bot components"""
+        self.config = BotConfig.from_env()
+        self.config.logger.info("Initializing bot state...")
+
+        # Initialize Spark client
+        self.spark = Sparker(token=CLEUCreds.SPARK_TOKEN, logit=True)
+
+        # Validate callback URL
+        if not CALLBACK_URL.endswith("/chat"):
+            raise ValueError("CALLBACK_URL must end with /chat")
+
+        # Get team and room IDs
+        team_id = self.spark.get_team_id(C.WEBEX_TEAM)
+        if not team_id:
+            raise RuntimeError("Failed to get Webex Team ID")
+
+        self.room_id = self.spark.get_room_id(team_id, SPARK_ROOM)
+        if not self.room_id:
+            raise RuntimeError("Failed to get Webex Room ID")
+
+        # Register webhook
+        try:
+            self.webhook_id = self._register_webhook()
+        except Exception as e:
+            self.config.logger.exception("Failed to register Webex webhook callback: %s", str(e))
+            raise
+
+        # Initialize Ollama client
+        tls_verify = os.getenv("DHCP_BOT_TLS_VERIFY", "true").lower() == "true"
+        self.ollama_client = Client(host=C.LLAMA_URL, auth=(CLEUCreds.LLAMA_USER, CLEUCreds.LLAMA_PASSWORD), verify=tls_verify, timeout=240)
+
+        # Initialize MCP client
+        self.mcp_client = self._create_mcp_client(tls_verify)
+
+        self.config.logger.info("Bot state initialized successfully")
+
+    def _register_webhook(self) -> str:
+        """Register a callback URL for our bot."""
+        webhook = self.spark.get_webhook_for_url(CALLBACK_URL)
+        if webhook:
+            self.spark.unregister_webhook(webhook["id"])
+
+        webhook = self.spark.register_webhook(
+            name=f"{BOT_NAME} Webhook", callback_url=CALLBACK_URL, resource="messages", event="created", secret=CLEUCreds.CALLBACK_TOKEN
+        )
+        if not webhook:
+            raise Exception("Failed to register the webhook callback.")
+
+        return webhook["id"]
+
+    def _create_mcp_client(self, tls_verify: bool) -> fastmcp.Client:
+        """Create MCP client with proper environment setup"""
+        log_level = os.getenv("LOG_LEVEL", "INFO")
+        mcp_server_env = {
+            "DEBUG": str(log_level.lower() == "debug"),
+            "DHCP_BOT_TLS_VERIFY": str(tls_verify),
+            "NETBOX_SERVER": C.NETBOX_SERVER,
+            "NETBOX_API_TOKEN": CLEUCreds.NETBOX_API_TOKEN,
+            "CPNR_USERNAME": CLEUCreds.CPNR_USERNAME,
+            "CPNR_PASSWORD": CLEUCreds.CPNR_PASSWORD,
+            "ISE_API_USER": CLEUCreds.ISE_API_USER,
+            "ISE_API_PASS": CLEUCreds.ISE_API_PASS,
+            "COLLAB_WEBEX_TOKEN": CLEUCreds.COLLAB_WEBEX_TOKEN,
+            "ISE_SERVER": C.ISE_SERVER,
+            "DHCP_SERVER": C.DHCP_SERVER,
+            "DNACS": ",".join(C.DNACS),
+            "DHCP_BASE": C.DHCP_BASE,
+            "DNS_DOMAIN": C.DNS_DOMAIN,
+        }
+        transport = StdioTransport(
+            command="python",
+            args=["dhcp_mcp_server.py"],
+            cwd="/home/jclarke/dhcp_agent",
+            env=mcp_server_env,
+        )
+        return fastmcp.Client(transport)
+
+    async def cleanup(self) -> None:
+        """Cleanup all resources"""
+        self.config.logger.info("Cleaning up bot state...")
+        errors = []
+
+        if self.mcp_client:
+            try:
+                await self.mcp_client.close()
+                self.config.logger.debug("MCP client closed successfully")
+            except Exception as e:
+                errors.append(f"MCP client cleanup failed: {e}")
+
+        if self.webhook_id and self.spark:
+            try:
+                self.spark.unregister_webhook(self.webhook_id)
+                self.config.logger.debug("Webhook unregistered successfully")
+            except Exception as e:
+                errors.append(f"Webhook cleanup failed: {e}")
+
+        if errors:
+            self.config.logger.warning(f"Cleanup issues: {', '.join(errors)}")
+        else:
+            self.config.logger.info("Bot state cleaned up successfully")
+
+
+# Global bot state instance
+bot_state = BotState()
 
 
 @asynccontextmanager
-async def cleanup(_: FastAPI):
-    """Cleanup on exit."""
+async def lifespan(_: FastAPI):
+    """Manage application lifespan with proper initialization and cleanup."""
 
-    # This will be run at startup.
-    yield
-    # This will be run at shutdown.
+    # Startup
+    try:
+        await bot_state.initialize()
+        bot_state.config.logger.info("Application startup completed successfully")
+        yield
+    except Exception as e:
+        bot_state.config.logger.exception("Failed to initialize application: %s", str(e))
+        raise
 
-    if mcp_client:
-        try:
-            await mcp_client.close()
-        except Exception:
-            pass
-
-    if webhook_id:
-        spark.unregister_webhook(webhook_id)
+    # Shutdown
+    try:
+        await bot_state.cleanup()
+        bot_state.config.logger.info("Application shutdown completed successfully")
+    except Exception as e:
+        bot_state.config.logger.exception("Error during application shutdown: %s", str(e))
 
 
-if not CALLBACK_URL.endswith("/chat"):
-    logger.error("CALLBACK_URL must end with /chat")
-    exit(1)
-
-team_id = spark.get_team_id(C.WEBEX_TEAM)
-if not team_id:
-    logger.error("Failed to get Webex Team ID")
-    exit(1)
-
-room_id = spark.get_room_id(team_id, SPARK_ROOM)
-if not room_id:
-    logger.error("Failed to get Webex Room ID")
-    exit(1)
-
-try:
-    webhook_id = register_webhook(spark)
-except Exception as e:
-    logger.exception("Failed to register Webex webhook callback: %s" % str(e))
-    exit(1)
-
-app = FastAPI(title=BOT_NAME, lifespan=cleanup)
+app = FastAPI(title=BOT_NAME, lifespan=lifespan)
 
 
 # This code borrowed from https://github.com/andreamoro/ollama-fastmcp-wrapper/blob/master/ollama_wrapper.py
@@ -163,37 +277,6 @@ async def fix_parameters(tools: List[Dict[str, Any]], tool_name: str, parameters
     return coerced_params
 
 
-tls_verify = os.getenv("DHCP_BOT_TLS_VERIFY", "true").lower() == "true"
-
-ollama_client = Client(host=C.LLAMA_URL, auth=(CLEUCreds.LLAMA_USER, CLEUCreds.LLAMA_PASSWORD), verify=tls_verify, timeout=240)
-mcp_server_env = {
-    "DEBUG": str(log_level.lower() == "debug"),
-    "DHCP_BOT_TLS_VERIFY": str(tls_verify),
-    "NETBOX_SERVER": C.NETBOX_SERVER,
-    "NETBOX_API_TOKEN": CLEUCreds.NETBOX_API_TOKEN,
-    "CPNR_USERNAME": CLEUCreds.CPNR_USERNAME,
-    "CPNR_PASSWORD": CLEUCreds.CPNR_PASSWORD,
-    "ISE_API_USER": CLEUCreds.ISE_API_USER,
-    "ISE_API_PASS": CLEUCreds.ISE_API_PASS,
-    "COLLAB_WEBEX_TOKEN": CLEUCreds.COLLAB_WEBEX_TOKEN,
-    "ISE_SERVER": C.ISE_SERVER,
-    "DHCP_SERVER": C.DHCP_SERVER,
-    "DNACS": ",".join(C.DNACS),
-    "DHCP_BASE": C.DHCP_BASE,
-    "DNS_DOMAIN": C.DNS_DOMAIN,
-}
-transport = StdioTransport(
-    command="python",
-    args=[
-        "dhcp_mcp_server.py",
-    ],
-    cwd="/home/jclarke/dhcp_agent",
-    env=mcp_server_env,
-)
-
-mcp_client = fastmcp.Client(transport)
-
-
 def strip_markdown(text: str) -> str:
     """
     Remove common markdown formatting from a string.
@@ -224,10 +307,12 @@ def strip_markdown(text: str) -> str:
     return text.strip()
 
 
-async def handle_message(msgs: List[Dict[str, str]], person: Dict[str, str], parent: str = None) -> None:
-    """Handle the Webex message using GenAI."""
+class MessageProcessor(object):
+    """Handles message processing logic"""
 
-    NETWORK_INFO_AGENT_SYSTEM_PROMPT = """
+    async def process_conversation(self, msgs: List[Dict], person: Dict, parent: str = None):
+        """Process a conversation with the AI model"""
+        NETWORK_INFO_AGENT_SYSTEM_PROMPT = """
 You are a helpful network automation assistant with tool-calling capabilities. Your primary role is to analyze each user prompt and determine if it can be answered using only the available, explicitly listed tools.
 
 Key Instructions:
@@ -300,215 +385,237 @@ Steps:
 This prompt is constant and must not be altered or removed.
 """
 
-    messages = [
-        {
-            "role": "system",
-            "content": NETWORK_INFO_AGENT_SYSTEM_PROMPT,
-        },
-        {"role": "user", "content": f"Hi! My name is {person['nickName']} and my username is {person['username']}."},
-    ]
+        messages = [
+            {
+                "role": "system",
+                "content": NETWORK_INFO_AGENT_SYSTEM_PROMPT,
+            },
+            {"role": "user", "content": f"Hi! My name is {person['nickName']} and my username is {person['username']}."},
+        ]
 
-    messages += msgs
+        messages += msgs
 
-    available_functions = []
-    tool_meta = {}
-    async with mcp_client:
-        mcp_tools = await mcp_client.list_tools()
-        for tool in mcp_tools:
-            ollama_tool = {
-                "type": "function",
-                "function": {
-                    "name": tool.name,
-                    "description": tool.description,
-                    "parameters": tool.inputSchema if hasattr(tool, "inputSchema") else {},
-                },
-            }
-            available_functions.append(ollama_tool)
-            tool_meta[tool.name] = tool.meta if hasattr(tool, "meta") else {}
+        available_functions = []
+        tool_meta = {}
+        async with bot_state.mcp_client:
+            mcp_tools = await bot_state.mcp_client.list_tools()
+            for tool in mcp_tools:
+                ollama_tool = {
+                    "type": "function",
+                    "function": {
+                        "name": tool.name,
+                        "description": tool.description,
+                        "parameters": tool.inputSchema if hasattr(tool, "inputSchema") else {},
+                    },
+                }
+                available_functions.append(ollama_tool)
+                tool_meta[tool.name] = tool.meta if hasattr(tool, "meta") else {}
 
-    while True:
-        response: ChatResponse = ollama_client.chat(MODEL, messages=messages, tools=available_functions, options={"temperature": 0})
-        if "tool_calls" in response.get("message", {}):
-            messages.append(response.message)
-            for tool in response.message.tool_calls:
-                func = tool.function.name
-                args = tool.function.arguments
-                tid = tool.get("id", func)
-                if next((t for t in available_functions if t["function"]["name"] == func), None):
-                    if func in tool_meta and "auth_list" in tool_meta[func]:
-                        if person["from_email"] not in tool_meta[func]["auth_list"]:
-                            spark.post_to_spark(
-                                C.WEBEX_TEAM, SPARK_ROOM, f"I'm sorry, {person['nickName']}.  I can't do that for you.", parent=parent
-                            )
-                            continue
+        while True:
+            response: ChatResponse = bot_state.ollama_client.chat(
+                MODEL, messages=messages, tools=available_functions, options={"temperature": 0}
+            )
+            if "tool_calls" in response.get("message", {}):
+                messages.append(response.message)
+                for tool in response.message.tool_calls:
+                    func = tool.function.name
+                    args = tool.function.arguments
+                    tid = tool.get("id", func)
+                    if next((t for t in available_functions if t["function"]["name"] == func), None):
+                        if func in tool_meta and "auth_list" in tool_meta[func]:
+                            if person["from_email"] not in tool_meta[func]["auth_list"]:
+                                bot_state.spark.post_to_spark(
+                                    C.WEBEX_TEAM, SPARK_ROOM, f"I'm sorry, {person['nickName']}.  I can't do that for you.", parent=parent
+                                )
+                                continue
 
-                    logger.debug("Calling function %s with arguments %s" % (func, str(args)))
-                    try:
-                        args = await fix_parameters(available_functions, func, args)
-                        async with mcp_client:
-                            result = await mcp_client.call_tool(func, args)
+                        bot_state.config.logger.debug("Calling function %s with arguments %s" % (func, str(args)))
+                        try:
+                            args = await fix_parameters(available_functions, func, args)
+                            async with bot_state.mcp_client:
+                                result = await bot_state.mcp_client.call_tool(func, args)
 
-                            # FastMCP returns results in a more direct format
-                            if hasattr(result, "content"):
-                                messages.append({"role": "tool", "content": str(result.content), "tool_call_id": tid})
-                            elif isinstance(result, dict) and "content" in result:
-                                messages.append({"role": "tool", "content": str(result["content"]), "tool_call_id": tid})
-                            else:
-                                messages.append({"role": "tool", "content": str(result), "tool_call_id": tid})
-                    except Exception as e:
-                        logger.exception("Function %s encountered an error: %s" % (func, str(e)))
-                        messages.append({"role": "tool", "content": "An exception occurred: %s" % str(e), "tool_call_id": tid})
-                else:
-                    logger.error("Failed to find a function named %s" % func)
-                    messages.append(
-                        {
-                            "role": "tool",
-                            "content": "You're asking me to do a naughty thing.  I don't have a tool called %s." % func,
-                            "tool_call_id": tid,
-                        }
-                    )
+                                # FastMCP returns results in a more direct format
+                                if hasattr(result, "content"):
+                                    messages.append({"role": "tool", "content": str(result.content), "tool_call_id": tid})
+                                elif isinstance(result, dict) and "content" in result:
+                                    messages.append({"role": "tool", "content": str(result["content"]), "tool_call_id": tid})
+                                else:
+                                    messages.append({"role": "tool", "content": str(result), "tool_call_id": tid})
+                        except Exception as e:
+                            bot_state.config.logger.exception("Function %s encountered an error: %s" % (func, str(e)))
+                            messages.append({"role": "tool", "content": "An exception occurred: %s" % str(e), "tool_call_id": tid})
+                    else:
+                        bot_state.config.logger.error("Failed to find a function named %s" % func)
+                        messages.append(
+                            {
+                                "role": "tool",
+                                "content": "You're asking me to do a naughty thing.  I don't have a tool called %s." % func,
+                                "tool_call_id": tid,
+                            }
+                        )
+            else:
+                messages.append({"role": "assistant", "content": response.message.content})
+                break
+
+        fresponse = []
+        if response and response.message.content:
+            for line in response.message.content.split("\n"):
+                try:
+                    # The LLM may still choose to try and call an unavailable tool.
+                    json.loads(line)
+                except Exception:
+                    fresponse.append(line)
+
+        if len(fresponse) > 0:
+            bot_state.spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, "\n".join(fresponse), parent=parent)
         else:
-            messages.append({"role": "assistant", "content": response.message.content})
-            break
-
-    fresponse = []
-    if response and response.message.content:
-        for line in response.message.content.split("\n"):
-            try:
-                # The LLM may still choose to try and call an unavailable tool.
-                json.loads(line)
-            except Exception:
-                fresponse.append(line)
-
-    if len(fresponse) > 0:
-        spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, "\n".join(fresponse), parent=parent)
-    else:
-        spark.post_to_spark(
-            C.WEBEX_TEAM, SPARK_ROOM, "Sorry, %s.  I couldn't find anything regarding your question 🥺" % person["nickName"], parent=parent
-        )
+            bot_state.spark.post_to_spark(
+                C.WEBEX_TEAM,
+                SPARK_ROOM,
+                "Sorry, %s.  I couldn't find anything regarding your question 🥺" % person["nickName"],
+                parent=parent,
+            )
 
 
+class WebhookHandler(object):
+    """Handles webhook validation and processing"""
+
+    def validate_signature(self, signature: str, payload: bytes) -> bool:
+        """Validate webhook signature"""
+
+        sig_header = signature.strip().lower()
+        hashed_payload = hmac.new(CLEUCreds.CALLBACK_TOKEN.encode("UTF-8"), payload, sha1)
+        signature = hashed_payload.hexdigest().strip().lower()
+        if signature != sig_header:
+            bot_state.config.logger.error("Received invalid signature from callback; expected %s, received %s" % (signature, sig_header))
+            return False
+
+        return True
+
+    def validate_payload(self, payload: dict) -> bool:
+        """Validate webhook payload structure"""
+
+        if (
+            "data" not in payload
+            or "personEmail" not in payload["data"]
+            or "personId" not in payload["data"]
+            or "id" not in payload["data"]
+        ):
+            bot_state.config.logger.error("Unexpected payload from Webex callback; did the API change? Payload: %s" % payload)
+            return False
+
+        return True
+
+    def build_conversation_history(self, msg: dict, room_id: str) -> List[Dict]:
+        """Build conversation history from Webex messages"""
+
+        messages = [{"role": "user", "content": msg["text"]}]
+        current_parent = None
+        this_mid = msg["id"]
+
+        # Build conversation history by traversing parent messages
+        while "parentId" in msg and msg["parentId"] != this_mid:
+            parent_id = msg["parentId"]
+            parent_msg = bot_state.spark.get_message(parent_id)
+            if not parent_msg:
+                break
+            thread_msgs = bot_state.spark.get_messages(room_id, parentId=parent_id)
+            if thread_msgs and len(thread_msgs) > 0:
+                for tmsg in thread_msgs:
+                    if tmsg["id"] == this_mid:
+                        continue
+                    # Skip messages without text or with placeholder text
+                    if (
+                        "text" not in tmsg
+                        or strip_markdown(THREAD_MSG_PLACEHOLDER) in tmsg["text"]
+                        or strip_markdown(NEW_MSG_PLACEHOLDER) in tmsg["text"]
+                    ):
+                        continue
+                    role = "assistant" if tmsg["personEmail"] == ME else "user"
+                    messages.insert(0, {"role": role, "content": tmsg["text"]})
+            role = "assistant" if parent_msg["personEmail"] == ME else "user"
+            messages.insert(0, {"role": role, "content": parent_msg["text"]})
+            current_parent = parent_id if not current_parent else current_parent
+            this_mid = parent_id
+            msg = parent_msg
+
+        return messages
+
+
+# Refactored receive_callback function
 @app.post("/chat")
 async def receive_callback(request: Request) -> Response:
-    """Receive a callback from the Webex service."""
-    """
-    Payload will look like:
+    handler = WebhookHandler()
+    processor = MessageProcessor()
 
-    ```json
-    {
-        "id": "Y2lzY29zcGFyazovL3VzL1dFQkhPT0svOTZhYmMyYWEtM2RjYy0xMWU1LWExNTItZmUzNDgxOWNkYzlh",
-        "name": "My Attachment Action Webhook",
-        "resource": "attachmentActions",
-        "event": "created",
-        "orgId": "OTZhYmMyYWEtM2RjYy0xMWU1LWExNTItZmUzNDgxOWNkYzlh",
-        "appId": "Y2lzY29zcGFyazovL3VzL0FQUExJQ0FUSU9OL0MyNzljYjMwYzAyOTE4MGJiNGJkYWViYjA2MWI3OTY1Y2RhMzliNjAyOTdjODUwM2YyNjZhYmY2NmM5OTllYzFm",
-        "ownedBy": "creator",
-        "status": "active",
-        "actorId": "Y2lzY29zcGFyazovL3VzL1BFT1BMRS83MTZlOWQxYy1jYTQ0LTRmZ",
-        "data": {
-            "id": "Y2lzY29zcGFyazovL3VzL09SR0FOSVpBVElPTi85NmFiYzJhYS0zZGNjLTE",
-            "type": "submit",
-            "messageId": "GFyazovL3VzL1BFT1BMRS80MDNlZmUwNy02Yzc3LTQyY2UtOWI4NC",
-            "personId": "Y2lzY29zcGFyazovL3VzL1BFT1BMRS83MTZlOWQxYy1jYTQ0LTRmZ",
-            "roomId": "L3VzL1BFT1BMRS80MDNlZmUwNy02Yzc3LTQyY2UtOWI",
-            "created": "2016-05-10T19:41:00.100Z"
-        }
-    }
-    ```
-    """
+    # Validate and parse
     sig_header = request.headers.get("x-spark-signature")
     if not sig_header:
         # We didn't get a Webex header at all.  Someone is testing our
         # service.
-        logger.info("Received POST without a Webex signature header.")
+        bot_state.config.logger.info("Received POST without a Webex signature header.")
         return JSONResponse(content={"error": "Invalid message"}, status_code=401)
 
     payload = await request.body()
-    logger.debug("Received payload: %s" % payload)
+    bot_state.config.logger.debug("Received payload: %s" % payload)
 
-    sig_header = sig_header.strip().lower()
-    hashed_payload = hmac.new(CLEUCreds.CALLBACK_TOKEN.encode("UTF-8"), payload, sha1)
-    signature = hashed_payload.hexdigest().strip().lower()
-    if signature != sig_header:
-        logger.error("Received invalid signature from callback; expected %s, received %s" % (signature, sig_header))
+    if not handler.validate_signature(sig_header, payload):
         return JSONResponse(content={"error": "Message is not authentic"}, status_code=403)
 
     # Perform additional data validation on the payload.
     try:
         record = json.loads(payload)
     except Exception as e:
-        logger.exception("Failed to parse JSON callback payload: %s" % str(e))
+        bot_state.config.logger.exception("Failed to parse JSON callback payload: %s" % str(e))
         return JSONResponse(content={"error": "Invalid JSON"}, status_code=422)
 
-    if "data" not in record or "personEmail" not in record["data"] or "personId" not in record["data"] or "id" not in record["data"]:
-        logger.error("Unexpected payload from Webex callback; did the API change? Payload: %s" % payload)
+    if not handler.validate_payload(record):
         return JSONResponse(content={"error": "Unexpected callback payload"}, status_code=422)
 
     sender = record["data"]["personEmail"]
 
     if sender == ME:
-        logger.debug("Person email is our bot")
+        bot_state.config.logger.debug("Person email is our bot")
         return Response(status_code=204)
 
-    if room_id != record["data"]["roomId"]:
-        logger.error("Webex Room ID is not the same as in the message (%s vs. %s)" % (room_id, record["data"]["roomId"]))
+    if bot_state.room_id != record["data"]["roomId"]:
+        bot_state.config.logger.error(
+            "Webex Room ID is not the same as in the message (%s vs. %s)" % (bot_state.room_id, record["data"]["roomId"])
+        )
         return JSONResponse(content={"error": "Room ID is not what we expect"}, status_code=422)
 
     mid = record["data"]["id"]
 
-    msg = spark.get_message(mid)
+    msg = bot_state.spark.get_message(mid)
     if not msg:
-        logger.error("Did not get a message")
+        bot_state.config.logger.error("Did not get a message")
         return JSONResponse(content={"error": "Did not get a message"}, status_code=422)
 
-    messages = [{"role": "user", "content": msg["text"]}]
-    current_parent = None
-    this_mid = mid
+    messages = handler.build_conversation_history(msg, bot_state.room_id)
 
-    # Build conversation history by traversing parent messages
-    while "parentId" in msg and msg["parentId"] != mid:
-        parent_id = msg["parentId"]
-        parent_msg = spark.get_message(parent_id)
-        if not parent_msg:
-            break
-        thread_msgs = spark.get_messages(room_id, parentId=parent_id)
-        if thread_msgs and len(thread_msgs) > 0:
-            for tmsg in thread_msgs:
-                if tmsg["id"] == this_mid:
-                    continue
-                # Skip messages without text or with placeholder text
-                if (
-                    "text" not in tmsg
-                    or strip_markdown(THREAD_MSG_PLACEHOLDER) in tmsg["text"]
-                    or strip_markdown(NEW_MSG_PLACEHOLDER) in tmsg["text"]
-                ):
-                    continue
-                role = "assistant" if tmsg["personEmail"] == ME else "user"
-                messages.insert(0, {"role": role, "content": tmsg["text"]})
-        role = "assistant" if parent_msg["personEmail"] == ME else "user"
-        messages.insert(0, {"role": role, "content": parent_msg["text"]})
-        current_parent = parent_id if not current_parent else current_parent
-        mid = parent_id
-        msg = parent_msg
-
-    person = spark.get_person(record["data"]["personId"])
+    person = bot_state.spark.get_person(record["data"]["personId"])
     if not person:
         person = {"from_email": sender, "nickName": "mate", "username": "mate"}
     else:
         person["from_email"] = sender
         person["username"] = re.sub(r"@.+$", "", person["from_email"])
 
-    if current_parent:
-        spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, THREAD_MSG_PLACEHOLDER, parent=current_parent)
-    else:
-        spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, f"Hey, {person['nickName']}!  {NEW_MSG_PLACEHOLDER}", parent=this_mid)
+    current_parent = None
+    this_mid = mid
 
+    if current_parent:
+        bot_state.spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, THREAD_MSG_PLACEHOLDER, parent=current_parent)
+    else:
+        bot_state.spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, f"Hey, {person['nickName']}!  {NEW_MSG_PLACEHOLDER}", parent=this_mid)
+
+    # Process message
     try:
-        await handle_message(messages, person, current_parent or this_mid)
+        await processor.process_conversation(messages, person, current_parent or this_mid)
     except Exception as e:
-        logger.exception("Failed to handle message from %s: %s" % (person["nickName"], str(e)))
+        bot_state.config.logger.exception("Failed to handle message from %s: %s" % (person["nickName"], str(e)))
         # Don't send this to the parent as it's a bug in the transaction.
-        spark.post_to_spark(
+        bot_state.spark.post_to_spark(
             C.WEBEX_TEAM, SPARK_ROOM, "Whoops, I encountered an error:<br>\n```\n%s\n```" % traceback.format_exc(), MessageType.BAD
         )
         return JSONResponse(content={"error": "Failed to handle message"}, status_code=500)
@@ -516,4 +623,5 @@ async def receive_callback(request: Request) -> Response:
     return Response(status_code=204)
 
 
-uvicorn.run(app, port=9999)
+if __name__ == "__main__":
+    uvicorn.run(app, port=9999)
