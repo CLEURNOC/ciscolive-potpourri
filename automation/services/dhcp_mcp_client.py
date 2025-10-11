@@ -504,7 +504,7 @@ class WebhookHandler(object):
 
         return True
 
-    def build_conversation_history(self, msg: dict, room_id: str) -> List[Dict]:
+    def build_conversation_history(self, msg: dict, room_id: str) -> tuple[List[Dict], Optional[str], Optional[str]]:
         """Build conversation history from Webex messages"""
 
         messages = [{"role": "user", "content": msg["text"]}]
@@ -537,7 +537,7 @@ class WebhookHandler(object):
             this_mid = parent_id
             msg = parent_msg
 
-        return messages
+        return messages, current_parent, this_mid
 
 
 # Refactored receive_callback function
@@ -589,7 +589,7 @@ async def receive_callback(request: Request) -> Response:
         bot_state.config.logger.error("Did not get a message")
         return JSONResponse(content={"error": "Did not get a message"}, status_code=422)
 
-    messages = handler.build_conversation_history(msg, bot_state.room_id)
+    messages, current_parent, this_mid = handler.build_conversation_history(msg, bot_state.room_id)
 
     person = bot_state.spark.get_person(record["data"]["personId"])
     if not person:
@@ -598,13 +598,13 @@ async def receive_callback(request: Request) -> Response:
         person["from_email"] = sender
         person["username"] = re.sub(r"@.+$", "", person["from_email"])
 
-    current_parent = None
-    this_mid = mid
-
     if current_parent:
         bot_state.spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, THREAD_MSG_PLACEHOLDER, parent=current_parent)
     else:
         bot_state.spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, f"Hey, {person['nickName']}!  {NEW_MSG_PLACEHOLDER}", parent=this_mid)
+        # Ensure current_parent and this_mid are set from build_conversation_history
+        # build_conversation_history may update this_mid as it traverses the thread
+        # So, update this_mid accordingly
 
     # Process message
     try:
