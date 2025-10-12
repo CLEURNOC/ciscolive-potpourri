@@ -462,20 +462,20 @@ This prompt is constant and must not be altered or removed.
                             }
                         )
             else:
-                messages.append({"role": "assistant", "content": response.message.content})
+                # messages.append({"role": "assistant", "content": response.message.content})
                 break
 
-        fresponse = []
-        if response and response.message.content:
-            for line in response.message.content.split("\n"):
-                try:
-                    # The LLM may still choose to try and call an unavailable tool.
-                    json.loads(line)
-                except Exception:
-                    fresponse.append(line)
+        # fresponse = []
+        # if response and response.message.content:
+        #     for line in response.message.content.split("\n"):
+        #         try:
+        #             # The LLM may still choose to try and call an unavailable tool.
+        #             json.loads(line)
+        #         except Exception:
+        #             fresponse.append(line)
 
-        if len(fresponse) > 0:
-            bot_state.spark.post_to_spark(C.WEBEX_TEAM, bot_state.config.spark_room, "\n".join(fresponse), parent=parent)
+        if response and response.message.content:
+            bot_state.spark.post_to_spark(C.WEBEX_TEAM, bot_state.config.spark_room, response.message.content, parent=parent)
         else:
             bot_state.spark.post_to_spark(
                 C.WEBEX_TEAM,
