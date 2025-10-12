@@ -136,7 +136,7 @@ class BotState(object):
         self.mcp_client = self._create_mcp_client(tls_verify)
 
         # Initialize tool list
-        self._initialize_tool_list()
+        await self._initialize_tool_list()
 
         self.logger.info("Bot state initialized successfully")
 
