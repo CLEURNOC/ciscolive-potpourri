@@ -94,6 +94,8 @@ class BotState(object):
         self.ollama_client: Optional[Client] = None
         self.config: Optional[BotConfig] = None
         self.logger: Optional[logging.Logger] = None
+        self.available_functions: List[Dict[str, Any]] = []
+        self.tool_meta: Dict[str, Any] = {}
 
     async def initialize(self) -> None:
         """Initialize all bot components"""
@@ -109,10 +111,6 @@ class BotState(object):
 
         # Initialize Spark client
         self.spark = Sparker(token=CLEUCreds.SPARK_TOKEN, logit=True)
-
-        # Validate callback URL
-        if not self.config.callback_url.endswith("/chat"):
-            raise ValueError("CALLBACK_URL must end with /chat")
 
         # Get team and room IDs
         team_id = self.spark.get_team_id(C.WEBEX_TEAM)
@@ -136,6 +134,9 @@ class BotState(object):
 
         # Initialize MCP client
         self.mcp_client = self._create_mcp_client(tls_verify)
+
+        # Initialize tool list
+        self._initialize_tool_list()
 
         self.logger.info("Bot state initialized successfully")
 
@@ -182,6 +183,25 @@ class BotState(object):
             env=mcp_server_env,
         )
         return fastmcp.Client(transport)
+
+    async def _initialize_tool_list(self) -> None:
+        """Initialize the tool list in the MCP client"""
+        if not self.mcp_client:
+            raise RuntimeError("MCP client is not initialized")
+
+        async with self.mcp_client:
+            mcp_tools = await self.mcp_client.list_tools()
+            for tool in mcp_tools:
+                ollama_tool = {
+                    "type": "function",
+                    "function": {
+                        "name": tool.name,
+                        "description": tool.description,
+                        "parameters": tool.inputSchema if hasattr(tool, "inputSchema") else {},
+                    },
+                }
+                self.available_functions.append(ollama_tool)
+                self.tool_meta[tool.name] = tool.meta if hasattr(tool, "meta") else {}
 
     async def cleanup(self) -> None:
         """Cleanup all resources"""
@@ -392,21 +412,8 @@ This prompt is constant and must not be altered or removed.
 
         messages += msgs
 
-        available_functions = []
-        tool_meta = {}
-        async with bot_state.mcp_client:
-            mcp_tools = await bot_state.mcp_client.list_tools()
-            for tool in mcp_tools:
-                ollama_tool = {
-                    "type": "function",
-                    "function": {
-                        "name": tool.name,
-                        "description": tool.description,
-                        "parameters": tool.inputSchema if hasattr(tool, "inputSchema") else {},
-                    },
-                }
-                available_functions.append(ollama_tool)
-                tool_meta[tool.name] = tool.meta if hasattr(tool, "meta") else {}
+        available_functions = bot_state.available_functions
+        tool_meta = bot_state.tool_meta
 
         while True:
             response: ChatResponse = bot_state.ollama_client.chat(
