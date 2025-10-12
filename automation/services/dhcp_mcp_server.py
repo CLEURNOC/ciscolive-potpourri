@@ -41,7 +41,6 @@ import pynetbox
 import xmltodict
 from fastmcp import FastMCP
 from fastmcp.exceptions import ToolError
-
 from pydantic import BaseModel, Field
 from sparker import Sparker  # type: ignore
 
