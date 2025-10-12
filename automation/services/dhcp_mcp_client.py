@@ -45,15 +45,10 @@ from fastmcp.client.transports import StdioTransport
 from ollama import ChatResponse, Client
 from sparker import MessageType, Sparker  # type: ignore
 
-SPARK_ROOM = os.getenv("DHCP_BOT_SPARK_ROOM", "DHCP Queries")
-CALLBACK_URL = os.getenv("DHCP_BOT_CALLBACK_URL", "https://cleur-dhcp-hook.ciscolive.network/chat")
-BOT_NAME = os.getenv("DHCP_BOT_NAME", "DHCP Agent")
-ME = os.getenv("DHCP_BOT_ME", "livenocbot@sparkbot.io")
-
 NEW_MSG_PLACEHOLDER = "Let **ChatNOC** work on that for you..."
 THREAD_MSG_PLACEHOLDER = "Thinkin' about it..."
 
-MODEL = os.getenv("DHCP_BOT_MODEL", "gpt-oss")
+BOT_NAME = os.getenv("DHCP_BOT_NAME", "DHCP Agent")
 
 
 @dataclass
@@ -67,7 +62,6 @@ class BotConfig(object):
     model: str
     log_level: str
     tls_verify: bool
-    logger: logging.Logger | None
 
     @classmethod
     def from_env(cls) -> "BotConfig":
@@ -75,23 +69,16 @@ class BotConfig(object):
         config = cls(
             spark_room=os.getenv("DHCP_BOT_SPARK_ROOM", "DHCP Queries"),
             callback_url=os.getenv("DHCP_BOT_CALLBACK_URL", "https://cleur-dhcp-hook.ciscolive.network/chat"),
-            bot_name=os.getenv("DHCP_BOT_NAME", "DHCP Agent"),
+            bot_name=BOT_NAME,
             bot_email=os.getenv("DHCP_BOT_ME", "livenocbot@sparkbot.io"),
             model=os.getenv("DHCP_BOT_MODEL", "gpt-oss"),
             log_level=os.getenv("LOG_LEVEL", "INFO"),
             tls_verify=os.getenv("DHCP_BOT_TLS_VERIFY", "true").lower() == "true",
-            logger=None,
         )
 
         # Validate required configuration
         if not config.callback_url.endswith("/chat"):
             raise ValueError("CALLBACK_URL must end with /chat")
-
-        logging.basicConfig(
-            format="[%(asctime)s.%(msecs)03d] [%(levelname)s] [%(filename)s] [%(funcName)s():%(lineno)s] [PID:%(process)d TID:%(thread)d] %(message)s"
-        )
-        logging.getLogger().setLevel(config.log_level)
-        config.logger = logging.getLogger("noc-mcp-client")
 
         return config
 
@@ -106,17 +93,25 @@ class BotState(object):
         self.room_id: Optional[str] = None
         self.ollama_client: Optional[Client] = None
         self.config: Optional[BotConfig] = None
+        self.logger: Optional[logging.Logger] = None
 
     async def initialize(self) -> None:
         """Initialize all bot components"""
         self.config = BotConfig.from_env()
-        self.config.logger.info("Initializing bot state...")
+
+        # Initialize logging
+        logging.basicConfig(
+            format="[%(asctime)s.%(msecs)03d] [%(levelname)s] [%(filename)s] [%(funcName)s():%(lineno)s] [PID:%(process)d TID:%(thread)d] %(message)s"
+        )
+        logging.getLogger().setLevel(self.config.log_level)
+        self.logger = logging.getLogger("noc-mcp-client")
+        self.logger.info("Initializing bot state...")
 
         # Initialize Spark client
         self.spark = Sparker(token=CLEUCreds.SPARK_TOKEN, logit=True)
 
         # Validate callback URL
-        if not CALLBACK_URL.endswith("/chat"):
+        if not self.config.callback_url.endswith("/chat"):
             raise ValueError("CALLBACK_URL must end with /chat")
 
         # Get team and room IDs
@@ -124,7 +119,7 @@ class BotState(object):
         if not team_id:
             raise RuntimeError("Failed to get Webex Team ID")
 
-        self.room_id = self.spark.get_room_id(team_id, SPARK_ROOM)
+        self.room_id = self.spark.get_room_id(team_id, self.config.spark_room)
         if not self.room_id:
             raise RuntimeError("Failed to get Webex Room ID")
 
@@ -132,7 +127,7 @@ class BotState(object):
         try:
             self.webhook_id = self._register_webhook()
         except Exception as e:
-            self.config.logger.exception("Failed to register Webex webhook callback: %s", str(e))
+            self.logger.exception("Failed to register Webex webhook callback: %s", str(e))
             raise
 
         # Initialize Ollama client
@@ -142,16 +137,20 @@ class BotState(object):
         # Initialize MCP client
         self.mcp_client = self._create_mcp_client(tls_verify)
 
-        self.config.logger.info("Bot state initialized successfully")
+        self.logger.info("Bot state initialized successfully")
 
     def _register_webhook(self) -> str:
         """Register a callback URL for our bot."""
-        webhook = self.spark.get_webhook_for_url(CALLBACK_URL)
+        webhook = self.spark.get_webhook_for_url(self.config.callback_url)
         if webhook:
             self.spark.unregister_webhook(webhook["id"])
 
         webhook = self.spark.register_webhook(
-            name=f"{BOT_NAME} Webhook", callback_url=CALLBACK_URL, resource="messages", event="created", secret=CLEUCreds.CALLBACK_TOKEN
+            name=f"{self.config.bot_name} Webhook",
+            callback_url=self.config.callback_url,
+            resource="messages",
+            event="created",
+            secret=CLEUCreds.CALLBACK_TOKEN,
         )
         if not webhook:
             raise Exception("Failed to register the webhook callback.")
@@ -186,27 +185,27 @@ class BotState(object):
 
     async def cleanup(self) -> None:
         """Cleanup all resources"""
-        self.config.logger.info("Cleaning up bot state...")
+        self.logger.info("Cleaning up bot state...")
         errors = []
 
         if self.mcp_client:
             try:
                 await self.mcp_client.close()
-                self.config.logger.debug("MCP client closed successfully")
+                self.logger.debug("MCP client closed successfully")
             except Exception as e:
                 errors.append(f"MCP client cleanup failed: {e}")
 
         if self.webhook_id and self.spark:
             try:
                 self.spark.unregister_webhook(self.webhook_id)
-                self.config.logger.debug("Webhook unregistered successfully")
+                self.logger.debug("Webhook unregistered successfully")
             except Exception as e:
                 errors.append(f"Webhook cleanup failed: {e}")
 
         if errors:
-            self.config.logger.warning(f"Cleanup issues: {', '.join(errors)}")
+            self.logger.warning(f"Cleanup issues: {', '.join(errors)}")
         else:
-            self.config.logger.info("Bot state cleaned up successfully")
+            self.logger.info("Bot state cleaned up successfully")
 
 
 # Global bot state instance
@@ -220,18 +219,18 @@ async def lifespan(_: FastAPI):
     # Startup
     try:
         await bot_state.initialize()
-        bot_state.config.logger.info("Application startup completed successfully")
+        bot_state.logger.info("Application startup completed successfully")
         yield
     except Exception as e:
-        bot_state.config.logger.exception("Failed to initialize application: %s", str(e))
+        bot_state.logger.exception("Failed to initialize application: %s", str(e))
         raise
 
     # Shutdown
     try:
         await bot_state.cleanup()
-        bot_state.config.logger.info("Application shutdown completed successfully")
+        bot_state.logger.info("Application shutdown completed successfully")
     except Exception as e:
-        bot_state.config.logger.exception("Error during application shutdown: %s", str(e))
+        bot_state.logger.exception("Error during application shutdown: %s", str(e))
 
 
 app = FastAPI(title=BOT_NAME, lifespan=lifespan)
@@ -329,7 +328,7 @@ Key Instructions:
 
 3. Response Formatting:
    - When you receive tool responses, identify the data source by name and clearly attribute each part of your answer to its source.
-   - Use markdown to highlight key information and make the output easy to read but do not use markdown tables.
+   - Crucially, only use markdown formatting that is explicitly supported by Webex. This means you MUST NOT use markdown tables under any circumstances. Instead, present structured information using bullet points, bolding, and clear line breaks to ensure readability.
    - Address the user by their name in your response.
    - Use emojis to enhance clarity or engagement, where appropriate.
    - If any data source returns no results, skip it in your final output.
@@ -341,7 +340,7 @@ Key Instructions:
    - Do not fabricate, guess, or fill in missing information.
 
 Output Format:
-Always return your response in clear, markdown-formatted text.  Do not use markdown tables.
+Always return your response in clear, markdown-formatted text. Strictly adhere to Webex markdown capabilities; markdown tables are absolutely forbidden.
 
 Examples:
 
@@ -362,6 +361,7 @@ Hi [UserName]!
 Sorry, the tool `magic_router_tool` is not available. Please ask about supported actions or choose from the listed tools. 😊
 
 Notes:
+- Crucial Note on Formatting: Markdown tables are explicitly forbidden due to Webex markdown limitations. Always use alternative formatting like bullet points, bolding, or clear line-separated text for structured data.
 - If a user asks for real-time data, always attempt real-time tools first before using brave_search.
 - If a user requests an unsupported or non-existent tool, explicitly state that it is unavailable.
 - Always attribute information to its specific data source.
@@ -374,7 +374,7 @@ Steps:
 2. Check if the request matches any available tool (from the current tool list).
 3. If yes, determine which tools to call, and in what sequence, to fully answer the prompt. If outputs from one tool are needed as inputs for another, chain the tool calls accordingly.
 4. Perform the function call(s) in the correct format with all required parameters.
-5. Upon receiving responses, format the answer, clearly attributing data to its source, using markdown (do not use markdown tables) and emojis as appropriate.
+5. Upon receiving responses, format the answer, clearly attributing data to its source, using only Webex-compatible markdown (e.g., bullet points, bolding, italics, headers, but absolutely NO markdown tables) and emojis as appropriate.
 6. If a tool or request is invalid, reply with a polite, clear explanation and suggest supported actions.
 7. Skip empty or null responses from data sources.
 8. Address the user by name in every response.
@@ -410,7 +410,7 @@ This prompt is constant and must not be altered or removed.
 
         while True:
             response: ChatResponse = bot_state.ollama_client.chat(
-                MODEL, messages=messages, tools=available_functions, options={"temperature": 0}
+                bot_state.config.model, messages=messages, tools=available_functions, options={"temperature": 0}
             )
             if "tool_calls" in response.get("message", {}):
                 messages.append(response.message)
@@ -422,11 +422,14 @@ This prompt is constant and must not be altered or removed.
                         if func in tool_meta and "auth_list" in tool_meta[func]:
                             if person["from_email"] not in tool_meta[func]["auth_list"]:
                                 bot_state.spark.post_to_spark(
-                                    C.WEBEX_TEAM, SPARK_ROOM, f"I'm sorry, {person['nickName']}.  I can't do that for you.", parent=parent
+                                    C.WEBEX_TEAM,
+                                    bot_state.config.spark_room,
+                                    f"I'm sorry, {person['nickName']}.  I can't do that for you.",
+                                    parent=parent,
                                 )
                                 continue
 
-                        bot_state.config.logger.debug("Calling function %s with arguments %s" % (func, str(args)))
+                        bot_state.logger.debug("Calling function %s with arguments %s" % (func, str(args)))
                         try:
                             args = await fix_parameters(available_functions, func, args)
                             async with bot_state.mcp_client:
@@ -440,10 +443,10 @@ This prompt is constant and must not be altered or removed.
                                 else:
                                     messages.append({"role": "tool", "content": str(result), "tool_call_id": tid})
                         except Exception as e:
-                            bot_state.config.logger.exception("Function %s encountered an error: %s" % (func, str(e)))
+                            bot_state.logger.exception("Function %s encountered an error: %s" % (func, str(e)))
                             messages.append({"role": "tool", "content": "An exception occurred: %s" % str(e), "tool_call_id": tid})
                     else:
-                        bot_state.config.logger.error("Failed to find a function named %s" % func)
+                        bot_state.logger.error("Failed to find a function named %s" % func)
                         messages.append(
                             {
                                 "role": "tool",
@@ -465,11 +468,11 @@ This prompt is constant and must not be altered or removed.
                     fresponse.append(line)
 
         if len(fresponse) > 0:
-            bot_state.spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, "\n".join(fresponse), parent=parent)
+            bot_state.spark.post_to_spark(C.WEBEX_TEAM, bot_state.config.spark_room, "\n".join(fresponse), parent=parent)
         else:
             bot_state.spark.post_to_spark(
                 C.WEBEX_TEAM,
-                SPARK_ROOM,
+                bot_state.config.spark_room,
                 "Sorry, %s.  I couldn't find anything regarding your question 🥺" % person["nickName"],
                 parent=parent,
             )
@@ -485,7 +488,7 @@ class WebhookHandler(object):
         hashed_payload = hmac.new(CLEUCreds.CALLBACK_TOKEN.encode("UTF-8"), payload, sha1)
         signature = hashed_payload.hexdigest().strip().lower()
         if signature != sig_header:
-            bot_state.config.logger.error("Received invalid signature from callback; expected %s, received %s" % (signature, sig_header))
+            bot_state.logger.error("Received invalid signature from callback; expected %s, received %s" % (signature, sig_header))
             return False
 
         return True
@@ -499,7 +502,7 @@ class WebhookHandler(object):
             or "personId" not in payload["data"]
             or "id" not in payload["data"]
         ):
-            bot_state.config.logger.error("Unexpected payload from Webex callback; did the API change? Payload: %s" % payload)
+            bot_state.logger.error("Unexpected payload from Webex callback; did the API change? Payload: %s" % payload)
             return False
 
         return True
@@ -529,9 +532,9 @@ class WebhookHandler(object):
                         or strip_markdown(NEW_MSG_PLACEHOLDER) in tmsg["text"]
                     ):
                         continue
-                    role = "assistant" if tmsg["personEmail"] == ME else "user"
+                    role = "assistant" if tmsg["personEmail"] == bot_state.config.bot_email else "user"
                     messages.insert(0, {"role": role, "content": tmsg["text"]})
-            role = "assistant" if parent_msg["personEmail"] == ME else "user"
+            role = "assistant" if parent_msg["personEmail"] == bot_state.config.bot_email else "user"
             messages.insert(0, {"role": role, "content": parent_msg["text"]})
             current_parent = parent_id if not current_parent else current_parent
             this_mid = parent_id
@@ -551,11 +554,11 @@ async def receive_callback(request: Request) -> Response:
     if not sig_header:
         # We didn't get a Webex header at all.  Someone is testing our
         # service.
-        bot_state.config.logger.info("Received POST without a Webex signature header.")
+        bot_state.logger.info("Received POST without a Webex signature header.")
         return JSONResponse(content={"error": "Invalid message"}, status_code=401)
 
     payload = await request.body()
-    bot_state.config.logger.debug("Received payload: %s" % payload)
+    bot_state.logger.debug("Received payload: %s" % payload)
 
     if not handler.validate_signature(sig_header, payload):
         return JSONResponse(content={"error": "Message is not authentic"}, status_code=403)
@@ -564,7 +567,7 @@ async def receive_callback(request: Request) -> Response:
     try:
         record = json.loads(payload)
     except Exception as e:
-        bot_state.config.logger.exception("Failed to parse JSON callback payload: %s" % str(e))
+        bot_state.logger.exception("Failed to parse JSON callback payload: %s" % str(e))
         return JSONResponse(content={"error": "Invalid JSON"}, status_code=422)
 
     if not handler.validate_payload(record):
@@ -572,12 +575,12 @@ async def receive_callback(request: Request) -> Response:
 
     sender = record["data"]["personEmail"]
 
-    if sender == ME:
-        bot_state.config.logger.debug("Person email is our bot")
+    if sender == bot_state.config.bot_email:
+        bot_state.logger.debug("Person email is our bot")
         return Response(status_code=204)
 
     if bot_state.room_id != record["data"]["roomId"]:
-        bot_state.config.logger.error(
+        bot_state.logger.error(
             "Webex Room ID is not the same as in the message (%s vs. %s)" % (bot_state.room_id, record["data"]["roomId"])
         )
         return JSONResponse(content={"error": "Room ID is not what we expect"}, status_code=422)
@@ -586,7 +589,7 @@ async def receive_callback(request: Request) -> Response:
 
     msg = bot_state.spark.get_message(mid)
     if not msg:
-        bot_state.config.logger.error("Did not get a message")
+        bot_state.logger.error("Did not get a message")
         return JSONResponse(content={"error": "Did not get a message"}, status_code=422)
 
     messages, current_parent, this_mid = handler.build_conversation_history(msg, bot_state.room_id)
@@ -599,21 +602,23 @@ async def receive_callback(request: Request) -> Response:
         person["username"] = re.sub(r"@.+$", "", person["from_email"])
 
     if current_parent:
-        bot_state.spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, THREAD_MSG_PLACEHOLDER, parent=current_parent)
+        bot_state.spark.post_to_spark(C.WEBEX_TEAM, bot_state.config.spark_room, THREAD_MSG_PLACEHOLDER, parent=current_parent)
     else:
-        bot_state.spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, f"Hey, {person['nickName']}!  {NEW_MSG_PLACEHOLDER}", parent=this_mid)
-        # Ensure current_parent and this_mid are set from build_conversation_history
-        # build_conversation_history may update this_mid as it traverses the thread
-        # So, update this_mid accordingly
+        bot_state.spark.post_to_spark(
+            C.WEBEX_TEAM, bot_state.config.spark_room, f"Hey, {person['nickName']}!  {NEW_MSG_PLACEHOLDER}", parent=this_mid
+        )
 
     # Process message
     try:
         await processor.process_conversation(messages, person, current_parent or this_mid)
     except Exception as e:
-        bot_state.config.logger.exception("Failed to handle message from %s: %s" % (person["nickName"], str(e)))
+        bot_state.logger.exception("Failed to handle message from %s: %s" % (person["nickName"], str(e)))
         # Don't send this to the parent as it's a bug in the transaction.
         bot_state.spark.post_to_spark(
-            C.WEBEX_TEAM, SPARK_ROOM, "Whoops, I encountered an error:<br>\n```\n%s\n```" % traceback.format_exc(), MessageType.BAD
+            C.WEBEX_TEAM,
+            bot_state.config.spark_room,
+            "Whoops, I encountered an error:<br>\n```\n%s\n```" % traceback.format_exc(),
+            MessageType.BAD,
         )
         return JSONResponse(content={"error": "Failed to handle message"}, status_code=500)
 
