@@ -382,7 +382,7 @@ class Sparker:
                 self._log_error(msg)
                 return None
 
-            except asyncio.TimeoutError:
+            except httpx.TimeoutException:
                 if attempt == self._config.max_retries - 1:
                     msg = f"Request timeout after {self._config.max_retries} retries: {url}"
                     self._log_error(msg)
@@ -391,7 +391,8 @@ class Sparker:
                 backoff *= 2
                 continue
 
-            except Exception as e:
+            except httpx.RequestError as e:
+                # Network errors, connection errors, etc. - retry
                 if attempt == self._config.max_retries - 1:
                     msg = f"Request failed: {url} - {repr(e)}"
                     self._log_error(msg, e)
@@ -399,6 +400,12 @@ class Sparker:
                 await asyncio.sleep(backoff)
                 backoff *= 2
                 continue
+
+            except Exception as e:
+                # Catch-all for unexpected errors - don't retry
+                msg = f"Unexpected error: {url} - {repr(e)}"
+                self._log_error(msg, e)
+                return None
 
         return None
 
@@ -474,7 +481,7 @@ class Sparker:
                 break
 
             try:
-                data = await response.json()
+                data = response.json()
                 result.extend(data.get("items", []))
 
                 # Check for next page
@@ -557,7 +564,7 @@ class Sparker:
         response = await self._async_request_with_retry("POST", url, json=payload)
         if response:
             try:
-                return await response.json()
+                return response.json()
             except Exception as e:
                 self._log_error(f"Failed to parse webhook response: {repr(e)}", e)
         return None
@@ -590,7 +597,7 @@ class Sparker:
         response = await self._async_request_with_retry("GET", url)
         if response:
             try:
-                return await response.json()
+                return response.json()
             except Exception as e:
                 self._log_error(f"Failed to parse message response: {repr(e)}", e)
         return None
@@ -625,7 +632,7 @@ class Sparker:
         response = await self._async_request_with_retry("GET", url)
         if response:
             try:
-                return await response.json()
+                return response.json()
             except Exception as e:
                 self._log_error(f"Failed to parse card response: {repr(e)}", e)
         return None
@@ -644,7 +651,7 @@ class Sparker:
         response = await self._async_request_with_retry("GET", url)
         if response:
             try:
-                return await response.json()
+                return response.json()
             except Exception as e:
                 self._log_error(f"Failed to parse person response: {repr(e)}", e)
         return None
@@ -1123,7 +1130,7 @@ class Sparker:
         response = await self._async_request_with_retry("GET", url)
         if response:
             try:
-                return await response.json()
+                return response.json()
             except Exception as e:
                 self._log_error(f"Failed to parse workspace response: {repr(e)}", e)
         return None
