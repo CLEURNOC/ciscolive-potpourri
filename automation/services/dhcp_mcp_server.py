@@ -689,44 +689,43 @@ async def get_webex_device_info(inp: WebexInfoInput | dict) -> WebexInfoResponse
             key = "displayName"
             val = val
 
-    dev_spark = Sparker(token=COLLAB_WEBEX_TOKEN, logit=True)
+    async with Sparker(token=COLLAB_WEBEX_TOKEN, logit=True) as dev_spark:
+        devices = await dev_spark.get_webex_devices_async()
+        if not devices:
+            raise ToolError("No devices found")
 
-    devices = dev_spark.get_webex_devices()
-    if not devices:
-        raise ToolError("No devices found")
+        for device in devices:
+            if device[key].lower() == val.lower():
+                workspace = await dev_spark.get_workspace_async(device["workspaceId"])
+                location = workspace["displayName"] if workspace else None
 
-    for device in devices:
-        if device[key].lower() == val.lower():
-            workspace = dev_spark.get_workspace(device["workspaceId"])
-            location = workspace["displayName"] if workspace else None
+                room_temperature = None
+                room_humidity = None
+                for metric, units in {"temperature": "degrees C", "humidity": "%"}.items():
+                    details = await dev_spark.get_workspace_metric_async(device["workspaceId"], metric)
+                    if details and len(details) > 0 and "mean" in details[0]:
+                        value = f"{int(details[0]['mean'])} {units}"
+                        if metric == "temperature":
+                            room_temperature = value
+                        elif metric == "humidity":
+                            room_humidity = value
 
-            room_temperature = None
-            room_humidity = None
-            for metric, units in {"temperature": "degrees C", "humidity": "%"}.items():
-                details = dev_spark.get_workspace_metric(device["workspaceId"], metric)
-                if details and len(details) > 0 and "mean" in details[0]:
-                    value = f"{int(details[0]['mean'])} {units}"
-                    if metric == "temperature":
-                        room_temperature = value
-                    elif metric == "humidity":
-                        room_humidity = value
+                return WebexInfoResponse(
+                    name=device["displayName"],
+                    product=device["product"],
+                    device_type=device["type"],
+                    mac=device["mac"],
+                    ip=device["ip"],
+                    serial_number=device["serial"],
+                    software=device["software"],
+                    connection_status=device["connectionStatus"],
+                    connected_interface=device["activeInterface"],
+                    location=location,
+                    room_temperature=room_temperature,
+                    room_humidity=room_humidity,
+                )
 
-            return WebexInfoResponse(
-                name=device["displayName"],
-                product=device["product"],
-                device_type=device["type"],
-                mac=device["mac"],
-                ip=device["ip"],
-                serial_number=device["serial"],
-                software=device["software"],
-                connection_status=device["connectionStatus"],
-                connected_interface=device["activeInterface"],
-                location=location,
-                room_temperature=room_temperature,
-                room_humidity=room_humidity,
-            )
-
-    raise ToolError(f"No device found matching {key} {val}")
+        raise ToolError(f"No device found matching {key} {val}")
 
 
 @server_mcp.tool(
