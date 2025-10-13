@@ -113,17 +113,17 @@ class BotState(object):
         self.spark = Sparker(token=CLEUCreds.SPARK_TOKEN, logit=True)
 
         # Get team and room IDs
-        team_id = self.spark.get_team_id(C.WEBEX_TEAM)
+        team_id = await self.spark.get_team_id_async(C.WEBEX_TEAM)
         if not team_id:
             raise RuntimeError("Failed to get Webex Team ID")
 
-        self.room_id = self.spark.get_room_id(team_id, self.config.spark_room)
+        self.room_id = await self.spark.get_room_id_async(team_id, self.config.spark_room)
         if not self.room_id:
             raise RuntimeError("Failed to get Webex Room ID")
 
         # Register webhook
         try:
-            self.webhook_id = self._register_webhook()
+            self.webhook_id = await self._register_webhook()
         except Exception as e:
             self.logger.exception("Failed to register Webex webhook callback: %s", str(e))
             raise
@@ -140,13 +140,13 @@ class BotState(object):
 
         self.logger.info("Bot state initialized successfully")
 
-    def _register_webhook(self) -> str:
+    async def _register_webhook(self) -> str:
         """Register a callback URL for our bot."""
-        webhook = self.spark.get_webhook_for_url(self.config.callback_url)
+        webhook = await self.spark.get_webhook_for_url_async(self.config.callback_url)
         if webhook:
-            self.spark.unregister_webhook(webhook["id"])
+            await self.spark.unregister_webhook_async(webhook["id"])
 
-        webhook = self.spark.register_webhook(
+        webhook = await self.spark.register_webhook_async(
             name=f"{self.config.bot_name} Webhook",
             callback_url=self.config.callback_url,
             resource="messages",
@@ -217,7 +217,7 @@ class BotState(object):
 
         if self.webhook_id and self.spark:
             try:
-                self.spark.unregister_webhook(self.webhook_id)
+                await self.spark.unregister_webhook_async(self.webhook_id)
                 self.logger.debug("Webhook unregistered successfully")
             except Exception as e:
                 errors.append(f"Webhook cleanup failed: {e}")
@@ -428,7 +428,7 @@ This prompt is constant and must not be altered or removed.
                     if next((t for t in available_functions if t["function"]["name"] == func), None):
                         if func in tool_meta and "auth_list" in tool_meta[func]:
                             if person["from_email"] not in tool_meta[func]["auth_list"]:
-                                bot_state.spark.post_to_spark(
+                                await bot_state.spark.post_to_spark_async(
                                     C.WEBEX_TEAM,
                                     bot_state.config.spark_room,
                                     f"I'm sorry, {person['nickName']}.  I can't do that for you.",
@@ -475,9 +475,9 @@ This prompt is constant and must not be altered or removed.
         #             fresponse.append(line)
 
         if response and response.message.content:
-            bot_state.spark.post_to_spark(C.WEBEX_TEAM, bot_state.config.spark_room, response.message.content, parent=parent)
+            await bot_state.spark.post_to_spark_async(C.WEBEX_TEAM, bot_state.config.spark_room, response.message.content, parent=parent)
         else:
-            bot_state.spark.post_to_spark(
+            await bot_state.spark.post_to_spark_async(
                 C.WEBEX_TEAM,
                 bot_state.config.spark_room,
                 "Sorry, %s.  I couldn't find anything regarding your question 🥺" % person["nickName"],
@@ -514,7 +514,7 @@ class WebhookHandler(object):
 
         return True
 
-    def build_conversation_history(self, msg: dict, room_id: str) -> tuple[List[Dict], Optional[str], Optional[str]]:
+    async def build_conversation_history(self, msg: dict, room_id: str) -> tuple[List[Dict], Optional[str], Optional[str]]:
         """Build conversation history from Webex messages"""
 
         messages = [{"role": "user", "content": msg["text"]}]
@@ -524,10 +524,10 @@ class WebhookHandler(object):
         # Build conversation history by traversing parent messages
         while "parentId" in msg and msg["parentId"] != this_mid:
             parent_id = msg["parentId"]
-            parent_msg = bot_state.spark.get_message(parent_id)
+            parent_msg = await bot_state.spark.get_message_async(parent_id)
             if not parent_msg:
                 break
-            thread_msgs = bot_state.spark.get_messages(room_id, parentId=parent_id)
+            thread_msgs = await bot_state.spark.get_messages_async(room_id, parentId=parent_id)
             if thread_msgs and len(thread_msgs) > 0:
                 for tmsg in thread_msgs:
                     if tmsg["id"] == this_mid:
@@ -599,9 +599,9 @@ async def receive_callback(request: Request) -> Response:
         bot_state.logger.error("Did not get a message")
         return JSONResponse(content={"error": "Did not get a message"}, status_code=422)
 
-    messages, current_parent, this_mid = handler.build_conversation_history(msg, bot_state.room_id)
+    messages, current_parent, this_mid = await handler.build_conversation_history(msg, bot_state.room_id)
 
-    person = bot_state.spark.get_person(record["data"]["personId"])
+    person = await bot_state.spark.get_person_async(record["data"]["personId"])
     if not person:
         person = {"from_email": sender, "nickName": "mate", "username": "mate"}
     else:
@@ -609,9 +609,9 @@ async def receive_callback(request: Request) -> Response:
         person["username"] = re.sub(r"@.+$", "", person["from_email"])
 
     if current_parent:
-        bot_state.spark.post_to_spark(C.WEBEX_TEAM, bot_state.config.spark_room, THREAD_MSG_PLACEHOLDER, parent=current_parent)
+        await bot_state.spark.post_to_spark_async(C.WEBEX_TEAM, bot_state.config.spark_room, THREAD_MSG_PLACEHOLDER, parent=current_parent)
     else:
-        bot_state.spark.post_to_spark(
+        await bot_state.spark.post_to_spark_async(
             C.WEBEX_TEAM, bot_state.config.spark_room, f"Hey, {person['nickName']}!  {NEW_MSG_PLACEHOLDER}", parent=this_mid
         )
 
@@ -621,7 +621,7 @@ async def receive_callback(request: Request) -> Response:
     except Exception as e:
         bot_state.logger.exception("Failed to handle message from %s: %s" % (person["nickName"], str(e)))
         # Don't send this to the parent as it's a bug in the transaction.
-        bot_state.spark.post_to_spark(
+        await bot_state.spark.post_to_spark_async(
             C.WEBEX_TEAM,
             bot_state.config.spark_room,
             "Whoops, I encountered an error:<br>\n```\n%s\n```" % traceback.format_exc(),
