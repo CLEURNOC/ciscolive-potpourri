@@ -916,7 +916,7 @@ async def get_user_details_from_ise(ise_input: ISEInput | dict) -> ISEResponse:
         vlan_match = re.search(r"vlan-id=([^,]+)", other_attr_string)
 
         if ap_match:
-            associated_access_point = normalize_mac(ap_match.group(1))
+            associated_access_point = str(normalize_mac(ap_match.group(1)))
         if ssid_match:
             associated_ssid = ssid_match.group(1)
         if vlan_match:
