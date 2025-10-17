@@ -8,7 +8,7 @@ pid=$!
 # Pause for Ollama to start.
 sleep 5
 
-MODELS="llama3.3 phi4 nomic-embed-text llava llama3-groq-tool-use"
+MODELS="llama3.3 phi4 nomic-embed-text llava llama3-groq-tool-use gpt-oss"
 
 for model in ${MODELS}; do
     echo "🔴 Retrieve ${model^^} model..."
