@@ -594,7 +594,7 @@ async def receive_callback(request: Request) -> Response:
 
     mid = record["data"]["id"]
 
-    msg = bot_state.spark.get_message(mid)
+    msg = await bot_state.spark.get_message_async(mid)
     if not msg:
         bot_state.logger.error("Did not get a message")
         return JSONResponse(content={"error": "Did not get a message"}, status_code=422)
