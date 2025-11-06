@@ -883,7 +883,11 @@ async def get_user_details_from_ise(ise_input: ISEInput | dict) -> ISEResponse:
 
     # Required fields
     network_access_server = session_details.get("nas_ip_address")
-    client_mac = str(normalize_mac(session_details.get("calling_station_id", "")))
+    calling_station_id = session_details.get("calling_station_id")
+    if calling_station_id:
+        client_mac = str(normalize_mac(calling_station_id))
+    else:
+        client_mac = ""
 
     # Optional fields
     client_ipv4 = session_details.get("framed_ip_address")
