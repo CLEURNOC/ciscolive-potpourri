@@ -39,7 +39,7 @@ import CLEUCreds  # type: ignore
 import fastmcp
 import uvicorn
 from cleu.config import Config as C  # type: ignore
-from fastapi import FastAPI, Request, Response
+from fastapi import BackgroundTasks, FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from fastmcp.client.transports import StdioTransport
 from ollama import ChatResponse, Client
@@ -550,11 +550,26 @@ class WebhookHandler(object):
         return messages, current_parent, this_mid
 
 
+async def process_message_background(messages: List[Dict], person: Dict, parent: str):
+    """Background task to process the conversation"""
+    processor = MessageProcessor()
+    try:
+        await processor.process_conversation(messages, person, parent)
+    except Exception as e:
+        bot_state.logger.exception("Failed to handle message from %s: %s" % (person["nickName"], str(e)))
+        # Don't send this to the parent as it's a bug in the transaction.
+        await bot_state.spark.post_to_spark_async(
+            C.WEBEX_TEAM,
+            bot_state.config.spark_room,
+            "Whoops, I encountered an error:<br>\n```\n%s\n```" % traceback.format_exc(),
+            MessageType.BAD,
+        )
+
+
 # Refactored receive_callback function
 @app.post("/chat")
-async def receive_callback(request: Request) -> Response:
+async def receive_callback(request: Request, background_tasks: BackgroundTasks) -> Response:
     handler = WebhookHandler()
-    processor = MessageProcessor()
 
     # Validate and parse
     sig_header = request.headers.get("x-spark-signature")
@@ -615,19 +630,8 @@ async def receive_callback(request: Request) -> Response:
             C.WEBEX_TEAM, bot_state.config.spark_room, f"Hey, {person['nickName']}!  {NEW_MSG_PLACEHOLDER}", parent=this_mid
         )
 
-    # Process message
-    try:
-        await processor.process_conversation(messages, person, current_parent or this_mid)
-    except Exception as e:
-        bot_state.logger.exception("Failed to handle message from %s: %s" % (person["nickName"], str(e)))
-        # Don't send this to the parent as it's a bug in the transaction.
-        await bot_state.spark.post_to_spark_async(
-            C.WEBEX_TEAM,
-            bot_state.config.spark_room,
-            "Whoops, I encountered an error:<br>\n```\n%s\n```" % traceback.format_exc(),
-            MessageType.BAD,
-        )
-        return JSONResponse(content={"error": "Failed to handle message"}, status_code=500)
+    # Background the message processing using FastAPI's BackgroundTasks
+    background_tasks.add_task(process_message_background, messages, person, current_parent or this_mid)
 
     return Response(status_code=204)
 
