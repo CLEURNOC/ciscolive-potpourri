@@ -68,7 +68,7 @@ class BotConfig(object):
         """Create BotConfig from environment variables"""
         config = cls(
             spark_room=os.getenv("DHCP_BOT_SPARK_ROOM", "DHCP Queries"),
-            callback_url=os.getenv("DHCP_BOT_CALLBACK_URL", "https://cleur-dhcp-hook.ciscolive.network/chat"),
+            callback_url=os.getenv("DHCP_BOT_CALLBACK_URL", f"https://cleur-dhcp-hook.{C.DNS_DOMAIN}/chat"),
             bot_name=BOT_NAME,
             bot_email=os.getenv("DHCP_BOT_ME", "livenocbot@sparkbot.io"),
             model=os.getenv("DHCP_BOT_MODEL", "gpt-oss"),

@@ -33,11 +33,12 @@ import smtplib
 import random
 import string
 from email.mime.text import MIMEText
+from cleu.config import Config as C  # type: ignore
 
 
-AD_DN_BASE = "cn=Users, dc=ad, dc=ciscolive, dc=network"
+AD_DN_BASE = f"cn=Users, dc=ad, dc={C.DNS_DOMAIN.replace('.', ', dc=')}"
 DEFAULT_GROUP = "NOC Users"
-AD_DOMAIN = "ad.ciscolive.network"
+AD_DOMAIN = f"ad.{C.DNS_DOMAIN}"
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
@@ -52,7 +53,7 @@ if __name__ == "__main__":
     group = sys.argv[1]
 
     MSG = "Created CLEU account for {}.\r\n\r\n"
-    MSG += "Login to the CL-NOC SSID and https://tool.ciscolive.network with the following:\r\n\r\n"
+    MSG += f"Login to the CL-NOC SSID and https://tool.{C.DNS_DOMAIN} with the following:\r\n\r\n"
     MSG += "Username: {}\r\n"
     MSG += "Password: {}\r\n"
 

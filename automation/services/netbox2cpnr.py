@@ -24,40 +24,31 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-from elemental_utils import ElementalDns, ElementalNetbox
-from elemental_utils.cpnr.query import RequestError
+import argparse
+import ipaddress
+import logging
+import logging.config
+import os
 
-# from elemental_utils.cpnr.query import RequestError
-from elemental_utils import cpnr
-from utils import (
-    dedup_cnames,
-    get_cname_record,
-    launch_parallel_task,
-    restart_dns_servers,
-    get_reverse_zone,
-)
+# import json
+import re
+import sys
+from dataclasses import dataclass, field
+from threading import Lock
+from typing import List, Tuple, Union
 
-from pynetbox.core.response import Record
-from pynetbox.models.ipam import IpAddresses
 import CLEUCreds  # type: ignore
+import pynetbox
 from cleu.config import Config as C  # type: ignore
 
 # from pynetbox.models.virtualization import VirtualMachines
 from colorama import Fore, Style
-
-from typing import Union, Tuple, List
-from dataclasses import dataclass, field
-from threading import Lock
-import os
-
-import ipaddress
-import logging.config
-import logging
-import argparse
-import sys
-
-# import json
-import re
+# from elemental_utils.cpnr.query import RequestError
+from elemental_utils import ElementalDns, cpnr  # type: ignore
+from elemental_utils.cpnr.query import RequestError  # type: ignore
+from pynetbox.core.response import Record
+from pynetbox.models.ipam import IpAddresses
+from utils import dedup_cnames, get_cname_record, get_reverse_zone, launch_parallel_task, restart_dns_servers
 
 # import hvac
 
@@ -288,14 +279,14 @@ def find_old_ptrs(addr_list: list, old_ptrs: list) -> None:
         old_ptrs.append((ptrn, rzn))
 
 
-def check_record(ip: IpAddresses, primary_domain: str, edns: ElementalDns, enb: ElementalNetbox, wip_records: DnsRecords) -> None:
+def check_record(ip: IpAddresses, primary_domain: str, edns: ElementalDns, pnb: pynetbox.api, wip_records: DnsRecords) -> None:
     """Check to see if a given NetBox IP object needs DNS updates.
 
     Args:
         :ip IpAddresses: NetBox IP address object to check
         :primary_domain str: Primary domain name for the records for the IP/host with trailing '.'
         :edns ElementalDns: ElementalDns object representing the auth DNS for the primary_domain
-        :enb ElementalNetbox: ElementalNetbox object for querying
+        :pnb pynetbox.api: Pynetbox API object for querying
         :wip_records DnsRecords: Object to hold the results of the function
     """
     if ip.family.value == 6 and ip.assigned_object:
@@ -448,7 +439,7 @@ def check_cnames(
         :dns_name str: Main hostname of the record
         :primary_domain str: Primary domain name of the record
         :a_record ARecord: A record object to link CNAMEs to
-        :enb ElementalNetbox: ElementalNetbox object for NetBox queries
+        :edns ElementalDns: ElementalDns object for DNS queries
         :wip_records DnsRecords: DnsRecords object to hold the results
     """
 
@@ -774,8 +765,6 @@ def parse_args() -> object:
 
 
 def main():
-    os.environ["NETBOX_ADDRESS"] = C.NETBOX_SERVER
-    os.environ["NETBOX_API_TOKEN"] = CLEUCreds.NETBOX_API_TOKEN
     os.environ["CPNR_USERNAME"] = CLEUCreds.CPNR_USERNAME
     os.environ["CPNR_PASSWORD"] = CLEUCreds.CPNR_PASSWORD
 
@@ -786,7 +775,11 @@ def main():
     if args.tenant:
         lower_tenant = args.tenant.lower()
 
-    enb = ElementalNetbox()
+    pnb = pynetbox.api(
+        C.NETBOX_SERVER,
+        token=CLEUCreds.NETBOX_API_TOKEN,
+    )
+    pnb.http_session.verify = False
 
     if args.dump_hosts:
         with open(args.hosts_output, "w") as fd:
@@ -794,7 +787,7 @@ def main():
 
     # 1. Get a list of all tenants.  If we work tenant-by-tenant, we will likely remain connected
     #    to the same DNS server.
-    tenants = enb.tenancy.tenants.all()
+    tenants = pnb.tenancy.tenants.all()
     for tenant in tenants:
         if args.site and str(tenant.group.parent).lower() != lower_site:
             continue
@@ -808,7 +801,7 @@ def main():
         ecdnses = C.CDNS_SERVERS
 
         # 2. Get all IP addresses for the tenant.
-        ip_addresses = list(enb.ipam.ip_addresses.filter(tenant_id=tenant.id))
+        ip_addresses = list(pnb.ipam.ip_addresses.filter(tenant_id=tenant.id))
         if len(ip_addresses) == 0:
             continue
 
@@ -816,7 +809,7 @@ def main():
 
         # 3. Use thread pools to obtain a list of records to delete then create (updates are done as a delete+create).
         launch_parallel_task(
-            check_record, "check DNS record(s)", ip_addresses, "address", 20, False, primary_domain, edns, enb, wip_records
+            check_record, "check DNS record(s)", ip_addresses, "address", 20, False, primary_domain, edns, pnb, wip_records
         )
 
         # 4. If desired, dump all hosts to a file.
