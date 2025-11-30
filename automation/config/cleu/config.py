@@ -1,7 +1,7 @@
 class Config:
     WEBEX_TEAM = "CLEUR 26 NOC"
     CISCOLIVE_YEAR = "2026"
-    DNS_DOMAIN = "ciscolive.network"
+    DNS_DOMAIN = "cleur.network"
     SMTP_SERVER = "10.100.252.13"
     VPN_SERVER_IP = "45.157.175.59"
     VPN_USER = "vpn"
@@ -9,7 +9,7 @@ class Config:
     DNS_SERVER = "10.100.253.21"
     CDNS_SERVERS = ["10.100.253.9", "10.100.254.9"]
     DNS_SERVERS = ["10.100.253.21", "10.100.254.21"]
-    NETBOX_SERVER = "https://cl-netbox.ciscolive.network"
+    NETBOX_SERVER = f"https://cl-netbox.{DNS_DOMAIN}"
 
     IPV6_PREFIX_SIZE = 48
     VLAN_OCTET = 2
@@ -25,13 +25,13 @@ class Config:
     PRIMARY_DNS = "dc1-dns"
     SECONDARY_DNS = "dc2-dns"
 
-    ISE_SERVER = "dc1-ise.ciscolive.network"
+    ISE_SERVER = f"dc1-ise.{DNS_DOMAIN}"
 
-    DNS_BASE = "https://dc1-dns.{}:8443/web-services/rest/resource".format(DNS_DOMAIN)
-    DHCP_BASE = "https://dc1-dhcp.{}:8443/web-services/rest/resource".format(DNS_DOMAIN)
-    MONITORING = "cl-monitoring." + DNS_DOMAIN
-    DHCP_SERVER = "dc1-dhcp." + DNS_DOMAIN
-    # PI = "cl-pi." + DNS_DOMAIN
+    DNS_BASE = f"https://dc1-dns.{DNS_DOMAIN}:8443/web-services/rest/resource"
+    DHCP_BASE = f"https://dc1-dhcp.{DNS_DOMAIN}:8443/web-services/rest/resource"
+    MONITORING = f"cl-monitoring.{DNS_DOMAIN}"
+    DHCP_SERVER = f"dc1-dhcp.{DNS_DOMAIN}"
+    # PI = f"cl-pi.{DNS_DOMAIN}"
 
     def _DNACS(dom, dnacs=[f"dc{x}-cat-center" for x in range(1, 2)]):
         return [f"{d}.{dom}" for d in dnacs]
@@ -40,15 +40,15 @@ class Config:
     # def DNACS(dom):
     #    return []
     DNACS = _DNACS(DNS_DOMAIN)
-    # SDA_BASE = "https://sdacleur20." + DNS_DOMAIN
-    CMX_GW = "http://cl-freebsd.{}:8002/api/v0.1/cmx".format(DNS_DOMAIN)
-    CMX = "https://cl-cmx." + DNS_DOMAIN
-    TOOL = "tool." + DNS_DOMAIN
-    TOOL_BASE = "https://{}/Port/Switchport.aspx?".format(TOOL)
-    AD_DOMAIN = "ad." + DNS_DOMAIN
-    AD_DN_BASE = "cn=Users" + "".join([", dc={}".format(x) for x in AD_DOMAIN.split(".")])
-    VCENTER = "cl-vcenter." + DNS_DOMAIN
-    PW_RESET_URL = "https://cl-jump-01.{}:8443".format(DNS_DOMAIN)
-    CPNR_SERVERS = ["dc1-dhcp." + DNS_DOMAIN, "dc2-dhcp." + DNS_DOMAIN, "dc1-dns." + DNS_DOMAIN, "dc2-dns." + DNS_DOMAIN]
+    # SDA_BASE = f"https://sdacleur20.{DNS_DOMAIN}"
+    CMX_GW = f"http://cl-freebsd.{DNS_DOMAIN}:8002/api/v0.1/cmx"
+    CMX = f"https://cl-cmx.{DNS_DOMAIN}"
+    TOOL = f"tool.{DNS_DOMAIN}"
+    TOOL_BASE = f"https://{TOOL}/Port/Switchport.aspx?"
+    AD_DOMAIN = f"ad.{DNS_DOMAIN}"
+    AD_DN_BASE = "cn=Users" + "".join([f", dc={x}" for x in AD_DOMAIN.split(".")])
+    VCENTER = f"cl-vcenter.{DNS_DOMAIN}"
+    PW_RESET_URL = f"https://cl-jump-01.{DNS_DOMAIN}:8443"
+    CPNR_SERVERS = [f"dc1-dhcp.{DNS_DOMAIN}", f"dc2-dhcp.{DNS_DOMAIN}", f"dc1-dns.{DNS_DOMAIN}", f"dc2-dns.{DNS_DOMAIN}"]
     UMBRELLA_ORGID = "1912631"
-    LLAMA_URL = "https://cl-llama.ciscolive.network"
+    LLAMA_URL = f"https://cl-llama.{DNS_DOMAIN}"
