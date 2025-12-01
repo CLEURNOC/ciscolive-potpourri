@@ -24,37 +24,31 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-from elemental_utils import ElementalDns, ElementalNetbox
-from elemental_utils.cpnr.query import RequestError
-
-# from elemental_utils.cpnr.query import RequestError
-from elemental_utils import cpnr
-from utils import (
-    launch_parallel_task,
-    restart_dns_servers,
-    get_reverse_zone,
-    parse_txt_record,
-)
-
-from pynetbox.core.response import Record
-
-# from pynetbox.models.virtualization import VirtualMachines
-from colorama import Fore, Style
-
-from dataclasses import dataclass, field
-from threading import Lock
-import os
-import re
-from typing import List
-import CLEUCreds  # type: ignore
-from cleu.config import Config as C  # type: ignore
+import argparse
+import ipaddress
+import logging
 
 # import ipaddress
 import logging.config
-import logging
-import argparse
+import os
+import re
 import sys
-import ipaddress
+from dataclasses import dataclass, field
+from threading import Lock
+from typing import List
+
+import CLEUCreds  # type: ignore
+import pynetbox
+from cleu.config import Config as C  # type: ignore
+# from pynetbox.models.virtualization import VirtualMachines
+from colorama import Fore, Style
+
+# from elemental_utils.cpnr.query import RequestError
+from elemental_utils import ElementalDns  # type: ignore
+from elemental_utils import cpnr  # type: ignore
+from elemental_utils.cpnr.query import RequestError  # type: ignore
+from pynetbox.core.response import Record
+from utils import get_reverse_zone, launch_parallel_task, parse_txt_record, restart_dns_servers  # type: ignore
 
 # import json
 # import hvac
@@ -101,7 +95,7 @@ def check_record(
     primary_domain: str,
     rrs: list,
     edns: ElementalDns,
-    enb: ElementalNetbox,
+    pnb: pynetbox.api,
     wip_records: DnsRecords,
 ) -> None:
     """Check if a host record is still valid.
@@ -112,7 +106,7 @@ def check_record(
         :rrs list: List of all RRSets
         :edns ElementalDns: ElementalDns object
         :dac DAC: DNS As Code Object
-        :enb ElementalNetbox: ElementalNetbox object
+        :pnb pynetbox.api: pynetbox.api object
         :wip_records DnsRecords: DnsRecords object to hold the records to delete
 
     """
@@ -156,7 +150,7 @@ def check_record(
             wip_records.deletes.extend(get_ptr_rrs(host.ip6AddressList["stringItem"], edns))
     elif found_txt.startswith('"v=_netbox'):
         txt_obj = parse_txt_record(found_txt)
-        ip_obj = enb.ipam.ip_addresses.get(int(txt_obj["ip_id"]))
+        ip_obj = pnb.ipam.ip_addresses.get(int(txt_obj["ip_id"]))
         if not ip_obj:
             # The IP object is gone, so remove this record.
             wip_records.deletes.append(host_rr)
@@ -169,9 +163,9 @@ def check_record(
             # renamed.
             nb_obj = None
             if txt_obj["type"] == "device":
-                nb_obj = enb.dcim.devices.get(int(txt_obj["id"]))
+                nb_obj = pnb.dcim.devices.get(int(txt_obj["id"]))
             else:
-                nb_obj = enb.virtualization.virtual_machines.get(int(txt_obj["id"]))
+                nb_obj = pnb.virtualization.virtual_machines.get(int(txt_obj["id"]))
 
             if not nb_obj or (nb_obj.name.lower() != host_rr.name.lower() and host_rr.name.lower() != ip_obj.dns_name.lower()):
                 wip_records.deletes.append(host_rr)
@@ -193,10 +187,7 @@ def check_cname(
     Args:
         :host Record: Host DNS record
         :primary_domain str: Primary domain name for the hosts
-        :rrs list: List of all RRSets
         :edns ElementalDns: ElementalDns object
-        :dac DAC: DNS As Code object
-        :enb ElementalNetbox: ElementalNetbox object
         :wip_records DnsRecords: DnsRecords object to hold the records to delete
     """
 
@@ -310,8 +301,6 @@ def parse_args() -> object:
 
 
 def main():
-    os.environ["NETBOX_ADDRESS"] = C.NETBOX_SERVER
-    os.environ["NETBOX_API_TOKEN"] = CLEUCreds.NETBOX_API_TOKEN
     os.environ["CPNR_USERNAME"] = CLEUCreds.CPNR_USERNAME
     os.environ["CPNR_PASSWORD"] = CLEUCreds.CPNR_PASSWORD
 
@@ -322,11 +311,11 @@ def main():
     if args.tenant:
         lower_tenant = args.tenant.lower()
 
-    enb = ElementalNetbox()
+    pnb = pynetbox.api(C.NETBOX_SERVER, token=CLEUCreds.NETBOX_API_TOKEN)
 
     # 1. Get a list of all tenants.  If we work tenant-by-tenant, we will likely remain connected
     #    to the same DNS server.
-    tenants = enb.tenancy.tenants.all()
+    tenants = pnb.tenancy.tenants.all()
     for tenant in tenants:
         if args.site and str(tenant.group.parent).lower() != lower_site:
             continue
@@ -349,7 +338,7 @@ def main():
         wip_records = DnsRecords()
 
         # 3. Use thread pools to obtain a list of records to delete.
-        launch_parallel_task(check_record, "check DNS record(s)", hosts, "name", 20, False, primary_domain, rrs, edns, enb, wip_records)
+        launch_parallel_task(check_record, "check DNS record(s)", hosts, "name", 20, False, primary_domain, rrs, edns, pnb, wip_records)
 
         # 4. Iterate through the RRs looking for stale CNAMEs
         launch_parallel_task(check_cname, "check for stale CNAMEs", rrs, "name", 20, False, primary_domain, edns, wip_records)
