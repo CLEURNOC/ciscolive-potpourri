@@ -355,7 +355,7 @@ def main() -> int:
     # Connect to NetBox
     nb = pynetbox.api(C.NETBOX_SERVER, CLEUCreds.NETBOX_API_TOKEN)
     # XXX Disable when back in prod
-    nb.http_session.verify = False
+    # nb.http_session.verify = False
 
     gs_service = build("sheets", "v4", credentials=creds)
 

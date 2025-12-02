@@ -312,7 +312,7 @@ def main():
         lower_tenant = args.tenant.lower()
 
     pnb = pynetbox.api(C.NETBOX_SERVER, token=CLEUCreds.NETBOX_API_TOKEN)
-    pnb.http_session.verify = False
+    # pnb.http_session.verify = False
 
     # 1. Get a list of all tenants.  If we work tenant-by-tenant, we will likely remain connected
     #    to the same DNS server.

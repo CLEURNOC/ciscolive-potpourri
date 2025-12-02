@@ -779,7 +779,7 @@ def main():
         C.NETBOX_SERVER,
         token=CLEUCreds.NETBOX_API_TOKEN,
     )
-    pnb.http_session.verify = False
+    # pnb.http_session.verify = False
 
     if args.dump_hosts:
         with open(args.hosts_output, "w") as fd:
