@@ -85,7 +85,7 @@ class NetBoxTypeEnum(StrEnum):
 
 
 MACAddress = Annotated[
-    str | None,
+    str,
     Field(
         pattern=re.compile(r"^[a-fA-F\d]{2}(:[a-fA-F\d]{2}){5}$"),
         description="MAC address in Linux format.",
