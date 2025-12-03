@@ -25,23 +25,28 @@
 # SUCH DAMAGE.
 
 
-from __future__ import print_function
-from elemental_utils import ElementalNetbox  # type: ignore
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import sys
+import traceback
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any
+
+import CLEUCreds  # type: ignore
 import requests
+from cleu.config import Config as C  # type: ignore
+import pynetbox
 from requests.packages.urllib3.exceptions import InsecureRequestWarning  # type: ignore
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)  # type: ignore
-import json
-import sys
-import re
-import os
-import argparse
-import traceback
-import CLEUCreds  # type: ignore
-from cleu.config import Config as C  # type: ignore
 
-CACHE_FILE = "netbox_tool_cache.json"
-SKU_MAP = {
+CACHE_FILE = Path("netbox_tool_cache.json")
+
+SKU_MAP: dict[str, str] = {
     "WS-C3560CX-12PD-S": "WS-C3560CX-12PD-S",
     "C9200CX-12P-2X2G": "C9200CX-12P-2X2G",
     "C9200CX-8UXG-2X": "C9200CX-8UXG-2X",
@@ -60,232 +65,342 @@ SKU_MAP = {
     "C9500-48Y4C": "C9500-48Y4C",
     "CMICR-4PT": "CMICR-4PT",
 }
-TYPE_OBJ_MAP = {}
 
-INTF_MAP = {"IDF": "loopback0", "Access": "Vlan127"}
-INTF_CIDR_MAP = {"IDF": 32, "Access": 24}
-
-SITE_MAP = {"IDF": "IDF Closet", "Access": "Conference Space"}
-SITE_OBJ_MAP = {}
-
-ROLE_MAP = {"IDF": "L3 Access Switch", "Access": "L2 Access Switch"}
-ROLE_OBJ_MAP = {}
-
-VRF_NAME = "default"
-VRF_OBJ = None
-TENANT_NAME = "DC Infrastructure"
-TENANT_OBJ = None
+INTF_MAP: dict[str, str] = {"IDF": "loopback0", "Access": "Vlan127"}
+INTF_CIDR_MAP: dict[str, int] = {"IDF": 32, "Access": 24}
+SITE_MAP: dict[str, str] = {"IDF": "IDF Closet", "Access": "Conference Space"}
+ROLE_MAP: dict[str, str] = {"IDF": "L3 Access Switch", "Access": "L2 Access Switch"}
 
 MGMT_PREFIX = "10.127.0."
-
-TTL = 300
-
-
-def get_devs():
-    url = f"http://{C.TOOL}/get/switches/json"
-
-    devices = []
-    response = requests.request("GET", url)
-    code = response.status_code
-    if code == 200:
-        j = response.json()
-
-        for dev in j:
-            dev_dic = {}
-            if dev["IPAddress"] == "0.0.0.0":
-                continue
-
-            # Do not add MDF switches (or APs)
-            if not re.search(r"^[0-9A-Za-z]{3}-", dev["Hostname"]):
-                continue
-
-            if dev["SKU"] not in SKU_MAP:
-                continue
-
-            dev_dic["type"] = SKU_MAP[dev["SKU"]]
-            m = re.search(r"^[0-9A-Za-z]{3}-[Xx](\d{3})", dev["Hostname"])
-            if m:
-                dev_dic["role"] = ROLE_MAP["IDF"]
-                dev_dic["intf"] = INTF_MAP["IDF"]
-                dev_dic["cidr"] = INTF_CIDR_MAP["IDF"]
-                dev_dic["site"] = SITE_MAP["IDF"]
-                dev_dic["ip"] = f"{MGMT_PREFIX}{m.group(1).lstrip('0')}"
-                dev_dic["v6"] = True
-            else:
-                dev_dic["role"] = ROLE_MAP["Access"]
-                dev_dic["intf"] = INTF_MAP["Access"]
-                dev_dic["cidr"] = INTF_CIDR_MAP["Access"]
-                dev_dic["site"] = SITE_MAP["Access"]
-                dev_dic["ip"] = dev["IPAddress"]
-                dev_dic["v6"] = False
-
-            dev_dic["name"] = dev["Hostname"]
-            dev_dic["aliases"] = [f"{dev['Name']}", f"{dev['AssetTag']}"]
-
-            devices.append(dev_dic)
-
-    return devices
+VRF_NAME = "default"
+TENANT_NAME = "DC Infrastructure"
+DNS_TTL = 300
 
 
-def delete_netbox_device(enb: ElementalNetbox, dname: str) -> None:
-    try:
-        dev_obj = enb.dcim.devices.get(name=dname)
-        if dev_obj:
-            if dev_obj.primary_ip4:
-                dev_obj.primary_ip4.delete()
+@dataclass
+class DeviceInfo:
+    """Device information from Tool."""
 
+    name: str
+    type: str
+    role: str
+    site: str
+    intf: str
+    ip: str
+    cidr: int
+    v6: bool
+    aliases: list[str] = field(default_factory=list)
+
+
+@dataclass
+class NetBoxObjects:
+    """Cached NetBox API objects."""
+
+    role_objs: dict[str, Any] = field(default_factory=dict)
+    site_objs: dict[str, Any] = field(default_factory=dict)
+    type_objs: dict[str, Any] = field(default_factory=dict)
+    vrf_obj: Any = None
+    tenant_obj: Any = None
+
+
+@dataclass
+class NetBoxSynchronizer:
+    """Manages synchronization between Tool and NetBox."""
+
+    netbox: pynetbox.api
+    dns_domain: str
+    objects: NetBoxObjects = field(default_factory=NetBoxObjects)
+
+    def populate_netbox_objects(self) -> None:
+        """Populate cached NetBox objects."""
+        for val in ROLE_MAP.values():
+            self.objects.role_objs[val] = self.netbox.dcim.device_roles.get(name=val)
+
+        for val in SITE_MAP.values():
+            self.objects.site_objs[val] = self.netbox.dcim.sites.get(name=val)
+
+        for val in SKU_MAP.values():
+            self.objects.type_objs[val] = self.netbox.dcim.device_types.get(part_number=val)
+
+        self.objects.tenant_obj = self.netbox.tenancy.tenants.get(name=TENANT_NAME)
+        self.objects.vrf_obj = self.netbox.ipam.vrfs.get(name=VRF_NAME)
+
+    def _parse_device(self, tool_device: dict[str, Any]) -> DeviceInfo | None:
+        """Parse a Tool device into DeviceInfo."""
+        # Skip invalid IPs
+        if tool_device.get("IPAddress") == "0.0.0.0":
+            return None
+
+        hostname = tool_device.get("Hostname", "")
+
+        # Skip non-standard naming
+        if not re.search(r"^[0-9A-Za-z]{3}-", hostname):
+            return None
+
+        sku = tool_device.get("SKU")
+        if sku not in SKU_MAP:
+            return None
+
+        device_type = SKU_MAP[sku]
+
+        # Check if IDF switch
+        if match := re.search(r"^[0-9A-Za-z]{3}-[Xx](\d{3})", hostname):
+            # IDF switch
+            idf_num = match.group(1).lstrip("0")
+            return DeviceInfo(
+                name=hostname,
+                type=device_type,
+                role=ROLE_MAP["IDF"],
+                site=SITE_MAP["IDF"],
+                intf=INTF_MAP["IDF"],
+                ip=f"{MGMT_PREFIX}{idf_num}",
+                cidr=INTF_CIDR_MAP["IDF"],
+                v6=True,
+                aliases=[tool_device.get("Name", ""), tool_device.get("AssetTag", "")],
+            )
+        else:
+            # Access switch
+            return DeviceInfo(
+                name=hostname,
+                type=device_type,
+                role=ROLE_MAP["Access"],
+                site=SITE_MAP["Access"],
+                intf=INTF_MAP["Access"],
+                ip=tool_device.get("IPAddress", ""),
+                cidr=INTF_CIDR_MAP["Access"],
+                v6=False,
+                aliases=[tool_device.get("Name", ""), tool_device.get("AssetTag", "")],
+            )
+
+    def get_devices_from_tool(self, tool_url: str) -> list[DeviceInfo]:
+        """Fetch and parse devices from Tool."""
+        url = f"http://{tool_url}/get/switches/json"
+
+        try:
+            response = requests.get(url, timeout=30)
+            response.raise_for_status()
+            tool_devices = response.json()
+        except requests.exceptions.RequestException as e:
+            print(f"ERROR: Failed to fetch devices from Tool: {e}", file=sys.stderr)
+            return []
+
+        devices = []
+        for tool_device in tool_devices:
+            if device := self._parse_device(tool_device):
+                devices.append(device)
+
+        return devices
+
+    def delete_device(self, device_name: str) -> None:
+        """Delete a device from NetBox."""
+        try:
+            dev_obj = self.netbox.dcim.devices.get(name=device_name)
+            if dev_obj:
+                if dev_obj.primary_ip4:
+                    dev_obj.primary_ip4.delete()
+                dev_obj.delete()
+        except Exception as e:
+            print(f"WARNING: Failed to delete NetBox device {device_name}: {e}", file=sys.stderr)
+            traceback.print_exc(file=sys.stderr)
+
+    def add_device(self, device: DeviceInfo) -> bool:
+        """Add a device to NetBox."""
+        role_obj = self.objects.role_objs.get(device.role)
+        type_obj = self.objects.type_objs.get(device.type)
+        site_obj = self.objects.site_objs.get(device.site)
+        tenant_obj = self.objects.tenant_obj
+        vrf_obj = self.objects.vrf_obj
+
+        # Validate required objects
+        if not role_obj:
+            print(f"ERROR: Invalid role for {device.name}: {device.role}", file=sys.stderr)
+            return False
+
+        if not type_obj:
+            print(f"ERROR: Invalid type for {device.name}: {device.type}", file=sys.stderr)
+            return False
+
+        if not site_obj:
+            print(f"ERROR: Invalid site for {device.name}: {device.site}", file=sys.stderr)
+            return False
+
+        # Create device
+        try:
+            dev_obj = self.netbox.dcim.devices.create(
+                name=device.name, role=role_obj.id, device_type=type_obj.id, site=site_obj.id, tenant=tenant_obj.id
+            )
+        except Exception as e:
+            print(f"ERROR: Failed to create NetBox entry for {device.name}: {e}", file=sys.stderr)
+            return False
+
+        if not dev_obj:
+            print(f"ERROR: Failed to create NetBox entry for {device.name}", file=sys.stderr)
+            return False
+
+        # Create IP address
+        try:
+            ip_obj = self.netbox.ipam.ip_addresses.create(address=f"{device.ip}/{device.cidr}", tenant=tenant_obj.id, vrf=vrf_obj.id)
+        except Exception as e:
             dev_obj.delete()
+            print(f"ERROR: Failed to create IP entry for {device.ip}: {e}", file=sys.stderr)
+            return False
+
+        if not ip_obj:
+            dev_obj.delete()
+            print(f"ERROR: Failed to create IP entry for {device.ip}", file=sys.stderr)
+            return False
+
+        # Find interface and assign IP
+        dev_intf = self.netbox.dcim.interfaces.get(device=dev_obj.name, name=device.intf)
+        if not dev_intf:
+            dev_obj.delete()
+            ip_obj.delete()
+            print(f"ERROR: Failed to find interface {device.intf} for {device.name}", file=sys.stderr)
+            return False
+
+        # Update IP with interface and custom fields
+        ip_obj.assigned_object_id = dev_intf.id
+        ip_obj.assigned_object_type = "dcim.interface"
+        device.aliases.sort()
+        ip_obj.custom_fields["CNAMEs"] = ",".join(device.aliases)
+        ip_obj.custom_fields["dns_ttl"] = DNS_TTL
+        ip_obj.custom_fields["v6_based_on_v4"] = device.v6
+        ip_obj.save()
+
+        # Set primary IP
+        dev_obj.primary_ip4 = ip_obj.id
+        dev_obj.save()
+
+        return True
+
+    def device_needs_update(self, device: DeviceInfo) -> bool:
+        """Check if a device needs to be updated in NetBox."""
+        dev_obj = self.netbox.dcim.devices.get(name=device.name)
+        if not dev_obj:
+            return True
+
+        ip_obj = dev_obj.primary_ip4
+        if not ip_obj:
+            return True
+
+        # Check if IP matches
+        if ip_obj.address != f"{device.ip}/{device.cidr}":
+            return True
+
+        # Check if CNAMEs match
+        cnames = ip_obj.custom_fields.get("CNAMEs", "")
+        device.aliases.sort()
+        expected_cnames = ",".join(device.aliases)
+
+        return cnames != expected_cnames
+
+
+def load_cache(cache_file: Path) -> list[str]:
+    """Load cached device names."""
+    if not cache_file.exists():
+        return []
+
+    try:
+        return json.loads(cache_file.read_text())
     except Exception as e:
-        sys.stderr.write("WARNING: Failed to delete NetBox device for %s: %s\n" % (dname, str(e)))
-        traceback.print_exc(file=sys.stderr)
+        print(f"WARNING: Failed to load cache: {e}", file=sys.stderr)
+        return []
 
 
-def populate_objects(enb: ElementalNetbox) -> None:
-    global ROLE_OBJ_MAP, SITE_OBJ_MAP, TYPE_OBJ_MAP, TENANT_OBJ, VRF_OBJ
-
-    for _, val in ROLE_MAP.items():
-        ROLE_OBJ_MAP[val] = enb.dcim.device_roles.get(name=val)
-
-    for _, val in SITE_MAP.items():
-        SITE_OBJ_MAP[val] = enb.dcim.sites.get(name=val)
-
-    for _, val in SKU_MAP.items():
-        TYPE_OBJ_MAP[val] = enb.dcim.device_types.get(part_number=val)
-
-    TENANT_OBJ = enb.tenancy.tenants.get(name=TENANT_NAME)
-    VRF_OBJ = enb.ipam.vrfs.get(name=VRF_NAME)
+def save_cache(cache_file: Path, device_names: list[str]) -> None:
+    """Save device names to cache atomically."""
+    temp_file = cache_file.with_suffix(f"{cache_file.suffix}.tmp")
+    try:
+        temp_file.write_text(json.dumps(device_names, indent=2))
+        temp_file.replace(cache_file)
+    except Exception as e:
+        print(f"ERROR: Failed to save cache: {e}", file=sys.stderr)
+        if temp_file.exists():
+            temp_file.unlink()
 
 
-def add_netbox_device(enb: ElementalNetbox, dev: dict) -> None:
-    role_obj = ROLE_OBJ_MAP[dev["role"]]
-    type_obj = TYPE_OBJ_MAP[dev["type"]]
-    tenant_obj = TENANT_OBJ
-    site_obj = SITE_OBJ_MAP[dev["site"]]
-    vrf_obj = VRF_OBJ
+def main() -> int:
+    """Synchronize devices from Tool to NetBox."""
+    parser = argparse.ArgumentParser(prog=sys.argv[0], description="Synchronize devices from Tool to NetBox")
+    parser.add_argument("--purge", action="store_true", help="Force re-creation of all devices")
+    parser.add_argument("--log", "-l", action="store_true", help="Enable verbose logging")
+    args = parser.parse_args()
 
-    if not role_obj:
-        sys.stderr.write(f"ERROR: Invalid role for {dev['name']}: {dev['role']}\n")
-        return
+    # Initialize NetBox connection
+    import os
 
-    if not type_obj:
-        sys.stderr.write(f"ERROR: Invalid type for {dev['name']}: {dev['type']}\n")
-        return
-
-    if not site_obj:
-        sys.stderr.write(f"ERROR: Invalid site for {dev['name']}: {dev['site']}\n")
-        return
-
-    dev_obj = enb.dcim.devices.create(name=dev["name"], role=role_obj.id, device_type=type_obj.id, site=site_obj.id, tenant=tenant_obj.id)
-
-    if not dev_obj:
-        sys.stderr.write(f"ERROR: Failed to create NetBox entry for {dev['name']}\n")
-        return
-
-    ip_obj = enb.ipam.ip_addresses.create(address=f"{dev['ip']}/{dev['cidr']}", tenant=tenant_obj.id, vrf=vrf_obj.id)
-
-    if not ip_obj:
-        dev_obj.delete()
-        sys.stderr.write(f"ERROR: Failed to create IP entry for {dev['ip']}\n")
-        return
-
-    dev_intf = enb.dcim.interfaces.get(device=dev_obj.name, name=dev["intf"])
-    if not dev_intf:
-        dev_obj.delete()
-        ip_obj.delete()
-        sys.stderr.write(f"ERROR: Failed to find interface {dev['intf']} for {dev['name']}\n")
-        return
-
-    ip_obj.assigned_object_id = dev_intf.id
-    ip_obj.assigned_object_type = "dcim.interface"
-    dev["aliases"].sort()
-    ip_obj.custom_fields["CNAMEs"] = ",".join(dev["aliases"])
-    ip_obj.custom_fields["dns_ttl"] = TTL
-    ip_obj.custom_fields["v6_based_on_v4"] = dev["v6"]
-    ip_obj.save()
-
-    dev_obj.primary_ip4 = ip_obj.id
-    dev_obj.save()
-
-
-if __name__ == "__main__":
     os.environ["NETBOX_ADDRESS"] = C.NETBOX_SERVER
     os.environ["NETBOX_API_TOKEN"] = CLEUCreds.NETBOX_API_TOKEN
 
-    parser = argparse.ArgumentParser(description="Usage:")
+    netbox = pynetbox.api(C.NETBOX_SERVER, token=CLEUCreds.NETBOX_API_TOKEN)
+    synchronizer = NetBoxSynchronizer(netbox=netbox, dns_domain=C.DNS_DOMAIN)
+    synchronizer.populate_netbox_objects()
 
-    # script arguments
-    parser.add_argument("--purge", help="Purge previous records", action="store_true")
-    parser.add_argument("--log", "-l", help="Print info output", default=False, action="store_true")
-    args = parser.parse_args()
+    # Load previous records
+    prev_records = load_cache(CACHE_FILE)
 
-    enb = ElementalNetbox()
-    populate_objects(enb)
+    # Get current devices from Tool
+    devices = synchronizer.get_devices_from_tool(C.TOOL)
+    if not devices:
+        print("WARNING: No devices retrieved from Tool", file=sys.stderr)
+        return 1
 
-    prev_records = []
+    # Remove devices that no longer exist in Tool
+    current_names = {dev.name.replace(f".{C.DNS_DOMAIN}", "") for dev in devices}
+    for prev_name in prev_records:
+        if prev_name not in current_names:
+            if args.log:
+                print(f"INFO: Removing obsolete device {prev_name}")
+            synchronizer.delete_device(prev_name)
 
-    if os.path.exists(CACHE_FILE):
-        with open(CACHE_FILE) as fd:
-            prev_records = json.load(fd)
-
-    devs = get_devs()
-    for record in prev_records:
-        found_record = False
-        for dev in devs:
-            hname = dev["name"].replace(f".{C.DNS_DOMAIN}", "")
-            if record == hname:
-                found_record = True
-                break
-        if found_record:
-            continue
-
-        delete_netbox_device(enb, record)
-
+    # Process each device
     records = []
-    for dev in devs:
-        hname = dev["name"].replace(f".{C.DNS_DOMAIN}", "")
+    for device in devices:
+        hostname = device.name.replace(f".{C.DNS_DOMAIN}", "")
+        records.append(hostname)
 
-        records.append(hname)
+        # Handle purge flag
         if args.purge:
-            delete_netbox_device(enb, hname)
+            if args.log:
+                print(f"INFO: Purging device {hostname}")
+            synchronizer.delete_device(hostname)
 
-        dev_obj = enb.dcim.devices.get(name=hname)
+        # Check if device exists
+        dev_obj = netbox.dcim.devices.get(name=hostname)
+
         if not dev_obj:
-            ip_obj = enb.ipam.ip_addresses.get(address=f"{dev['ip']}/{dev['cidr']}")
-            cur_entry = None
+            # Check for IP conflict
+            ip_obj = netbox.ipam.ip_addresses.get(address=f"{device.ip}/{device.cidr}")
             if ip_obj and ip_obj.assigned_object:
-                cur_entry = ip_obj.assigned_object.device
-
-            if cur_entry:
+                old_device = ip_obj.assigned_object.device
                 if args.log:
-                    print(f"INFO: Found old entry for IP {dev['ip']} => {cur_entry.name}")
+                    print(f"INFO: Found IP conflict {device.ip} => {old_device.name}")
+                synchronizer.delete_device(old_device.name)
 
-                delete_netbox_device(enb, cur_entry.name)
+            # Add new device
+            if args.log:
+                print(f"INFO: Adding device {hostname}")
+            synchronizer.add_device(device)
 
-            add_netbox_device(enb, dev)
+        elif synchronizer.device_needs_update(device):
+            # Update existing device
+            if args.log:
+                print(f"INFO: Updating device {hostname}")
+            synchronizer.delete_device(hostname)
+            synchronizer.add_device(device)
         else:
-            cur_entry = dev_obj
-            create_new = True
-            ip_obj = dev_obj.primary_ip4
-            if ip_obj and ip_obj.address == f"{dev['ip']}/{dev['cidr']}":
-                cnames = ip_obj.custom_fields["CNAMEs"]
-                if not cnames:
-                    cnames = ""
+            # Device is up to date
+            if args.log:
+                print(f"INFO: Device {hostname} is up to date")
 
-                dev["aliases"].sort()
-                cname_str = ",".join(dev["aliases"])
+    # Save cache
+    save_cache(CACHE_FILE, records)
 
-                if cname_str == cnames:
-                    create_new = False
+    if args.log:
+        print(f"\nSynchronization complete. {len(records)} devices processed.")
 
-            if create_new:
-                if args.log:
-                    print(f"INFO: Deleting entry for {hname}")
+    return 0
 
-                delete_netbox_device(enb, hname)
-                add_netbox_device(enb, dev)
-            else:
-                # print("Not creating a new entry for {} as it already exists".format(dev["name"]))
-                pass
 
-    with open(CACHE_FILE, "w") as fd:
-        json.dump(records, fd, indent=2)
+if __name__ == "__main__":
+    sys.exit(main())
