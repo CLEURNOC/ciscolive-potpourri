@@ -652,7 +652,7 @@ async def get_object_info_from_netbox(inp: NetBoxInput | dict) -> List[NetBoxRes
         "title": "Get Webex Device Info",
         "readOnlyHint": True,
     },
-    enabled=is_testing,
+    enabled=not is_testing,
 )
 async def get_webex_device_info(inp: WebexInfoInput | dict) -> WebexInfoResponse:
     """
@@ -733,7 +733,7 @@ async def get_webex_device_info(inp: WebexInfoInput | dict) -> WebexInfoResponse
         "title": "Get Webex Device Info",
         "readOnlyHint": True,
     },
-    enabled=not is_testing,
+    enabled=is_testing,
 )
 async def test_get_webex_device_info(inp: WebexInfoInput | dict) -> WebexInfoResponse:
     """
@@ -831,7 +831,7 @@ async def generate_password(
         "title": "Get Client Details from ISE",
         "readOnlyHint": True,
     },
-    enabled=is_testing,
+    enabled=not is_testing,
 )
 async def get_user_details_from_ise(ise_input: ISEInput | dict) -> ISEResponse:
     """
@@ -944,7 +944,7 @@ async def get_user_details_from_ise(ise_input: ISEInput | dict) -> ISEResponse:
         "title": "Get Client Details from ISE",
         "readOnlyHint": True,
     },
-    enabled=not is_testing,
+    enabled=is_testing,
 )
 async def test_get_user_details_from_ise(ise_input: ISEInput | dict) -> ISEResponse:
     """
@@ -989,7 +989,7 @@ async def test_get_user_details_from_ise(ise_input: ISEInput | dict) -> ISERespo
         "title": "Get Client Details from Catalyst Center",
         "readOnlyHint": True,
     },
-    enabled=is_testing,
+    enabled=not is_testing,
 )
 async def get_client_details_from_cat_center(
     input_data: DNACInput | dict,
@@ -1113,7 +1113,7 @@ async def get_client_details_from_cat_center(
         "title": "Get Client Details from Catalyst Center",
         "readOnlyHint": True,
     },
-    enabled=not is_testing,
+    enabled=is_testing,
 )
 async def test_get_client_details_from_cat_center(
     input_data: DNACInput | dict,
@@ -1159,7 +1159,7 @@ async def test_get_client_details_from_cat_center(
         "title": "Get DHCP Lease Info from CPNR",
         "readOnlyHint": True,
     },
-    enabled=is_testing,
+    enabled=not is_testing,
 )
 async def get_dhcp_lease_info_from_cpnr(input: CPNRLeaseInput | dict) -> List[CPNRLeaseResponse]:
     """
@@ -1184,7 +1184,7 @@ async def get_dhcp_lease_info_from_cpnr(input: CPNRLeaseInput | dict) -> List[CP
         "title": "Get DHCP Lease Info from CPNR",
         "readOnlyHint": True,
     },
-    enabled=not is_testing,
+    enabled=is_testing,
 )
 async def test_get_dhcp_lease_info_from_cpnr(input: CPNRLeaseInput | dict) -> List[CPNRLeaseResponse]:
     """
@@ -1227,7 +1227,7 @@ async def test_get_dhcp_lease_info_from_cpnr(input: CPNRLeaseInput | dict) -> Li
         "readOnlyHint": False,
         "destructiveHint": True,
     },
-    enabled=is_testing,
+    enabled=not is_testing,
     meta={"auth_list": ALLOWED_TO_DELETE},
 )
 async def delete_dhcp_reservation_from_cpnr(ip: IPAddress) -> bool:
@@ -1263,7 +1263,7 @@ async def delete_dhcp_reservation_from_cpnr(ip: IPAddress) -> bool:
         "readOnlyHint": False,
         "destructiveHint": True,
     },
-    enabled=not is_testing,
+    enabled=is_testing,
     meta={"auth_list": ALLOWED_TO_DELETE},
 )
 async def test_delete_dhcp_reservation_from_cpnr(ip: IPAddress) -> bool:
@@ -1285,7 +1285,7 @@ async def test_delete_dhcp_reservation_from_cpnr(ip: IPAddress) -> bool:
         "title": "Create DHCP Reservation in CPNR",
         "readOnlyHint": False,
     },
-    enabled=is_testing,
+    enabled=not is_testing,
 )
 async def create_dhcp_reservation_in_cpnr(ip: IPAddress) -> bool:
     """
@@ -1343,7 +1343,7 @@ async def create_dhcp_reservation_in_cpnr(ip: IPAddress) -> bool:
         "title": "Create DHCP Reservation in CPNR",
         "readOnlyHint": False,
     },
-    enabled=not is_testing,
+    enabled=is_testing,
 )
 async def test_create_dhcp_reservation_in_cpnr(ip: IPAddress) -> bool:
     """
