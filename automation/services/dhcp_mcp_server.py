@@ -174,10 +174,10 @@ class WebexInfoResponse(BaseModel, extra="forbid"):
 class ISEResponse(BaseModel, extra="forbid"):
     username: str = Field(..., description="The username of the client.")
     client_mac: MACAddress = Field(..., description="The MAC address of the client.")
-    network_access_server: IPAddress = Field(..., description="The IP address of the network access server (NAS).")
+    network_access_server: IPAddress | None = Field(None, description="The IP address of the network access server (NAS).")
     client_ipv4: IPAddress | None = Field(None, description="The IPv4 address of the client, if available.")
     client_ipv6: list[IPAddress] | None = Field(None, description="List of IPv6 addresses of the client, if available.")
-    authentication_timestamp: str = Field(..., description="The timestamp of the client's authentication.")
+    authentication_timestamp: str | None = Field(None, description="The timestamp of the client's authentication.")
     associated_access_point: MACAddress | None = Field(None, description="The MAC address of the associated access point, if available.")
     connected_vlan: str | None = Field(None, description="The VLAN ID the client is connected to, if available.")
     associated_ssid: str | None = Field(None, description="The SSID the client is associated with, if available.")
