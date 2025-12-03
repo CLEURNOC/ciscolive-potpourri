@@ -24,154 +24,252 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-from __future__ import print_function
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import sys
+import time
+import traceback
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
 import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning  # type: ignore
 
-requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-import json
-import sys
-import time
-import re
-import traceback
-import argparse
 import CLEUCreds  # type: ignore
 from cleu.config import Config as C  # type: ignore
 
-CACHE_FILE = "/home/jclarke/monitored_devs.json"
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
-LIBRE_HEADERS = {"X-Auth-Token": CLEUCreds.LIBRENMS_TOKEN}
+CACHE_FILE = Path("/home/jclarke/monitored_devs.json")
 
 
-def get_devs():
-    url = "http://{}/get/switches/json".format(C.TOOL)
+@dataclass
+class LibreNMSManager:
+    """Manages LibreNMS device synchronization."""
 
-    devs = []
-    response = requests.get(url)
-    code = 200
-    code = response.status_code
-    if code == 200:
-        j = response.json()
+    api_token: str
+    dns_domain: str
+    snmp_auth_pass: str
+    snmp_priv_pass: str
 
-        for dev in j:
-            if dev["IPAddress"] == "0.0.0.0" or not dev["Reachable"]:
+    @property
+    def _headers(self) -> dict[str, str]:
+        """Get API headers."""
+        return {"X-Auth-Token": self.api_token}
+
+    def _should_monitor_device(self, device: dict[str, Any]) -> bool:
+        """Check if a device should be monitored in LibreNMS."""
+        # Skip unreachable or invalid IP devices
+        if device.get("IPAddress") == "0.0.0.0" or not device.get("Reachable"):
+            return False
+
+        hostname = device.get("Hostname", "")
+
+        # Must match standard naming convention
+        if not re.match(r"^[0-9A-Za-z]{3}-", hostname):
+            return False
+
+        # Exclude certain device types
+        excluded_patterns = [
+            r".*CORE.*",
+            r"^WLC",
+            r".*MER[124]-dist.*",
+            r".*EDGE.*",
+        ]
+
+        return not any(re.search(pattern, hostname, re.I) for pattern in excluded_patterns)
+
+    def get_devices_from_tool(self, tool_url: str) -> list[dict[str, Any]]:
+        """Fetch device list from the Tool."""
+        url = f"http://{tool_url}/get/switches/json"
+
+        try:
+            response = requests.get(url, timeout=30)
+            response.raise_for_status()
+            devices = response.json()
+            return [dev for dev in devices if self._should_monitor_device(dev)]
+        except requests.exceptions.RequestException as e:
+            print(f"ERROR: Failed to fetch devices from Tool: {e}", file=sys.stderr)
+            return []
+
+    def delete_device(self, device_name: str) -> requests.Response:
+        """Delete a device from LibreNMS."""
+        url = f"https://librenms.{self.dns_domain}/api/v0/devices/{device_name}"
+        return requests.delete(url, headers=self._headers, timeout=30)
+
+    def device_exists(self, hostname: str) -> bool:
+        """Check if a device exists in LibreNMS."""
+        url = f"https://librenms.{self.dns_domain}/api/v0/inventory/{hostname}"
+        try:
+            response = requests.get(url, headers=self._headers, timeout=30)
+            response.raise_for_status()
+            return True
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 400:
+                return False
+            print(f"Error checking device status for {hostname}: {e.response.text}", file=sys.stderr)
+            return False
+        except Exception as e:
+            print(f"Error checking device status for {hostname}: {e}", file=sys.stderr)
+            traceback.print_exc()
+            return False
+
+    def add_device(self, hostname: str) -> bool:
+        """Add a device to LibreNMS."""
+        url = f"https://librenms.{self.dns_domain}/api/v0/devices"
+        payload = {
+            "hostname": hostname,
+            "version": "v3",
+            "authlevel": "authPriv",
+            "authname": "CLEUR",
+            "authpass": self.snmp_auth_pass,
+            "authalgo": "sha",
+            "cryptopass": self.snmp_priv_pass,
+            "cryptoalgo": "aes",
+        }
+
+        try:
+            response = requests.post(url, headers=self._headers, json=payload, timeout=30)
+            response.raise_for_status()
+            return True
+        except requests.exceptions.RequestException as e:
+            print(f"ERROR: Failed to add {hostname} to LibreNMS: {e}", file=sys.stderr)
+            if hasattr(e, "response") and e.response is not None:
+                print(f"Response: {e.response.text}", file=sys.stderr)
+            return False
+
+
+def load_device_cache(cache_file: Path) -> dict[str, str]:
+    """Load device cache from disk."""
+    if not cache_file.exists():
+        return {}
+
+    try:
+        return json.loads(cache_file.read_text())
+    except Exception as e:
+        print(f"Failed to load cache from {cache_file}: {e}", file=sys.stderr)
+        return {}
+
+
+def save_device_cache(cache_file: Path, devices: dict[str, str]) -> None:
+    """Save device cache to disk atomically."""
+    # Create backup
+    backup_file = cache_file.with_suffix(f"{cache_file.suffix}.bak")
+    if cache_file.exists():
+        try:
+            backup_file.write_text(cache_file.read_text())
+        except Exception as e:
+            print(f"WARNING: Failed to create backup: {e}", file=sys.stderr)
+
+    # Atomic write
+    temp_file = cache_file.with_suffix(f"{cache_file.suffix}.tmp")
+    try:
+        temp_file.write_text(json.dumps(devices, indent=2))
+        temp_file.replace(cache_file)
+    except Exception as e:
+        print(f"ERROR: Failed to save cache: {e}", file=sys.stderr)
+        if temp_file.exists():
+            temp_file.unlink()
+
+
+def main() -> int:
+    """Synchronize devices from Tool to LibreNMS."""
+    parser = argparse.ArgumentParser(prog=sys.argv[0], description="Add devices from the Tool to LibreNMS")
+    parser.add_argument("--force", "-f", action="store_true", help="Force re-adding all devices")
+    parser.add_argument("--log", "-l", action="store_true", help="Log progress to stdout")
+    args = parser.parse_args()
+
+    # Load cached devices
+    cached_devices = load_device_cache(CACHE_FILE)
+
+    # Initialize LibreNMS manager
+    manager = LibreNMSManager(
+        api_token=CLEUCreds.LIBRENMS_TOKEN,
+        dns_domain=C.DNS_DOMAIN,
+        snmp_auth_pass=CLEUCreds.SNMP_AUTH_PASS,
+        snmp_priv_pass=CLEUCreds.SNMP_PRIV_PASS,
+    )
+
+    # Fetch current devices from Tool
+    tool_devices = manager.get_devices_from_tool(C.TOOL)
+    if not tool_devices:
+        print("WARNING: No devices retrieved from Tool", file=sys.stderr)
+        return 1
+
+    changes_made = False
+    total_devices = len(tool_devices)
+
+    for idx, device in enumerate(tool_devices, start=1):
+        asset_tag = device.get("AssetTag")
+        hostname = device.get("Hostname")
+
+        if not asset_tag or not hostname:
+            continue
+
+        # Handle hostname change for existing asset
+        if asset_tag in cached_devices and cached_devices[asset_tag] != hostname:
+            old_hostname = cached_devices[asset_tag]
+            if args.log:
+                print(f"=== Deleting renamed device {old_hostname} from LibreNMS ({idx}/{total_devices}) ===")
+
+            response = manager.delete_device(old_hostname)
+            if response.status_code > 299:
+                print(f"WARNING: Failed to remove {old_hostname}: {response.text}", file=sys.stderr)
+
+            if args.log:
+                print("=== DONE ===")
+
+            del cached_devices[asset_tag]
+            changes_made = True
+            time.sleep(3)
+
+        # Add new device or force re-add
+        should_add = asset_tag not in cached_devices or args.force
+
+        if should_add:
+            # Force deletion if --force flag is set
+            if args.force:
+                if args.log:
+                    print(f"=== Force deleting device {hostname} from LibreNMS ({idx}/{total_devices}) ===")
+
+                response = manager.delete_device(hostname)
+                if response.status_code > 299:
+                    print(f"WARNING: Failed to remove {hostname}: {response.text}", file=sys.stderr)
+
+                if args.log:
+                    print("=== DONE ===")
+                time.sleep(3)
+
+            # Check if device already exists
+            if manager.device_exists(hostname):
+                cached_devices[asset_tag] = hostname
+                changes_made = True
                 continue
 
-            if not re.search(r"^[0-9A-Za-z]{3}-", dev["Hostname"]):
-                continue
+            # Add the device
+            if args.log:
+                print(f"=== Adding device {hostname} to LibreNMS ({idx}/{total_devices}) ===")
 
-            if (
-                re.search(r".*CORE.*", dev["Hostname"], flags=re.I)
-                or re.search(r"^WLC", dev["Hostname"], flags=re.I)
-                or re.search(r".*MER[124]-dist.*", dev["Hostname"], flags=re.I)
-                or re.search(r".*EDGE.*", dev["Hostname"], flags=re.I)
-            ):
-                continue
+            if manager.add_device(hostname):
+                cached_devices[asset_tag] = hostname
+                changes_made = True
+                if args.log:
+                    print("=== DONE ===")
+            else:
+                print(f"Failed to add {hostname}", file=sys.stderr)
 
-            devs.append(dev)
+    # Save cache if changes were made
+    if changes_made:
+        save_device_cache(CACHE_FILE, cached_devices)
+        if args.log:
+            print(f"\nSynchronization complete. {len(cached_devices)} devices cached.")
 
-    return devs
-
-
-def delete_device(dev):
-    global LIBRE_HEADERS
-
-    url = f"https://librenms.{C.DNS_DOMAIN}/api/v0/devices/{dev}"
-    resp = requests.delete(url, headers=LIBRE_HEADERS)
-
-    return resp
+    return 0
 
 
 if __name__ == "__main__":
-    devs = {}
-    force = False
-    changed_devs = False
-    do_log = False
-
-    parser = argparse.ArgumentParser(sys.argv[0], "Add devices from the Tool to LibreNMS")
-    parser.add_argument("--force", "-f", default=False, help="Force adding devices", action="store_true")
-    parser.add_argument("--log", "-l", default=False, help="Log progress (default: False)", action="store_true")
-
-    args = parser.parse_args()
-    force = args.force
-    do_log = args.log
-
-    try:
-        with open(CACHE_FILE, "r") as fd:
-            devs = json.load(fd)
-    except Exception as e:
-        print(f"Failed to open {CACHE_FILE}: {e}")
-
-    tdevs = get_devs()
-
-    i = 0
-    for tdev in tdevs:
-        i += 1
-        if tdev["AssetTag"] in list(devs.keys()) and devs[tdev["AssetTag"]] != tdev["Hostname"]:
-            if do_log:
-                print("=== Deleting device {} from LibreNMS ({} / {}) ===".format(tdev["Hostname"], i, len(tdevs)))
-            res = delete_device(devs[tdev["AssetTag"]])
-            if res.status_code > 299:
-                print("\n\n***WARNING: Failed to remove LibreNMS device {}: response='{}'".format(devs[tdev["AssetTag"]], res.text))
-
-            if do_log:
-                print("=== DONE. ===")
-            changed_devs = True
-            del devs[tdev["AssetTag"]]
-            time.sleep(3)
-
-        if tdev["AssetTag"] not in list(devs.keys()) or force:
-            if force:
-                if do_log:
-                    print("=== Deleting device {} from LibreNMS ({} / {}) ===".format(tdev["Hostname"], i, len(tdevs)))
-                res = delete_device(tdev["Hostname"])
-                if res.status_code > 299:
-                    print("\n\n***WARNING: Failed to remove LibreNMS device {}: response='{}'".format(tdev["Hostname"], res.text))
-
-                if do_log:
-                    print("=== DONE. ===")
-                time.sleep(3)
-
-            url = f"https://librenms.{C.DNS_DOMAIN}/api/v0/inventory/{tdev['Hostname']}"
-            try:
-                response = requests.get(url, headers=LIBRE_HEADERS)
-                response.raise_for_status()
-                devs[tdev["AssetTag"]] = tdev["Hostname"]
-                changed_devs = True
-                continue
-            except requests.exceptions.HTTPError as he:
-                if he.response.status_code != 400:
-                    print(f"Error retrieving device status for {tdev['Hostname']} from LibreNMS: '{he.response.text}'")
-                else:
-                    delete_device(tdev["Hostname"])
-            except Exception:
-                print(f"Error retrieving device status for {tdev['Hostname']} from LibreNMS")
-                traceback.print_exc()
-
-            if do_log:
-                print("=== Adding device {} to LibreNMS ({} / {}) ===".format(tdev["Hostname"], i, len(tdevs)))
-            url = f"https://librenms.{C.DNS_DOMAIN}/api/v0/devices"
-            payload = {
-                "hostname": tdev["Hostname"],
-                "version": "v3",
-                "authlevel": "authPriv",
-                "authname": "CLEUR",
-                "authpass": CLEUCreds.SNMP_AUTH_PASS,
-                "authalgo": "sha",
-                "cryptopass": CLEUCreds.SNMP_PRIV_PASS,
-                "cryptoalgo": "aes",
-            }
-            res = requests.post(url, headers=LIBRE_HEADERS, json=payload)
-            if res.status_code > 299:
-                print("\n\n***ERROR: Failed to add {} to LibreNMS: response='{}'".format(tdev["Hostname"], res.text))
-                continue
-
-            if do_log:
-                print("=== DONE. ===")
-
-            changed_devs = True
-            devs[tdev["AssetTag"]] = tdev["Hostname"]
-
-    if changed_devs:
-        with open(CACHE_FILE, "w") as fd:
-            json.dump(devs, fd)
+    sys.exit(main())
