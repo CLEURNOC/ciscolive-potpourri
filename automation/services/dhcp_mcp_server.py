@@ -59,7 +59,7 @@ CNR_HEADERS = {"Accept": "application/json"}
 
 DEFAULT_INT_TYPE = "Ethernet"
 
-ALLOWED_TO_DELETE = ("jclarke@cisco.com", "josterfe@cisco.com", "anjesani@cisco.com")
+ALLOWED_TO_DELETE = ("jclarke@cisco.com", "josterfe@cisco.com", "anjesani@cisco.com", "eagcagul@cisco.com")
 
 # TYPES
 
