@@ -334,7 +334,30 @@ def load_and_refresh_credentials(creds_file: Path) -> Credentials:
 
     if not creds.valid:
         creds.refresh(Request())
-        creds_file.write_text(creds.to_json())
+
+        # Create backup before updating
+        backup_file = creds_file.with_suffix(f"{creds_file.suffix}.bak")
+        if creds_file.exists():
+            try:
+                backup_file.write_text(creds_file.read_text())
+            except Exception as e:
+                print(f"WARNING: Failed to create backup of credentials: {e}", file=sys.stderr)
+
+        # Write new credentials atomically to prevent truncation
+        new_creds_json = creds.to_json()
+        if not new_creds_json or len(new_creds_json.strip()) == 0:
+            print("ERROR: Credentials JSON is empty, refusing to write", file=sys.stderr)
+            sys.exit(1)
+
+        temp_file = creds_file.with_suffix(f"{creds_file.suffix}.tmp")
+        try:
+            temp_file.write_text(new_creds_json)
+            temp_file.replace(creds_file)
+        except Exception as e:
+            print(f"ERROR: Failed to update credentials file: {e}", file=sys.stderr)
+            if temp_file.exists():
+                temp_file.unlink()
+            sys.exit(1)
 
     return creds
 
