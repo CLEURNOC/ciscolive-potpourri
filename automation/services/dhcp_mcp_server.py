@@ -246,7 +246,7 @@ def normalize_mac(mac: str) -> MACAddress:
     clean_mac = re.sub(r"[:.-]", "", mac).lower()
 
     # Validate length
-    if len(clean_mac) != 12:
+    if len(clean_mac) < 12:
         raise ValueError(f"Invalid MAC address length: {mac}")
 
     # Insert colons every 2 characters
