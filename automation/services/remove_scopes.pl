@@ -30,8 +30,6 @@ use v5.32;
 use feature qw(say signatures);
 no warnings 'experimental::signatures';
 
-use English qw(-no_match_vars);
-
 # Constants
 use constant {
     NRCMD_PATH             => '/root/nrcmd.sh',
@@ -42,7 +40,7 @@ use constant {
 sub run_command($command) {
     # Execute command and capture output
     my $output = qx($command 2>&1);
-    my $exit_code = $CHILD_ERROR >> 8;
+    my $exit_code = $? >> 8;
     
     return ($output, $exit_code);
 }
