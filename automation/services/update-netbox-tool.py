@@ -326,12 +326,6 @@ def main() -> int:
     parser.add_argument("--log", "-l", action="store_true", help="Enable verbose logging")
     args = parser.parse_args()
 
-    # Initialize NetBox connection
-    import os
-
-    os.environ["NETBOX_ADDRESS"] = C.NETBOX_SERVER
-    os.environ["NETBOX_API_TOKEN"] = CLEUCreds.NETBOX_API_TOKEN
-
     netbox = pynetbox.api(C.NETBOX_SERVER, token=CLEUCreds.NETBOX_API_TOKEN)
     synchronizer = NetBoxSynchronizer(netbox=netbox, dns_domain=C.DNS_DOMAIN)
     synchronizer.populate_netbox_objects()
