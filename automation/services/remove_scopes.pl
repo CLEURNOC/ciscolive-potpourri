@@ -23,67 +23,114 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
-#
+
 use strict;
 use warnings;
+use v5.32;
+use feature qw(say signatures);
+no warnings 'experimental::signatures';
 
-sub run_command {
-    my ($command) = @_;
-    
-    # Use system's open for command execution
-    my $output = `$command 2>&1`;
-    my $exit_code = $? >> 8;
+use Readonly;
+use English qw(-no_match_vars);
+
+# Constants
+Readonly my $NRCMD_PATH => '/root/nrcmd.sh';
+Readonly my $SUCCESS_CODE_PATTERN => qr/^10[01]/;
+Readonly my $QUERY_SUCCESS_PATTERN => qr/^100/;
+
+sub run_command($command) {
+    # Execute command and capture output
+    my $output = qx($command 2>&1);
+    my $exit_code = $CHILD_ERROR >> 8;
     
     return ($output, $exit_code);
 }
 
-# Main script
-my $match = $ARGV[0] // undef;
-
-# Prompt for confirmation
-my $prompt_text = defined $match 
-    ? qq{Really delete all scopes that match "$match" (y/N): }
-    : "Really delete all scopes (y/N): ";
-
-print $prompt_text;
-my $ans = <STDIN>;
-chomp $ans;
-
-unless ($ans =~ /^[yY]/) {
-    say "Exiting...";
-    exit 0;
-}
-
-# List scopes
-my $list_command = "/root/nrcmd.sh -r scope listnames";
-my ($out, $exit_code) = run_command($list_command);
-
-unless ($out =~ /^100/) {
-    say qq{Query for scopes failed: "$out"};
-    exit 1;
-}
-
-# Process scopes
-my @scopes = grep { $_ =~ /^\w/ && $_ !~ /100 Ok/ } split(/\n/, $out);
-
-for my $scope (@scopes) {
-    $scope =~ s/^\s+|\s+$//g;  # Trim whitespace
+sub get_user_confirmation($match) {
+    my $prompt_text = defined $match 
+        ? qq{Really delete all scopes that match "$match" (y/N): }
+        : "Really delete all scopes (y/N): ";
     
-    my $delete = 1;
-    if (defined $match && $scope !~ /$match/) {
-        $delete = 0;
+    print $prompt_text;
+    my $answer = <STDIN>;
+    chomp $answer;
+    
+    return $answer =~ /^[yY]/;
+}
+
+sub list_scopes() {
+    my $list_command = "$NRCMD_PATH -r scope listnames";
+    my ($output, $exit_code) = run_command($list_command);
+    
+    unless ($output =~ $QUERY_SUCCESS_PATTERN) {
+        die qq{ERROR: Query for scopes failed: "$output"\n};
     }
     
-    if ($delete) {
-        say "Deleting scope $scope";
-        
-        my $delete_command = "/root/nrcmd.sh -r scope '\"$scope\"' delete";
-        my ($delete_out, $delete_exit) = run_command($delete_command);
-        
-        unless ($delete_out =~ /^10[01]/) {
-            say "ERROR: Deleting scope $scope failed: $delete_out";
+    # Extract scope names (lines that start with word characters, excluding status line)
+    my @scopes = grep { /^\w/ && !/100 Ok/ } split /\n/, $output;
+    
+    # Trim whitespace from each scope name
+    return map { s/^\s+|\s+$//gr } @scopes;
+}
+
+sub should_delete_scope($scope, $match) {
+    return 1 unless defined $match;
+    return $scope =~ /$match/;
+}
+
+sub delete_scope($scope) {
+    say "Deleting scope $scope";
+    
+    my $delete_command = qq{$NRCMD_PATH -r scope '"$scope"' delete};
+    my ($output, $exit_code) = run_command($delete_command);
+    
+    unless ($output =~ $SUCCESS_CODE_PATTERN) {
+        warn "ERROR: Deleting scope $scope failed: $output\n";
+        return 0;
+    }
+    
+    return 1;
+}
+
+sub main() {
+    my $match = $ARGV[0];
+    
+    # Get user confirmation
+    unless (get_user_confirmation($match)) {
+        say "Exiting...";
+        return 0;
+    }
+    
+    # Retrieve list of scopes
+    my @scopes = list_scopes();
+    
+    unless (@scopes) {
+        say "No scopes found.";
+        return 0;
+    }
+    
+    # Process each scope
+    my $deleted_count = 0;
+    my $skipped_count = 0;
+    
+    for my $scope (@scopes) {
+        if (should_delete_scope($scope, $match)) {
+            if (delete_scope($scope)) {
+                $deleted_count++;
+            }
+        } else {
+            say qq{Skipping scope $scope as it did not match "$match"};
+            $skipped_count++;
         }
-    } else {
-        say qq{Skipping scope $scope as it did not match "$match"};
     }
+    
+    # Summary
+    say "\n--- Summary ---";
+    say "Deleted: $deleted_count scope(s)";
+    say "Skipped: $skipped_count scope(s)";
+    
+    return 0;
 }
+
+# Run main
+exit main();
