@@ -27,14 +27,13 @@
 from builtins import str
 from builtins import range
 import json
-from elemental_utils import ElementalNetbox
+import pynetbox
 import ipaddress
 import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning  # type: ignore
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 import sys
-import os
 import CLEUCreds  # type: ignore
 from cleu.config import Config as C  # type: ignore
 
@@ -55,13 +54,10 @@ HEADERS = {"accept": "application/json", "content-type": "application/json"}
 
 
 if __name__ == "__main__":
-    os.environ["NETBOX_ADDRESS"] = C.NETBOX_SERVER
-    os.environ["NETBOX_API_TOKEN"] = CLEUCreds.NETBOX_API_TOKEN
+    pnb = pynetbox.api(C.NETBOX_SERVER, token=CLEUCreds.NETBOX_API_TOKEN)
 
-    enb = ElementalNetbox()
-
-    tenant = list(enb.tenancy.tenants.filter(tenant_name=NB_TENANT))[0]
-    prefixes = list(enb.ipam.prefixes.filter(tenant_id=tenant.id))
+    tenant = list(pnb.tenancy.tenants.filter(tenant_name=NB_TENANT))[0]
+    prefixes = list(pnb.ipam.prefixes.filter(tenant_id=tenant.id))
 
     for prefix in prefixes:
         prefix_obj = ipaddress.ip_network(prefix.prefix)
