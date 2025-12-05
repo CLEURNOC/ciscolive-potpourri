@@ -30,13 +30,14 @@ use v5.32;
 use feature qw(say signatures);
 no warnings 'experimental::signatures';
 
-use Readonly;
 use English qw(-no_match_vars);
 
 # Constants
-Readonly my $NRCMD_PATH => '/root/nrcmd.sh';
-Readonly my $SUCCESS_CODE_PATTERN => qr/^10[01]/;
-Readonly my $QUERY_SUCCESS_PATTERN => qr/^100/;
+use constant {
+    NRCMD_PATH             => '/root/nrcmd.sh',
+    SUCCESS_CODE_PATTERN   => qr/^10[01]/,
+    QUERY_SUCCESS_PATTERN  => qr/^100/,
+};
 
 sub run_command($command) {
     # Execute command and capture output
@@ -59,10 +60,10 @@ sub get_user_confirmation($match) {
 }
 
 sub list_scopes() {
-    my $list_command = "$NRCMD_PATH -r scope listnames";
+    my $list_command = NRCMD_PATH . ' -r scope listnames';
     my ($output, $exit_code) = run_command($list_command);
     
-    unless ($output =~ $QUERY_SUCCESS_PATTERN) {
+    unless ($output =~ QUERY_SUCCESS_PATTERN) {
         die qq{ERROR: Query for scopes failed: "$output"\n};
     }
     
@@ -81,10 +82,10 @@ sub should_delete_scope($scope, $match) {
 sub delete_scope($scope) {
     say "Deleting scope $scope";
     
-    my $delete_command = qq{$NRCMD_PATH -r scope '"$scope"' delete};
+    my $delete_command = NRCMD_PATH . qq{ -r scope '"$scope"' delete};
     my ($output, $exit_code) = run_command($delete_command);
     
-    unless ($output =~ $SUCCESS_CODE_PATTERN) {
+    unless ($output =~ SUCCESS_CODE_PATTERN) {
         warn "ERROR: Deleting scope $scope failed: $output\n";
         return 0;
     }
