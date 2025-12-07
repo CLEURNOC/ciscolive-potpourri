@@ -59,7 +59,7 @@ CNR_HEADERS = {"Accept": "application/json"}
 
 DEFAULT_INT_TYPE = "Ethernet"
 
-ALLOWED_TO_DELETE = ("jclarke@cisco.com", "josterfe@cisco.com", "anjesani@cisco.com", "eagcagul@cisco.com")
+ALLOWED_TO_DELETE = ("jclarke@cisco.com", "josterfe@cisco.com", "anjesani@cisco.com", "eagcagul@cisco.com", "james@bottswanamedia.info")
 
 # TYPES
 
@@ -245,7 +245,7 @@ def normalize_mac(mac: str) -> MACAddress:
     # Remove all separators and convert to lowercase
     clean_mac = re.sub(r"[:.-]", "", mac).lower()
 
-    # Validate length
+    # Validate length and allow for some trailing fuzziness.
     if len(clean_mac) < 12:
         raise ValueError(f"Invalid MAC address length: {mac}")
 

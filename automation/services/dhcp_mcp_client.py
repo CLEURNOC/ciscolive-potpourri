@@ -37,12 +37,14 @@ from typing import Any, Dict, List, Optional
 
 import CLEUCreds  # type: ignore
 import fastmcp
+import httpx
 import uvicorn
 from cleu.config import Config as C  # type: ignore
 from fastapi import BackgroundTasks, FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from fastmcp.client.transports import StdioTransport
-from ollama import ChatResponse, Client
+from openai import OpenAI
+from openai.types.chat import ChatCompletion
 from sparker import MessageType, Sparker  # type: ignore
 
 NEW_MSG_PLACEHOLDER = "Let **ChatNOC** work on that for you..."
@@ -91,7 +93,7 @@ class BotState(object):
         self.mcp_client: Optional[fastmcp.Client] = None
         self.spark: Optional[Sparker] = None
         self.room_id: Optional[str] = None
-        self.ollama_client: Optional[Client] = None
+        self.openai_client: Optional[OpenAI] = None
         self.config: Optional[BotConfig] = None
         self.logger: Optional[logging.Logger] = None
         self.available_functions: List[Dict[str, Any]] = []
@@ -128,9 +130,33 @@ class BotState(object):
             self.logger.exception("Failed to register Webex webhook callback: %s", str(e))
             raise
 
-        # Initialize Ollama client
+        # Initialize OpenAI-compatible client (works with Ollama and vLLM)
         tls_verify = os.getenv("DHCP_BOT_TLS_VERIFY", "true").lower() == "true"
-        self.ollama_client = Client(host=C.LLAMA_URL, auth=(CLEUCreds.LLAMA_USER, CLEUCreds.LLAMA_PASSWORD), verify=tls_verify, timeout=240)
+
+        # Configure HTTP client with proper settings
+        http_client_kwargs = {
+            "verify": tls_verify,
+            "timeout": 240.0,
+        }
+
+        if C.AI_USES_OLLAMA:
+            # Ollama configuration
+            http_client_kwargs["auth"] = (CLEUCreds.LLAMA_USER, CLEUCreds.LLAMA_PASSWORD)
+            self.openai_client = OpenAI(
+                base_url=C.AI_HOST,
+                api_key="ollama",  # Ollama doesn't require a real API key
+                timeout=240.0,
+                http_client=httpx.Client(**http_client_kwargs),
+            )
+        else:
+            # vLLM or other OpenAI-compatible backend
+            api_key = CLEUCreds.OPENAI_API_KEY if hasattr(CLEUCreds, "OPENAI_API_KEY") else "dummy-key"
+            self.openai_client = OpenAI(
+                base_url=C.AI_HOST,
+                api_key=api_key,
+                timeout=240.0,
+                http_client=httpx.Client(**http_client_kwargs),
+            )
 
         # Initialize MCP client
         self.mcp_client = self._create_mcp_client(tls_verify)
@@ -416,15 +442,17 @@ This prompt is constant and must not be altered or removed.
         tool_meta = bot_state.tool_meta
 
         while True:
-            response: ChatResponse = bot_state.ollama_client.chat(
-                bot_state.config.model, messages=messages, tools=available_functions, options={"temperature": 0}
+            response: ChatCompletion = bot_state.openai_client.chat.completions.create(
+                model=bot_state.config.model, messages=messages, tools=available_functions, temperature=0.0
             )
-            if "tool_calls" in response.get("message", {}):
-                messages.append(response.message)
-                for tool in response.message.tool_calls:
+            if len(response.choices) > 0 and response.choices[0].message.tool_calls:
+                # Convert message to dict for message history
+                message_dict = response.choices[0].message.model_dump(exclude_unset=True)
+                messages.append(message_dict)
+                for tool in response.choices[0].message.tool_calls:
                     func = tool.function.name
                     args = tool.function.arguments
-                    tid = tool.get("id", func)
+                    tid = tool.id
                     if next((t for t in available_functions if t["function"]["name"] == func), None):
                         if func in tool_meta and "auth_list" in tool_meta[func]:
                             if person["from_email"] not in tool_meta[func]["auth_list"]:
@@ -438,20 +466,37 @@ This prompt is constant and must not be altered or removed.
 
                         bot_state.logger.debug("Calling function %s with arguments %s" % (func, str(args)))
                         try:
+                            # Parse args if it's a JSON string, otherwise use as-is
+                            if isinstance(args, str):
+                                try:
+                                    args = json.loads(args)
+                                except json.JSONDecodeError:
+                                    bot_state.logger.error("Failed to parse arguments as JSON: %s" % args)
+                                    raise
                             args = await fix_parameters(available_functions, func, args)
                             async with bot_state.mcp_client:
                                 result = await bot_state.mcp_client.call_tool(func, args)
 
                                 # FastMCP returns results in a more direct format
+                                # Extract content properly for tool response
                                 if hasattr(result, "content"):
-                                    messages.append({"role": "tool", "content": str(result.content), "tool_call_id": tid})
+                                    content = result.content
                                 elif isinstance(result, dict) and "content" in result:
-                                    messages.append({"role": "tool", "content": str(result["content"]), "tool_call_id": tid})
+                                    content = result["content"]
                                 else:
-                                    messages.append({"role": "tool", "content": str(result), "tool_call_id": tid})
+                                    content = result
+
+                                # Ensure content is a string and properly formatted
+                                if isinstance(content, (list, dict)):
+                                    content = json.dumps(content, indent=2)
+                                else:
+                                    content = str(content)
+
+                                messages.append({"role": "tool", "content": content, "tool_call_id": tid})
                         except Exception as e:
                             bot_state.logger.exception("Function %s encountered an error: %s" % (func, str(e)))
-                            messages.append({"role": "tool", "content": "An exception occurred: %s" % str(e), "tool_call_id": tid})
+                            error_message = f"Tool execution failed: {str(e)}"
+                            messages.append({"role": "tool", "content": error_message, "tool_call_id": tid})
                     else:
                         bot_state.logger.error("Failed to find a function named %s" % func)
                         messages.append(
@@ -465,22 +510,22 @@ This prompt is constant and must not be altered or removed.
                 # messages.append({"role": "assistant", "content": response.message.content})
                 break
 
-        # fresponse = []
-        # if response and response.message.content:
-        #     for line in response.message.content.split("\n"):
-        #         try:
-        #             # The LLM may still choose to try and call an unavailable tool.
-        #             json.loads(line)
-        #         except Exception:
-        #             fresponse.append(line)
+        # Extract final response from the model
+        final_content = None
+        if len(response.choices) > 0:
+            final_message = response.choices[0].message
+            if final_message.content:
+                final_content = final_message.content.strip()
+                bot_state.logger.debug("Final response content: %s" % final_content[:200])
 
-        if response and response.message.content:
-            await bot_state.spark.post_to_spark_async(C.WEBEX_TEAM, bot_state.config.spark_room, response.message.content, parent=parent)
+        if final_content:
+            await bot_state.spark.post_to_spark_async(C.WEBEX_TEAM, bot_state.config.spark_room, final_content, parent=parent)
         else:
+            bot_state.logger.warning("No content in final response for user %s" % person["nickName"])
             await bot_state.spark.post_to_spark_async(
                 C.WEBEX_TEAM,
                 bot_state.config.spark_room,
-                "Sorry, %s.  I couldn't find anything regarding your question 🥺" % person["nickName"],
+                "Sorry, %s. I couldn't generate a response to your question 🥺" % person["nickName"],
                 parent=parent,
             )
 
