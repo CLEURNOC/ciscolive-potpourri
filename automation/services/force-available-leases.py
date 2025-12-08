@@ -48,7 +48,7 @@ def force_leases_available(subnet: str) -> None:
             resp = requests.put(lease_url, params={"action": "forceAvailable"}, headers=headers, auth=auth, verify=False)
             resp.raise_for_status()
         except requests.RequestException as e:
-            print(f"Error forcing lease available for {ip_str}: {e}")
+            print(f"Error forcing lease available for {ip_str}: {e.response.text if e.response else str(e)}")
             continue
 
 
