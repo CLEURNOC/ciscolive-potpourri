@@ -22,12 +22,12 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-import requests
-import ipaddress
 import argparse
-import CLEUCreds  # type: ignore
-from cleu.config import Config as C  # type: ignore
+import ipaddress
 
+import CLEUCreds  # type: ignore
+import requests
+from cleu.config import Config as C  # type: ignore
 from requests.packages.urllib3.exceptions import InsecureRequestWarning  # type: ignore
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
@@ -39,17 +39,28 @@ def force_leases_available(subnet: str) -> None:
     headers = {"accept": "application/json", "content-type": "application/json"}
     auth = (CLEUCreds.CPNR_USERNAME, CLEUCreds.CPNR_PASSWORD)
 
-    addresses = ipaddress.ip_network(subnet, strict=False).hosts()
+    addresses = list(ipaddress.ip_network(subnet, strict=False).hosts())
+    total = len(addresses)
 
-    for host in addresses:
+    for idx, host in enumerate(addresses, 1):
         ip_str = str(host)
         lease_url = f"{dhcp_url}/{ip_str}"
+
+        # Display progress bar
+        bar_length = 40
+        filled = int(bar_length * idx / total)
+        bar = "█" * filled + "░" * (bar_length - filled)
+        percent = idx * 100 // total
+        print(f"\r[{bar}] {percent}% ({idx}/{total}) {ip_str}", end="", flush=True)
+
         try:
             resp = requests.delete(lease_url, headers=headers, auth=auth, verify=False)
             resp.raise_for_status()
         except requests.RequestException as e:
-            print(f"Error forcing lease available for {ip_str}: {e.response.text if e.response else str(e)}")
+            print(f"\nError forcing lease available for {ip_str}: {e.response.text if e.response else str(e)}")
             continue
+
+    print()  # New line after progress bar completes
 
 
 if __name__ == "__main__":
