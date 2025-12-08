@@ -54,7 +54,7 @@ def force_leases_available(subnet: str) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Force all DHCP leases to be available.")
-    parser.add_argument("--subnet", type=str, help="Force available all leases in this subnet (CIDR notation).")
+    parser.add_argument("--subnet", type=str, help="Force available all leases in this subnet (CIDR notation).", required=True)
     args = parser.parse_args()
 
     force_leases_available(args.subnet)
