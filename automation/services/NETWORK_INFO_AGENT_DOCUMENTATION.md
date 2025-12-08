@@ -18,24 +18,26 @@ The system consists of two main components:
 └────────┬────────┘
          │ POST /chat (webhook)
          ▼
-┌─────────────────────────────┐
-│  dhcp_mcp_client.py         │
-│  (FastAPI + FastMCP Client) │
-│                             │
-│  • Webhook handler          │
-│  • Conversation processor   │
-│  • LLM integration (Ollama) │
-└────────┬────────────────────┘
+┌──────────────────────────────────────┐
+│  dhcp_mcp_client.py                  │
+│  (FastAPI + FastMCP Client)          │
+│                                      │
+│  • Webhook handler                   │
+│  • Conversation processor            │
+│  • OpenAI-compatible API integration │
+│    (Ollama or vLLM backend)          │
+└────────┬─────────────────────────────┘
          │ stdio transport
          ▼
-┌─────────────────────────────┐
-│  dhcp_mcp_server.py         │
-│  (FastMCP Server)           │
-│                             │
-│  • Network tools            │
-│  • DHCP operations          │
-│  • Device queries           │
-└─────────────────────────────┘
+┌──────────────────────────────────────┐
+│  dhcp_mcp_server.py                  │
+│  (FastMCP Server)                    │
+│                                      │
+│  • Network tools (FastMCP)           │
+│  • DHCP operations                   │
+│  • Device queries                    │
+│  • ISE/Catalyst Center integration   │
+└──────────────────────────────────────┘
 ```
 
 ## Prerequisites
@@ -62,7 +64,7 @@ Key dependencies include:
 - `uvicorn` - ASGI server
 - `httpx` - Async HTTP client
 - `pynetbox` - NetBox API client
-- `ollama` - LLM client
+- `openai` - OpenAI-compatible API client (works with Ollama and vLLM)
 - `sparker` - Webex Teams API wrapper
 - `dns.asyncresolver` - Async DNS resolution
 - `pydantic` - Data validation
@@ -89,6 +91,14 @@ The agent requires several environment variables to be configured:
 - `DHCP_BOT_MODEL` - LLM model name (default: "gpt-oss")
 - `LOG_LEVEL` - Logging level: DEBUG, INFO, WARNING, ERROR (default: "INFO")
 - `DHCP_BOT_TLS_VERIFY` - Enable TLS verification (default: "true")
+
+#### AI Backend Configuration
+
+- `AI_HOST` - OpenAI-compatible API endpoint URL
+- `AI_USES_OLLAMA` - Set to "true" for Ollama backend, "false" for vLLM or other OpenAI-compatible backends
+- `LLAMA_USER` - Username for Ollama authentication (if using Ollama)
+- `LLAMA_PASSWORD` - Password for Ollama authentication (if using Ollama)
+- `OPENAI_API_KEY` - API key for vLLM or other OpenAI-compatible backends (not needed for Ollama)
 
 #### Network System Integration
 
@@ -661,9 +671,52 @@ systemctl start network-info-agent
 - **Connection Pooling**: HTTP clients use connection pooling for efficiency
 - **Async Operations**: All I/O operations are async (httpx, FastMCP)
 - **Resource Cleanup**: Proper async context managers prevent leaks
-- **LLM Timeout**: Ollama client has 240s timeout for complex queries
+- **LLM Timeout**: OpenAI client has 240s timeout for complex queries (applies to both Ollama and vLLM backends)
 - **REST Timeouts**: Network APIs have configurable timeouts (default 10s)
 - **DNS Timeout**: DNS queries timeout after 5s
+
+## AI Backend Compatibility
+
+The Network Info Agent uses the OpenAI-compatible API standard, allowing it to work with multiple LLM backends:
+
+### Ollama Backend
+
+- Set `AI_USES_OLLAMA=true` in configuration
+- Requires basic authentication credentials (`LLAMA_USER`, `LLAMA_PASSWORD`)
+- Uses "ollama" as the API key (not validated)
+- Supports local LLM deployment
+- Recommended models: `qwen2.5-coder:32b`, `gpt-oss`, or other tool-calling capable models
+
+### vLLM Backend
+
+- Set `AI_USES_OLLAMA=false` in configuration
+- Requires `OPENAI_API_KEY` for authentication
+- Supports distributed LLM inference
+- Compatible with any OpenAI API specification-compliant backend
+- Works with tool-calling reasoning models
+
+### Tool-Calling Requirements
+
+The agent requires an LLM that supports:
+
+1. **Function/tool calling** - Model must understand and execute tool calls
+2. **OpenAI chat completions API** - Standard request/response format
+3. **Multi-turn conversations** - Maintaining context across tool invocations
+4. **Structured outputs** - Proper JSON formatting for tool arguments
+
+### Model Configuration
+
+The `DHCP_BOT_MODEL` environment variable specifies which model to use. Ensure the model:
+
+- Is available on your AI backend
+- Supports tool/function calling
+- Has been tested with the FastMCP tool schema format
+- Can handle the complexity of network operations queries
+
+Recommended models:
+
+- **Ollama**: `gpt-oss`, `qwen2.5-coder:32b`, `mistral-large`
+- **vLLM**: Any OpenAI-compatible model with tool calling support
 
 ## Support and Maintenance
 
