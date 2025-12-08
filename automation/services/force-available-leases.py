@@ -37,7 +37,7 @@ def force_leases_available(subnet: str) -> None:
     """Force all leases to be available."""
     dhcp_url = f"{C.DHCP_BASE}/Lease"
     headers = {"accept": "application/json", "content-type": "application/json"}
-    auth = (CLEUCreds.DHCP_API_USER, CLEUCreds.DHCP_API_PASS)
+    auth = (CLEUCreds.CPNR_USERNAME, CLEUCreds.CPNR_PASSWORD)
 
     addresses = ipaddress.ip_network(subnet, strict=False).hosts()
 
