@@ -3,7 +3,7 @@
 Execute the following command on `dc1-dhcp`:
 
 ```bash
-nohup tail -F /var/nwreg2/local/logs/name_dhcp_1_log | logger -n cl-freebsd.cleur.network -p local7.info&
+nohup tail -F /var/nwreg2/local/logs/name_dhcp_1_log | logger -n 10.100.252.13 -p local7.info&
 ```
 
 This needs to be re-run every time the VM reboots.
