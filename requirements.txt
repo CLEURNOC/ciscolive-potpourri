@@ -58,3 +58,4 @@ fastmcp
 httpx
 fastapi
 openai
+prometheus_client

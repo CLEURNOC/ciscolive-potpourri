@@ -24,45 +24,167 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-from flask import Flask  # type: ignore
-from flask import Response  # type: ignore
-from gevent.pywsgi import WSGIServer  # type: ignore
-from subprocess import run
-import shlex
+"""CPNR Metrics Exporter for Prometheus.
+
+This script collects disk utilization metrics from CPNR servers via SSH
+and exposes them as Prometheus metrics.
+"""
+
+import logging
 import re
+import shlex
+import sys
+from dataclasses import dataclass
+from subprocess import CompletedProcess, run
+from typing import ClassVar
+
 from cleu.config import Config as C  # type: ignore
+from flask import Flask, Response
+from gevent.pywsgi import WSGIServer  # type: ignore
+from prometheus_client import CONTENT_TYPE_LATEST, CollectorRegistry, Gauge, generate_latest
 
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)],
+)
+logger = logging.getLogger(__name__)
 
-# CACHE_FILE = "/home/jclarke/cpnr_metrics.dat"
 PORT = 8085
 
-app = Flask("CPNR Stats Fetcher")
 
-COMMANDS = {"df -h /": {"pattern": r"(\d+)%", "metrics": ["diskUtilization"]}}
+@dataclass
+class MetricsCollector:
+    """Collects and exposes CPNR server metrics."""
+
+    registry: CollectorRegistry
+    disk_utilization: Gauge
+
+    # Class variable for command configuration
+    COMMANDS: ClassVar[dict[str, dict[str, str]]] = {"df -h /": {"pattern": r"(\d+)%"}}
+
+    @classmethod
+    def create(cls) -> "MetricsCollector":
+        """Create a new MetricsCollector with initialized metrics."""
+        registry = CollectorRegistry()
+
+        disk_utilization = Gauge(
+            "cpnr_disk_utilization_percent",
+            "CPNR server root filesystem utilization percentage",
+            ["server"],
+            registry=registry,
+        )
+
+        logger.info("Initialized Prometheus metrics collector")
+        return cls(registry=registry, disk_utilization=disk_utilization)
+
+    def _execute_ssh_command(self, server: str, command: str) -> CompletedProcess[str] | None:
+        """Execute a command on a remote server via SSH.
+
+        Args:
+            server: The server hostname or IP address
+            command: The command to execute
+
+        Returns:
+            CompletedProcess result or None if execution failed
+        """
+        ssh_command = f"ssh -2 root@{server} {command}"
+        try:
+            result = run(
+                shlex.split(ssh_command),
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+
+            if result.returncode != 0:
+                logger.error(
+                    f"Command failed on {server}: {command} - " f"stdout: {result.stdout.strip()}, stderr: {result.stderr.strip()}"
+                )
+                return None
+
+            return result
+
+        except Exception as e:
+            logger.error(f"Exception executing command on {server}: {command} - {e}")
+            return None
+
+    def _parse_disk_utilization(self, output: str) -> int | None:
+        """Parse disk utilization percentage from df command output.
+
+        Args:
+            output: The command output to parse
+
+        Returns:
+            Utilization percentage as integer, or None if parsing failed
+        """
+        if match := re.search(self.COMMANDS["df -h /"]["pattern"], output):
+            return int(match.group(1))
+        return None
+
+    def collect_metrics(self) -> None:
+        """Collect metrics from all configured CPNR servers."""
+        logger.info("Starting metrics collection")
+
+        for server in C.CPNR_SERVERS:
+            logger.debug(f"Collecting metrics from {server}")
+
+            if result := self._execute_ssh_command(server, "df -h /"):
+                if utilization := self._parse_disk_utilization(result.stdout.strip()):
+                    self.disk_utilization.labels(server=server).set(utilization)
+                    logger.debug(f"Updated disk utilization for {server}: {utilization}%")
+                else:
+                    logger.warning(f"Failed to parse disk utilization for {server}")
+
+        logger.info("Metrics collection completed")
 
 
-@app.route("/metrics")
-def get_metrics():
-    global COMMANDS
+def create_app(collector: MetricsCollector) -> Flask:
+    """Create and configure the Flask application.
 
-    output = ""
-    for server in C.CPNR_SERVERS:
-        for command in list(COMMANDS.keys()):
-            res = run(shlex.split(f"ssh -2 root@{server} {command}"), capture_output=True, text=True)
-            if res.returncode != 0:
-                print("ERROR: Failed to execute %s on %s: out='%s', err='%s'" % (command, server, res.stdout.strip(), res.stderr.strip()))
-                continue
+    Args:
+        collector: The MetricsCollector instance
 
-            if m := re.search(COMMANDS[command]["pattern"], res.stdout.strip()):
-                i = 1
-                for metric in COMMANDS[command]["metrics"]:
-                    output += f'{metric}{{server="{server}"}} {m.group(i)}\n'
-                    i += 1
+    Returns:
+        Configured Flask application
+    """
+    app = Flask("CPNR Metrics Exporter")
 
-    return Response(output, mimetype="text/plain")
+    @app.route("/metrics")
+    def metrics() -> Response:
+        """Prometheus metrics endpoint."""
+        collector.collect_metrics()
+        return Response(generate_latest(collector.registry), mimetype=CONTENT_TYPE_LATEST)
+
+    @app.route("/health")
+    def health() -> tuple[str, int]:
+        """Health check endpoint."""
+        return "OK", 200
+
+    return app
+
+
+def main() -> None:
+    """Main entry point for the CPNR metrics exporter."""
+    logger.info("Starting CPNR Metrics Exporter")
+    logger.info(f"Monitoring servers: {', '.join(C.CPNR_SERVERS)}")
+
+    collector = MetricsCollector.create()
+    app = create_app(collector)
+
+    logger.info(f"Starting HTTP server on {C.WSGI_SERVER}:{PORT}")
+    http_server = WSGIServer((C.WSGI_SERVER, PORT), app)
+
+    try:
+        http_server.serve_forever()
+    except KeyboardInterrupt:
+        logger.info("Shutting down gracefully")
+        http_server.stop()
+    except Exception as e:
+        logger.error(f"Server error: {e}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
-    #    app.run(host='10.100.253.13', port=8081, threaded=True)
-    http_server = WSGIServer((C.WSGI_SERVER, PORT), app)
-    http_server.serve_forever()
+    main()
