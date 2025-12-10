@@ -410,14 +410,14 @@ def main() -> int:
     parser.add_argument(
         "--router-file",
         type=Path,
-        default=Path(__file__).parent / "routers.json",
-        help="JSON file with router inventory (default: routers.json)",
+        default=ROUTER_FILE,
+        help=f"JSON file with router inventory (default: {ROUTER_FILE})",
     )
     parser.add_argument(
         "--cache-dir",
         type=Path,
-        default=Path("/var/tmp/route-table-cache"),
-        help="Directory for cache files (default: /var/tmp/route-table-cache)",
+        default=CACHE_DIR,
+        help=f"Directory for cache files (default: {CACHE_DIR})",
     )
     parser.add_argument(
         "--git-repo",
@@ -431,8 +431,8 @@ def main() -> int:
     )
     parser.add_argument(
         "--webex-room",
-        default="Core Alarms",
-        help="Webex room name for notifications (default: Core Alarms)",
+        default=WEBEX_ROOM,
+        help=f"Webex room name for notifications (default: {WEBEX_ROOM})",
     )
     parser.add_argument(
         "--notify-routers",
