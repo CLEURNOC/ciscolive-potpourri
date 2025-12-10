@@ -51,7 +51,7 @@ def main(spark, args):
 
         msg += line + "\n"
 
-    spark.post_to_spark(C.WEBEX_TEAM, args.room, f"**{subject.strip()}**\n\n```text\n{msg}```")
+    spark.post_to_spark(C.WEBEX_TEAM, args.room, f"**{subject.strip()}**\n\n```diff\n{msg}```")
 
 
 if __name__ == "__main__":
