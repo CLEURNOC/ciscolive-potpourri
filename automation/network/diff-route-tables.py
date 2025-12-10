@@ -474,6 +474,7 @@ def main() -> int:
     # Configure monitoring
     config = MonitorConfig(
         cache_dir=args.cache_dir,
+        router_file=args.router_file,
         git_repo=args.git_repo,
         git_branch=args.git_branch,
         webex_room=args.webex_room,
