@@ -35,6 +35,9 @@ from cleu.config import Config as C  # type: ignore
 from flask import Flask, Response
 from gevent.pywsgi import WSGIServer  # type: ignore
 from prometheus_client import CONTENT_TYPE_LATEST, CollectorRegistry, Counter, Gauge, generate_latest
+from requests.packages.urllib3.exceptions import InsecureRequestWarning  # type: ignore
+
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 # Configure logging
 logging.basicConfig(
