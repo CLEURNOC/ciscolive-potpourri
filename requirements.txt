@@ -59,3 +59,4 @@ httpx
 fastapi
 openai
 prometheus_client
+netmiko
