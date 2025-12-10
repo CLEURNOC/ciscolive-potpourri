@@ -30,6 +30,7 @@ This script monitors network devices for reachability changes via ICMP ping
 and sends alerts to Webex Teams when devices become unreachable or recover.
 """
 
+import argparse
 import json
 import logging
 import re
@@ -83,6 +84,8 @@ class DeviceDict(TypedDict, total=False):
     ipv6: str
     reachability: str
     reachability_v6: str
+    consecutive_unreachable_count: int
+    consecutive_unreachable_count_v6: int
     alerts: list[tuple[str, MessageType]]
 
 
@@ -104,6 +107,7 @@ class DeviceMonitorConfig:
     excluded_patterns: list[str] = field(default_factory=lambda: [r"^VHS-"])
     ping_retries: int = 2
     ping_retry_delay: float = 0.5
+    unreachable_threshold: int = 10
 
     messages: dict[str, MessageTemplate] = field(
         default_factory=lambda: {
@@ -178,6 +182,26 @@ class DeviceMonitor:
             True if device was previously known
         """
         return any(pd["name"] == device["name"] for pd in prev_devices)
+
+    @staticmethod
+    def _get_consecutive_count(device: DeviceDict, prev_devices: list[DeviceDict], is_ipv6: bool = False) -> int:
+        """Get consecutive unreachable count from previous run.
+
+        Args:
+            device: Device to check
+            prev_devices: List of devices from previous run
+            is_ipv6: Whether checking IPv6 reachability
+
+        Returns:
+            Previous consecutive unreachable count, or 0 if not found
+        """
+        count_key = "consecutive_unreachable_count_v6" if is_ipv6 else "consecutive_unreachable_count"
+
+        for prev_dev in prev_devices:
+            if prev_dev["name"] == device["name"]:
+                return prev_dev.get(count_key, 0)
+
+        return 0
 
     def _ping_host(self, host: str) -> bool:
         """Ping a host and return reachability status.
@@ -273,11 +297,28 @@ class DeviceMonitor:
         is_reachable = self._ping_host(device["ip"])
         device["reachability"] = ReachabilityState.REACHABLE.value if is_reachable else ReachabilityState.UNREACHABLE.value
 
-        # Determine if we should create IPv4 alert
+        # Track consecutive unreachable counts
         if is_reachable:
+            device["consecutive_unreachable_count"] = 0
+            # Alert if recovering from unreachable state
             should_alert = self._check_state_changed(device, self.previous_devices, ReachabilityState.REACHABLE)
         else:
-            should_alert = self._is_known_device(device, self.previous_devices)
+            # Increment consecutive unreachable count
+            prev_count = self._get_consecutive_count(device, self.previous_devices, is_ipv6=False)
+            device["consecutive_unreachable_count"] = prev_count + 1
+
+            # Alert if device is known AND (first transition OR count is multiple of threshold)
+            if self._is_known_device(device, self.previous_devices):
+                # Alert on first transition from REACHABLE to UNREACHABLE
+                first_transition = self._check_state_changed(device, self.previous_devices, ReachabilityState.UNREACHABLE)
+                # Alert every N polls (10, 20, 30, etc.)
+                threshold_reached = (
+                    device["consecutive_unreachable_count"] >= self.config.unreachable_threshold
+                    and device["consecutive_unreachable_count"] % self.config.unreachable_threshold == 0
+                )
+                should_alert = first_transition or threshold_reached
+            else:
+                should_alert = False
 
         if should_alert:
             alert = self._create_alert(device["name"], device["ip"], location, is_reachable)
@@ -289,11 +330,30 @@ class DeviceMonitor:
             is_reachable_v6 = self._ping_host(device["ipv6"])
             device["reachability_v6"] = ReachabilityState.REACHABLE.value if is_reachable_v6 else ReachabilityState.UNREACHABLE.value
 
-            # Determine if we should create IPv6 alert
+            # Track consecutive unreachable counts for IPv6
             if is_reachable_v6:
+                device["consecutive_unreachable_count_v6"] = 0
+                # Alert if recovering from unreachable state
                 should_alert_v6 = self._check_state_changed(device, self.previous_devices, ReachabilityState.REACHABLE, is_ipv6=True)
             else:
-                should_alert_v6 = self._is_known_device(device, self.previous_devices)
+                # Increment consecutive unreachable count
+                prev_count_v6 = self._get_consecutive_count(device, self.previous_devices, is_ipv6=True)
+                device["consecutive_unreachable_count_v6"] = prev_count_v6 + 1
+
+                # Alert if device is known AND (first transition OR count is multiple of threshold)
+                if self._is_known_device(device, self.previous_devices):
+                    # Alert on first transition from REACHABLE to UNREACHABLE
+                    first_transition_v6 = self._check_state_changed(
+                        device, self.previous_devices, ReachabilityState.UNREACHABLE, is_ipv6=True
+                    )
+                    # Alert every N polls (10, 20, 30, etc.)
+                    threshold_reached_v6 = (
+                        device["consecutive_unreachable_count_v6"] >= self.config.unreachable_threshold
+                        and device["consecutive_unreachable_count_v6"] % self.config.unreachable_threshold == 0
+                    )
+                    should_alert_v6 = first_transition_v6 or threshold_reached_v6
+                else:
+                    should_alert_v6 = False
 
             if should_alert_v6:
                 alert_v6 = self._create_alert(device["name"], device["ipv6"], location, is_reachable_v6)
@@ -461,7 +521,18 @@ def load_additional_devices(ping_devs_file: Path) -> list[str]:
 
 def main() -> None:
     """Main entry point for device reachability monitoring."""
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(description="Monitor network device reachability and send Webex alerts")
+    parser.add_argument(
+        "--unreachable-threshold",
+        type=int,
+        default=10,
+        help="Number of consecutive unreachable polls before alerting (and every N polls thereafter). Default: 10",
+    )
+    args = parser.parse_args()
+
     logger.info("Starting device reachability monitor")
+    logger.info(f"Unreachable threshold: {args.unreachable_threshold} consecutive polls")
 
     # Load configuration
     config = DeviceMonitorConfig(
@@ -469,6 +540,7 @@ def main() -> None:
         ping_devs_file=PING_DEVS_FILE,
         room_name=ROOM_NAME,
         fping_path=FPING_PATH,
+        unreachable_threshold=args.unreachable_threshold,
     )
 
     # Load previous device states
