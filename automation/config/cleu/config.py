@@ -8,6 +8,7 @@ class Config:
     WSGI_SERVER = "10.100.252.13"
     DNS_SERVER = "10.100.253.21"
     CDNS_SERVERS = ["10.100.253.9", "10.100.254.9"]
+    DHCP_SERVERS = CDNS_SERVERS
     DNS_SERVERS = ["10.100.253.21", "10.100.254.21"]
     NETBOX_SERVER = f"https://cl-netbox.{DNS_DOMAIN}"
 
@@ -52,3 +53,5 @@ class Config:
     CPNR_SERVERS = [f"dc1-dhcp.{DNS_DOMAIN}", f"dc2-dhcp.{DNS_DOMAIN}", f"dc1-dns.{DNS_DOMAIN}", f"dc2-dns.{DNS_DOMAIN}"]
     UMBRELLA_ORGID = "1912631"
     LLAMA_URL = f"https://cl-llama.{DNS_DOMAIN}"
+    AI_USES_OLLAMA = True
+    AI_HOST = LLAMA_URL

@@ -209,7 +209,7 @@ def main() -> None:
     app = create_app(collector)
 
     http_server = WSGIServer((C.WSGI_SERVER, PORT), app)
-    logger.info(f"Starting DHCP metrics exporter on port {PORT}")
+    logger.info(f"Starting DHCP metrics exporter on {C.WSGI_SERVER} port {PORT}")
     try:
         http_server.serve_forever()
     except KeyboardInterrupt:
