@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2017-2024  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2025  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,38 +24,129 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+"""IDF Device Collector.
+
+This script retrieves IDF (Intermediate Distribution Frame) devices from the Tool
+API and saves them to a JSON file for use by other automation scripts.
+"""
+
+import json
+import logging
+import re
+import shutil
+import sys
+from pathlib import Path
 
 import requests
-import json
-import re
 from cleu.config import Config as C  # type: ignore
 
-OUTPUT = "/home/jclarke/idf-devices.json"
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)],
+)
+logger = logging.getLogger(__name__)
+
+OUTPUT = Path("/home/jclarke/idf-devices.json")
+IDF_PATTERN = re.compile(r"[xX]\d+-")
 
 
-def get_devs():
-    url = "http://{}/get/switches/json".format(C.TOOL)
+def get_idf_devices() -> list[str]:
+    """Retrieve IDF device hostnames from Tool API.
 
-    devs = []
-    response = requests.get(url)
-    code = 200
-    code = response.status_code
-    if code == 200:
-        j = response.json()
+    Returns:
+        List of IDF device hostnames that are reachable with valid IP addresses
+    """
+    url = f"http://{C.TOOL}/get/switches/json"
 
-        for dev in j:
-            if dev["IPAddress"] == "0.0.0.0" or not dev["Reachable"]:
+    try:
+        response = requests.get(url, timeout=30)
+        response.raise_for_status()
+
+        devices = response.json()
+        idf_devices: list[str] = []
+
+        for device in devices:
+            # Skip devices without valid IP or that are unreachable
+            if device.get("IPAddress") == "0.0.0.0" or not device.get("Reachable"):
                 continue
 
-            if not re.search(r"[xX]\d+-", dev["Hostname"]):
-                continue
+            # Only include IDF devices (match pattern like X1-, X2-, x10-, etc.)
+            if hostname := device.get("Hostname"):
+                if IDF_PATTERN.search(hostname):
+                    idf_devices.append(hostname)
 
-            devs.append(dev["Hostname"])
+        logger.info(f"Retrieved {len(idf_devices)} IDF devices from Tool API")
+        return idf_devices
 
-    return devs
+    except requests.RequestException as e:
+        logger.error(f"Failed to retrieve devices from Tool API: {e}")
+        raise
+    except (KeyError, ValueError) as e:
+        logger.error(f"Failed to parse device data: {e}")
+        raise
+
+
+def save_devices_atomic(output_file: Path, devices: list[str]) -> None:
+    """Save device list to file atomically to prevent truncation.
+
+    Uses atomic write pattern: write to temp file, validate, then replace original.
+    Creates backup before replacement.
+
+    Args:
+        output_file: Path to output JSON file
+        devices: List of device hostnames to save
+    """
+    # Ensure parent directory exists
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+
+    # Create backup of existing file if it exists
+    if output_file.exists():
+        backup_file = output_file.with_suffix(output_file.suffix + ".bak")
+        try:
+            shutil.copy2(output_file, backup_file)
+            logger.debug(f"Created backup at {backup_file}")
+        except Exception as e:
+            logger.warning(f"Failed to create backup: {e}")
+
+    # Write to temporary file first
+    temp_file = output_file.with_suffix(output_file.suffix + ".tmp")
+    try:
+        with temp_file.open("w") as fd:
+            json.dump(devices, fd, indent=2, ensure_ascii=False)
+
+        # Verify the temp file is valid JSON
+        with temp_file.open("r") as fd:
+            json.load(fd)
+
+        # Atomically replace the output file
+        temp_file.replace(output_file)
+        logger.info(f"Successfully saved {len(devices)} devices to {output_file}")
+
+    except Exception as e:
+        logger.error(f"Failed to save devices to {output_file}: {e}")
+        # Clean up temp file if it exists
+        if temp_file.exists():
+            temp_file.unlink()
+        raise
+
+
+def main() -> None:
+    """Main entry point for IDF device collection."""
+    try:
+        logger.info("Starting IDF device collection")
+        idf_devices = get_idf_devices()
+        save_devices_atomic(OUTPUT, idf_devices)
+        logger.info("IDF device collection completed successfully")
+
+    except KeyboardInterrupt:
+        logger.info("Collection interrupted by user")
+        sys.exit(0)
+    except Exception as e:
+        logger.error(f"Collection failed: {e}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
-    idfs = get_devs()
-    with open(OUTPUT, "w") as fd:
-        json.dump(idfs, fd, indent=2)
+    main()
