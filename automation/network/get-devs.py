@@ -24,181 +24,478 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-from builtins import range
+"""Network device reachability monitor with Webex alerting.
+
+This script monitors network devices for reachability changes via ICMP ping
+and sends alerts to Webex Teams when devices become unreachable or recover.
+"""
+
+import json
+import logging
+import re
+import shutil
+import socket
+import sys
+import time
+from dataclasses import dataclass, field
+from enum import Enum
+from multiprocessing import Pool
+from multiprocessing.pool import Pool as PoolType
+from pathlib import Path
+from subprocess import DEVNULL, run
+from typing import TypedDict
+
 import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning  # type: ignore
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-import json
-import time
-import os
-from subprocess import call
-from sparker import Sparker, MessageType  # type: ignore
-import re
-from multiprocessing import Pool
-import socket
+
 import CLEUCreds  # type: ignore
 from cleu.config import Config as C  # type: ignore
+from sparker import MessageType, Sparker  # type: ignore
 
-CACHE_FILE = "/home/jclarke/cached_devs.dat"
-PING_DEVS_FILE = "/home/jclarke/ping-devs.json"
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)],
+)
+logger = logging.getLogger(__name__)
 
-MESSAGES = {
-    "BAD": {"msg": "Pinger detected that device %s (IP: %s)%s is no longer reachable", "type": MessageType.BAD},
-    "GOOD": {"msg": "Pinger has detected that device %s (IP: %s)%s is now reachable again", "type": MessageType.GOOD},
-}
-
+CACHE_FILE = Path("/home/jclarke/cached_devs.dat")
+PING_DEVS_FILE = Path("/home/jclarke/ping-devs.json")
 ROOM_NAME = "Device Alarms"
-
-excluded_devices = [r"^VHS-"]
-
-additional_devices = []
+FPING_PATH = "/usr/local/sbin/fping"
 
 
-def check_prev(dev_dic, prev_devs, pstate="REACHABLE", isv6=False):
-    send_msg = False
-    prop = "reachability"
-    if isv6:
-        prop += "_v6"
-    for pd in prev_devs:
-        if pd["name"] == dev_dic["name"]:
-            if prop in pd and pd[prop] != pstate:
-                send_msg = True
-            break
-    return send_msg
+class ReachabilityState(str, Enum):
+    """Device reachability states."""
+
+    REACHABLE = "REACHABLE"
+    UNREACHABLE = "UNREACHABLE"
 
 
-def know_device(dev_dic, prev_devs):
-    for pd in prev_devs:
-        if pd["name"] == dev_dic["name"]:
-            return True
+class DeviceDict(TypedDict, total=False):
+    """Type definition for device dictionary."""
 
-    return False
+    name: str
+    ip: str
+    ipv6: str
+    reachability: str
+    reachability_v6: str
 
 
-def ping_device(dev):
-    global ROOM_NAME, MESSAGES, prev_devs, spark, excluded_devices
+class MessageTemplate(TypedDict):
+    """Type definition for message template."""
 
-    dev_dic = {}
+    msg: str
+    type: MessageType
 
-    dev_dic["name"] = dev["Hostname"]
-    dev_dic["ip"] = dev["IPAddress"]
-    if dev_dic["ip"] == "0.0.0.0":
-        return None
-    for exc in excluded_devices:
-        if re.search(exc, dev_dic["name"]) or re.search(exc, dev_dic["ip"]):
+
+@dataclass
+class DeviceMonitorConfig:
+    """Configuration for device monitoring."""
+
+    cache_file: Path
+    ping_devs_file: Path
+    room_name: str
+    fping_path: str
+    excluded_patterns: list[str] = field(default_factory=lambda: [r"^VHS-"])
+    ping_retries: int = 2
+    ping_retry_delay: float = 0.5
+
+    messages: dict[str, MessageTemplate] = field(
+        default_factory=lambda: {
+            "BAD": {
+                "msg": "Pinger detected that device {name} (IP: {ip}){location} is no longer reachable",
+                "type": MessageType.BAD,
+            },
+            "GOOD": {
+                "msg": "Pinger has detected that device {name} (IP: {ip}){location} is now reachable again",
+                "type": MessageType.GOOD,
+            },
+        }
+    )
+
+
+@dataclass
+class DeviceMonitor:
+    """Monitors network device reachability."""
+
+    config: DeviceMonitorConfig
+    spark: Sparker
+    previous_devices: list[DeviceDict] = field(default_factory=list)
+    additional_devices: list[str] = field(default_factory=list)
+
+    @staticmethod
+    def _check_state_changed(
+        device: DeviceDict,
+        prev_devices: list[DeviceDict],
+        current_state: ReachabilityState,
+        is_ipv6: bool = False,
+    ) -> bool:
+        """Check if device reachability state changed from previous run.
+
+        Args:
+            device: Current device information
+            prev_devices: List of devices from previous run
+            current_state: Current reachability state
+            is_ipv6: Whether checking IPv6 reachability
+
+        Returns:
+            True if state changed and message should be sent
+        """
+        prop = "reachability_v6" if is_ipv6 else "reachability"
+
+        for prev_dev in prev_devices:
+            if prev_dev["name"] == device["name"]:
+                return prop in prev_dev and prev_dev[prop] != current_state.value
+
+        return False
+
+    @staticmethod
+    def _is_known_device(device: DeviceDict, prev_devices: list[DeviceDict]) -> bool:
+        """Check if device was seen in previous run.
+
+        Args:
+            device: Device to check
+            prev_devices: List of devices from previous run
+
+        Returns:
+            True if device was previously known
+        """
+        return any(pd["name"] == device["name"] for pd in prev_devices)
+
+    def _ping_host(self, host: str) -> bool:
+        """Ping a host and return reachability status.
+
+        Args:
+            host: IP address or hostname to ping
+
+        Returns:
+            True if host is reachable
+        """
+        for attempt in range(self.config.ping_retries):
+            result = run(
+                [self.config.fping_path, "-q", "-r0", host],
+                stdout=DEVNULL,
+                stderr=DEVNULL,
+                timeout=5,
+            )
+
+            if result.returncode == 0:
+                return True
+
+            if attempt < self.config.ping_retries - 1:
+                time.sleep(self.config.ping_retry_delay)
+
+        return False
+
+    def _should_exclude_device(self, name: str, ip: str) -> bool:
+        """Check if device should be excluded from monitoring.
+
+        Args:
+            name: Device name
+            ip: Device IP address
+
+        Returns:
+            True if device should be excluded
+        """
+        return any(re.search(pattern, name) or re.search(pattern, ip) for pattern in self.config.excluded_patterns)
+
+    def _send_alert(
+        self,
+        device_name: str,
+        ip_address: str,
+        location: str,
+        is_reachable: bool,
+    ) -> None:
+        """Send Webex Teams alert for device state change.
+
+        Args:
+            device_name: Name of the device
+            ip_address: IP address of the device
+            location: Location information
+            is_reachable: Current reachability state
+        """
+        msg_key = "GOOD" if is_reachable else "BAD"
+        template = self.config.messages[msg_key]
+
+        message = template["msg"].format(
+            name=device_name,
+            ip=ip_address,
+            location=location,
+        )
+
+        try:
+            self.spark.post_to_spark(
+                C.WEBEX_TEAM,
+                self.config.room_name,
+                message,
+                template["type"],
+            )
+        except Exception as e:
+            logger.error(f"Failed to send alert for {device_name}: {e}")
+
+    def ping_device(self, dev: dict[str, str]) -> DeviceDict | None:
+        """Ping a device and check reachability, sending alerts on state changes.
+
+        Args:
+            dev: Device information dictionary
+
+        Returns:
+            Device dictionary with reachability status, or None if excluded
+        """
+        device: DeviceDict = {
+            "name": dev["Hostname"],
+            "ip": dev["IPAddress"],
+        }
+
+        # Skip invalid or excluded devices
+        if device["ip"] == "0.0.0.0":
             return None
-    # print('Pinging {}'.format(dev_dic['name']))
-    msg_tag = "BAD"
-    msg_tag_v6 = "BAD"
-    send_msg = True
-    send_msg_v6 = True
-    if not dev["Reachable"]:
-        send_msg = know_device(dev_dic, prev_devs)
-    if "Reachable_v6" in dev and not dev["Reachable_v6"]:
-        send_msg_v6 = know_device(dev_dic, prev_devs)
-    for _ in range(2):
-        res = call(["/usr/local/sbin/fping", "-q", "-r0", dev_dic["ip"]])
-        if res == 0:
-            break
 
-        time.sleep(0.5)
-    if res != 0:
-        dev_dic["reachability"] = "UNREACHABLE"
-        send_msg = check_prev(dev_dic, prev_devs, "UNREACHABLE")
-    else:
-        dev_dic["reachability"] = "REACHABLE"
-        msg_tag = "GOOD"
-        send_msg = check_prev(dev_dic, prev_devs)
+        if self._should_exclude_device(device["name"], device["ip"]):
+            return None
 
-    if "IPv6Address" in dev:
-        dev_dic["ipv6"] = dev["IPv6Address"]
-        for _ in range(2):
-            res = call(["/usr/local/sbin/fping", "-q", "-r0", dev_dic["ipv6"]])
-            if res == 0:
-                break
+        location = f" (Location: {dev['LocationDetail']})" if "LocationDetail" in dev else ""
 
-            time.sleep(0.5)
+        # Check IPv4 reachability
+        is_reachable = self._ping_host(device["ip"])
+        device["reachability"] = ReachabilityState.REACHABLE.value if is_reachable else ReachabilityState.UNREACHABLE.value
 
-        if res != 0:
-            dev_dic["reachability_v6"] = "UNREACHABLE"
-            send_msg_v6 = check_prev(dev_dic, prev_devs, "UNREACHABLE", True)
+        # Determine if we should send IPv4 alert
+        if is_reachable:
+            should_alert = self._check_state_changed(device, self.previous_devices, ReachabilityState.REACHABLE)
         else:
-            dev_dic["reachability_v6"] = "REACHABLE"
-            msg_tag_v6 = "GOOD"
-            send_msg_v6 = check_prev(dev_dic, prev_devs, "REACHABLE", True)
+            should_alert = self._is_known_device(device, self.previous_devices)
 
-    loc = ""
-    if send_msg:
-        if "LocationDetail" in dev:
-            loc = " (Location: {})".format(dev["LocationDetail"])
-        message = MESSAGES[msg_tag]["msg"] % (dev_dic["name"], dev_dic["ip"], loc)
-        spark.post_to_spark(C.WEBEX_TEAM, ROOM_NAME, message, MESSAGES[msg_tag]["type"])
+        if should_alert:
+            self._send_alert(device["name"], device["ip"], location, is_reachable)
 
-    if send_msg_v6 and "ipv6" in dev_dic:
-        if loc == "":
-            if "LocationDetail" in dev:
-                loc = " (Location: {})".format(dev["LocationDetail"])
-        message = MESSAGES[msg_tag_v6]["msg"] % (dev_dic["name"], dev_dic["ipv6"], loc)
-        spark.post_to_spark(C.WEBEX_TEAM, ROOM_NAME, message, MESSAGES[msg_tag_v6]["type"])
+        # Check IPv6 reachability if available
+        if "IPv6Address" in dev:
+            device["ipv6"] = dev["IPv6Address"]
+            is_reachable_v6 = self._ping_host(device["ipv6"])
+            device["reachability_v6"] = ReachabilityState.REACHABLE.value if is_reachable_v6 else ReachabilityState.UNREACHABLE.value
 
-    return dev_dic
-
-
-def get_devs(p):
-    global additional_devices
-
-    # url = "http://{}/get/switches/json".format(C.TOOL)
-
-    devices = []
-    #    response = requests.request('GET', url)
-    code = 200
-    #   code = response.status_code
-    if code == 200:
-        # j = json.loads(response.text)
-        j = []
-
-        for dev in additional_devices:
-            ip = dev
-            try:
-                ip = socket.gethostbyname(dev)
-                addr_info = socket.getaddrinfo(dev, 0)
-            except Exception as e:
-                spark.post_to_spark(C.WEBEX_TEAM, ROOM_NAME, "Failed to resolve {}: {}".format(dev, e), MessageType.WARNING)
-                continue
+            # Determine if we should send IPv6 alert
+            if is_reachable_v6:
+                should_alert_v6 = self._check_state_changed(device, self.previous_devices, ReachabilityState.REACHABLE, is_ipv6=True)
             else:
-                drec = {"Hostname": dev, "IPAddress": ip, "Reachable": True}
-                v6_addrs = list(filter(lambda x: x[0] == socket.AF_INET6, addr_info))
-                if len(v6_addrs) > 0:
-                    drec["IPv6Address"] = v6_addrs[0][4][0]
-                    drec["Reachable_v6"] = True
+                should_alert_v6 = self._is_known_device(device, self.previous_devices)
 
-                j.append(drec)
+            if should_alert_v6:
+                self._send_alert(device["name"], device["ipv6"], location, is_reachable_v6)
 
-        results = [p.apply_async(ping_device, [d]) for d in j]
-        for res in results:
-            retval = res.get()
-            if retval:
-                devices.append(retval)
+        return device
 
-    return devices
+    def _resolve_device(self, hostname: str) -> dict[str, str] | None:
+        """Resolve device hostname to IP addresses.
+
+        Args:
+            hostname: Hostname to resolve
+
+        Returns:
+            Device record with IP addresses, or None if resolution failed
+        """
+        try:
+            ipv4 = socket.gethostbyname(hostname)
+            addr_info = socket.getaddrinfo(hostname, 0)
+
+            device_rec = {
+                "Hostname": hostname,
+                "IPAddress": ipv4,
+                "Reachable": True,
+            }
+
+            # Extract IPv6 addresses if available
+            if v6_addrs := [addr for addr in addr_info if addr[0] == socket.AF_INET6]:
+                device_rec["IPv6Address"] = v6_addrs[0][4][0]
+                device_rec["Reachable_v6"] = True
+
+            return device_rec
+
+        except Exception as e:
+            logger.error(f"Failed to resolve {hostname}: {e}")
+            try:
+                self.spark.post_to_spark(
+                    C.WEBEX_TEAM,
+                    self.config.room_name,
+                    f"Failed to resolve {hostname}: {e}",
+                    MessageType.WARNING,
+                )
+            except Exception as alert_error:
+                logger.error(f"Failed to send resolution failure alert: {alert_error}")
+
+            return None
+
+    def get_devices(self, pool: PoolType) -> list[DeviceDict]:
+        """Get all devices and check their reachability.
+
+        Args:
+            pool: Multiprocessing Pool for parallel pinging
+
+        Returns:
+            List of devices with reachability status
+        """
+        devices: list[DeviceDict] = []
+        device_records: list[dict[str, str]] = []
+
+        # Resolve all additional devices
+        for hostname in self.additional_devices:
+            if device_rec := self._resolve_device(hostname):
+                device_records.append(device_rec)
+
+        # Ping all devices in parallel
+        if device_records:
+            results = [pool.apply_async(self.ping_device, [dev]) for dev in device_records]
+
+            for result in results:
+                try:
+                    if device := result.get(timeout=60):
+                        devices.append(device)
+                except Exception as e:
+                    logger.error(f"Error getting ping result: {e}")
+
+        return devices
+
+
+def load_cache(cache_file: Path) -> list[DeviceDict]:
+    """Load previous device states from cache file.
+
+    Args:
+        cache_file: Path to cache file
+
+    Returns:
+        List of previously cached devices
+    """
+    if not cache_file.exists():
+        logger.info(f"Cache file {cache_file} does not exist, starting fresh")
+        return []
+
+    try:
+        with cache_file.open("r") as fd:
+            devices = json.load(fd)
+            logger.info(f"Loaded {len(devices)} devices from cache")
+            return devices
+    except Exception as e:
+        logger.error(f"Failed to load cache file {cache_file}: {e}")
+        return []
+
+
+def save_cache_atomic(cache_file: Path, devices: list[DeviceDict]) -> None:
+    """Save device states to cache file atomically to prevent truncation.
+
+    Uses atomic write pattern: write to temp file, then replace original.
+    Creates backup before replacement.
+
+    Args:
+        cache_file: Path to cache file
+        devices: List of devices to save
+    """
+    # Ensure parent directory exists
+    cache_file.parent.mkdir(parents=True, exist_ok=True)
+
+    # Create backup of existing cache if it exists
+    if cache_file.exists():
+        backup_file = cache_file.with_suffix(cache_file.suffix + ".bak")
+        try:
+            shutil.copy2(cache_file, backup_file)
+            logger.debug(f"Created backup at {backup_file}")
+        except Exception as e:
+            logger.warning(f"Failed to create backup: {e}")
+
+    # Write to temporary file first
+    temp_file = cache_file.with_suffix(cache_file.suffix + ".tmp")
+    try:
+        with temp_file.open("w") as fd:
+            json.dump(devices, fd, ensure_ascii=False, indent=4)
+
+        # Verify the temp file is valid JSON
+        with temp_file.open("r") as fd:
+            json.load(fd)
+
+        # Atomically replace the cache file
+        temp_file.replace(cache_file)
+        logger.info(f"Successfully saved {len(devices)} devices to cache")
+
+    except Exception as e:
+        logger.error(f"Failed to save cache file {cache_file}: {e}")
+        # Clean up temp file if it exists
+        if temp_file.exists():
+            temp_file.unlink()
+        raise
+
+
+def load_additional_devices(ping_devs_file: Path) -> list[str]:
+    """Load additional devices to monitor from configuration file.
+
+    Args:
+        ping_devs_file: Path to JSON file with device list
+
+    Returns:
+        List of device hostnames
+    """
+    if not ping_devs_file.exists():
+        logger.warning(f"Additional devices file {ping_devs_file} does not exist")
+        return []
+
+    try:
+        with ping_devs_file.open("r") as fd:
+            devices = json.load(fd)
+            logger.info(f"Loaded {len(devices)} additional devices to monitor")
+            return devices
+    except Exception as e:
+        logger.error(f"Failed to load additional devices from {ping_devs_file}: {e}")
+        return []
+
+
+def main() -> None:
+    """Main entry point for device reachability monitoring."""
+    logger.info("Starting device reachability monitor")
+
+    # Load configuration
+    config = DeviceMonitorConfig(
+        cache_file=CACHE_FILE,
+        ping_devs_file=PING_DEVS_FILE,
+        room_name=ROOM_NAME,
+        fping_path=FPING_PATH,
+    )
+
+    # Load previous device states
+    prev_devices = load_cache(config.cache_file)
+
+    # Initialize Sparker
+    spark = Sparker(token=CLEUCreds.SPARK_TOKEN)
+
+    # Load additional devices to monitor
+    additional_devices = load_additional_devices(config.ping_devs_file)
+
+    # Create monitor instance
+    monitor = DeviceMonitor(
+        config=config,
+        spark=spark,
+        previous_devices=prev_devices,
+        additional_devices=additional_devices,
+    )
+
+    # Monitor devices
+    try:
+        with Pool(20) as pool:
+            devices = monitor.get_devices(pool)
+
+        # Save results atomically
+        save_cache_atomic(config.cache_file, devices)
+        logger.info(f"Monitoring completed successfully for {len(devices)} devices")
+
+    except KeyboardInterrupt:
+        logger.info("Monitoring interrupted by user")
+        sys.exit(0)
+    except Exception as e:
+        logger.error(f"Monitoring failed: {e}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
-    prev_devs = []
-    if os.path.exists(CACHE_FILE):
-        with open(CACHE_FILE, "r") as fd:
-            prev_devs = json.load(fd)
-
-    spark = Sparker(token=CLEUCreds.SPARK_TOKEN)
-
-    try:
-        with open(PING_DEVS_FILE, "r") as fd:
-            additional_devices = json.load(fd)
-    except Exception:
-        pass
-
-    pool = Pool(20)
-    devs = get_devs(pool)
-    with open(CACHE_FILE, "w") as fd:
-        json.dump(devs, fd, ensure_ascii=False, indent=4)
+    main()
