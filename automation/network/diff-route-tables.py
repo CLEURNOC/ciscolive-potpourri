@@ -257,6 +257,15 @@ def commit_to_git(
     try:
         # Copy file to git repo
         git_file = git_repo / file_path.with_suffix(".txt").name
+
+        # Check if file already exists in git repo with same content
+        if git_file.exists():
+            # Compare content to avoid unnecessary commits
+            with file_path.open("r") as f1, git_file.open("r") as f2:
+                if f1.read() == f2.read():
+                    logger.debug(f"No changes to commit for {git_file.name}")
+                    return False
+
         shutil.copyfile(file_path, git_file)
 
         # Git add and commit
@@ -375,6 +384,12 @@ def process_router(
             config.cache_dir,
         )
 
+        # Commit to git if configured (always commit first time, notify only on changes)
+        if config.git_repo:
+            prev_path = config.cache_dir / f"{command.name}-{router}.prev"
+            if commit_to_git(prev_path, config.git_repo):
+                git_commits = True
+
         if changed:
             logger.info(f"Detected changes in {command.name} on {router}")
 
@@ -390,12 +405,6 @@ def process_router(
                     time.sleep(1)  # Rate limiting
                 except Exception as e:
                     logger.error(f"Failed to send Webex notification: {e}")
-
-            # Commit to git if configured
-            if config.git_repo:
-                prev_path = config.cache_dir / f"{command.name}-{router}.prev"
-                if commit_to_git(prev_path, config.git_repo):
-                    git_commits = True
 
     return git_commits
 
