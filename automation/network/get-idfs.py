@@ -27,7 +27,8 @@
 """IDF Device Collector.
 
 This script retrieves IDF (Intermediate Distribution Frame) devices from the Tool
-API and saves them to a JSON file for use by other automation scripts.
+API, saves them in JSON and Rancid router.db formats, and sends Webex notifications
+when the IDF list changes.
 """
 
 import json
@@ -38,7 +39,10 @@ import sys
 from pathlib import Path
 
 import requests
+
+import CLEUCreds  # type: ignore
 from cleu.config import Config as C  # type: ignore
+from sparker import Sparker  # type: ignore
 
 # Configure logging
 logging.basicConfig(
@@ -48,15 +52,34 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-OUTPUT = Path("/home/jclarke/idf-devices.json")
+OUTPUT_JSON = Path("/home/jclarke/idf-devices.json")
+OUTPUT_RANCID = Path("/home/jclarke/idf-devices.db")
 IDF_PATTERN = re.compile(r"[xX]\d+-")
+NOTIFICATION_EMAIL = "jclarke@cisco.com"
+
+
+def extract_idf_name(hostname: str) -> str | None:
+    """Extract IDF name from hostname (first two dash-separated components).
+
+    Example: H01-X013-S0696 -> H01-X013
+
+    Args:
+        hostname: Full device hostname
+
+    Returns:
+        IDF name (first two components) or None if invalid format
+    """
+    parts = hostname.split("-")
+    if len(parts) >= 2:
+        return f"{parts[0]}-{parts[1]}"
+    return None
 
 
 def get_idf_devices() -> list[str]:
     """Retrieve IDF device hostnames from Tool API.
 
     Returns:
-        List of IDF device hostnames that are reachable with valid IP addresses
+        List of unique IDF names (first two dash-separated components)
     """
     url = f"http://{C.TOOL}/get/switches/json"
 
@@ -65,7 +88,7 @@ def get_idf_devices() -> list[str]:
         response.raise_for_status()
 
         devices = response.json()
-        idf_devices: list[str] = []
+        idf_names: set[str] = set()
 
         for device in devices:
             # Skip devices without valid IP or that are unreachable
@@ -75,10 +98,13 @@ def get_idf_devices() -> list[str]:
             # Only include IDF devices (match pattern like X1-, X2-, x10-, etc.)
             if hostname := device.get("Hostname"):
                 if IDF_PATTERN.search(hostname):
-                    idf_devices.append(hostname)
+                    # Extract first two components (e.g., H01-X013)
+                    if idf_name := extract_idf_name(hostname):
+                        idf_names.add(idf_name)
 
-        logger.info(f"Retrieved {len(idf_devices)} IDF devices from Tool API")
-        return idf_devices
+        idf_list = sorted(idf_names)
+        logger.info(f"Retrieved {len(idf_list)} unique IDF devices from Tool API")
+        return idf_list
 
     except requests.RequestException as e:
         logger.error(f"Failed to retrieve devices from Tool API: {e}")
@@ -132,12 +158,147 @@ def save_devices_atomic(output_file: Path, devices: list[str]) -> None:
         raise
 
 
+def save_rancid_format_atomic(output_file: Path, devices: list[str]) -> None:
+    """Save device list in Rancid router.db format atomically.
+
+    Rancid router.db format: hostname;device_type;state
+    Example: switch01;cisco;up
+
+    Args:
+        output_file: Path to output Rancid format file
+        devices: List of device hostnames to save
+    """
+    # Ensure parent directory exists
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+
+    # Create backup of existing file if it exists
+    if output_file.exists():
+        backup_file = output_file.with_suffix(output_file.suffix + ".bak")
+        try:
+            shutil.copy2(output_file, backup_file)
+            logger.debug(f"Created backup at {backup_file}")
+        except Exception as e:
+            logger.warning(f"Failed to create backup: {e}")
+
+    # Write to temporary file first
+    temp_file = output_file.with_suffix(output_file.suffix + ".tmp")
+    try:
+        with temp_file.open("w") as fd:
+            for device in sorted(devices):
+                # Rancid format: hostname;device_type;state
+                fd.write(f"{device};cisco;up\n")
+
+        # Atomically replace the output file
+        temp_file.replace(output_file)
+        logger.info(f"Successfully saved {len(devices)} devices to {output_file} in Rancid format")
+
+    except Exception as e:
+        logger.error(f"Failed to save Rancid format to {output_file}: {e}")
+        # Clean up temp file if it exists
+        if temp_file.exists():
+            temp_file.unlink()
+        raise
+
+
+def load_previous_devices(json_file: Path) -> set[str]:
+    """Load previous device list from JSON file.
+
+    Args:
+        json_file: Path to JSON file with previous device list
+
+    Returns:
+        Set of device hostnames from previous run, empty set if file doesn't exist
+    """
+    if not json_file.exists():
+        return set()
+
+    try:
+        with json_file.open("r") as fd:
+            devices = json.load(fd)
+            return set(devices)
+    except Exception as e:
+        logger.warning(f"Failed to load previous devices: {e}")
+        return set()
+
+
+def send_change_notification(
+    spark: Sparker,
+    added: set[str],
+    removed: set[str],
+    total: int,
+) -> None:
+    """Send Webex notification about IDF list changes.
+
+    Args:
+        spark: Sparker instance for sending messages
+        added: Set of newly added devices
+        removed: Set of removed devices
+        total: Total number of devices in current list
+    """
+    if not added and not removed:
+        return
+
+    message_parts = ["**IDF Device List Change Detected**\n"]
+    message_parts.append(f"Total IDF devices: **{total}**\n")
+
+    if added:
+        message_parts.append(f"\n**Added ({len(added)}):**")
+        for device in sorted(added):
+            message_parts.append(f"- {device}")
+
+    if removed:
+        message_parts.append(f"\n**Removed ({len(removed)}):**")
+        for device in sorted(removed):
+            message_parts.append(f"- {device}")
+
+    message = "\n".join(message_parts)
+
+    try:
+        spark.post_to_spark(
+            team=None,
+            room=None,
+            msg=message,
+            person=NOTIFICATION_EMAIL,
+        )
+        logger.info(f"Sent change notification to {NOTIFICATION_EMAIL}")
+    except Exception as e:
+        logger.error(f"Failed to send Webex notification: {e}")
+
+
 def main() -> None:
     """Main entry point for IDF device collection."""
     try:
         logger.info("Starting IDF device collection")
+
+        # Load previous device list
+        previous_devices = load_previous_devices(OUTPUT_JSON)
+
+        # Get current IDF devices
         idf_devices = get_idf_devices()
-        save_devices_atomic(OUTPUT, idf_devices)
+        current_devices = set(idf_devices)
+
+        # Detect changes
+        added_devices = current_devices - previous_devices
+        removed_devices = previous_devices - current_devices
+
+        if added_devices or removed_devices:
+            logger.info(f"Device list changed: {len(added_devices)} added, " f"{len(removed_devices)} removed")
+
+            # Send Webex notification
+            spark = Sparker(token=CLEUCreds.SPARK_TOKEN)
+            send_change_notification(
+                spark,
+                added_devices,
+                removed_devices,
+                len(idf_devices),
+            )
+        else:
+            logger.info("No changes detected in IDF device list")
+
+        # Save outputs
+        save_devices_atomic(OUTPUT_JSON, idf_devices)
+        save_rancid_format_atomic(OUTPUT_RANCID, idf_devices)
+
         logger.info("IDF device collection completed successfully")
 
     except KeyboardInterrupt:
