@@ -83,6 +83,7 @@ class DeviceDict(TypedDict, total=False):
     ipv6: str
     reachability: str
     reachability_v6: str
+    alerts: list[tuple[str, MessageType]]
 
 
 class MessageTemplate(TypedDict):
@@ -126,6 +127,18 @@ class DeviceMonitor:
     spark: Sparker
     previous_devices: list[DeviceDict] = field(default_factory=list)
     additional_devices: list[str] = field(default_factory=list)
+
+    def __getstate__(self) -> dict:
+        """Prepare object for pickling by excluding Sparker instance."""
+        state = self.__dict__.copy()
+        # Remove the unpicklable Sparker instance
+        state["spark"] = None
+        return state
+
+    def __setstate__(self, state: dict) -> None:
+        """Restore object after unpickling."""
+        self.__dict__.update(state)
+        # Sparker will be None in worker processes, which is fine since we collect alerts
 
     @staticmethod
     def _check_state_changed(
@@ -203,20 +216,23 @@ class DeviceMonitor:
         """
         return any(re.search(pattern, name) or re.search(pattern, ip) for pattern in self.config.excluded_patterns)
 
-    def _send_alert(
+    def _create_alert(
         self,
         device_name: str,
         ip_address: str,
         location: str,
         is_reachable: bool,
-    ) -> None:
-        """Send Webex Teams alert for device state change.
+    ) -> tuple[str, MessageType]:
+        """Create alert message for device state change.
 
         Args:
             device_name: Name of the device
             ip_address: IP address of the device
             location: Location information
             is_reachable: Current reachability state
+
+        Returns:
+            Tuple of (message, message_type)
         """
         msg_key = "GOOD" if is_reachable else "BAD"
         template = self.config.messages[msg_key]
@@ -227,28 +243,21 @@ class DeviceMonitor:
             location=location,
         )
 
-        try:
-            self.spark.post_to_spark(
-                C.WEBEX_TEAM,
-                self.config.room_name,
-                message,
-                template["type"],
-            )
-        except Exception as e:
-            logger.error(f"Failed to send alert for {device_name}: {e}")
+        return (message, template["type"])
 
     def ping_device(self, dev: dict[str, str]) -> DeviceDict | None:
-        """Ping a device and check reachability, sending alerts on state changes.
+        """Ping a device and check reachability, collecting alerts for later sending.
 
         Args:
             dev: Device information dictionary
 
         Returns:
-            Device dictionary with reachability status, or None if excluded
+            Device dictionary with reachability status and alerts, or None if excluded
         """
         device: DeviceDict = {
             "name": dev["Hostname"],
             "ip": dev["IPAddress"],
+            "alerts": [],
         }
 
         # Skip invalid or excluded devices
@@ -264,14 +273,15 @@ class DeviceMonitor:
         is_reachable = self._ping_host(device["ip"])
         device["reachability"] = ReachabilityState.REACHABLE.value if is_reachable else ReachabilityState.UNREACHABLE.value
 
-        # Determine if we should send IPv4 alert
+        # Determine if we should create IPv4 alert
         if is_reachable:
             should_alert = self._check_state_changed(device, self.previous_devices, ReachabilityState.REACHABLE)
         else:
             should_alert = self._is_known_device(device, self.previous_devices)
 
         if should_alert:
-            self._send_alert(device["name"], device["ip"], location, is_reachable)
+            alert = self._create_alert(device["name"], device["ip"], location, is_reachable)
+            device["alerts"].append(alert)
 
         # Check IPv6 reachability if available
         if "IPv6Address" in dev:
@@ -279,25 +289,26 @@ class DeviceMonitor:
             is_reachable_v6 = self._ping_host(device["ipv6"])
             device["reachability_v6"] = ReachabilityState.REACHABLE.value if is_reachable_v6 else ReachabilityState.UNREACHABLE.value
 
-            # Determine if we should send IPv6 alert
+            # Determine if we should create IPv6 alert
             if is_reachable_v6:
                 should_alert_v6 = self._check_state_changed(device, self.previous_devices, ReachabilityState.REACHABLE, is_ipv6=True)
             else:
                 should_alert_v6 = self._is_known_device(device, self.previous_devices)
 
             if should_alert_v6:
-                self._send_alert(device["name"], device["ipv6"], location, is_reachable_v6)
+                alert_v6 = self._create_alert(device["name"], device["ipv6"], location, is_reachable_v6)
+                device["alerts"].append(alert_v6)
 
         return device
 
-    def _resolve_device(self, hostname: str) -> dict[str, str] | None:
+    def _resolve_device(self, hostname: str) -> tuple[dict[str, str] | None, str | None]:
         """Resolve device hostname to IP addresses.
 
         Args:
             hostname: Hostname to resolve
 
         Returns:
-            Device record with IP addresses, or None if resolution failed
+            Tuple of (device record with IP addresses, error message if resolution failed)
         """
         try:
             ipv4 = socket.gethostbyname(hostname)
@@ -314,38 +325,33 @@ class DeviceMonitor:
                 device_rec["IPv6Address"] = v6_addrs[0][4][0]
                 device_rec["Reachable_v6"] = True
 
-            return device_rec
+            return (device_rec, None)
 
         except Exception as e:
-            logger.error(f"Failed to resolve {hostname}: {e}")
-            try:
-                self.spark.post_to_spark(
-                    C.WEBEX_TEAM,
-                    self.config.room_name,
-                    f"Failed to resolve {hostname}: {e}",
-                    MessageType.WARNING,
-                )
-            except Exception as alert_error:
-                logger.error(f"Failed to send resolution failure alert: {alert_error}")
+            error_msg = f"Failed to resolve {hostname}: {e}"
+            logger.error(error_msg)
+            return (None, error_msg)
 
-            return None
-
-    def get_devices(self, pool: PoolType) -> list[DeviceDict]:
+    def get_devices(self, pool: PoolType) -> tuple[list[DeviceDict], list[str]]:
         """Get all devices and check their reachability.
 
         Args:
             pool: Multiprocessing Pool for parallel pinging
 
         Returns:
-            List of devices with reachability status
+            Tuple of (devices with reachability status, list of error messages)
         """
         devices: list[DeviceDict] = []
         device_records: list[dict[str, str]] = []
+        errors: list[str] = []
 
         # Resolve all additional devices
         for hostname in self.additional_devices:
-            if device_rec := self._resolve_device(hostname):
+            device_rec, error = self._resolve_device(hostname)
+            if device_rec:
                 device_records.append(device_rec)
+            elif error:
+                errors.append(error)
 
         # Ping all devices in parallel
         if device_records:
@@ -356,9 +362,11 @@ class DeviceMonitor:
                     if device := result.get(timeout=60):
                         devices.append(device)
                 except Exception as e:
-                    logger.error(f"Error getting ping result: {e}")
+                    error_msg = f"Error getting ping result: {e}"
+                    logger.error(error_msg)
+                    errors.append(error_msg)
 
-        return devices
+        return (devices, errors)
 
 
 def load_cache(cache_file: Path) -> list[DeviceDict]:
@@ -483,11 +491,48 @@ def main() -> None:
     # Monitor devices
     try:
         with Pool(20) as pool:
-            devices = monitor.get_devices(pool)
+            devices, errors = monitor.get_devices(pool)
+
+        # Send all alerts from main process
+        alert_count = 0
+        for device in devices:
+            if "alerts" in device and device["alerts"]:
+                for message, msg_type in device["alerts"]:
+                    try:
+                        spark.post_to_spark(
+                            C.WEBEX_TEAM,
+                            config.room_name,
+                            message,
+                            msg_type,
+                        )
+                        alert_count += 1
+                    except Exception as e:
+                        logger.error(f"Failed to send alert: {e}")
+
+        # Send error alerts
+        for error in errors:
+            try:
+                spark.post_to_spark(
+                    C.WEBEX_TEAM,
+                    config.room_name,
+                    error,
+                    MessageType.WARNING,
+                )
+            except Exception as e:
+                logger.error(f"Failed to send error alert: {e}")
+
+        # Remove alerts from devices before caching (not needed in cache)
+        devices_to_cache = []
+        for device in devices:
+            device_copy = device.copy()
+            device_copy.pop("alerts", None)
+            devices_to_cache.append(device_copy)
 
         # Save results atomically
-        save_cache_atomic(config.cache_file, devices)
-        logger.info(f"Monitoring completed successfully for {len(devices)} devices")
+        save_cache_atomic(config.cache_file, devices_to_cache)
+        logger.info(
+            f"Monitoring completed successfully: {len(devices)} devices checked, " f"{alert_count} alerts sent, {len(errors)} errors"
+        )
 
     except KeyboardInterrupt:
         logger.info("Monitoring interrupted by user")
