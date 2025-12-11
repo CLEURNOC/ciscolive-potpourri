@@ -399,7 +399,7 @@ def process_router(
                     spark.post_to_spark(
                         C.WEBEX_TEAM,
                         config.webex_room,
-                        f"Routing table diff ({command.command}) on **{router}**:\n```\n{diff_output}\n```",
+                        f"Routing table diff ({command.command}) on **{router}**:\n```diff\n{diff_output}\n```",
                         MessageType.BAD,
                     )
                     time.sleep(1)  # Rate limiting
