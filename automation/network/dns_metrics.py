@@ -208,8 +208,8 @@ def create_app(collector: MetricsCollector) -> Flask:
 def main() -> None:
     collector = MetricsCollector.create()
     app = create_app(collector)
-    http_server = WSGIServer(("", PORT), app)
-    logger.info(f"Starting DNS Metrics Exporter on port {PORT}")
+    http_server = WSGIServer((C.WSGI_SERVER, PORT), app)
+    logger.info(f"Starting DNS Metrics Exporter on {C.WSGI_SERVER} port {PORT}")
     try:
         http_server.serve_forever()
     except KeyboardInterrupt:
