@@ -174,10 +174,11 @@ class MetricsCollector(object):
 
             self.acksPerSecond.labels(server=server).set(acks_per_second)
             self.activeLeases.labels(server=server).set(active_leases)
-            self.discovers.labels(server=server).inc(discovers)
-            self.droppedTotal.labels(server=server).inc(dropped_total)
-            self.offers.labels(server=server).inc(offers)
-            self.requests.labels(server=server).inc(requests)
+            # Set absolute counter values since API returns cumulative totals
+            self.discovers.labels(server=server)._value.set(discovers)
+            self.droppedTotal.labels(server=server)._value.set(dropped_total)
+            self.offers.labels(server=server)._value.set(offers)
+            self.requests.labels(server=server)._value.set(requests)
 
             logger.debug(
                 f"Updated metrics for {server}: "

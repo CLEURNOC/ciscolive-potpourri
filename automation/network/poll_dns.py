@@ -24,6 +24,9 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+# !!! This file is now obsolete.  Simple run dns_metrics.py to export the metrics. !!!
+
+
 import os
 import json
 import requests

@@ -24,37 +24,199 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-from flask import Flask
-from flask import Response
-import json
-from gevent.pywsgi import WSGIServer
+import logging
+import sys
+import time
+from dataclasses import dataclass
+from datetime import datetime
+from typing import ClassVar
+
+import CLEUCreds  # type: ignore
+import requests
 from cleu.config import Config as C  # type: ignore
+from flask import Flask, Response
+from gevent.pywsgi import WSGIServer  # type: ignore
+from prometheus_client import CONTENT_TYPE_LATEST, CollectorRegistry, Counter, generate_latest
+from requests.packages.urllib3.exceptions import InsecureRequestWarning  # type: ignore
 
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
-CACHE_FILE = "/home/jclarke/dns_metrics.dat"
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)],
+)
+logger = logging.getLogger(__name__)
+
+# Adjust START_TIME to the start of the event (convert datetime string to UNIX epoch milliseconds)
+START_TIME = int(datetime.fromisoformat("2025-12-11T00:00:00").timestamp() * 1000)
+
 PORT = 8093
 
-app = Flask("DNS Stats Fetcher")
+
+class UmbrellaAPI(object):
+    def __init__(self):
+        try:
+            self.access_token = self.getAccessToken()
+            if not self.access_token:
+                raise Exception("Request for access token failed")
+        except Exception as e:
+            logger.error(f"Failed to initialize UmbrellaAPI: {e}", exc_info=True)
+
+    def getAccessToken(self):
+        try:
+            payload = {}
+            rsp = requests.post(
+                "https://api.umbrella.com/auth/v2/token", data=payload, auth=(CLEUCreds.UMBRELLA_KEY, CLEUCreds.UMBRELLA_SECRET)
+            )
+            rsp.raise_for_status()
+        except Exception as e:
+            logger.error(f"Failed to get access token: {e}", exc_info=True)
+            return None
+        else:
+            clock_skew = 300
+            self.access_token_expiration = int(time.time()) + rsp.json()["expires_in"] - clock_skew
+            return rsp.json()["access_token"]
 
 
-@app.route("/metrics")
-def get_metrics():
-    global CACHE_FILE
+def refreshToken(decorated):
+    def wrapper(api, *args, **kwargs):
+        if int(time.time()) > api.access_token_expiration:
+            api.access_token = api.getAccessToken()
+        return decorated(api, *args, **kwargs)
 
-    with open(CACHE_FILE, "r") as fd:
-        macs = json.load(fd)
+    return wrapper
 
-    response = []
 
-    for line in macs:
-        line = line.rstrip()
-        if line != "":
-            response.append(line)
+@refreshToken
+def get_umbrella_activity(api: UmbrellaAPI) -> int:
+    try:
+        response = requests.get(
+            f"https://reports.api.umbrella.com/v2/organizations/{C.UMBRELLA_ORGID}/requests-by-timerange?from={START_TIME}&to=now&limit=168",
+            headers={"Authorization": f"Bearer {api.access_token}"},
+        )
+        response.raise_for_status()
+    except Exception as e:
+        logger.error("Failed to get stats: %s" % str(e), exc_info=True)
 
-    return Response("\n".join(response) + "\n", mimetype="text/plain")
+    j = response.json()
+
+    total = 0
+    for n in j["data"]:
+        total += n["count"]
+
+    return total
+
+
+@dataclass
+class MetricsCollector(object):
+    """Collects and exposes DNS server metrics."""
+
+    registry: CollectorRegistry
+    umbrella: ClassVar[UmbrellaAPI] = UmbrellaAPI()
+    queriesTotal: Counter
+    umbrellaQueriesTotal: Counter
+
+    URL: ClassVar[dict[str, dict[str, str]]] = {
+        "url": "https://{server}:8443/web-services/rest/stats/DNSServer",
+        "params": {"nrClass": "DNSServerQueryStats"},
+    }
+
+    @classmethod
+    def create(cls) -> "MetricsCollector":
+        registry = CollectorRegistry()
+        queriesTotal = Counter(
+            "dns_queries_total",
+            "Total number of DNS queries",
+            ["server"],
+            registry=registry,
+        )
+        umbrellaQueriesTotal = Counter(
+            "dns_umbrella_queries_total",
+            "Total number of DNS queries forwarded to Umbrella",
+            ["server"],
+            registry=registry,
+        )
+        return cls(registry=registry, queriesTotal=queriesTotal, umbrellaQueriesTotal=umbrellaQueriesTotal)
+
+    def _fetch_dns_metrics(self, server: str) -> dict[str, int] | None:
+        url = self.URL["url"].format(server=server)
+        try:
+            response = requests.get(
+                url,
+                params=self.URL["params"],
+                auth=(CLEUCreds.CPNR_USERNAME, CLEUCreds.CPNR_PASSWORD),
+                verify=False,
+            )
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            logger.error(f"Failed to get stats from {server}: {e}", exc_info=True)
+            return None
+
+    def _fetch_umbrella_metrics(self) -> int:
+        return get_umbrella_activity(self.umbrella)
+
+    def _parse_metric(self, metrics: dict[str, int], key: str) -> int:
+        value = metrics.get(key)
+        if value is None:
+            logger.warning(f"Metric {key} not found in response")
+            return 0
+        return int(value)
+
+    def collect_metrics(self) -> None:
+        for server in C.DNS_SERVERS:
+            metrics = self._fetch_dns_metrics(server)
+            if metrics is None:
+                continue
+
+            total_queries = self._parse_metric(metrics, "totalQueries")
+
+            # Set absolute counter value since API returns cumulative total
+            self.queriesTotal.labels(server=server)._value.set(total_queries)
+
+        umbrella_total = self._fetch_umbrella_metrics()
+        # Set absolute counter value since API returns cumulative total
+        self.umbrellaQueriesTotal.labels(server="umbrella")._value.set(umbrella_total)
+
+        logger.debug(
+            f"Collected metrics: DNS Queries Total - {self.queriesTotal.collect()}, Umbrella Queries Total - {self.umbrellaQueriesTotal.collect()}"
+        )
+
+
+def create_app(collector: MetricsCollector) -> Flask:
+    """Create and configure the Flask application.
+
+    Args:
+        collector: The MetricsCollector instance
+    Returns:
+        Configured Flask application
+    """
+    app = Flask("DNS Metrics Exporter")
+
+    @app.route("/metrics")
+    def metrics() -> Response:
+        collector.collect_metrics()
+        data = generate_latest(collector.registry)
+        return Response(data, mimetype=CONTENT_TYPE_LATEST)
+
+    return app
+
+
+def main() -> None:
+    collector = MetricsCollector.create()
+    app = create_app(collector)
+    http_server = WSGIServer(("", PORT), app)
+    logger.info(f"Starting DNS Metrics Exporter on port {PORT}")
+    try:
+        http_server.serve_forever()
+    except KeyboardInterrupt:
+        logger.info("Shutting down DNS Metrics Exporter")
+    except Exception as e:
+        logger.error(f"Server error: {e}", exc_info=True)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
-    #    app.run(host='10.100.253.13', port=8081, threaded=True)
-    http_server = WSGIServer((C.WSGI_SERVER, PORT), app)
-    http_server.serve_forever()
+    main()
