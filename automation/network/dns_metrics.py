@@ -173,7 +173,7 @@ class MetricsCollector(object):
             if metrics is None:
                 continue
 
-            total_queries = self._parse_metric(metrics, "totalQueries")
+            total_queries = self._parse_metric(metrics, "queriesTotal")
 
             # Set absolute counter value since API returns cumulative total
             self.queriesTotal.labels(server=server)._value.set(total_queries)
