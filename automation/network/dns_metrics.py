@@ -140,13 +140,14 @@ class MetricsCollector(object):
         )
         return cls(registry=registry, queriesTotal=queriesTotal, umbrellaQueriesTotal=umbrellaQueriesTotal)
 
-    def _fetch_dns_metrics(self, server: str) -> dict[str, int] | None:
+    def _fetch_dns_metrics(self, server: str) -> dict | None:
         url = self.URL["url"].format(server=server)
         try:
             response = requests.get(
                 url,
                 params=self.URL["params"],
                 auth=(CLEUCreds.CPNR_USERNAME, CLEUCreds.CPNR_PASSWORD),
+                headers={"Accept": "application/json"},
                 verify=False,
             )
             response.raise_for_status()
@@ -158,7 +159,7 @@ class MetricsCollector(object):
     def _fetch_umbrella_metrics(self) -> int:
         return get_umbrella_activity(self.umbrella)
 
-    def _parse_metric(self, metrics: dict[str, int], key: str) -> int:
+    def _parse_metric(self, metrics: dict, key: str) -> int:
         value = metrics.get(key)
         if value is None:
             logger.warning(f"Metric {key} not found in response")
@@ -181,9 +182,7 @@ class MetricsCollector(object):
         # Set absolute counter value since API returns cumulative total
         self.umbrellaQueriesTotal.labels(server="umbrella")._value.set(umbrella_total)
 
-        logger.info(
-            f"Collected metrics: DNS Queries Total - {self.queriesTotal.collect()}, Umbrella Queries Total - {self.umbrellaQueriesTotal.collect()}"
-        )
+        logger.info(f"Collected metrics: DNS Queries Total - {total_queries}, Umbrella Queries Total - {umbrella_total}")
 
 
 def create_app(collector: MetricsCollector) -> Flask:
