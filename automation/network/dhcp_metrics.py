@@ -180,7 +180,7 @@ class MetricsCollector(object):
             self.offers.labels(server=server)._value.set(offers)
             self.requests.labels(server=server)._value.set(requests)
 
-            logger.debug(
+            logger.info(
                 f"Updated metrics for {server}: "
                 f"acksPerSecond={acks_per_second}, activeLeases={active_leases}, "
                 f"discovers={discovers}, droppedTotal={dropped_total}, "

@@ -166,6 +166,7 @@ class MetricsCollector(object):
         return int(value)
 
     def collect_metrics(self) -> None:
+        logger.info("Starting DNS metrics collection")
         for server in C.DNS_SERVERS:
             metrics = self._fetch_dns_metrics(server)
             if metrics is None:
@@ -180,7 +181,7 @@ class MetricsCollector(object):
         # Set absolute counter value since API returns cumulative total
         self.umbrellaQueriesTotal.labels(server="umbrella")._value.set(umbrella_total)
 
-        logger.debug(
+        logger.info(
             f"Collected metrics: DNS Queries Total - {self.queriesTotal.collect()}, Umbrella Queries Total - {self.umbrellaQueriesTotal.collect()}"
         )
 
