@@ -153,14 +153,9 @@ def create_app(collector: MetricsCollector) -> Flask:
 
     @app.route("/metrics")
     def metrics() -> Response:
-        """Prometheus metrics endpoint."""
         collector.collect_metrics()
-        return Response(generate_latest(collector.registry), mimetype=CONTENT_TYPE_LATEST)
-
-    @app.route("/health")
-    def health() -> tuple[str, int]:
-        """Health check endpoint."""
-        return "OK", 200
+        data = generate_latest(collector.registry)
+        return Response(data, mimetype=CONTENT_TYPE_LATEST)
 
     return app
 
