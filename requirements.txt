@@ -60,3 +60,4 @@ fastapi
 openai
 prometheus_client
 netmiko
+ncclient

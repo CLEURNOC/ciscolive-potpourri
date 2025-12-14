@@ -33,6 +33,8 @@ from enum import StrEnum
 from shlex import split
 from subprocess import run
 from typing import Annotated, Dict, List, Tuple
+from pathlib import Path
+import json
 
 import dns.asyncresolver
 import dns.reversename
@@ -41,6 +43,7 @@ import pynetbox
 import xmltodict
 from fastmcp import FastMCP
 from fastmcp.exceptions import ToolError
+from ncclient import manager
 from pydantic import BaseModel, Field
 from sparker import Sparker  # type: ignore
 
@@ -178,7 +181,7 @@ class ISEResponse(BaseModel, extra="forbid"):
     client_ipv4: IPAddress | None = Field(None, description="The IPv4 address of the client, if available.")
     client_ipv6: list[IPAddress] | None = Field(None, description="List of IPv6 addresses of the client, if available.")
     authentication_timestamp: str | None = Field(None, description="The timestamp of the client's authentication.")
-    associated_access_point: MACAddress | None = Field(None, description="The MAC address of the associated access point, if available.")
+    associated_access_point: str | None = Field(None, description="The MAC address or name of the associated access point, if available.")
     connected_vlan: str | None = Field(None, description="The VLAN ID the client is connected to, if available.")
     associated_ssid: str | None = Field(None, description="The SSID the client is associated with, if available.")
 
@@ -538,6 +541,137 @@ async def _get_dhcp_lease_info_from_cpnr(input: CPNRLeaseInput | dict) -> CPNRLe
     return leases if leases else None
 
 
+def _get_bssids_from_netconf(controller: str, bssids: dict[str, str]) -> None:
+    """Get the per-WLAN BSSIDs from NETCONF"""
+
+    # NETCONF filter for the radio operational data
+    filter_xml = """
+    <filter xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+      <access-point-oper-data xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-wireless-access-point-oper">
+        <radio-oper-data/>
+        <ap-name-mac-map/>
+      </access-point-oper-data>
+    </filter>
+    """
+
+    try:
+        with manager.connect(
+            host=controller,
+            port=830,
+            username=NETCONF_USERNAME,
+            password=NETCONF_PASSWORD,
+            hostkey_verify=False,
+            device_params={"name": "iosxe"},
+            timeout=30,
+        ) as m:
+            # Get the operational data using NETCONF
+            netconf_reply = m.get(filter=filter_xml)
+
+            # Convert XML to dict using xmltodict
+            data_dict = xmltodict.parse(netconf_reply.xml)
+
+            # Get the AP name to MAC mapping
+            ap_name_mac_map = data_dict.get("rpc-reply", {}).get("data", {}).get("access-point-oper-data", {}).get("ap-name-mac-map", {})
+
+            # Ensure it's a list (xmltodict returns single items as dict, not list)
+            if isinstance(ap_name_mac_map, dict):
+                ap_name_mac_map = [ap_name_mac_map]
+            elif not ap_name_mac_map:
+                ap_name_mac_map = []
+
+            mac_aps = {}
+            for ap in ap_name_mac_map:
+                if (ap_name := ap.get("wtp-name")) and (ap_mac := ap.get("wtp-mac")):
+                    mac_aps[ap_mac] = ap_name
+
+            # Navigate to the radio-oper-data in the response
+            radio_oper_data = data_dict.get("rpc-reply", {}).get("data", {}).get("access-point-oper-data", {}).get("radio-oper-data", [])
+
+            # Ensure it's a list (xmltodict returns single items as dict, not list)
+            if isinstance(radio_oper_data, dict):
+                radio_oper_data = [radio_oper_data]
+            elif not radio_oper_data:
+                radio_oper_data = []
+
+            for ap in radio_oper_data:
+                if (wtp_mac := ap.get("wtp-mac")) and (vap_config := ap.get("vap-oper-config")):
+                    # vap-oper-config won't be present for monitor mode
+                    # Ensure vap_config is a list
+                    ap_name = mac_aps.get(wtp_mac, "unknown-ap")
+                    if isinstance(vap_config, dict):
+                        vap_config = [vap_config]
+                    bssids.update({mac["bssid-mac"].lower(): ap_name for mac in vap_config})
+
+    except Exception as e:
+        logger.warning(f"NETCONF request failed: {e}")
+        return
+
+
+def _load_bssid_cache(cache_file: Path) -> dict[str, str]:
+    """Load cached BSSIDs from file.
+
+    Args:
+        cache_file: Path to cache file
+
+    Returns:
+        Dictionary mapping BSSIDs to AP names
+    """
+    if not cache_file.exists():
+        logger.info(f"Cache file {cache_file} does not exist, starting fresh")
+        return {}
+
+    try:
+        with cache_file.open("r") as fd:
+            state = json.load(fd)
+            logger.info(f"Loaded cache with {len(state)} devices")
+            return state
+    except Exception as e:
+        logger.error(f"Failed to load cache file {cache_file}: {e}")
+        return {}
+
+
+def _save_bssid_cache_atomic(cache_file: Path, bssids: dict) -> None:
+    """Save interface state to cache file atomically.
+
+    Args:
+        cache_file: Path to cache file
+        bssids: BSSID to AP name mapping to save
+    """
+    temp_file = cache_file.with_suffix(".tmp")
+
+    try:
+        # Write to temporary file
+        with temp_file.open("w") as fd:
+            json.dump(bssids, fd, indent=4)
+
+        # Atomic replace
+        temp_file.replace(cache_file)
+        logger.debug(f"Saved cache with {len(bssids)} devices")
+    except Exception as e:
+        logger.error(f"Failed to save cache file {cache_file}: {e}")
+        if temp_file.exists():
+            temp_file.unlink()
+
+
+def _refresh_bssid_cache(do_refresh: bool = False) -> dict[str, str]:
+    """Refresh the BSSID cache from the controller via NETCONF.
+
+    Args:
+        controller: Controller hostname or IP
+        cache_file: Path to cache file
+    """
+    bssids = _load_bssid_cache(Path("bssid_cache.json"))
+    if not do_refresh:
+        return bssids
+    for controller in WLCS.split(","):
+        controller = controller.strip()
+        if controller:
+            _get_bssids_from_netconf(controller, bssids)
+    _save_bssid_cache_atomic(Path("bssid_cache.json"), bssids)
+
+    return bssids
+
+
 # TOOLS
 
 
@@ -856,6 +990,8 @@ async def get_user_details_from_ise(ise_input: ISEInput | dict) -> ISEResponse:
     if sum([username is not None, mac is not None, ip is not None]) > 1:
         raise ToolError("Only one of username, mac, or ip may be specified")
 
+    bssids = _refresh_bssid_cache(do_refresh=False)
+
     if mac:
         mac_str = str(normalize_mac(mac)).upper()
         url = f"https://{ISE_SERVER}/admin/API/mnt/Session/MACAddress/{mac_str}"
@@ -925,6 +1061,13 @@ async def get_user_details_from_ise(ise_input: ISEInput | dict) -> ISEResponse:
             associated_ssid = ssid_match.group(1)
         if vlan_match:
             connected_vlan = vlan_match.group(1)
+
+    if associated_access_point and associated_access_point.lower() in bssids:
+        associated_access_point = bssids[associated_access_point.lower()]
+    elif associated_access_point:
+        bssids = _refresh_bssid_cache(do_refresh=True)
+        if associated_access_point.lower() in bssids:
+            associated_access_point = bssids[associated_access_point.lower()]
 
     return ISEResponse(
         username=auth_username,
@@ -1443,7 +1586,10 @@ if __name__ == "__main__":
     ISE_API_USER = os.getenv("ISE_API_USER")
     ISE_API_PASS = os.getenv("ISE_API_PASS")
     DNACS = os.getenv("DNACS", "")
+    WLCS = os.getenv("WLCS", "")
     DNS_DOMAIN = os.getenv("DNS_DOMAIN")
+    NETCONF_USERNAME = os.getenv("NETCONF_USERNAME")
+    NETCONF_PASSWORD = os.getenv("NETCONF_PASSWORD")
 
     pnb = pynetbox.api(os.getenv("NETBOX_SERVER"), os.getenv("NETBOX_API_TOKEN"))
     tls_verify = os.getenv("DHCP_BOT_TLS_VERIFY", "True").lower() == "true"

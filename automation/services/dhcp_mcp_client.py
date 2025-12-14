@@ -201,6 +201,8 @@ class BotState(object):
             "DNACS": ",".join(C.DNACS),
             "DHCP_BASE": C.DHCP_BASE,
             "DNS_DOMAIN": C.DNS_DOMAIN,
+            "NETCONF_USERNAME": CLEUCreds.NET_USER,
+            "NETCONF_PASSWORD": CLEUCreds.NET_PASS,
         }
         transport = StdioTransport(
             command="python",
