@@ -29,6 +29,6 @@ declare -A EXPORTERS=(["cpnr_metrics"]="cpnr_metrics.py" ["mac_metrics"]="mac_me
 
 for sname in "${!EXPORTERS[@]}"; do
   if ! screen -ls ${sname} >/dev/null 2>&1; then
-    screen -d -m -S ${sname} ./${EXPORTERS[$sname]}
+    screen -d -m -S ${sname} ./${EXPORTERS[$sname]} 2>&1 | tee -a ./${sname}.log
   fi
 done
