@@ -622,9 +622,9 @@ def _load_bssid_cache(cache_file: Path) -> dict[str, str]:
 
     try:
         with cache_file.open("r") as fd:
-            state = json.load(fd)
-            logger.info(f"Loaded cache with {len(state)} devices")
-            return state
+            bssids = json.load(fd)
+            logger.info(f"Loaded cache with {len(bssids)} devices")
+            return bssids
     except Exception as e:
         logger.error(f"Failed to load cache file {cache_file}: {e}")
         return {}
