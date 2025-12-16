@@ -24,6 +24,8 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+# !!! This file is now obsolete.  Simple run mac_metrics.py to export the metrics. !!!
+
 from flask import Flask
 from flask import Response
 import json
