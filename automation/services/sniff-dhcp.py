@@ -24,28 +24,38 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-import pyshark
-from subprocess import Popen, PIPE, DEVNULL
-from shlex import split
-from influxdb import InfluxDBClient
 import datetime
-import traceback
-from cleu.config import Config as C  # type: ignore
+import logging
+import sys
+from shlex import split
+from subprocess import DEVNULL, PIPE, Popen
+
 import CLEUCreds  # type: ignore
+import pyshark
+from cleu.config import Config as C  # type: ignore
+from influxdb import InfluxDBClient
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)],
+)
+logger = logging.getLogger(__name__)
 
 
 def print_client_mac(pkt):
     try:
-        print(f"Got packet from {pkt.dhcp.hw.mac_addr}")
+        logger.info(f"Got packet from {pkt.dhcp.hw.mac_addr}")
     except Exception:
-        traceback.print_exec()
+        logger.error("Error processing packet:", exc_info=True)
         return
 
     is_v6mostly = False
 
     if "55" in pkt.dhcp.option.type:
         param_list = pkt.dhcp.option.type_tree[pkt.dhcp.option.type.index("55")]
-        print(f"Param list is {param_list.request_list_item}")
+        logger.info(f"Param list is {param_list.request_list_item}")
         if "108" in param_list.request_list_item:
             is_v6mostly = True
 
