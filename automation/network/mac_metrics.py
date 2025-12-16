@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2017-2023  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2025  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,38 +24,445 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-from flask import Flask
-from flask import Response
+"""Network Metrics Exporter.
+
+This script collects various metrics (MAC counts, ARP entries, NAT statistics, etc.)
+from network devices via SSH and exports them to Prometheus.
+"""
+
+import argparse
 import json
-from gevent.pywsgi import WSGIServer
+import logging
+import re
+import sys
+from dataclasses import dataclass
+from multiprocessing import Pool
+from pathlib import Path
+
+import CLEUCreds  # type: ignore
 from cleu.config import Config as C  # type: ignore
+from flask import Flask, Response
+from gevent.pywsgi import WSGIServer  # type: ignore
+from netmiko import ConnectHandler
+from netmiko.exceptions import NetmikoAuthenticationException, NetmikoTimeoutException
+from prometheus_client import CONTENT_TYPE_LATEST, CollectorRegistry, Gauge, generate_latest
+from sparker import MessageType, Sparker  # type: ignore
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)],
+)
+logger = logging.getLogger(__name__)
+
+# Default paths
+DEFAULT_CONFIG_FILE = Path(__file__).parent / "poll_macs_config.json"
+DEFAULT_WEBEX_ROOM = "Core Alarms"
+DEFAULT_PORT = 8081
 
 
-CACHE_FILE = "/home/jclarke/mac_counts.dat"
+@dataclass
+class CommandConfig:
+    """Configuration for a command to execute."""
 
-PORT = 8081
+    command: str
+    pattern: str
+    metric: str | None = None
+    metrics: list[str] | None = None
+    threshold: str | None = None
+    thresholds: list[str] | None = None
 
-app = Flask("MAC Address Count Fetcher")
+
+@dataclass
+class DeviceTarget:
+    """Target device configuration."""
+
+    device: str
+    commands: list[str]
+    device_type: str = "cisco_ios"
 
 
-@app.route("/metrics")
-def get_metrics():
-    global CACHE_FILE
+@dataclass
+class MonitorConfig:
+    """Configuration for metrics monitoring."""
 
-    with open(CACHE_FILE, "r") as fd:
-        macs = json.load(fd)
+    webex_room: str
+    commands: dict[str, CommandConfig]
+    devices: list[dict]
+    worker_pool_size: int = 20
+    connection_timeout: int = 5
 
-    response = []
 
-    for line in macs:
-        line = line.rstrip()
-        if line != "":
-            response.append(line)
+@dataclass
+class MetricsCollector:
+    """Collects and exposes network device metrics."""
 
-    return Response("\n".join(response) + "\n", mimetype="text/plain")
+    registry: CollectorRegistry
+    config: MonitorConfig
+    targets: list[DeviceTarget]
+    gauges: dict[str, Gauge]
+    spark: Sparker
+
+    @classmethod
+    def create(cls, config: MonitorConfig, targets: list[DeviceTarget]) -> "MetricsCollector":
+        """Factory method to create a MetricsCollector instance."""
+        registry = CollectorRegistry()
+        gauges: dict[str, Gauge] = {}
+        spark = Sparker(token=CLEUCreds.SPARK_TOKEN)
+
+        # Create Gauge metrics for all unique metric names
+        metric_names = set()
+        for cmd_config in config.commands.values():
+            if cmd_config.metric:
+                metric_names.add(cmd_config.metric)
+            if cmd_config.metrics:
+                metric_names.update(cmd_config.metrics)
+
+        for metric_name in metric_names:
+            gauges[metric_name] = Gauge(
+                metric_name,
+                f"Network device metric: {metric_name}",
+                ["device"],
+                registry=registry,
+            )
+
+        return cls(
+            registry=registry,
+            config=config,
+            targets=targets,
+            gauges=gauges,
+            spark=spark,
+        )
+
+    def _check_threshold(
+        self,
+        metric_name: str,
+        value: str,
+        threshold: str,
+    ) -> None:
+        """Check if a metric violates its threshold and send notification."""
+        if not threshold or not (threshold.startswith("==") or threshold.startswith("<") or threshold.startswith(">")):
+            return
+
+        try:
+            if eval(f"{value} {threshold}"):
+                self.spark.post_to_spark(
+                    C.WEBEX_TEAM,
+                    self.config.webex_room,
+                    f"Metric **{metric_name}** has violated threshold {threshold}, currently {value}",
+                    MessageType.WARNING,
+                )
+        except Exception as e:
+            logger.error(f"Failed to check threshold for {metric_name}: {e}")
+
+    def _set_metric_value(self, metric_name: str, device: str, value: str) -> None:
+        """Set a metric value for a device."""
+        try:
+            self.gauges[metric_name].labels(device=device).set(float(value))
+        except Exception as e:
+            logger.error(f"Failed to set metric {metric_name} for {device}: {e}")
+
+    def _set_metrics_to_zero(self, target: DeviceTarget) -> None:
+        """Set all metrics for a device to zero (on connection/command failure)."""
+        for command_name in target.commands:
+            if command_name in self.config.commands:
+                cmd_config = self.config.commands[command_name]
+                if cmd_config.metric:
+                    self._set_metric_value(cmd_config.metric, target.device, "0")
+                elif cmd_config.metrics:
+                    for metric in cmd_config.metrics:
+                        self._set_metric_value(metric, target.device, "0")
+
+    def _process_command_output(
+        self,
+        target: DeviceTarget,
+        cmd_config: CommandConfig,
+        output: str,
+    ) -> None:
+        """Process output from a single command and update metrics."""
+        if match := re.search(cmd_config.pattern, output, re.DOTALL):
+            if cmd_config.metric:
+                # Single metric
+                value = match.group(1)
+                self._set_metric_value(cmd_config.metric, target.device, value)
+                if cmd_config.threshold:
+                    self._check_threshold(cmd_config.metric, value, cmd_config.threshold)
+
+            elif cmd_config.metrics:
+                # Multiple metrics
+                for i, metric in enumerate(cmd_config.metrics, start=1):
+                    value = match.group(i)
+                    self._set_metric_value(metric, target.device, value)
+                    if cmd_config.thresholds and i <= len(cmd_config.thresholds):
+                        self._check_threshold(metric, value, cmd_config.thresholds[i - 1])
+        else:
+            # Pattern didn't match, set to zero
+            if cmd_config.metric:
+                self._set_metric_value(cmd_config.metric, target.device, "0")
+            elif cmd_config.metrics:
+                for metric in cmd_config.metrics:
+                    self._set_metric_value(metric, target.device, "0")
+
+    def _collect_device_metrics(self, target: DeviceTarget) -> None:
+        """Collect metrics from a single device."""
+        device_params = {
+            "device_type": target.device_type,
+            "host": target.device,
+            "username": CLEUCreds.NET_USER,
+            "password": CLEUCreds.NET_PASS,
+            "timeout": self.config.connection_timeout,
+        }
+
+        try:
+            with ConnectHandler(**device_params) as ssh:
+                logger.debug(f"Connected to {target.device}")
+
+                for command_name in target.commands:
+                    if command_name not in self.config.commands:
+                        logger.warning(f"Unknown command {command_name} for {target.device}")
+                        continue
+
+                    cmd_config = self.config.commands[command_name]
+
+                    try:
+                        output = ssh.send_command(cmd_config.command, read_timeout=30)
+                        self._process_command_output(target, cmd_config, output)
+                    except Exception as e:
+                        logger.error(f"Failed to execute {command_name} on {target.device}: {e}")
+                        # Set zeros for failed command
+                        if cmd_config.metric:
+                            self._set_metric_value(cmd_config.metric, target.device, "0")
+                        elif cmd_config.metrics:
+                            for metric in cmd_config.metrics:
+                                self._set_metric_value(metric, target.device, "0")
+
+        except (NetmikoTimeoutException, NetmikoAuthenticationException) as e:
+            error_type = "timeout" if isinstance(e, NetmikoTimeoutException) else "authentication"
+            logger.error(f"Connection {error_type} for {target.device}")
+            self._set_metrics_to_zero(target)
+        except Exception as e:
+            logger.error(f"Failed to connect to {target.device}: {e}")
+            self._set_metrics_to_zero(target)
+
+    def collect_metrics(self) -> None:
+        """Collect metrics from all devices in parallel."""
+        logger.info(f"Starting network metrics collection from {len(self.targets)} devices")
+
+        with Pool(self.config.worker_pool_size) as pool:
+            results = [pool.apply_async(self._collect_device_metrics, [target]) for target in self.targets]
+
+            for result in results:
+                try:
+                    result.get(timeout=120)
+                except Exception as e:
+                    logger.error(f"Failed to get result from worker: {e}")
+
+        logger.info("Network metrics collection completed")
+
+
+def load_config_file(config_file: Path) -> dict:
+    """Load configuration from JSON file.
+
+    Args:
+        config_file: Path to configuration file
+
+    Returns:
+        Configuration dictionary
+    """
+    try:
+        with config_file.open("r") as fd:
+            config = json.load(fd)
+            logger.info(f"Loaded configuration from {config_file}")
+            return config
+    except Exception as e:
+        logger.error(f"Failed to load configuration file {config_file}: {e}")
+        sys.exit(1)
+
+
+def parse_commands(commands_dict: dict) -> dict[str, CommandConfig]:
+    """Parse commands configuration into CommandConfig objects.
+
+    Args:
+        commands_dict: Raw commands dictionary
+
+    Returns:
+        Dictionary mapping command names to CommandConfig objects
+    """
+    parsed = {}
+    for name, cmd_data in commands_dict.items():
+        parsed[name] = CommandConfig(
+            command=cmd_data["command"],
+            pattern=cmd_data["pattern"],
+            metric=cmd_data.get("metric"),
+            metrics=cmd_data.get("metrics"),
+            threshold=cmd_data.get("threshold"),
+            thresholds=cmd_data.get("thresholds"),
+        )
+    return parsed
+
+
+def expand_device_targets(devices_config: list[dict]) -> list[DeviceTarget]:
+    """Expand device configuration into individual targets.
+
+    Args:
+        devices_config: List of device configuration dictionaries
+
+    Returns:
+        List of DeviceTarget objects
+    """
+    targets: list[DeviceTarget] = []
+
+    for device_spec in devices_config:
+        device_type = device_spec.get("device_type", "cisco_ios")
+        commands = device_spec["commands"]
+
+        if "list" in device_spec:
+            for dev in device_spec["list"]:
+                targets.append(DeviceTarget(device=dev, commands=commands, device_type=device_type))
+
+        elif "range" in device_spec:
+            pattern = device_spec["pattern"]
+            range_spec = device_spec["range"]
+            for i in range(range_spec["min"], range_spec["max"] + 1):
+                targets.append(
+                    DeviceTarget(
+                        device=pattern.format(str(i)),
+                        commands=commands,
+                        device_type=device_type,
+                    )
+                )
+
+        elif "subs" in device_spec:
+            pattern = device_spec["pattern"]
+            for sub in device_spec["subs"]:
+                targets.append(
+                    DeviceTarget(
+                        device=pattern.format(sub),
+                        commands=commands,
+                        device_type=device_type,
+                    )
+                )
+
+        elif "file" in device_spec:
+            file_path = Path(device_spec["file"])
+            try:
+                with file_path.open("r") as fd:
+                    device_list = json.load(fd)
+                    for dev in device_list:
+                        targets.append(
+                            DeviceTarget(
+                                device=dev,
+                                commands=commands,
+                                device_type=device_type,
+                            )
+                        )
+            except Exception as e:
+                logger.error(f"Failed to load device file {file_path}: {e}")
+
+    logger.info(f"Expanded {len(targets)} device targets")
+    return targets
+
+
+def create_app(collector: MetricsCollector) -> Flask:
+    """Create and configure the Flask application.
+
+    Args:
+        collector: The MetricsCollector instance
+    Returns:
+        Configured Flask application
+    """
+    app = Flask("Network Metrics Exporter")
+
+    @app.route("/metrics")
+    def metrics() -> Response:
+        collector.collect_metrics()
+        data = generate_latest(collector.registry)
+        return Response(data, mimetype=CONTENT_TYPE_LATEST)
+
+    return app
+
+
+def main() -> None:
+    """Main entry point for the network metrics exporter."""
+    parser = argparse.ArgumentParser(description="Network device metrics exporter for Prometheus")
+    parser.add_argument(
+        "--config",
+        "-c",
+        type=Path,
+        default=DEFAULT_CONFIG_FILE,
+        help=f"Path to configuration file (default: {DEFAULT_CONFIG_FILE})",
+    )
+    parser.add_argument(
+        "--webex-room",
+        default=DEFAULT_WEBEX_ROOM,
+        help=f"Webex room for notifications (default: {DEFAULT_WEBEX_ROOM})",
+    )
+    parser.add_argument(
+        "--port",
+        "-p",
+        type=int,
+        default=DEFAULT_PORT,
+        help=f"Port to listen on (default: {DEFAULT_PORT})",
+    )
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=20,
+        help="Number of parallel workers (default: 20)",
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Enable verbose debug logging",
+    )
+
+    args = parser.parse_args()
+
+    if args.verbose:
+        logger.setLevel(logging.DEBUG)
+        logger.debug("Debug logging enabled")
+
+    # Load configuration
+    config_data = load_config_file(args.config)
+
+    # Parse configuration
+    commands_dict = parse_commands(config_data.get("commands", {}))
+    devices_config = config_data.get("devices", [])
+
+    config = MonitorConfig(
+        webex_room=args.webex_room,
+        commands=commands_dict,
+        devices=devices_config,
+        worker_pool_size=args.workers,
+    )
+
+    # Expand device targets
+    targets = expand_device_targets(devices_config)
+
+    if not targets:
+        logger.error("No device targets found")
+        sys.exit(1)
+
+    # Create metrics collector
+    collector = MetricsCollector.create(config, targets)
+
+    # Create Flask app
+    app = create_app(collector)
+
+    # Start HTTP server
+    http_server = WSGIServer((C.WSGI_SERVER, args.port), app)
+    logger.info(f"Starting network metrics exporter on {C.WSGI_SERVER} port {args.port}")
+    try:
+        http_server.serve_forever()
+    except KeyboardInterrupt:
+        logger.info("Shutting down network metrics exporter")
+        http_server.stop()
+    except Exception as e:
+        logger.error(f"Error running network metrics exporter: {e}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
-    #    app.run(host='10.100.253.13', port=8081, threaded=True)
-    http_server = WSGIServer((C.WSGI_SERVER, PORT), app)
-    http_server.serve_forever()
+    main()
