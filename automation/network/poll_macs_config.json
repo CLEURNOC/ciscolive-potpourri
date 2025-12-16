@@ -1,0 +1,175 @@
+{
+  "commands": {
+    "macCore": {
+      "command": "show mac address-table count | inc Dynamic Address Count",
+      "pattern": "Dynamic Address Count:\\s+(\\d+)",
+      "metric": "totalMacs"
+    },
+    "macIdf": {
+      "command": "show mac address-table dynamic | inc Total",
+      "pattern": "Total.*: (\\d+)",
+      "metric": "totalMacs"
+    },
+    "arpEntries": {
+      "command": "show ip arp summary | inc IP ARP",
+      "pattern": "(\\d+) IP ARP entries",
+      "metric": "arpEntries"
+    },
+    "ndEntries": {
+      "command": "show ipv6 neighbors statistics | inc Entries",
+      "pattern": "Entries (\\d+),",
+      "metric": "ndEntries"
+    },
+    "natTrans": {
+      "command": "show ip nat translations total",
+      "pattern": "Total number of translations: (\\d+)",
+      "metric": "natTranslations"
+    },
+    "nat64Trans": {
+      "command": "show nat64 statistics global",
+      "pattern": "Total active translations: (\\d+)",
+      "metric": "nat64Translations"
+    },
+    "nat64Exhaustions": {
+      "command": "show nat64 statistics mapping dynamic pool nat64-pool",
+      "pattern": "address exhaustion packet count (\\d+)",
+      "metric": "nat64Exhaustions",
+      "threshold": "> 0"
+    },
+    "natPoolDefault1": {
+      "command": "show ip nat statistics | begin NAT-POOL-DEFAULT-1",
+      "pattern": "total addresses (\\d+), allocated (\\d+)[^,]+, misses (\\d+)",
+      "metrics": [
+        "natPoolDefault1Addresses",
+        "natPoolDefault1Allocated",
+        "natPoolDefault1Misses"
+      ]
+    },
+    "natPoolRes1": {
+      "command": "show ip nat statistics | begin NAT-POOL-RES-1",
+      "pattern": "total addresses (\\d+), allocated (\\d+)[^,]+, misses (\\d+)",
+      "metrics": [
+        "natPoolRes1Addresses",
+        "natPoolRes1Allocated",
+        "natPoolRes1Misses"
+      ]
+    },
+    "natPoolRes2": {
+      "command": "show ip nat statistics | begin NAT-POOL-RES-2",
+      "pattern": "total addresses (\\d+), allocated (\\d+)[^,]+, misses (\\d+)",
+      "metrics": [
+        "natPoolRes2Addresses",
+        "natPoolRes2Allocated",
+        "natPoolRes2Misses"
+      ]
+    },
+    "natPoolLabs": {
+      "command": "show ip nat statistics | begin NAT-POOL-LABS",
+      "pattern": "total addresses (\\d+), allocated (\\d+)[^,]+, misses (\\d+)",
+      "metrics": [
+        "natPoolLabsAddresses",
+        "natPoolLabsAllocated",
+        "natPoolLabsMisses"
+      ]
+    },
+    "natPoolWLC": {
+      "command": "show ip nat statistics | begin NAT-POOL-WLC",
+      "pattern": "total addresses (\\d+), allocated (\\d+)[^,]+, misses (\\d+)",
+      "metrics": [
+        "natPoolWLCAddresses",
+        "natPoolWLCAllocated",
+        "natPoolWLCMisses"
+      ]
+    },
+    "natGatewayStatsIn": {
+      "command": "show platform hardware qfp active feature nat datapath gatein activity",
+      "pattern": "Hits ([^,]+), Miss ([^,]+), Aged ([^ ]+) Added ([^ ]+) Replaced ([^ ]+) Active ([0-9]+)",
+      "metrics": [
+        "natGateInHits",
+        "natGateInMisses",
+        "natGateInAged",
+        "natGateInAdded",
+        "natGateInReplaced",
+        "natGateInActive"
+      ]
+    },
+    "natGatewayStatsOut": {
+      "command": "show platform hardware qfp active feature nat datapath gateout activity",
+      "pattern": "Hits ([^,]+), Miss ([^,]+), Aged ([^ ]+) Added ([^ ]+) Replaced ([^ ]+) Active ([0-9]+)",
+      "metrics": [
+        "natGateOutHits",
+        "natGateOutMisses",
+        "natGateOutAged",
+        "natGateOutAdded",
+        "natGateOutReplaced",
+        "natGateOutActive"
+      ]
+    },
+    "natHealthStats": {
+      "command": "show ip nat statistics | begin In-to-out",
+      "pattern": "In-to-out-drops: (\\d+)\\s+Out-to-in-drops: (\\d+).*Pool stats drop: (\\d+)\\s+Mapping stats drop: (\\d+).*Port block alloc fail: (\\d+).*IP alias add fail: (\\d+).*Limit entry add fail: (\\d+)",
+      "metrics": [
+        "natHealthInOutDrops",
+        "natHealthOutInDrops",
+        "natHealthStatsDrops",
+        "natHealthPortBlockAllocFail",
+        "natHealthAliasAddFail",
+        "natHealthEntryAddFail"
+      ]
+    },
+    "qfpUtil": {
+      "command": "show platform hardware qfp active datapath utilization summary",
+      "pattern": "Processing: Load \\(pct\\)\\s+(\\d+)",
+      "metric": "qfpUtil"
+    }
+  },
+  "devices": [
+    {
+      "pattern": "CORE{}-CORE",
+      "range": {
+        "min": 1,
+        "max": 2
+      },
+      "commands": ["arpEntries", "ndEntries"]
+    },
+    {
+      "file": "/home/jclarke/idf-devices.json",
+      "commands": ["macIdf", "arpEntries", "ndEntries"]
+    },
+    {
+      "pattern": "CORE{}-WA",
+      "range": {
+        "min": 1,
+        "max": 2
+      },
+      "commands": ["macIdf", "arpEntries", "ndEntries"]
+    },
+    {
+      "pattern": "CORE{}-EDGE",
+      "range": {
+        "min": 1,
+        "max": 2
+      },
+      "commands": [
+        "natTrans",
+        "qfpUtil",
+        "natPoolDefault1",
+        "natPoolRes1",
+        "natPoolRes2",
+        "natPoolLabs",
+        "natPoolWLC",
+        "natHealthStats",
+        "natGatewayStatsIn",
+        "natGatewayStatsOut"
+      ]
+    },
+    {
+      "pattern": "CORE{}-NAT64",
+      "range": {
+        "min": 1,
+        "max": 2
+      },
+      "commands": ["qfpUtil", "nat64Trans"]
+    }
+  ]
+}

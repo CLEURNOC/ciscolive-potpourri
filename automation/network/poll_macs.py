@@ -24,358 +24,445 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-from builtins import str
-from builtins import range
-import os
+"""Network Metrics Exporter.
+
+This script collects various metrics (MAC counts, ARP entries, NAT statistics, etc.)
+from network devices via SSH and exports them to Prometheus.
+"""
+
+import argparse
+import json
+import logging
 import re
 import sys
-import time
-import random
-import json
-import paramiko
+from dataclasses import dataclass
 from multiprocessing import Pool
-import traceback
-from sparker import Sparker, MessageType  # type: ignore
+from pathlib import Path
+
 import CLEUCreds  # type: ignore
 from cleu.config import Config as C  # type: ignore
+from flask import Flask, Response
+from gevent.pywsgi import WSGIServer  # type: ignore
+from netmiko import ConnectHandler
+from netmiko.exceptions import NetmikoAuthenticationException, NetmikoTimeoutException
+from prometheus_client import CONTENT_TYPE_LATEST, CollectorRegistry, Gauge, generate_latest
+from sparker import MessageType, Sparker  # type: ignore
 
-WEBEX_ROOM = "Core Alarms"
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)],
+)
+logger = logging.getLogger(__name__)
 
-CACHE_FILE = "/home/jclarke/mac_counts.dat"
-CACHE_FILE_TMP = CACHE_FILE + ".tmp"
-IDF_FILE = "/home/jclarke/idf-devices.json"
-
-commands = {
-    "macCore": {
-        "command": "show mac address-table count | inc Dynamic Address Count",
-        "pattern": r"Dynamic Address Count:\s+(\d+)",
-        "metric": "totalMacs",
-    },
-    "macIdf": {
-        "command": "show mac address-table dynamic | inc Total",
-        "pattern": r"Total.*: (\d+)",
-        "metric": "totalMacs",
-    },
-    "arpEntries": {
-        "command": "show ip arp summary | inc IP ARP",
-        "pattern": r"(\d+) IP ARP entries",
-        "metric": "arpEntries",
-    },
-    "ndEntries": {
-        "command": "show ipv6 neighbors statistics | inc Entries",
-        "pattern": r"Entries (\d+),",
-        "metric": "ndEntries",
-    },
-    "natTrans": {
-        "command": "show ip nat translations total",
-        "pattern": r"Total number of translations: (\d+)",
-        "metric": "natTranslations",
-    },
-    "nat64Trans": {
-        "command": "show nat64 statistics global",
-        "pattern": r"Total active translations: (\d+)",
-        "metric": "nat64Translations",
-    },
-    "nat64Exhaustions": {
-        "command": "show nat64 statistics mapping dynamic pool nat64-pool",
-        "pattern": r"address exhaustion packet count (\d+)",
-        "metric": "nat64Exhaustions",
-        "threshold": "> 0",
-    },
-    # "umbrella1Trans": {
-    #     "command": "show platform hardware qfp active feature nat datapath limit",
-    #     "pattern": r"limit_type 5 limit_id 0xa64fd06.*curr_count (\d+)",
-    #     "metric": "umbrella1NatTrans",
-    # },
-    # "umbrella2Trans": {
-    #     "command": "show platform hardware qfp active feature nat datapath limit",
-    #     "pattern": r"limit_type 5 limit_id 0xa64fe06.*curr_count (\d+)",
-    #     "metric": "umbrella2NatTrans",
-    # },
-    "natPoolDefault1": {
-        "command": "show ip nat statistics | begin NAT-POOL-DEFAULT-1",
-        "pattern": r"total addresses (\d+), allocated (\d+)[^,]+, misses (\d+)",
-        "metrics": ["natPoolDefault1Addresses", "natPoolDefault1Allocated", "natPoolDefault1Misses"],
-    },
-    "natPoolRes1": {
-        "command": "show ip nat statistics | begin NAT-POOL-RES-1",
-        "pattern": r"total addresses (\d+), allocated (\d+)[^,]+, misses (\d+)",
-        "metrics": ["natPoolRes1Addresses", "natPoolRes1Allocated", "natPoolRes1Misses"],
-    },
-    "natPoolRes2": {
-        "command": "show ip nat statistics | begin NAT-POOL-RES-2",
-        "pattern": r"total addresses (\d+), allocated (\d+)[^,]+, misses (\d+)",
-        "metrics": ["natPoolRes2Addresses", "natPoolRes2Allocated", "natPoolRes2Misses"],
-    },
-    # "natPoolDefault2": {
-    #     "command": "show ip nat statistics | begin NAT-POOL-DEFAULT-2",
-    #     "pattern": r"total addresses (\d+), allocated (\d+)[^,]+, misses (\d+)",
-    #     "metrics": ["natPoolDefault2Addresses", "natPoolDefault2Allocated", "natPoolDefault2Misses"],
-    # },
-    # "natPoolDns": {
-    #     "command": "show ip nat statistics | begin NAT-POOL-DNS",
-    #     "pattern": r"total addresses (\d+), allocated (\d+)[^,]+, misses (\d+)",
-    #     "metrics": ["natPoolDnsAddresses", "natPoolDnsAllocated", "natPoolDnsMisses"],
-    # },
-    "natPoolLabs": {
-        "command": "show ip nat statistics | begin NAT-POOL-LABS",
-        "pattern": r"total addresses (\d+), allocated (\d+)[^,]+, misses (\d+)",
-        "metrics": ["natPoolLabsAddresses", "natPoolLabsAllocated", "natPoolLabsMisses"],
-    },
-    "natPoolWLC": {
-        "command": "show ip nat statistics | begin NAT-POOL-WLC",
-        "pattern": r"total addresses (\d+), allocated (\d+)[^,]+, misses (\d+)",
-        "metrics": ["natPoolWLCAddresses", "natPoolWLCAllocated", "natPoolWLCMisses"],
-    },
-    "natGatewayStatsIn": {
-        "command": "show platform hardware qfp active feature nat datapath gatein activity",
-        "pattern": r"Hits ([^,]+), Miss ([^,]+), Aged ([^ ]+) Added ([^ ]+) Replaced ([^ ]+) Active ([0-9]+)",
-        "metrics": ["natGateInHits", "natGateInMisses", "natGateInAged", "natGateInAdded", "natGateInReplaced", "natGateInActive"],
-    },
-    "natGatewayStatsOut": {
-        "command": "show platform hardware qfp active feature nat datapath gateout activity",
-        "pattern": r"Hits ([^,]+), Miss ([^,]+), Aged ([^ ]+) Added ([^ ]+) Replaced ([^ ]+) Active ([0-9]+)",
-        "metrics": ["natGateOutHits", "natGateOutMisses", "natGateOutAged", "natGateOutAdded", "natGateOutReplaced", "natGateOutActive"],
-    },
-    "natHealthStats": {
-        "command": "show ip nat statistics | begin In-to-out",
-        "pattern": r"In-to-out-drops: (\d+)\s+Out-to-in-drops: (\d+).*Pool stats drop: (\d+)\s+Mapping stats drop: (\d+).*Port block alloc fail: (\d+).*IP alias add fail: (\d+).*Limit entry add fail: (\d+)",
-        "metrics": [
-            "natHealthInOutDrops",
-            "natHealthOutInDrops",
-            "natHealthStatsDrops",
-            "natHealthPortBlockAllocFail",
-            "natHealthAliasAddFail",
-            "natHealthEntryAddFail",
-        ],
-    },
-    "qfpUtil": {
-        "command": "show platform hardware qfp active datapath utilization summary",
-        "pattern": r"Processing: Load \(pct\)\s+(\d+)",
-        "metric": "qfpUtil",
-    },
-}
-
-devices = [
-    {
-        "pattern": "CORE{}-CORE",
-        "range": {"min": 1, "max": 2},
-        "commands": ["arpEntries", "ndEntries"],
-    },
-    {
-        "file": IDF_FILE,
-        "commands": ["macIdf", "arpEntries", "ndEntries"],
-    },
-    {
-        "pattern": "CORE{}-WA",
-        "range": {"min": 1, "max": 2},
-        "commands": ["macIdf", "arpEntries", "ndEntries"],
-    },
-    # {
-    #     "pattern": "CORE{}-EDGE",
-    #     "range": {"min": 1, "max": 2},
-    #     "commands": [
-    #         "natTrans",
-    #         "qfpUtil",
-    #         "umbrella1Trans",
-    #         "umbrella2Trans",
-    #         "natPoolDefault1",
-    #         "natPoolDefault2",
-    #         "natPoolDns",
-    #         "natPoolLabs",
-    #         "natPoolWLC",
-    #         "natHealthStats",
-    #         "natGatewayStatsIn",
-    #         "natGatewayStatsOut",
-    #     ],
-    # },
-    {
-        "pattern": "CORE{}-EDGE",
-        "range": {"min": 1, "max": 2},
-        "commands": [
-            "natTrans",
-            "qfpUtil",
-            "natPoolDefault1",
-            "natPoolRes1",
-            "natPoolRes2",
-            "natPoolLabs",
-            "natPoolWLC",
-            "natHealthStats",
-            "natGatewayStatsIn",
-            "natGatewayStatsOut",
-        ],
-    },
-    {
-        "pattern": "CORE{}-NAT64",
-        "range": {"min": 1, "max": 2},
-        "commands": [
-            "qfpUtil",
-            "nat64Trans",
-        ],
-    },
-]
+# Default paths
+DEFAULT_CONFIG_FILE = Path(__file__).parent / "poll_macs_config.json"
+DEFAULT_WEBEX_ROOM = "Core Alarms"
+DEFAULT_PORT = 8081
 
 
-def send_command(chan, command):
-    chan.sendall(command + "\n")
-    time.sleep(0.5)
-    output = ""
-    i = 0
-    while i < 60:
-        r = chan.recv(65535)
-        if len(r) == 0:
-            raise EOFError("Remote host has closed the connection")
-        r = r.decode("utf-8", "ignore")
-        output += r
-        if re.search(r"[#>]$", r.strip()):
-            break
-        time.sleep(1)
+@dataclass
+class CommandConfig:
+    """Configuration for a command to execute."""
 
-    return output
+    command: str
+    pattern: str
+    metric: str | None = None
+    metrics: list[str] | None = None
+    threshold: str | None = None
+    thresholds: list[str] | None = None
 
 
-def get_results(dev):
-    global commands
+@dataclass
+class DeviceTarget:
+    """Target device configuration."""
 
-    ssh_client = paramiko.SSHClient()
-    ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    device: str
+    commands: list[str]
+    device_type: str = "cisco_ios"
 
-    response = []
-    try:
-        ssh_client.connect(
-            dev["device"],
-            username=CLEUCreds.NET_USER,
-            password=CLEUCreds.NET_PASS,
-            timeout=5,
-            allow_agent=False,
-            look_for_keys=False,
+
+@dataclass
+class MonitorConfig:
+    """Configuration for metrics monitoring."""
+
+    webex_room: str
+    commands: dict[str, CommandConfig]
+    devices: list[dict]
+    worker_pool_size: int = 20
+    connection_timeout: int = 5
+
+
+@dataclass
+class MetricsCollector:
+    """Collects and exposes network device metrics."""
+
+    registry: CollectorRegistry
+    config: MonitorConfig
+    targets: list[DeviceTarget]
+    gauges: dict[str, Gauge]
+    spark: Sparker
+
+    @classmethod
+    def create(cls, config: MonitorConfig, targets: list[DeviceTarget]) -> "MetricsCollector":
+        """Factory method to create a MetricsCollector instance."""
+        registry = CollectorRegistry()
+        gauges: dict[str, Gauge] = {}
+        spark = Sparker(token=CLEUCreds.SPARK_TOKEN)
+
+        # Create Gauge metrics for all unique metric names
+        metric_names = set()
+        for cmd_config in config.commands.values():
+            if cmd_config.metric:
+                metric_names.add(cmd_config.metric)
+            if cmd_config.metrics:
+                metric_names.update(cmd_config.metrics)
+
+        for metric_name in metric_names:
+            gauges[metric_name] = Gauge(
+                metric_name,
+                f"Network device metric: {metric_name}",
+                ["device"],
+                registry=registry,
+            )
+
+        return cls(
+            registry=registry,
+            config=config,
+            targets=targets,
+            gauges=gauges,
+            spark=spark,
         )
-        chan = ssh_client.invoke_shell()
+
+    def _check_threshold(
+        self,
+        metric_name: str,
+        value: str,
+        threshold: str,
+    ) -> None:
+        """Check if a metric violates its threshold and send notification."""
+        if not threshold or not (threshold.startswith("==") or threshold.startswith("<") or threshold.startswith(">")):
+            return
+
         try:
-            send_command(chan, "term width 0")
-            send_command(chan, "term length 0")
-            for command in dev["commands"]:
-                cmd = commands[command]["command"]
-                pattern = commands[command]["pattern"]
-                metric = None
-                if "metric" in commands[command]:
-                    metric = commands[command]["metric"]
-                output = ""
+            if eval(f"{value} {threshold}"):
+                self.spark.post_to_spark(
+                    C.WEBEX_TEAM,
+                    self.config.webex_room,
+                    f"Metric **{metric_name}** has violated threshold {threshold}, currently {value}",
+                    MessageType.WARNING,
+                )
+        except Exception as e:
+            logger.error(f"Failed to check threshold for {metric_name}: {e}")
 
-                try:
-                    output = send_command(chan, cmd)
-                except Exception as iie:
-                    response.append("")
-                    sys.stderr.write("Failed to get result for {} from {}: {}\n".format(cmd, dev["device"], iie))
-                    traceback.print_exc()
+    def _set_metric_value(self, metric_name: str, device: str, value: str) -> None:
+        """Set a metric value for a device."""
+        try:
+            self.gauges[metric_name].labels(device=device).set(float(value))
+        except Exception as e:
+            logger.error(f"Failed to set metric {metric_name} for {device}: {e}")
 
-                m = re.search(pattern, output)
-                if m:
-                    if metric:
-                        response.append('{}{{idf="{}"}} {}'.format(metric, dev["device"], m.group(1)))
-                        if "threshold" in commands[command] and (
-                            commands[command]["threshold"].startswith("==")
-                            or commands[command]["threshold"].startswith("<")
-                            or commands[command]["threshold"].startswith(">")
-                        ):
-                            if eval(f"{m.group(1)} {commands[command]['threshold']}"):
-                                spark.post_to_spark(
-                                    C.WEBEX_TEAM,
-                                    WEBEX_ROOM,
-                                    f"Metric {metric} has violated threshold {commands[command]['threshold']}, currently {m.group(1)}",
-                                    MessageType.WARNING,
-                                )
-                    else:
-                        metrics = commands[command]["metrics"]
-                        i = 1
-                        for metric in metrics:
-                            response.append('{}{{idf="{}"}} {}'.format(metric, dev["device"], m.group(i)))
-                            if "thresholds" in commands[command] and (
-                                commands[command]["thresholds"][i].startswith("==")
-                                or commands[command]["thresholds"][i].startswith("<")
-                                or commands[command]["thresholds"][i].startswith(">")
-                            ):
-                                if eval(f"{m.group(i)} {commands[command]['thresholds'][i]}"):
-                                    spark.post_to_spark(
-                                        C.WEBEX_TEAM,
-                                        WEBEX_ROOM,
-                                        f"Metric {metric} has violated threshold {commands[command]['thresholds'][i]}, currently {m.group(i)}",
-                                        MessageType.WARNING,
-                                    )
-                            i += 1
-                else:
-                    # sys.stderr.write(
-                    #     'Failed to find pattern "{}" in "{}"\n'.format(pattern, output)
-                    # )
-                    if metric:
-                        response.append('{}{{idf="{}"}} {}'.format(metric, dev["device"], 0))
-                    else:
-                        metrics = commands[command]["metrics"]
-                        for metric in metrics:
-                            response.append('{}{{idf="{}"}} {}'.format(metric, dev["device"], 0))
-        except Exception as ie:
-            for command in dev["commands"]:
-                response.append("")
-            sys.stderr.write("Failed to setup SSH on {}: {}\n".format(dev["device"], ie))
-            traceback.print_exc()
-    except Exception as e:
-        for command in dev["commands"]:
-            response.append("")
-        sys.stderr.write("Failed to connect to {}: {}\n".format(dev["device"], e))
+    def _set_metrics_to_zero(self, target: DeviceTarget) -> None:
+        """Set all metrics for a device to zero (on connection/command failure)."""
+        for command_name in target.commands:
+            if command_name in self.config.commands:
+                cmd_config = self.config.commands[command_name]
+                if cmd_config.metric:
+                    self._set_metric_value(cmd_config.metric, target.device, "0")
+                elif cmd_config.metrics:
+                    for metric in cmd_config.metrics:
+                        self._set_metric_value(metric, target.device, "0")
 
-    ssh_client.close()
+    def _process_command_output(
+        self,
+        target: DeviceTarget,
+        cmd_config: CommandConfig,
+        output: str,
+    ) -> None:
+        """Process output from a single command and update metrics."""
+        if match := re.search(cmd_config.pattern, output, re.DOTALL):
+            if cmd_config.metric:
+                # Single metric
+                value = match.group(1)
+                self._set_metric_value(cmd_config.metric, target.device, value)
+                if cmd_config.threshold:
+                    self._check_threshold(cmd_config.metric, value, cmd_config.threshold)
 
-    return response
-
-
-def get_metrics(pool):
-    response = []
-    targets = []
-
-    for device in devices:
-        if "list" in device:
-            for dev in device["list"]:
-                targets.append({"device": dev, "commands": device["commands"]})
-        elif "range" in device or "subs" in device:
-            if "range" in device:
-                for i in range(device["range"]["min"], device["range"]["max"] + 1):
-                    targets.append(
-                        {
-                            "device": device["pattern"].format(str(i)),
-                            "commands": device["commands"],
-                        }
-                    )
-            else:
-                for sub in device["subs"]:
-                    targets.append(
-                        {
-                            "device": device["pattern"].format(sub),
-                            "commands": device["commands"],
-                        }
-                    )
+            elif cmd_config.metrics:
+                # Multiple metrics
+                for i, metric in enumerate(cmd_config.metrics, start=1):
+                    value = match.group(i)
+                    self._set_metric_value(metric, target.device, value)
+                    if cmd_config.thresholds and i <= len(cmd_config.thresholds):
+                        self._check_threshold(metric, value, cmd_config.thresholds[i - 1])
         else:
-            with open(device["file"]) as fd:
-                for dev in json.load(fd):
-                    targets.append({"device": dev, "commands": device["commands"]})
+            # Pattern didn't match, set to zero
+            if cmd_config.metric:
+                self._set_metric_value(cmd_config.metric, target.device, "0")
+            elif cmd_config.metrics:
+                for metric in cmd_config.metrics:
+                    self._set_metric_value(metric, target.device, "0")
 
-    results = [pool.apply_async(get_results, [d]) for d in targets]
-    for res in results:
-        retval = res.get()
-        if retval is not None:
-            response += retval
+    def _collect_device_metrics(self, target: DeviceTarget) -> None:
+        """Collect metrics from a single device."""
+        device_params = {
+            "device_type": target.device_type,
+            "host": target.device,
+            "username": CLEUCreds.NET_USER,
+            "password": CLEUCreds.NET_PASS,
+            "timeout": self.config.connection_timeout,
+        }
 
-    return response
+        try:
+            with ConnectHandler(**device_params) as ssh:
+                logger.debug(f"Connected to {target.device}")
+
+                for command_name in target.commands:
+                    if command_name not in self.config.commands:
+                        logger.warning(f"Unknown command {command_name} for {target.device}")
+                        continue
+
+                    cmd_config = self.config.commands[command_name]
+
+                    try:
+                        output = ssh.send_command(cmd_config.command, read_timeout=30)
+                        self._process_command_output(target, cmd_config, output)
+                    except Exception as e:
+                        logger.error(f"Failed to execute {command_name} on {target.device}: {e}")
+                        # Set zeros for failed command
+                        if cmd_config.metric:
+                            self._set_metric_value(cmd_config.metric, target.device, "0")
+                        elif cmd_config.metrics:
+                            for metric in cmd_config.metrics:
+                                self._set_metric_value(metric, target.device, "0")
+
+        except (NetmikoTimeoutException, NetmikoAuthenticationException) as e:
+            error_type = "timeout" if isinstance(e, NetmikoTimeoutException) else "authentication"
+            logger.error(f"Connection {error_type} for {target.device}")
+            self._set_metrics_to_zero(target)
+        except Exception as e:
+            logger.error(f"Failed to connect to {target.device}: {e}")
+            self._set_metrics_to_zero(target)
+
+    def collect_metrics(self) -> None:
+        """Collect metrics from all devices in parallel."""
+        logger.info(f"Starting network metrics collection from {len(self.targets)} devices")
+
+        with Pool(self.config.worker_pool_size) as pool:
+            results = [pool.apply_async(self._collect_device_metrics, [target]) for target in self.targets]
+
+            for result in results:
+                try:
+                    result.get(timeout=120)
+                except Exception as e:
+                    logger.error(f"Failed to get result from worker: {e}")
+
+        logger.info("Network metrics collection completed")
+
+
+def load_config_file(config_file: Path) -> dict:
+    """Load configuration from JSON file.
+
+    Args:
+        config_file: Path to configuration file
+
+    Returns:
+        Configuration dictionary
+    """
+    try:
+        with config_file.open("r") as fd:
+            config = json.load(fd)
+            logger.info(f"Loaded configuration from {config_file}")
+            return config
+    except Exception as e:
+        logger.error(f"Failed to load configuration file {config_file}: {e}")
+        sys.exit(1)
+
+
+def parse_commands(commands_dict: dict) -> dict[str, CommandConfig]:
+    """Parse commands configuration into CommandConfig objects.
+
+    Args:
+        commands_dict: Raw commands dictionary
+
+    Returns:
+        Dictionary mapping command names to CommandConfig objects
+    """
+    parsed = {}
+    for name, cmd_data in commands_dict.items():
+        parsed[name] = CommandConfig(
+            command=cmd_data["command"],
+            pattern=cmd_data["pattern"],
+            metric=cmd_data.get("metric"),
+            metrics=cmd_data.get("metrics"),
+            threshold=cmd_data.get("threshold"),
+            thresholds=cmd_data.get("thresholds"),
+        )
+    return parsed
+
+
+def expand_device_targets(devices_config: list[dict]) -> list[DeviceTarget]:
+    """Expand device configuration into individual targets.
+
+    Args:
+        devices_config: List of device configuration dictionaries
+
+    Returns:
+        List of DeviceTarget objects
+    """
+    targets: list[DeviceTarget] = []
+
+    for device_spec in devices_config:
+        device_type = device_spec.get("device_type", "cisco_ios")
+        commands = device_spec["commands"]
+
+        if "list" in device_spec:
+            for dev in device_spec["list"]:
+                targets.append(DeviceTarget(device=dev, commands=commands, device_type=device_type))
+
+        elif "range" in device_spec:
+            pattern = device_spec["pattern"]
+            range_spec = device_spec["range"]
+            for i in range(range_spec["min"], range_spec["max"] + 1):
+                targets.append(
+                    DeviceTarget(
+                        device=pattern.format(str(i)),
+                        commands=commands,
+                        device_type=device_type,
+                    )
+                )
+
+        elif "subs" in device_spec:
+            pattern = device_spec["pattern"]
+            for sub in device_spec["subs"]:
+                targets.append(
+                    DeviceTarget(
+                        device=pattern.format(sub),
+                        commands=commands,
+                        device_type=device_type,
+                    )
+                )
+
+        elif "file" in device_spec:
+            file_path = Path(device_spec["file"])
+            try:
+                with file_path.open("r") as fd:
+                    device_list = json.load(fd)
+                    for dev in device_list:
+                        targets.append(
+                            DeviceTarget(
+                                device=dev,
+                                commands=commands,
+                                device_type=device_type,
+                            )
+                        )
+            except Exception as e:
+                logger.error(f"Failed to load device file {file_path}: {e}")
+
+    logger.info(f"Expanded {len(targets)} device targets")
+    return targets
+
+
+def create_app(collector: MetricsCollector) -> Flask:
+    """Create and configure the Flask application.
+
+    Args:
+        collector: The MetricsCollector instance
+    Returns:
+        Configured Flask application
+    """
+    app = Flask("Network Metrics Exporter")
+
+    @app.route("/metrics")
+    def metrics() -> Response:
+        collector.collect_metrics()
+        data = generate_latest(collector.registry)
+        return Response(data, mimetype=CONTENT_TYPE_LATEST)
+
+    return app
+
+
+def main() -> None:
+    """Main entry point for the network metrics exporter."""
+    parser = argparse.ArgumentParser(description="Network device metrics exporter for Prometheus")
+    parser.add_argument(
+        "--config",
+        "-c",
+        type=Path,
+        default=DEFAULT_CONFIG_FILE,
+        help=f"Path to configuration file (default: {DEFAULT_CONFIG_FILE})",
+    )
+    parser.add_argument(
+        "--webex-room",
+        default=DEFAULT_WEBEX_ROOM,
+        help=f"Webex room for notifications (default: {DEFAULT_WEBEX_ROOM})",
+    )
+    parser.add_argument(
+        "--port",
+        "-p",
+        type=int,
+        default=DEFAULT_PORT,
+        help=f"Port to listen on (default: {DEFAULT_PORT})",
+    )
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=20,
+        help="Number of parallel workers (default: 20)",
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Enable verbose debug logging",
+    )
+
+    args = parser.parse_args()
+
+    if args.verbose:
+        logger.setLevel(logging.DEBUG)
+        logger.debug("Debug logging enabled")
+
+    # Load configuration
+    config_data = load_config_file(args.config)
+
+    # Parse configuration
+    commands_dict = parse_commands(config_data.get("commands", {}))
+    devices_config = config_data.get("devices", [])
+
+    config = MonitorConfig(
+        webex_room=args.webex_room,
+        commands=commands_dict,
+        devices=devices_config,
+        worker_pool_size=args.workers,
+    )
+
+    # Expand device targets
+    targets = expand_device_targets(devices_config)
+
+    if not targets:
+        logger.error("No device targets found")
+        sys.exit(1)
+
+    # Create metrics collector
+    collector = MetricsCollector.create(config, targets)
+
+    # Create Flask app
+    app = create_app(collector)
+
+    # Start HTTP server
+    http_server = WSGIServer((C.WSGI_SERVER, args.port), app)
+    logger.info(f"Starting network metrics exporter on {C.WSGI_SERVER} port {args.port}")
+    try:
+        http_server.serve_forever()
+    except KeyboardInterrupt:
+        logger.info("Shutting down network metrics exporter")
+        http_server.stop()
+    except Exception as e:
+        logger.error(f"Error running network metrics exporter: {e}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
-    # Add some jitter.
-    time.sleep(random.randrange(90))
-    spark = Sparker(token=CLEUCreds.SPARK_TOKEN)
-
-    pool = Pool(20)
-    response = get_metrics(pool)
-
-    with open(CACHE_FILE_TMP, "w") as fd:
-        json.dump(response, fd, indent=4)
-
-    os.rename(CACHE_FILE_TMP, CACHE_FILE)
+    main()
