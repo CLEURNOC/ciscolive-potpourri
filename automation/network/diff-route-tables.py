@@ -430,11 +430,13 @@ def main() -> int:
     )
     parser.add_argument(
         "--git-repo",
+        "-g",
         type=Path,
         help="Git repository path for commits (optional)",
     )
     parser.add_argument(
         "--git-branch",
+        "-b",
         default="master",
         help="Git branch name (default: master)",
     )
@@ -445,9 +447,9 @@ def main() -> int:
     )
     parser.add_argument(
         "--notify-routers",
-        nargs="*",
-        default=[],
+        "-n",
         help="Only notify for these routers (default: all routers)",
+        action="append",
     )
     parser.add_argument(
         "--jitter",
