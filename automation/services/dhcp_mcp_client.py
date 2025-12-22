@@ -104,11 +104,14 @@ class BotState(object):
         self.config = BotConfig.from_env()
 
         # Initialize logging
-        logging.basicConfig(
-            format="[%(asctime)s.%(msecs)03d] [%(levelname)s] [%(filename)s] [%(funcName)s():%(lineno)s] [PID:%(process)d TID:%(thread)d] %(message)s"
-        )
-        logging.getLogger().setLevel(self.config.log_level)
         self.logger = logging.getLogger("noc-mcp-client")
+        self.logger.setLevel(self.config.log_level)
+        # Configure handler with format for this module only
+        if not self.logger.handlers:
+            handler = logging.StreamHandler()
+            handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(threadName)s %(name)s: %(message)s"))
+            self.logger.addHandler(handler)
+            self.logger.propagate = False
         self.logger.info("Initializing bot state...")
 
         # Initialize Spark client
@@ -150,7 +153,10 @@ class BotState(object):
             )
         else:
             # vLLM or other OpenAI-compatible backend
-            api_key = CLEUCreds.OPENAI_API_KEY if hasattr(CLEUCreds, "OPENAI_API_KEY") else "dummy-key"
+            if hasattr(CLEUCreds, "OPENAI_API_KEY"):
+                api_key = CLEUCreds.OPENAI_API_KEY
+            else:
+                raise RuntimeError("OPENAI_API_KEY is not set in CLEUCreds")
             self.openai_client = OpenAI(
                 base_url=C.AI_HOST,
                 api_key=api_key,
