@@ -220,7 +220,7 @@ class BotState(object):
         async with self.mcp_client:
             mcp_tools = await self.mcp_client.list_tools()
             for tool in mcp_tools:
-                ollama_tool = {
+                llm_tool = {
                     "type": "function",
                     "function": {
                         "name": tool.name,
@@ -228,7 +228,7 @@ class BotState(object):
                         "parameters": tool.inputSchema if hasattr(tool, "inputSchema") else {},
                     },
                 }
-                self.available_functions.append(ollama_tool)
+                self.available_functions.append(llm_tool)
                 self.tool_meta[tool.name] = tool.meta if hasattr(tool, "meta") else {}
 
     async def cleanup(self) -> None:
