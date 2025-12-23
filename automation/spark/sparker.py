@@ -203,12 +203,17 @@ class Sparker:
     SPARK_API = "https://webexapis.com/v1/"
 
     def __init__(
-        self, token: Optional[str] = None, logit: bool = False, config: Optional[WebexConfig] = None, **kwargs  # For backward compatibility
+        self,
+        token: Optional[str] = None,
+        logit: bool = False,
+        config: Optional[WebexConfig] = None,
+        debug: bool = False,
+        **kwargs,  # For backward compatibility
     ):
         self._config = config or WebexConfig()
         self._token = f"Bearer {token}" if token else None
         self._logit = logit or kwargs.get("logit", False)
-        self._logger = logging.getLogger(__name__) if self._logit else None
+        self._logger = logging.getLogger("webex.sparker") if self._logit else None
 
         # Thread-safe caches
         self._team_cache = ThreadSafeCache(ttl=self._config.cache_ttl)
@@ -225,7 +230,8 @@ class Sparker:
             formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
             handler.setFormatter(formatter)
             self._logger.addHandler(handler)
-            self._logger.setLevel(logging.INFO)
+            loglevel = logging.DEBUG if debug or kwargs.get("debug", False) else logging.INFO
+            self._logger.setLevel(loglevel)
 
     def _get_session(self) -> requests.Session:
         """Get or create thread-safe requests session with connection pooling."""
