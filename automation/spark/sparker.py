@@ -1292,7 +1292,7 @@ if CLICK_AVAILABLE:
             logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
         # Create Sparker instance
-        ctx.obj["sparker"] = Sparker(token=token, logit=verbose)
+        ctx.obj["sparker"] = Sparker(token=token, logit=True, debug=verbose)
         ctx.obj["verbose"] = verbose
 
     @cli.command()
