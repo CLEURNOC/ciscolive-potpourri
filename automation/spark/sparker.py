@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 #
 # Copyright (c) 2017-2025  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
@@ -57,6 +58,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import sys
 import time
 from dataclasses import dataclass, field
 from enum import Enum, unique
@@ -64,6 +66,14 @@ from functools import wraps
 from io import BytesIO
 from threading import Lock
 from typing import Any, Callable, Dict, List, Optional, Union
+
+try:
+    import click
+
+    CLICK_AVAILABLE = True
+except ImportError:
+    CLICK_AVAILABLE = False
+    click = None  # type: ignore
 
 try:
     import httpx
@@ -1255,3 +1265,230 @@ class Sparker:
         if self._async_session and not self._async_session.is_closed:
             await self._async_session.aclose()
             self._async_session = None
+
+
+# ==================== CLI APPLICATION ====================
+
+if CLICK_AVAILABLE:
+
+    @click.group()
+    @click.option("--token", envvar="WEBEX_TOKEN", required=True, help="Webex API token (or set WEBEX_TOKEN environment variable)")
+    @click.option("--verbose", "-v", is_flag=True, help="Enable verbose logging")
+    @click.pass_context
+    def cli(ctx, token, verbose):
+        """Webex (Spark) API command-line tool.
+
+        This tool provides various operations for interacting with the Webex API,
+        including retrieving room IDs and sending messages.
+
+        Set your Webex token via the WEBEX_TOKEN environment variable or --token option.
+        """
+        ctx.ensure_object(dict)
+
+        # Configure logging
+        if verbose:
+            logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        else:
+            logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+
+        # Create Sparker instance
+        ctx.obj["sparker"] = Sparker(token=token, logit=verbose)
+        ctx.obj["verbose"] = verbose
+
+    @cli.command()
+    @click.argument("room")
+    @click.option("--team", "-t", help="Team name (optional)")
+    @click.pass_context
+    def get_room_id(ctx, room, team):
+        """Get the room ID for a given room name.
+
+        ROOM: The name of the room to look up
+
+        Examples:
+
+            sparker.py get-room-id "My Room"
+
+            sparker.py get-room-id "My Room" --team "My Team"
+        """
+        sparker = ctx.obj["sparker"]
+
+        team_id = None
+        if team:
+            click.echo(f"Looking up team: {team}")
+            team_id = sparker.get_team_id(team)
+            if team_id is None:
+                click.echo(f"❌ Team '{team}' not found", err=True)
+                sys.exit(1)
+            click.echo(f"✓ Team ID: {team_id}")
+
+        click.echo(f"Looking up room: {room}")
+        room_id = sparker.get_room_id(team_id, room)
+
+        if room_id is None:
+            click.echo(f"❌ Room '{room}' not found", err=True)
+            sys.exit(1)
+
+        click.echo(f"✓ Room ID: {room_id}")
+
+        # Output just the ID if not verbose (for scripting)
+        if not ctx.obj["verbose"]:
+            click.echo(room_id)
+
+    @cli.command()
+    @click.argument("room")
+    @click.argument("message")
+    @click.option("--team", "-t", help="Team name (optional)")
+    @click.option(
+        "--type",
+        "-m",
+        "msg_type",
+        type=click.Choice(["good", "bad", "warning", "neutral"], case_sensitive=False),
+        default="neutral",
+        help="Message type for visual indicator",
+    )
+    @click.option("--person", "-p", help="Send to person email instead of room")
+    @click.option("--room-id", help="Use room ID directly instead of looking up by name")
+    @click.option("--parent", help="Parent message ID for threading")
+    @click.pass_context
+    def send_message(ctx, room, message, team, msg_type, person, room_id, parent):
+        """Send a message to a room or person.
+
+        ROOM: The name of the room (or any string if using --person or --room-id)
+
+        MESSAGE: The message text to send
+
+        Examples:
+
+            sparker.py send-message "My Room" "Hello, World!"
+
+            sparker.py send-message "My Room" "Alert!" --type bad
+
+            sparker.py send-message "My Room" "Success!" --team "My Team" --type good
+
+            sparker.py send-message "" "Hi there" --person user@example.com
+
+            sparker.py send-message "" "Quick message" --room-id Y2lzY29zcGFyazov...
+        """
+        sparker = ctx.obj["sparker"]
+
+        # Map string to MessageType enum
+        type_map = {"good": MessageType.GOOD, "bad": MessageType.BAD, "warning": MessageType.WARNING, "neutral": MessageType.NEUTRAL}
+        mtype = type_map[msg_type.lower()]
+
+        # Build kwargs for post_to_spark
+        kwargs = {}
+        if person:
+            kwargs["person"] = person
+            click.echo(f"Sending message to person: {person}")
+        elif room_id:
+            kwargs["roomId"] = room_id
+            click.echo(f"Sending message to room ID: {room_id}")
+        else:
+            if team:
+                click.echo(f"Looking up team: {team}")
+
+        if parent:
+            kwargs["parent"] = parent
+            click.echo(f"Threading under parent message: {parent}")
+
+        click.echo(f"Sending message with type: {msg_type}")
+
+        success = sparker.post_to_spark(team, room, message, mtype=mtype, **kwargs)
+
+        if success:
+            click.echo("✓ Message sent successfully")
+        else:
+            click.echo("❌ Failed to send message", err=True)
+            sys.exit(1)
+
+    @cli.command()
+    @click.option("--team", "-t", help="Team name to filter rooms by")
+    @click.option("--limit", "-l", type=int, help="Limit number of results")
+    @click.pass_context
+    def list_rooms(ctx, team, limit):
+        """List all accessible rooms.
+
+        Examples:
+
+            sparker.py list-rooms
+
+            sparker.py list-rooms --team "My Team"
+
+            sparker.py list-rooms --limit 10
+        """
+        sparker = ctx.obj["sparker"]
+
+        team_id = None
+        if team:
+            click.echo(f"Looking up team: {team}")
+            team_id = sparker.get_team_id(team)
+            if team_id is None:
+                click.echo(f"❌ Team '{team}' not found", err=True)
+                sys.exit(1)
+
+        url = f"{sparker._config.api_base}rooms"
+        params = {}
+        if team_id:
+            params["teamId"] = team_id
+
+        items = sparker._get_items_pages_new("GET", url, params=params)
+
+        if limit:
+            items = items[:limit]
+
+        if not items:
+            click.echo("No rooms found")
+            return
+
+        click.echo(f"\nFound {len(items)} room(s):\n")
+        for idx, room_item in enumerate(items, 1):
+            room_name = room_item.get("title", "Unknown")
+            room_id = room_item.get("id", "Unknown")
+            room_type = room_item.get("type", "Unknown")
+            click.echo(f"{idx}. {room_name}")
+            click.echo(f"   ID: {room_id}")
+            click.echo(f"   Type: {room_type}")
+            if "teamId" in room_item:
+                click.echo(f"   Team ID: {room_item['teamId']}")
+            click.echo()
+
+    @cli.command()
+    @click.option("--limit", "-l", type=int, help="Limit number of results")
+    @click.pass_context
+    def list_teams(ctx, limit):
+        """List all accessible teams.
+
+        Examples:
+
+            sparker.py list-teams
+
+            sparker.py list-teams --limit 5
+        """
+        sparker = ctx.obj["sparker"]
+
+        url = f"{sparker._config.api_base}teams"
+        items = sparker._get_items_pages_new("GET", url)
+
+        if limit:
+            items = items[:limit]
+
+        if not items:
+            click.echo("No teams found")
+            return
+
+        click.echo(f"\nFound {len(items)} team(s):\n")
+        for idx, team_item in enumerate(items, 1):
+            team_name = team_item.get("name", "Unknown")
+            team_id = team_item.get("id", "Unknown")
+            click.echo(f"{idx}. {team_name}")
+            click.echo(f"   ID: {team_id}")
+            click.echo()
+
+
+if __name__ == "__main__":
+    if CLICK_AVAILABLE:
+        cli(obj={})
+    else:
+        print("Error: click library is required for CLI functionality")
+        print("Install it with: pip install click")
+        sys.exit(1)
