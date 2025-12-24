@@ -968,7 +968,7 @@ async def generate_password(
 
 @server_mcp.tool(
     annotations={
-        "title": "Get AP name from BSSIS",
+        "title": "Get AP name from BSSID",
         "readOnlyHint": True,
     },
     enabled=not is_testing,
