@@ -968,6 +968,33 @@ async def generate_password(
 
 @server_mcp.tool(
     annotations={
+        "title": "Get AP name from BSSIS",
+        "readOnlyHint": True,
+    },
+    enabled=not is_testing,
+)
+async def get_ap_name_from_bssid(bssid: str) -> str:
+    """
+    Get the AP name associated with a given BSSID from the cached BSSID data.
+
+    Args:
+        bssid (str): The BSSID (MAC address) of the access point.
+    Returns:
+        str: The name of the access point associated with the BSSID.
+    """
+    bssids = _refresh_bssid_cache(do_refresh=False)
+    bssid_str = str(normalize_mac(bssid)).lower()
+    if bssid_str in bssids:
+        return bssids[bssid_str]
+    else:
+        bssids = _refresh_bssid_cache(do_refresh=True)
+        if bssid_str in bssids:
+            return bssids[bssid_str]
+    raise ToolError(f"No AP name found for BSSID {bssid_str}")
+
+
+@server_mcp.tool(
+    annotations={
         "title": "Get Client Details from ISE",
         "readOnlyHint": True,
     },
@@ -995,8 +1022,6 @@ async def get_user_details_from_ise(ise_input: ISEInput | dict) -> ISEResponse:
         raise ToolError("One of username, mac, or ip is required")
     if sum([username is not None, mac is not None, ip is not None]) > 1:
         raise ToolError("Only one of username, mac, or ip may be specified")
-
-    bssids = _refresh_bssid_cache(do_refresh=False)
 
     if mac:
         mac_str = str(normalize_mac(mac)).upper()
@@ -1067,13 +1092,6 @@ async def get_user_details_from_ise(ise_input: ISEInput | dict) -> ISEResponse:
             associated_ssid = ssid_match.group(1)
         if vlan_match:
             connected_vlan = vlan_match.group(1)
-
-    if associated_access_point and associated_access_point.lower() in bssids:
-        associated_access_point = bssids[associated_access_point.lower()]
-    elif associated_access_point:
-        bssids = _refresh_bssid_cache(do_refresh=True)
-        if associated_access_point.lower() in bssids:
-            associated_access_point = bssids[associated_access_point.lower()]
 
     return ISEResponse(
         username=auth_username,
