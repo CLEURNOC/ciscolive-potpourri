@@ -135,6 +135,7 @@ class MetricsCollector(object):
                 headers={"Accept": "application/json"},
                 params=params,
                 verify=False,
+                timeout=30,
             )
             response.raise_for_status()
             return response.json()
