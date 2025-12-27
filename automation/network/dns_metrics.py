@@ -213,7 +213,7 @@ def main() -> None:
         http_server.serve_forever()
     except KeyboardInterrupt:
         logger.info("Shutting down DNS Metrics Exporter")
-        sys.exit(0)
+        http_server.stop()
     except Exception as e:
         logger.error(f"Server error: {e}", exc_info=True)
         sys.exit(1)
