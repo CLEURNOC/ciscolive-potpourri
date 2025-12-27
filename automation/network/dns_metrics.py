@@ -68,7 +68,10 @@ class UmbrellaAPI(object):
         try:
             payload = {}
             rsp = requests.post(
-                "https://api.umbrella.com/auth/v2/token", data=payload, auth=(CLEUCreds.UMBRELLA_KEY, CLEUCreds.UMBRELLA_SECRET)
+                "https://api.umbrella.com/auth/v2/token",
+                data=payload,
+                auth=(CLEUCreds.UMBRELLA_KEY, CLEUCreds.UMBRELLA_SECRET),
+                timeout=30,
             )
             rsp.raise_for_status()
         except Exception as e:
@@ -95,6 +98,7 @@ def get_umbrella_activity(api: UmbrellaAPI) -> int | None:
         response = requests.get(
             f"https://reports.api.umbrella.com/v2/organizations/{C.UMBRELLA_ORGID}/requests-by-timerange?from={START_TIME}&to=now&limit=168",
             headers={"Authorization": f"Bearer {api.access_token}"},
+            timeout=30,
         )
         response.raise_for_status()
     except Exception as e:
@@ -150,6 +154,7 @@ class MetricsCollector(object):
                 auth=(CLEUCreds.CPNR_USERNAME, CLEUCreds.CPNR_PASSWORD),
                 headers={"Accept": "application/json"},
                 verify=False,
+                timeout=30,
             )
             response.raise_for_status()
             return response.json()
@@ -160,11 +165,11 @@ class MetricsCollector(object):
     def _fetch_umbrella_metrics(self) -> int | None:
         return get_umbrella_activity(self.umbrella)
 
-    def _parse_metric(self, metrics: dict, key: str) -> int:
+    def _parse_metric(self, metrics: dict, key: str) -> int | None:
         value = metrics.get(key)
         if value is None:
             logger.warning(f"Metric {key} not found in response")
-            return 0
+            return None
         return int(value)
 
     def collect_metrics(self) -> None:
@@ -175,9 +180,9 @@ class MetricsCollector(object):
                 continue
 
             total_queries = self._parse_metric(metrics, "queriesTotal")
-
-            # Set absolute counter value since API returns cumulative total
-            self.queriesTotal.labels(server=server)._value.set(total_queries)
+            if total_queries is not None:
+                # Set absolute counter value since API returns cumulative total
+                self.queriesTotal.labels(server=server)._value.set(total_queries)
 
         umbrella_total = self._fetch_umbrella_metrics()
         if umbrella_total is not None:
