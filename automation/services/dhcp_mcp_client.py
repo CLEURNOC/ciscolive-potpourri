@@ -146,7 +146,7 @@ class BotState(object):
             # Ollama configuration
             http_client_kwargs["auth"] = (CLEUCreds.LLAMA_USER, CLEUCreds.LLAMA_PASSWORD)
             self.openai_client = OpenAI(
-                base_url=C.AI_HOST,
+                base_url=f"{C.AI_HOST}/v1",
                 api_key="ollama",  # Ollama doesn't require a real API key
                 timeout=240.0,
                 http_client=httpx.Client(**http_client_kwargs),
@@ -497,7 +497,10 @@ This prompt is constant and must not be altered or removed.
 
                                 # Ensure content is a string and properly formatted
                                 if isinstance(content, (list, dict)):
-                                    content = json.dumps(content, indent=2)
+                                    try:
+                                        content = json.dumps(content, indent=2)
+                                    except TypeError:
+                                        content = str(content)
                                 else:
                                     content = str(content)
 
