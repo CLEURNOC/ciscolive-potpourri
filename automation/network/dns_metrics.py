@@ -90,7 +90,7 @@ def refreshToken(decorated):
 
 
 @refreshToken
-def get_umbrella_activity(api: UmbrellaAPI) -> int:
+def get_umbrella_activity(api: UmbrellaAPI) -> int | None:
     try:
         response = requests.get(
             f"https://reports.api.umbrella.com/v2/organizations/{C.UMBRELLA_ORGID}/requests-by-timerange?from={START_TIME}&to=now&limit=168",
@@ -99,6 +99,7 @@ def get_umbrella_activity(api: UmbrellaAPI) -> int:
         response.raise_for_status()
     except Exception as e:
         logger.error("Failed to get stats: %s" % str(e), exc_info=True)
+        return None
 
     j = response.json()
 
@@ -156,7 +157,7 @@ class MetricsCollector(object):
             logger.error(f"Failed to get stats from {server}: {e}", exc_info=True)
             return None
 
-    def _fetch_umbrella_metrics(self) -> int:
+    def _fetch_umbrella_metrics(self) -> int | None:
         return get_umbrella_activity(self.umbrella)
 
     def _parse_metric(self, metrics: dict, key: str) -> int:
@@ -179,8 +180,9 @@ class MetricsCollector(object):
             self.queriesTotal.labels(server=server)._value.set(total_queries)
 
         umbrella_total = self._fetch_umbrella_metrics()
-        # Set absolute counter value since API returns cumulative total
-        self.umbrellaQueriesTotal.labels(server="umbrella")._value.set(umbrella_total)
+        if umbrella_total is not None:
+            # Set absolute counter value since API returns cumulative total
+            self.umbrellaQueriesTotal.labels(server="umbrella")._value.set(umbrella_total)
 
         logger.info(f"Collected metrics: DNS Queries Total - {total_queries}, Umbrella Queries Total - {umbrella_total}")
 
