@@ -79,8 +79,17 @@ class UmbrellaAPI(object):
             return None
         else:
             clock_skew = 300
-            self.access_token_expiration = int(time.time()) + rsp.json()["expires_in"] - clock_skew
-            return rsp.json()["access_token"]
+            response_data = rsp.json()
+            expires_in = response_data.get("expires_in")
+            if expires_in is None:
+                logger.error("Missing 'expires_in' in token response")
+                return None
+            self.access_token_expiration = int(time.time()) + int(expires_in) - clock_skew
+            access_token = response_data.get("access_token")
+            if not access_token:
+                logger.error("Missing 'access_token' in token response")
+                return None
+            return access_token
 
 
 def refreshToken(decorated):
