@@ -47,8 +47,12 @@ CACHE_FILE = "/home/jclarke/object_counts.json"
 logger = logging.getLogger(__name__)
 
 
-def get_results(dev: str, command: str, cache: dict, spark: Sparker | None = None, room_name: str = ROOM_NAME) -> dict:
-    """Get command results from device using netmiko."""
+def get_results(dev: str, command: str, cache: dict) -> tuple[dict, list[str]]:
+    """Get command results from device using netmiko.
+
+    Returns:
+        Tuple of (device metrics dict, list of alert messages)
+    """
     device_params = {
         "device_type": "cisco_ios",
         "host": dev,
@@ -70,7 +74,9 @@ def get_results(dev: str, command: str, cache: dict, spark: Sparker | None = Non
         logger.error(f"Failed to connect to {dev}: {e}")
     except Exception as e:
         logger.error(f"Unexpected error connecting to {dev}: {e}", exc_info=True)
+
     dev_obj = {dev: {}}
+    alerts = []
 
     for line in output.split("\n"):
         if m := re.search(r"^(([^:]+):\s+)?([^\s]+):\s(\d+)(,([^:]+):\s(\d+))?", line):
@@ -89,12 +95,11 @@ def get_results(dev: str, command: str, cache: dict, spark: Sparker | None = Non
                     value = values[i]
                     if dev in cache and metric in cache[dev] and cache[dev][metric] < value and value > 0:
                         msg = f"Metric **{metric}** has changed from {cache[dev][metric]} to {value} on **{dev}**"
-                        if spark:
-                            spark.post_to_spark(C.WEBEX_TEAM, room_name, msg, MessageType.BAD)
+                        alerts.append(msg)
 
                     dev_obj[dev][metric] = value
 
-    return dev_obj
+    return dev_obj, alerts
 
 
 def atomic_write_json(filepath: str | Path, data: dict) -> None:
@@ -109,9 +114,14 @@ def atomic_write_json(filepath: str | Path, data: dict) -> None:
     tmp_path.replace(filepath)
 
 
-def get_metrics(pool: Pool, spark: Sparker | None = None) -> dict:
-    """Collect metrics from all devices."""
+def get_metrics(pool: Pool) -> tuple[dict, list[str]]:
+    """Collect metrics from all devices.
+
+    Returns:
+        Tuple of (device metrics dict, list of alert messages)
+    """
     response = {}
+    all_alerts = []
 
     cache_path = Path(CACHE_FILE)
     try:
@@ -132,13 +142,12 @@ def get_metrics(pool: Pool, spark: Sparker | None = None) -> dict:
         logger.error(f"Failed to load IDF file {IDF_FILE}: {e}")
         idfs = []
 
-    results = [
-        pool.apply_async(get_results, [d, "show platform software object-manager switch active f0 statistics", cache, spark]) for d in idfs
-    ]
+    results = [pool.apply_async(get_results, [d, "show platform software object-manager switch active f0 statistics", cache]) for d in idfs]
     for res in results:
-        retval = res.get()
-        if retval:
-            response = response | retval
+        dev_obj, alerts = res.get()
+        if dev_obj:
+            response = response | dev_obj
+        all_alerts.extend(alerts)
 
     logger.info(f"Collected metrics from {len(response)} IDF devices")
 
@@ -159,17 +168,18 @@ def get_metrics(pool: Pool, spark: Sparker | None = None) -> dict:
         "mer4-dist-b",
     ]
 
-    results = [pool.apply_async(get_results, [d, "show platform software object-manager f0 statistics", cache, spark]) for d in cores]
+    results = [pool.apply_async(get_results, [d, "show platform software object-manager f0 statistics", cache]) for d in cores]
     collected_cores = 0
     for res in results:
-        retval = res.get()
-        if retval:
-            response = response | retval
+        dev_obj, alerts = res.get()
+        if dev_obj:
+            response = response | dev_obj
             collected_cores += 1
+        all_alerts.extend(alerts)
 
     logger.info(f"Collected metrics from {collected_cores}/{len(cores)} core devices")
 
-    return response
+    return response, all_alerts
 
 
 if __name__ == "__main__":
@@ -177,10 +187,16 @@ if __name__ == "__main__":
 
     logger.info("Starting object polling")
     time.sleep(random.randrange(90))
-    spark = Sparker(token=CLEUCreds.SPARK_TOKEN)
 
     with _Pool(20) as pool:
-        response = get_metrics(pool, spark)
+        response, alerts = get_metrics(pool)
 
     atomic_write_json(CACHE_FILE, response)
     logger.info(f"Completed polling, wrote {len(response)} device results to {CACHE_FILE}")
+
+    # Send alerts after all data is collected
+    if alerts:
+        spark = Sparker(token=CLEUCreds.SPARK_TOKEN)
+        for msg in alerts:
+            spark.post_to_spark(C.WEBEX_TEAM, ROOM_NAME, msg, MessageType.BAD)
+        logger.info(f"Sent {len(alerts)} alerts to Webex")
