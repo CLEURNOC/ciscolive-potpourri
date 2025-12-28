@@ -24,69 +24,52 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-import re
-import sys
-import time
 import json
-import paramiko
+import logging
 import random
-from multiprocessing import Pool
-from sparker import Sparker, MessageType  # type: ignore
-import traceback
+import re
+import tempfile
+import time
+from multiprocessing import Pool as _Pool
+from multiprocessing.pool import Pool
+from pathlib import Path
+
 import CLEUCreds  # type: ignore
 from cleu.config import Config as C  # type: ignore
-
+from netmiko import ConnectHandler
+from netmiko.exceptions import NetmikoAuthenticationException, NetmikoTimeoutException
+from sparker import MessageType, Sparker  # type: ignore
 
 IDF_FILE = "/home/jclarke/idf-devices.json"
 ROOM_NAME = "Core Alarms"
 CACHE_FILE = "/home/jclarke/object_counts.json"
 
-spark = None
+logger = logging.getLogger(__name__)
 
 
-def send_command(chan, command):
-    chan.sendall(command + "\n")
-    i = 0
-    output = ""
-    while i < 10:
-        if chan.recv_ready():
-            break
-        i += 1
-        time.sleep(i * 0.5)
-    while chan.recv_ready():
-        r = chan.recv(131070).decode("utf-8")
-        output = output + r
-
-    return output
-
-
-def get_results(dev, command, cache):
-    global ROOM_NAME, spark
-
-    ssh_client = paramiko.SSHClient()
-    ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+def get_results(dev: str, command: str, cache: dict, spark: Sparker | None = None, room_name: str = ROOM_NAME) -> dict:
+    """Get command results from device using netmiko."""
+    device_params = {
+        "device_type": "cisco_ios",
+        "host": dev,
+        "username": CLEUCreds.NET_USER,
+        "password": CLEUCreds.NET_PASS,
+        "timeout": 10,
+        "conn_timeout": 5,
+    }
 
     output = ""
 
     try:
-        ssh_client.connect(dev, username=CLEUCreds.NET_USER, password=CLEUCreds.NET_PASS, timeout=5, allow_agent=False, look_for_keys=False)
-        chan = ssh_client.invoke_shell()
-        try:
-            send_command(chan, "term width 0")
-            send_command(chan, "term length 0")
+        with ConnectHandler(**device_params) as ssh_client:
             try:
-                output = send_command(chan, command)
+                output = ssh_client.send_command(command, read_timeout=30)
             except Exception as iie:
-                sys.stderr.write("Failed to get result for {} from {}: {}\n".format(command, dev, iie))
-                traceback.print_exc()
-
-        except Exception as ie:
-            sys.stderr.write("Failed to setup SSH on {}: {}\n".format(dev, ie))
-            traceback.print_exc()
+                logger.error(f"Failed to get result for {command} from {dev}: {iie}", exc_info=True)
+    except (NetmikoTimeoutException, NetmikoAuthenticationException) as e:
+        logger.error(f"Failed to connect to {dev}: {e}")
     except Exception as e:
-        sys.stderr.write("Failed to connect to {}: {}\n".format(dev, e))
-
-    ssh_client.close()
+        logger.error(f"Unexpected error connecting to {dev}: {e}", exc_info=True)
     dev_obj = {dev: {}}
 
     for line in output.split("\n"):
@@ -106,30 +89,58 @@ def get_results(dev, command, cache):
                     value = values[i]
                     if dev in cache and metric in cache[dev] and cache[dev][metric] < value and value > 0:
                         msg = f"Metric **{metric}** has changed from {cache[dev][metric]} to {value} on **{dev}**"
-                        spark.post_to_spark(C.WEBEX_TEAM, ROOM_NAME, msg, MessageType.BAD)
+                        if spark:
+                            spark.post_to_spark(C.WEBEX_TEAM, room_name, msg, MessageType.BAD)
 
                     dev_obj[dev][metric] = value
 
     return dev_obj
 
 
-def get_metrics(pool):
+def atomic_write_json(filepath: str | Path, data: dict) -> None:
+    """Atomically write JSON data to a file to avoid truncation."""
+    filepath = Path(filepath)
+    # Write to temporary file in same directory to ensure same filesystem
+    with tempfile.NamedTemporaryFile(mode="w", dir=filepath.parent, prefix=f".{filepath.name}.", suffix=".tmp", delete=False) as tmp_file:
+        json.dump(data, tmp_file, indent=2)
+        tmp_path = Path(tmp_file.name)
+
+    # Atomic rename
+    tmp_path.replace(filepath)
+
+
+def get_metrics(pool: Pool, spark: Sparker | None = None) -> dict:
+    """Collect metrics from all devices."""
     response = {}
 
+    cache_path = Path(CACHE_FILE)
     try:
-        with open(CACHE_FILE, "r") as fd:
-            cache = json.load(fd)
-    except Exception:
+        if cache_path.exists():
+            cache = json.loads(cache_path.read_text())
+            logger.info(f"Loaded cache with {len(cache)} devices")
+        else:
+            logger.info("No existing cache found, starting fresh")
+            cache = {}
+    except Exception as e:
+        logger.warning(f"Failed to load cache: {e}")
         cache = {}
 
-    with open(IDF_FILE, "r") as fd:
-        idfs = json.load(fd)
+    try:
+        idfs = json.loads(Path(IDF_FILE).read_text())
+        logger.info(f"Polling {len(idfs)} IDF devices")
+    except Exception as e:
+        logger.error(f"Failed to load IDF file {IDF_FILE}: {e}")
+        idfs = []
 
-    results = [pool.apply_async(get_results, [d, "show platform software object-manager switch active f0 statistics", cache]) for d in idfs]
+    results = [
+        pool.apply_async(get_results, [d, "show platform software object-manager switch active f0 statistics", cache, spark]) for d in idfs
+    ]
     for res in results:
         retval = res.get()
         if retval:
             response = response | retval
+
+    logger.info(f"Collected metrics from {len(response)} IDF devices")
 
     cores = [
         "core1-core",
@@ -148,21 +159,28 @@ def get_metrics(pool):
         "mer4-dist-b",
     ]
 
-    results = [pool.apply_async(get_results, [d, "show platform software object-manager f0 statistics", cache]) for d in cores]
+    results = [pool.apply_async(get_results, [d, "show platform software object-manager f0 statistics", cache, spark]) for d in cores]
+    collected_cores = 0
     for res in results:
         retval = res.get()
         if retval:
             response = response | retval
+            collected_cores += 1
+
+    logger.info(f"Collected metrics from {collected_cores}/{len(cores)} core devices")
 
     return response
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+
+    logger.info("Starting object polling")
     time.sleep(random.randrange(90))
     spark = Sparker(token=CLEUCreds.SPARK_TOKEN)
 
-    pool = Pool(20)
-    response = get_metrics(pool)
+    with _Pool(20) as pool:
+        response = get_metrics(pool, spark)
 
-    with open(CACHE_FILE, "w") as fd:
-        json.dump(response, fd, indent=2)
+    atomic_write_json(CACHE_FILE, response)
+    logger.info(f"Completed polling, wrote {len(response)} device results to {CACHE_FILE}")
