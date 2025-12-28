@@ -155,7 +155,7 @@ def create_app(collector: MetricsCollector) -> Flask:
     def metrics() -> Response:
         collector.collect_metrics()
         data = generate_latest(collector.registry)
-        return Response(data, mimetype=CONTENT_TYPE_LATEST)
+        return Response(data, content_type=CONTENT_TYPE_LATEST)
 
     return app
 
