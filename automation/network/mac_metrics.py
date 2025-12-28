@@ -41,11 +41,12 @@ from pathlib import Path
 
 import CLEUCreds  # type: ignore
 from cleu.config import Config as C  # type: ignore
-from flask import Flask, Response
+from flask import Flask, Response, request
 from gevent.pywsgi import WSGIServer  # type: ignore
 from netmiko import ConnectHandler
 from netmiko.exceptions import NetmikoAuthenticationException, NetmikoTimeoutException
-from prometheus_client import CONTENT_TYPE_PLAIN_0_0_4, CollectorRegistry, Gauge, generate_latest
+from prometheus_client import CollectorRegistry, Gauge
+from prometheus_client.exposition import choose_encoder
 from sparker import MessageType, Sparker  # type: ignore
 
 # Configure logging
@@ -377,8 +378,9 @@ def create_app(collector: MetricsCollector) -> Flask:
     @app.route("/metrics")
     def metrics() -> Response:
         collector.collect_metrics()
-        data = generate_latest(collector.registry)
-        return Response(data, content_type=CONTENT_TYPE_PLAIN_0_0_4)
+        encoder, content_type = choose_encoder(request.headers.get("Accept"))
+        data = encoder(collector.registry)
+        return Response(data, content_type=content_type)
 
     return app
 

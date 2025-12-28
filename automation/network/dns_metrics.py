@@ -34,9 +34,10 @@ from typing import ClassVar
 import CLEUCreds  # type: ignore
 import requests
 from cleu.config import Config as C  # type: ignore
-from flask import Flask, Response
+from flask import Flask, Response, request
 from gevent.pywsgi import WSGIServer  # type: ignore
-from prometheus_client import CONTENT_TYPE_PLAIN_0_0_4, CollectorRegistry, Counter, generate_latest
+from prometheus_client import CollectorRegistry, Counter
+from prometheus_client.exposition import choose_encoder
 from requests.packages.urllib3.exceptions import InsecureRequestWarning  # type: ignore
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
@@ -214,8 +215,9 @@ def create_app(collector: MetricsCollector) -> Flask:
     @app.route("/metrics")
     def metrics() -> Response:
         collector.collect_metrics()
-        data = generate_latest(collector.registry)
-        return Response(data, content_type=CONTENT_TYPE_PLAIN_0_0_4)
+        encoder, content_type = choose_encoder(request.headers.get("Accept"))
+        data = encoder(collector.registry)
+        return Response(data, content_type=content_type)
 
     return app
 
