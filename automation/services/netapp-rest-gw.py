@@ -1,6 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
-# Copyright (c) 2017-2024  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2025  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,37 +24,65 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-from flask import Flask
-from flask import Response, request
+import logging
+from typing import Any
+
+import CLEUCreds  # type: ignore
 import requests
 import xmltodict
-from gevent.pywsgi import WSGIServer
 from cleu.config import Config as C  # type: ignore
-import CLEUCreds  # type: ignore
+from flask import Flask, Response, request
+from gevent.pywsgi import WSGIServer
 
 PORT = 9999
 WEBHOOK_URL = CLEUCreds.NETAPP_WEBHOOK_GW
 
+logger = logging.getLogger(__name__)
 app = Flask("NetApp Alert Gateway")
 
 
 @app.route("/event", methods=["POST"])
-def ontap_to_webex():
-    event_data = request.data.decode("utf-8")
-    event_dict = xmltodict.parse(event_data)
-    sevstr = event_dict["netapp"]["ems-message-info"]["severity"]
-    if sevstr == "alert":
-        sev = "🚨🚨"
-    else:
-        sev = "✴️ "
+def ontap_to_webex() -> Response:
+    """Process NetApp ONTAP events and forward to Webex."""
+    try:
+        event_data = request.data.decode("utf-8")
+        event_dict: dict[str, Any] = xmltodict.parse(event_data)
 
-    payload = {"markdown": f"{sev} **NetApp {sevstr.capitalize()} Event**: {event_dict['netapp']['ems-message-info']['event']}"}
-    requests.post(WEBHOOK_URL, json=payload)
+        logger.info(f"Received NetApp event: {event_dict.get('netapp', {}).get('ems-message-info', {}).get('event', 'unknown')}")
+
+        sevstr = event_dict["netapp"]["ems-message-info"]["severity"]
+        sev = "🚨🚨" if sevstr == "alert" else "✴️"
+
+        payload = {"markdown": f"{sev} **NetApp {sevstr.capitalize()} Event**: {event_dict['netapp']['ems-message-info']['event']}"}
+
+        response = requests.post(WEBHOOK_URL, json=payload, timeout=10)
+        response.raise_for_status()
+        logger.info(f"Successfully sent {sevstr} event to Webex")
+
+    except KeyError as e:
+        logger.error(f"Missing expected field in NetApp event: {e}", exc_info=True)
+        return Response("<result>ERROR: Invalid event format</result>", status=400, mimetype="text/xml")
+    except requests.RequestException as e:
+        logger.error(f"Failed to send event to Webex: {e}", exc_info=True)
+        return Response("<result>ERROR: Failed to forward event</result>", status=502, mimetype="text/xml")
+    except Exception as e:
+        logger.error(f"Unexpected error processing NetApp event: {e}", exc_info=True)
+        return Response("<result>ERROR: Internal error</result>", status=500, mimetype="text/xml")
 
     return Response("<result>OK</result>", mimetype="text/xml")
 
 
 if __name__ == "__main__":
-    #    app.run(host='10.100.253.13', port=8081, threaded=True)
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+
+    logger.info(f"Starting NetApp Alert Gateway on {C.WSGI_SERVER}:{PORT}")
     http_server = WSGIServer((C.WSGI_SERVER, PORT), app)
-    http_server.serve_forever()
+
+    try:
+        http_server.serve_forever()
+    except KeyboardInterrupt:
+        logger.info("Shutting down NetApp Alert Gateway")
+        http_server.stop()
+    except Exception as e:
+        logger.error(f"Server error: {e}", exc_info=True)
+        raise
