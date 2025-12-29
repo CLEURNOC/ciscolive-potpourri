@@ -193,13 +193,13 @@ class MetricsCollector(object):
             if total_queries is not None:
                 # Set absolute counter value since API returns cumulative total
                 self.queriesTotal.labels(server=server)._value.set(total_queries)
+                logger.info(f"Collected metrics from {server}: DNS Queries Total - {total_queries}")
 
         umbrella_total = self._fetch_umbrella_metrics()
         if umbrella_total is not None:
             # Set absolute counter value since API returns cumulative total
             self.umbrellaQueriesTotal.labels(server="umbrella")._value.set(umbrella_total)
-
-        logger.info(f"Collected metrics: DNS Queries Total - {total_queries}, Umbrella Queries Total - {umbrella_total}")
+            logger.info(f"Collected metrics: Umbrella Queries Total - {umbrella_total}")
 
 
 def create_app(collector: MetricsCollector) -> Flask:
