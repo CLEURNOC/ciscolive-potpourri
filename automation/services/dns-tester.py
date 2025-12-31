@@ -48,8 +48,8 @@ logger = logging.getLogger(__name__)
 # Constants
 SPARK_ROOM = "DNS Alarms"
 CACHE_FILE = Path.home() / "dns_cache.dat"
-DNS_TIMEOUT = 2
-DNS_LIFETIME = 2
+DNS_TIMEOUT = 3
+DNS_LIFETIME = 3
 
 
 @dataclass
