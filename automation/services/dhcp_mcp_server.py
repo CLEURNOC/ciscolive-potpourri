@@ -689,11 +689,10 @@ def _refresh_bssid_cache(do_refresh: bool = False) -> dict[str, str]:
 )
 async def get_object_info_from_netbox(inp: NetBoxInput | dict) -> List[NetBoxResponse]:
     """
-    Get a list of objects from the NetBox network source of truth given an IP address or a name.
+    Query NetBox IPAM for devices/VMs by IP or hostname. Returns name, type, IP, contacts, and notes.
 
     Args:
-        inp (NetBoxInput | dict): Input data, either a validated NetBoxInput (ip for IP Address or hostname for Hostname)
-        or a dict (for certain LLM compatibility).
+        inp: NetBoxInput with ip OR hostname (mutually exclusive)
     """
     try:
         # Handle dict input for LLMs that pass JSON objects
@@ -796,12 +795,10 @@ async def get_object_info_from_netbox(inp: NetBoxInput | dict) -> List[NetBoxRes
 )
 async def get_webex_device_info(inp: WebexInfoInput | dict) -> WebexInfoResponse:
     """
-    Retrieve Webex device details including name, product, type, MAC address, IP address, serial number, workspace name,
-    workspace location, workspace temperature, and workspace humidity given a device's MAC address or IP address.
+    Get Webex device details by MAC, IP, or device name. Returns product info, serial, connection status, workspace location, and environmental metrics.
 
     Args:
-      inp (WebexInfoInput | dict): Input data, either a validated WebexInfoInput (mac, ip, or device_name)
-        or a dict (for certain LLM compatibility).
+      inp: WebexInfoInput with mac, ip, OR device_name (one required)
     """
 
     if isinstance(inp, dict):
@@ -877,12 +874,10 @@ async def get_webex_device_info(inp: WebexInfoInput | dict) -> WebexInfoResponse
 )
 async def test_get_webex_device_info(inp: WebexInfoInput | dict) -> WebexInfoResponse:
     """
-    Retrieve Webex device details including name, product, type, MAC address, IP address, serial number, workspace name,
-    workspace location, workspace temperature, and workspace humidity given a device's MAC address or IP address.
+    Get Webex device details by MAC, IP, or device name. Returns product info, serial, connection status, workspace location, and environmental metrics.
 
     Args:
-      inp (WebexInfoInput | dict): Input data, either a validated WebexInfoInput (mac, ip, or device_name)
-        or a dict (for certain LLM compatibility).
+      inp: WebexInfoInput with mac, ip, OR device_name (one required)
     """
 
     if isinstance(inp, dict):
@@ -921,10 +916,10 @@ async def test_get_webex_device_info(inp: WebexInfoInput | dict) -> WebexInfoRes
 )
 async def convert_celsius_to_fahrenheit(degrees_celsius: int) -> int:
     """
-    Convert temperature in degrees Celsius to degree Fahrenheit.
+    Convert Celsius to Fahrenheit (°C × 1.8 + 32).
 
     Args:
-      degrees_celsius (int): Temperature in degrees Celsius.
+      degrees_celsius: Temperature in °C (≥-273)
     """
     if degrees_celsius < -273:
         raise ToolError("degrees_celsius must be greater than or equal to -273")
@@ -943,12 +938,11 @@ async def generate_password(
     words: Annotated[int, Field(description="Number of words in the password", ge=3, le=6)] = 3, add_symbol: bool = False
 ) -> Annotated[str, Field(description="The generated password.")]:
     """
-    Generate a random password containing a specified number of words and an optional symbol.
+    Generate passphrase with word count (3-6) and optional symbol.
 
     Args:
-      words (int, optional): The number of words to include (default: 3).  Number of words must
-                             be between 3 and 6 (inclusive).
-      add_symbol (bool, optional): Whether to include a symbol in the password (default: False)
+      words: Word count (3-6, default: 3)
+      add_symbol: Include symbol (default: False)
     """
     try:
         num_words = int(words)
@@ -975,12 +969,10 @@ async def generate_password(
 )
 async def get_ap_name_from_bssid(bssid: str) -> str:
     """
-    Get the AP name associated with a given BSSID from the cached BSSID data.
+    Resolve AP name from BSSID (wireless MAC). Auto-refreshes cache if needed.
 
     Args:
-        bssid (str): The BSSID (MAC address) of the access point.
-    Returns:
-        str: The name of the access point associated with the BSSID.
+        bssid: Access point BSSID (MAC address)
     """
     bssids = _refresh_bssid_cache(do_refresh=False)
     bssid_str = str(normalize_mac(bssid)).lower()
@@ -1002,13 +994,10 @@ async def get_ap_name_from_bssid(bssid: str) -> str:
 )
 async def get_user_details_from_ise(ise_input: ISEInput | dict) -> ISEResponse:
     """
-    Get client username, client MAC address, NAS IP address, client IP address, authentication timestamp,
-    client IPv6 address(es), associated AP, VLAN ID, associated SSID for a client from ISE based on the client's username,
-    MAC address, or IP address.  At least one of username, MAC address, or IP address is required.
+    Query Cisco ISE for client auth session by username, MAC, or IP. Returns NAS, client IPs, AP, VLAN, SSID, and timestamp.
 
     Args:
-        ISEInput | dict: Input data, either a validated ISEInput (username, mac, or ip)
-        or a dict (for certain LLM compatibility).
+        ise_input: ISEInput with username, mac, OR ip (one required)
     """
 
     if isinstance(ise_input, dict):
@@ -1115,13 +1104,10 @@ async def get_user_details_from_ise(ise_input: ISEInput | dict) -> ISEResponse:
 )
 async def test_get_user_details_from_ise(ise_input: ISEInput | dict) -> ISEResponse:
     """
-    Get client username, client MAC address, NAS IP address, client IP address, authentication timestamp,
-    client IPv6 address(es), associated AP, VLAN ID, associated SSID for a client from ISE based on the client's username,
-    MAC address, or IP address.  At least one of username, MAC address, or IP address is required.
+    Query Cisco ISE for client auth session by username, MAC, or IP. Returns NAS, client IPs, AP, VLAN, SSID, and timestamp.
 
     Args:
-        ISEInput | dict: Input data, either a validated ISEInput (username, mac, or ip)
-        or a dict (for certain LLM compatibility).
+        ise_input: ISEInput with username, mac, OR ip (one required)
     """
 
     if isinstance(ise_input, dict):
@@ -1162,12 +1148,10 @@ async def get_client_details_from_cat_center(
     input_data: DNACInput | dict,
 ) -> DNACResponse:
     """
-    Get client connect and onboard health, location, OS type, associated AP and SSID, and type from Catalyst Center based on the client's username or MAC address.
-    At least one of the client's username, MAC address, or IP address is required.
+    Query Cisco Catalyst Center (DNA Center) for client health metrics by username, MAC, or IP. Returns device type, OS, health scores (overall/onboard/connect), AP, and SSID.
 
     Args:
-       DNACInput | dict: Input data, either a validated DNACInput (username, mac, or ip)
-       or a dict (for certain LLM compatibility).
+       input_data: DNACInput with username, mac, OR ip (one required)
     """
     # Validate input
     if isinstance(input_data, dict):
@@ -1286,12 +1270,10 @@ async def test_get_client_details_from_cat_center(
     input_data: DNACInput | dict,
 ) -> DNACResponse:
     """
-    Get client connect and onboard health, location, OS type, associated AP and SSID, and type from Catalyst Center based on the client's username or MAC address.
-    At least one of the client's username, MAC address, or IP address is required.
+    Query Cisco Catalyst Center (DNA Center) for client health metrics by username, MAC, or IP. Returns device type, OS, health scores (overall/onboard/connect), AP, and SSID.
 
     Args:
-       DNACInput | dict: Input data, either a validated DNACInput (username, mac, or ip)
-       or a dict (for certain LLM compatibility).
+       input_data: DNACInput with username, mac, OR ip (one required)
     """
     # Validate input
     if isinstance(input_data, dict):
@@ -1330,13 +1312,10 @@ async def test_get_client_details_from_cat_center(
 )
 async def get_dhcp_lease_info_from_cpnr(input: CPNRLeaseInput | dict) -> List[CPNRLeaseResponse]:
     """
-    Get a list of DHCP leases with hostname of the client, MAC address of the client, scope for the lease, state of the lease,
-    DHCP relay information (switch, VLAN, and port), and whether the lease is reserved for a given MAC address
-    or IP address from CPNR.
+    Query Cisco Prime Network Registrar (CPNR) for DHCP lease by IP or MAC. Returns hostname, MAC, scope, state, relay info (switch/VLAN/port), and reservation status.
 
     Args:
-        input (CPNRLeaseInput | dict): Input data, either a validated CPNRLeaseInput (ip or mac)
-            or a dict (for certain LLM compatibility).
+        input: CPNRLeaseInput with ip OR mac (one required)
     """
 
     leases = await _get_dhcp_lease_info_from_cpnr(input)
@@ -1355,13 +1334,10 @@ async def get_dhcp_lease_info_from_cpnr(input: CPNRLeaseInput | dict) -> List[CP
 )
 async def test_get_dhcp_lease_info_from_cpnr(input: CPNRLeaseInput | dict) -> List[CPNRLeaseResponse]:
     """
-    Get a list of DHCP leases with hostname of the client, MAC address of the client, scope for the lease, state of the lease,
-    DHCP relay information (switch, VLAN, and port), and whether the lease is reserved for a given MAC address
-    or IP address from CPNR.
+    Query Cisco Prime Network Registrar (CPNR) for DHCP lease by IP or MAC. Returns hostname, MAC, scope, state, relay info (switch/VLAN/port), and reservation status.
 
     Args:
-        input (CPNRLeaseInput | dict): Input data, either a validated CPNRLeaseInput (ip or mac)
-            or a dict (for certain LLM compatibility).
+        input: CPNRLeaseInput with ip OR mac (one required)
     """
 
     if isinstance(input, dict):
@@ -1399,10 +1375,10 @@ async def test_get_dhcp_lease_info_from_cpnr(input: CPNRLeaseInput | dict) -> Li
 )
 async def delete_dhcp_reservation_from_cpnr(ip: IPAddress) -> bool:
     """
-    Delete a DHCP reservation from CPNR.
+    Remove DHCP reservation from CPNR by IP. Destructive operation.
 
     Args:
-      ip (IPAddress): IP address that is reserved in CPNR
+      ip: Reserved IP address to delete
     """
 
     if not ip:
@@ -1435,10 +1411,10 @@ async def delete_dhcp_reservation_from_cpnr(ip: IPAddress) -> bool:
 )
 async def test_delete_dhcp_reservation_from_cpnr(ip: IPAddress) -> bool:
     """
-    Delete a DHCP reservation from CPNR.
+    Remove DHCP reservation from CPNR by IP. Destructive operation.
 
     Args:
-      ip (IPAddress): IP address that is reserved in CPNR
+      ip: Reserved IP address to delete
     """
 
     if not ip:
@@ -1456,10 +1432,10 @@ async def test_delete_dhcp_reservation_from_cpnr(ip: IPAddress) -> bool:
 )
 async def create_dhcp_reservation_in_cpnr(ip: IPAddress) -> bool:
     """
-    Create a new DHCP reservation in CPNR.
+    Reserve leased IP in CPNR for current client MAC. Requires active lease.
 
     Args:
-      ip (IPAddress): IP address that is leased to the client
+      ip: IP address currently leased to reserve
     """
 
     if not ip:
@@ -1514,10 +1490,10 @@ async def create_dhcp_reservation_in_cpnr(ip: IPAddress) -> bool:
 )
 async def test_create_dhcp_reservation_in_cpnr(ip: IPAddress) -> bool:
     """
-    Create a new DHCP reservation in CPNR.
+    Reserve leased IP in CPNR for current client MAC. Requires active lease.
 
     Args:
-      ip (IPAddress): IP address that is leased to the client
+      ip: IP address currently leased to reserve
     """
 
     if not ip:
@@ -1534,11 +1510,10 @@ async def test_create_dhcp_reservation_in_cpnr(ip: IPAddress) -> bool:
 )
 async def perform_dns_lookup(input: DNSInput | dict) -> DNSResponse:
     """
-    Perform a DNS lookup for the given IP address or hostname.
+    DNS lookup: forward (A/AAAA/CNAME) or reverse (PTR). Auto-appends domain for short hostnames.
 
     Args:
-        input (DNSInput | dict): Input data, either a validated DNSInput (ip or hostname)
-            or a dict (for certain LLM compatibility).
+        input: DNSInput with ip OR hostname (one required)
     """
 
     if isinstance(input, dict):
