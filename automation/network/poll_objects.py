@@ -26,6 +26,7 @@
 
 import json
 import logging
+import os
 import random
 import re
 import tempfile
@@ -44,7 +45,16 @@ IDF_FILE = "/home/jclarke/idf-devices.json"
 ROOM_NAME = "Core Alarms"
 CACHE_FILE = "/home/jclarke/object_counts.json"
 
-logger = logging.getLogger(__name__)
+# Set up logging
+logger = logging.getLogger("poll-objects")
+loglevel = logging.DEBUG if os.getenv("DEBUG", "false").lower() == "true" else logging.INFO
+logger.setLevel(loglevel)
+# Configure handler with format for this module only
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(threadName)s %(name)s: %(message)s"))
+    logger.addHandler(handler)
+    logger.propagate = False
 
 
 def get_results(dev: str, command: str, cache: dict) -> tuple[dict, list[str]]:

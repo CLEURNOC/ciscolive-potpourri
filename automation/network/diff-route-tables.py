@@ -33,6 +33,7 @@ optionally commits changes to git, and sends Webex notifications for changes.
 import argparse
 import json
 import logging
+import os
 import random
 import re
 import shutil
@@ -48,13 +49,16 @@ from netmiko import ConnectHandler
 from netmiko.exceptions import NetmikoAuthenticationException, NetmikoTimeoutException
 from sparker import MessageType, Sparker  # type: ignore
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[logging.StreamHandler(sys.stdout)],
-)
-logger = logging.getLogger(__name__)
+# Set up logging
+logger = logging.getLogger("diff-routing-tables")
+loglevel = logging.DEBUG if os.getenv("DEBUG", "false").lower() == "true" else logging.INFO
+logger.setLevel(loglevel)
+# Configure handler with format for this module only
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(threadName)s %(name)s: %(message)s"))
+    logger.addHandler(handler)
+    logger.propagate = False
 
 CACHE_DIR = Path("/home/jclarke/routing-tables")
 ROUTER_FILE = Path("/home/jclarke/routers.json")
