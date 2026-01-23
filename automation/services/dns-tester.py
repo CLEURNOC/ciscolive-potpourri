@@ -86,16 +86,22 @@ def report_error(server: str, addr: str, query_type: str, error_obj: Any) -> Non
 
     msg = f"DNS failure to {server} for {query_type} query for {addr}\n\n```\n{error_obj}\n```"
 
-    if not spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, msg, MessageType.BAD):
-        logger.error("Failed to post error message to Webex")
+    try:
+        if not spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, msg, MessageType.BAD):
+            logger.error("Failed to post error message to Webex")
+    except Exception:
+        logger.exception("Exception occurred while reporting DNS error to Webex")
 
 
 def report_good(msg: str) -> None:
     """Report DNS resolution success to Webex."""
     spark = Sparker(token=CLEUCreds.SPARK_TOKEN)
 
-    if not spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, msg, MessageType.GOOD):
-        logger.error("Failed to post success message to Webex")
+    try:
+        if not spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, msg, MessageType.GOOD):
+            logger.error("Failed to post success message to Webex")
+    except Exception:
+        logger.exception("Exception occurred while reporting DNS success to Webex")
 
 
 def load_previous_state() -> DNSState:
