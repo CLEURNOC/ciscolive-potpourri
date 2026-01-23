@@ -32,6 +32,8 @@ import os
 
 # import json
 import re
+import requests
+from requests.adapters import HTTPAdapter
 import sys
 from dataclasses import dataclass, field
 from threading import Lock
@@ -775,10 +777,25 @@ def main():
     if args.tenant:
         lower_tenant = args.tenant.lower()
 
+    class TimeoutHTTPAdapter(HTTPAdapter):
+        def __init__(self, timeout=15, *args, **kwargs):
+            self.timeout = timeout
+            super().__init__(*args, **kwargs)
+
+        def send(self, request, **kwargs):
+            kwargs["timeout"] = kwargs.get("timeout") or self.timeout
+            return super().send(request, **kwargs)
+
+    session = requests.Session()
+    adapter = TimeoutHTTPAdapter(timeout=15)
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+
     pnb = pynetbox.api(
         C.NETBOX_SERVER,
         token=CLEUCreds.NETBOX_API_TOKEN,
     )
+    pnb.http_session = session
     # pnb.http_session.verify = False
 
     if args.dump_hosts:
