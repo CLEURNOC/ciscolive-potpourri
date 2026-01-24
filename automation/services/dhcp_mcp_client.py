@@ -218,13 +218,26 @@ class BotState(object):
                 env=mcp_server_env,
             )
         else:
-            client_factory = httpx.AsyncClient(verify=tls_verify, timeout=240.0)
+
+            def custom_httpx_client_factory(*args, **kwargs) -> httpx.AsyncClient:
+                """
+                Factory function that returns a custom configured httpx.AsyncClient.
+                This ensures a good timeout and SSL verification settings.
+                """
+                if "timeout" not in kwargs:
+                    kwargs["timeout"] = httpx.Timeout(240.0)
+
+                if "verify" not in kwargs:
+                    kwargs["verify"] = tls_verify
+
+                return httpx.AsyncClient(*args, **kwargs)
+
             transport = StreamableHttpTransport(
                 f"https://{C.DHCP_MCP_SERVER}/mcp",
                 headers={
                     "Authorization": f"Bearer {CLEUCreds.DHCP_MCP_API_TOKEN}",
                 },
-                httpx_client_factory=client_factory,
+                httpx_client_factory=custom_httpx_client_factory,
             )
         return fastmcp.Client(transport)
 

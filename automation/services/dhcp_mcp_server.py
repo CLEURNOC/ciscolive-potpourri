@@ -60,24 +60,27 @@ class HttpMiddleware(Middleware):
             raise McpError(ErrorData(message="Unauthorized: Missing or invalid Authorization header", code=-31002))
 
         token = auth.split(" ", 1)[1]
-        with open("./.dhcp_mcp_auth.json", "r") as f:
-            auth_data = json.load(f)
+        try:
+            with open("./.dhcp_mcp_auth.json", "r") as f:
+                auth_data = json.load(f)
+        except Exception:
+            logger.exception("Failed to load MCP auth data")
 
         if token not in auth_data.get("tokens", {}):
             raise McpError(ErrorData(message="Unauthorized: Invalid token", code=-31002))
 
         if context.fastmcp_context:
             if "is_admin" in auth_data["tokens"][token] and auth_data["tokens"][token]["is_admin"]:
-                await context.fastmcp_context.set_state("is_admin", True)
+                context.fastmcp_context.set_state("is_admin", True)
             else:
-                await context.fastmcp_context.set_state("is_admin", False)
+                context.fastmcp_context.set_state("is_admin", False)
 
         return await call_next(context)
 
     async def on_list_tools(self, context: MiddlewareContext, call_next) -> List[str]:
         result = await call_next(context)
         if context.fastmcp_context:
-            is_admin = await context.fastmcp_context.get_state("is_admin")
+            is_admin = context.fastmcp_context.get_state("is_admin")
             if is_admin:
                 return result
 
@@ -85,8 +88,8 @@ class HttpMiddleware(Middleware):
 
     async def on_call_tool(self, context: MiddlewareContext, call_next) -> Any:
         if context.fastmcp_context:
-            is_admin = await context.fastmcp_context.get_state("is_admin")
-            tool = await context.fastmcp_context.fastmcp.get_tool(context.message.name)
+            is_admin = context.fastmcp_context.get_state("is_admin")
+            tool = context.fastmcp_context.fastmcp.get_tool(context.message.name)
             if not is_admin and "admin" in tool.tags:
                 raise ToolError(f"Calling {tool.name} requires admin privileges")
 
