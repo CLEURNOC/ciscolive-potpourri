@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2025  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2025-2026  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,15 +26,15 @@
 
 
 import asyncio
+import json
 import logging
 import os
 import re
 from enum import StrEnum
+from pathlib import Path
 from shlex import split
 from subprocess import run
-from typing import Annotated, Dict, List, Tuple
-from pathlib import Path
-import json
+from typing import Annotated, Any, Dict, List, Tuple
 
 import dns.asyncresolver
 import dns.reversename
@@ -43,9 +43,55 @@ import pynetbox
 import xmltodict
 from fastmcp import FastMCP
 from fastmcp.exceptions import ToolError
+from fastmcp.server.dependencies import get_http_headers
+from fastmcp.server.middleware import Middleware, MiddlewareContext
+from mcp.shared.exceptions import McpError
+from mcp.types import ErrorData
 from ncclient import manager
 from pydantic import BaseModel, Field
 from sparker import Sparker  # type: ignore
+
+
+class HttpMiddleware(Middleware):
+    async def on_request(self, context: MiddlewareContext, call_next) -> Any:
+        headers = get_http_headers()
+        auth = headers.get("authorization")
+        if not auth or not auth.startswith("Bearer "):
+            raise McpError(ErrorData(message="Unauthorized: Missing or invalid Authorization header", code=-31002))
+
+        token = auth.split(" ", 1)[1]
+        with open("./.dhcp_mcp_auth.json", "r") as f:
+            auth_data = json.load(f)
+
+        if token not in auth_data.get("tokens", {}):
+            raise McpError(ErrorData(message="Unauthorized: Invalid token", code=-31002))
+
+        if context.fastmcp_context:
+            if "is_admin" in auth_data["tokens"][token] and auth_data["tokens"][token]["is_admin"]:
+                await context.fastmcp_context.set_state("is_admin", True)
+            else:
+                await context.fastmcp_context.set_state("is_admin", False)
+
+        return await call_next(context)
+
+    async def on_list_tools(self, context: MiddlewareContext, call_next) -> List[str]:
+        result = await call_next(context)
+        if context.fastmcp_context:
+            is_admin = await context.fastmcp_context.get_state("is_admin")
+            if is_admin:
+                return result
+
+        return [tool for tool in result if "admin" not in tool.tags]
+
+    async def on_call_tool(self, context: MiddlewareContext, call_next) -> Any:
+        if context.fastmcp_context:
+            is_admin = await context.fastmcp_context.get_state("is_admin")
+            tool = await context.fastmcp_context.fastmcp.get_tool(context.message.name)
+            if not is_admin and "admin" in tool.tags:
+                raise ToolError(f"Calling {tool.name} requires admin privileges")
+
+        return await call_next(context)
+
 
 # Set up logging
 logger = logging.getLogger("noc-mcp-server")
@@ -58,9 +104,37 @@ if not logger.handlers:
     logger.addHandler(handler)
     logger.propagate = False
 
+# Global initialization
+DHCP_BASE = os.getenv("DHCP_BASE")
+BASIC_AUTH = (os.getenv("CPNR_USERNAME"), os.getenv("CPNR_PASSWORD"))
+REST_TIMEOUT = int(os.getenv("DHCP_BOT_REST_TIMEOUT", "10"))
+DNS_TIMEOUT = float(os.getenv("DHCP_BOT_DNS_TIMEOUT", "5.0"))
+COLLAB_WEBEX_TOKEN = os.getenv("COLLAB_WEBEX_TOKEN")
+ISE_SERVER = os.getenv("ISE_SERVER")
+ISE_API_USER = os.getenv("ISE_API_USER")
+ISE_API_PASS = os.getenv("ISE_API_PASS")
+DNACS = os.getenv("DNACS", "")
+WLCS = os.getenv("WLCS", "")
+DNS_DOMAIN = os.getenv("DNS_DOMAIN")
+NETCONF_USERNAME = os.getenv("NETCONF_USERNAME")
+NETCONF_PASSWORD = os.getenv("NETCONF_PASSWORD")
+
+pnb = pynetbox.api(os.getenv("NETBOX_SERVER"), os.getenv("NETBOX_API_TOKEN"))
+tls_verify = os.getenv("DHCP_BOT_TLS_VERIFY", "True").lower() == "true"
+pnb.http_session.verify = tls_verify
+
+transport = os.getenv("DHCP_BOT_MCP_TRANSPORT", "stdio").lower()
+if transport not in ("stdio", "http"):
+    logger.error(f"Invalid MCP transport specified: {transport}")
+    exit(1)
+
 is_testing = os.getenv("DHCP_BOT_IS_TESTING", "False").lower() == "true"
 
 server_mcp = FastMCP("Cisco Live Europe NOC")
+app = None
+if transport == "http":
+    server_mcp.add_middleware(HttpMiddleware())
+    app = server_mcp.http_app()
 
 AT_MACADDR = 9
 
@@ -1372,6 +1446,7 @@ async def test_get_dhcp_lease_info_from_cpnr(input: CPNRLeaseInput | dict) -> Li
     },
     enabled=not is_testing,
     meta={"auth_list": ALLOWED_TO_DELETE},
+    tags=["admin"],
 )
 async def delete_dhcp_reservation_from_cpnr(ip: IPAddress) -> bool:
     """
@@ -1408,6 +1483,7 @@ async def delete_dhcp_reservation_from_cpnr(ip: IPAddress) -> bool:
     },
     enabled=is_testing,
     meta={"auth_list": ALLOWED_TO_DELETE},
+    tags=["admin"],
 )
 async def test_delete_dhcp_reservation_from_cpnr(ip: IPAddress) -> bool:
     """
@@ -1576,22 +1652,4 @@ async def perform_dns_lookup(input: DNSInput | dict) -> DNSResponse:
 
 
 if __name__ == "__main__":
-    DHCP_BASE = os.getenv("DHCP_BASE")
-    BASIC_AUTH = (os.getenv("CPNR_USERNAME"), os.getenv("CPNR_PASSWORD"))
-    REST_TIMEOUT = int(os.getenv("DHCP_BOT_REST_TIMEOUT", "10"))
-    DNS_TIMEOUT = float(os.getenv("DHCP_BOT_DNS_TIMEOUT", "5.0"))
-    COLLAB_WEBEX_TOKEN = os.getenv("COLLAB_WEBEX_TOKEN")
-    ISE_SERVER = os.getenv("ISE_SERVER")
-    ISE_API_USER = os.getenv("ISE_API_USER")
-    ISE_API_PASS = os.getenv("ISE_API_PASS")
-    DNACS = os.getenv("DNACS", "")
-    WLCS = os.getenv("WLCS", "")
-    DNS_DOMAIN = os.getenv("DNS_DOMAIN")
-    NETCONF_USERNAME = os.getenv("NETCONF_USERNAME")
-    NETCONF_PASSWORD = os.getenv("NETCONF_PASSWORD")
-
-    pnb = pynetbox.api(os.getenv("NETBOX_SERVER"), os.getenv("NETBOX_API_TOKEN"))
-    tls_verify = os.getenv("DHCP_BOT_TLS_VERIFY", "True").lower() == "true"
-    pnb.http_session.verify = tls_verify
-
     asyncio.run(server_mcp.run_async())
