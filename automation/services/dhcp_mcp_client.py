@@ -42,7 +42,7 @@ import uvicorn
 from cleu.config import Config as C  # type: ignore
 from fastapi import BackgroundTasks, FastAPI, Request, Response
 from fastapi.responses import JSONResponse
-from fastmcp.client.transports import StdioTransport
+from fastmcp.client.transports import StdioTransport, StreamableHttpTransport
 from openai import OpenAI
 from openai.types.chat import ChatCompletion
 from sparker import MessageType, Sparker  # type: ignore
@@ -192,30 +192,40 @@ class BotState(object):
 
     def _create_mcp_client(self, tls_verify: bool) -> fastmcp.Client:
         """Create MCP client with proper environment setup"""
-        mcp_server_env = {
-            "DEBUG": str(self.config.log_level.lower() == "debug"),
-            "DHCP_BOT_TLS_VERIFY": str(tls_verify),
-            "NETBOX_SERVER": C.NETBOX_SERVER,
-            "NETBOX_API_TOKEN": CLEUCreds.NETBOX_API_TOKEN,
-            "CPNR_USERNAME": CLEUCreds.CPNR_USERNAME,
-            "CPNR_PASSWORD": CLEUCreds.CPNR_PASSWORD,
-            "ISE_API_USER": CLEUCreds.ISE_API_USER,
-            "ISE_API_PASS": CLEUCreds.ISE_API_PASS,
-            "COLLAB_WEBEX_TOKEN": CLEUCreds.COLLAB_WEBEX_TOKEN,
-            "ISE_SERVER": C.ISE_SERVER,
-            "DHCP_SERVER": C.DHCP_SERVER,
-            "DNACS": ",".join(C.DNACS),
-            "DHCP_BASE": C.DHCP_BASE,
-            "DNS_DOMAIN": C.DNS_DOMAIN,
-            "NETCONF_USERNAME": CLEUCreds.NET_USER,
-            "NETCONF_PASSWORD": CLEUCreds.NET_PASS,
-        }
-        transport = StdioTransport(
-            command="python",
-            args=["dhcp_mcp_server.py"],
-            cwd=os.getcwd(),
-            env=mcp_server_env,
-        )
+        if os.getenv("DHCP_BOT_MCP_TRANSPORT", "stdio").lower() == "stdio":
+            mcp_server_env = {
+                "DEBUG": str(self.config.log_level.lower() == "debug"),
+                "DHCP_BOT_TLS_VERIFY": str(tls_verify),
+                "NETBOX_SERVER": C.NETBOX_SERVER,
+                "NETBOX_API_TOKEN": CLEUCreds.NETBOX_API_TOKEN,
+                "CPNR_USERNAME": CLEUCreds.CPNR_USERNAME,
+                "CPNR_PASSWORD": CLEUCreds.CPNR_PASSWORD,
+                "ISE_API_USER": CLEUCreds.ISE_API_USER,
+                "ISE_API_PASS": CLEUCreds.ISE_API_PASS,
+                "COLLAB_WEBEX_TOKEN": CLEUCreds.COLLAB_WEBEX_TOKEN,
+                "ISE_SERVER": C.ISE_SERVER,
+                "DHCP_SERVER": C.DHCP_SERVER,
+                "DNACS": ",".join(C.DNACS),
+                "DHCP_BASE": C.DHCP_BASE,
+                "DNS_DOMAIN": C.DNS_DOMAIN,
+                "NETCONF_USERNAME": CLEUCreds.NET_USER,
+                "NETCONF_PASSWORD": CLEUCreds.NET_PASS,
+            }
+            transport = StdioTransport(
+                command="python",
+                args=["dhcp_mcp_server.py"],
+                cwd=os.getcwd(),
+                env=mcp_server_env,
+            )
+        else:
+            client_factory = httpx.AsyncClient(verify=tls_verify, timeout=240.0)
+            transport = StreamableHttpTransport(
+                f"https://{C.DHCP_MCP_SERVER}/mcp",
+                headers={
+                    "Authorization": f"Bearer {CLEUCreds.DHCP_MCP_API_TOKEN}",
+                },
+                httpx_client_factory=client_factory,
+            )
         return fastmcp.Client(transport)
 
     async def _initialize_tool_list(self) -> None:

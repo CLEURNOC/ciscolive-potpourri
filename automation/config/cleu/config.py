@@ -56,3 +56,4 @@ class Config:
     LLAMA_URL = f"https://cl-llama.{DNS_DOMAIN}"
     AI_USES_OLLAMA = True
     AI_HOST = LLAMA_URL
+    DHCP_MCP_SERVER = f"dhcp-mcp-server.{DNS_DOMAIN}"
