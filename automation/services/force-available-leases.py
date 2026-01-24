@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2017-2025  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2026  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -24,6 +24,7 @@
 
 import argparse
 import ipaddress
+import re
 
 import CLEUCreds  # type: ignore
 import requests
@@ -65,7 +66,25 @@ def force_leases_available(subnet: str) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Force all DHCP leases to be available.")
-    parser.add_argument("--subnet", type=str, help="Force available all leases in this subnet (CIDR notation).", required=True)
+    parser.add_argument(
+        "--subnet",
+        type=lambda s: s if re.match(r"^\d{1,3}(\.\d{1,3}){3}/\d{1,2}$", s) else None,
+        help="Force available all leases in this subnet (CIDR notation).",
+        required=True,
+    )
     args = parser.parse_args()
+    if args.subnet is None:
+        print("ERROR: Invalid subnet format. Please use CIDR notation (e.g., 192.168.1.0/24).")
+        exit(1)
+    else:
+        (_, length) = args.subnet.split("/")
+        if int(length) < 16:
+            confirm = input(
+                f"WARNING: You are about to force available all leases in a large subnet ({args.subnet}). "
+                "This may have significant impact. Are you sure you want to continue? (yes/no): "
+            )
+            if not confirm.lower().startswith("y"):
+                print("Operation cancelled by user.")
+                exit(0)
 
     force_leases_available(args.subnet)
