@@ -41,6 +41,7 @@ class Config:
     # def DNACS(dom):
     #    return []
     DNACS = _DNACS(DNS_DOMAIN)
+    WLCS = [f"wlc1-staging.{DNS_DOMAIN}", f"wlc3-main.{DNS_DOMAIN}", f"wlc5-keynote.{DNS_DOMAIN}", f"wlc7-meeting.{DNS_DOMAIN}"]
     # SDA_BASE = f"https://sdacleur20.{DNS_DOMAIN}"
     CMX_GW = f"http://cl-freebsd.{DNS_DOMAIN}:8002/api/v0.1/cmx"
     CMX = f"https://cl-cmx.{DNS_DOMAIN}"
