@@ -40,6 +40,8 @@ import dns.asyncresolver
 import dns.reversename
 import httpx
 import pynetbox
+import requests
+from requests.adapters import HTTPAdapter
 import xmltodict
 from fastmcp import FastMCP
 from fastmcp.exceptions import ToolError
@@ -121,10 +123,10 @@ WLCS = os.getenv("WLCS", "")
 DNS_DOMAIN = os.getenv("DNS_DOMAIN")
 NETCONF_USERNAME = os.getenv("NETCONF_USERNAME")
 NETCONF_PASSWORD = os.getenv("NETCONF_PASSWORD")
+NETBOX_SERVER = os.getenv("NETBOX_SERVER")
+NETBOX_API_TOKEN = os.getenv("NETBOX_API_TOKEN")
 
-pnb = pynetbox.api(os.getenv("NETBOX_SERVER"), os.getenv("NETBOX_API_TOKEN"))
 tls_verify = os.getenv("DHCP_BOT_TLS_VERIFY", "True").lower() == "true"
-pnb.http_session.verify = tls_verify
 
 transport = os.getenv("DHCP_BOT_MCP_TRANSPORT", "stdio").lower()
 if transport not in ("stdio", "http"):
@@ -771,6 +773,24 @@ async def get_object_info_from_netbox(inp: NetBoxInput | dict) -> List[NetBoxRes
     Args:
         inp: NetBoxInput with ip OR hostname (mutually exclusive)
     """
+    class TimeoutHTTPAdapter(HTTPAdapter):
+        def __init__(self, timeout=REST_TIMEOUT, *args, **kwargs):
+            self.timeout = timeout
+            super().__init__(*args, **kwargs)
+
+        def send(self, request, **kwargs):
+            kwargs["timeout"] = kwargs.get("timeout") or self.timeout
+            return super().send(request, **kwargs)
+
+    session = requests.Session()
+    session.verify = tls_verify
+    adapter = TimeoutHTTPAdapter(timeout=REST_TIMEOUT)
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+
+    pnb = pynetbox.api(NETBOX_SERVER, NETBOX_API_TOKEN)
+    pnb.http_session = session
+
     try:
         # Handle dict input for LLMs that pass JSON objects
         if isinstance(inp, dict):
