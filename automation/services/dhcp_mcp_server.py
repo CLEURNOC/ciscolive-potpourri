@@ -67,6 +67,7 @@ class HttpMiddleware(Middleware):
                 auth_data = json.load(f)
         except Exception:
             logger.exception("Failed to load MCP auth data")
+            raise McpError(ErrorData(message="Unauthorized: Unable to load auth data", code=-31002))
 
         if token not in auth_data.get("tokens", {}):
             raise McpError(ErrorData(message="Unauthorized: Invalid token", code=-31002))
