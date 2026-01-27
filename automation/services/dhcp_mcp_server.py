@@ -92,7 +92,7 @@ class HttpMiddleware(Middleware):
     async def on_call_tool(self, context: MiddlewareContext, call_next) -> Any:
         if context.fastmcp_context:
             is_admin = context.fastmcp_context.get_state("is_admin")
-            tool = context.fastmcp_context.fastmcp.get_tool(context.message.name)
+            tool = await context.fastmcp_context.fastmcp.get_tool(context.message.name)
             if not is_admin and "admin" in tool.tags:
                 raise ToolError(f"Calling {tool.name} requires admin privileges")
 
