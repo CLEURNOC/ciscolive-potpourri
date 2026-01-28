@@ -1067,11 +1067,11 @@ async def generate_password(
 )
 async def get_ap_name_from_bssid(bssid: str) -> str:
     """
-    Resolve AP name from BSSID (wireless MAC). Auto-refreshes cache if needed.  Use this tool whenever you are
-    presented with an AP BSSID and need to know the AP name.
+    Resolve AP name from BSSID (wireless MAC address format). Auto-refreshes cache if needed.
 
-    Args:
-        bssid: Access point BSSID (MAC address)
+    Use this tool ONLY when you have a BSSID (looks like a MAC address, e.g., aa:bb:cc:dd:ee:ff) that a wireless
+    client is associated with, and you need to know the human-readable AP name. This is typically found in wireless
+    client information from ISE or Catalyst Center as the "associated access point" field.
     """
     bssids = _refresh_bssid_cache(do_refresh=False)
     bssid_str = str(normalize_mac(bssid)).lower()
