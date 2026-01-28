@@ -1,203 +1,203 @@
 [NXOS_DC1]
-dc1-ethsw-1.ciscolive.network core_svi_v4_suffix="249" core_svi_v6_suffix="f9" core_hsrp_priority="105"
-dc1-ethsw-2.ciscolive.network core_svi_v4_suffix="250" core_svi_v6_suffix="fa" core_hsrp_priority="104"
+dc1-ethsw-1.cleur.network core_svi_v4_suffix="249" core_svi_v6_suffix="f9" core_hsrp_priority="105"
+dc1-ethsw-2.cleur.network core_svi_v4_suffix="250" core_svi_v6_suffix="fa" core_hsrp_priority="104"
 
 [NXOS_DC2]
-dc2-ethsw-1.ciscolive.network core_svi_v4_suffix="247" core_svi_v6_suffix="f7" core_hsrp_priority="103"
-dc2-ethsw-2.ciscolive.network core_svi_v4_suffix="248" core_svi_v6_suffix="f8" core_hsrp_priority="102"
+dc2-ethsw-1.cleur.network core_svi_v4_suffix="247" core_svi_v6_suffix="f7" core_hsrp_priority="103"
+dc2-ethsw-2.cleur.network core_svi_v4_suffix="248" core_svi_v6_suffix="f8" core_hsrp_priority="102"
 
 [PDU_DC1]
-core1-dc-pdu1.ciscolive.network
-core1-dc-pdu2.ciscolive.network
+core1-dc-pdu1.cleur.network
+core1-dc-pdu2.cleur.network
 
 [PDU_DC2]
-core2-dc-pdu1.ciscolive.network
-core2-dc-pdu2.ciscolive.network
+core2-dc-pdu1.cleur.network
+core2-dc-pdu2.cleur.network
 
 [PDU_CORE1]
-core1-net-pdu1.ciscolive.network
-core1-net-pdu2.ciscolive.network
+core1-net-pdu1.cleur.network
+core1-net-pdu2.cleur.network
 
 [PDU_CORE2]
-core2-net-pdu1.ciscolive.network
-core2-net-pdu2.ciscolive.network
+core2-net-pdu1.cleur.network
+core2-net-pdu2.cleur.network
 
 [OLLAMA_NODES]
-dc1-ollama-node-5.ciscolive.network
-dc1-ollama-node-6.ciscolive.network
-dc2-ollama-node-5.ciscolive.network
-dc2-ollama-node-6.ciscolive.network
+dc1-ollama-node-5.cleur.network
+dc1-ollama-node-6.cleur.network
+dc2-ollama-node-5.cleur.network
+dc2-ollama-node-6.cleur.network
 
 [EDGE1]
-core1-edge.ciscolive.network
+core1-edge.cleur.network
 
 [EDGE2]
-core2-edge.ciscolive.network
+core2-edge.cleur.network
 
 [TS_DC1]
-dc1-ts.ciscolive.network
+dc1-ts.cleur.network
 
 [TS_DC2]
-dc2-ts.ciscolive.network
+dc2-ts.cleur.network
 
 [NETAPP_DC1]
-cl-emea-noc-mcc-dc1.ciscolive.network
+cl-emea-noc-mcc-dc1.cleur.network
 
 [NETAPP_DC2]
-cl-emea-noc-mcc-dc2.ciscolive.network
+cl-emea-noc-mcc-dc2.cleur.network
 
 [SDA_CORE]
-fusion-005-mdf-a.ciscolive.network
-fusion-005-mdf-b.ciscolive.network
-005-mdf-a.ciscolive.network
-005-mdf-b.ciscolive.network
+fusion-005-mdf-a.cleur.network
+fusion-005-mdf-b.cleur.network
+005-mdf-a.cleur.network
+005-mdf-b.cleur.network
 
 [SDA_IDF]
-sda-005-idf-01.ciscolive.network
-sda-005-idf-02.ciscolive.network
-sda-005-idf-03.ciscolive.network
-sda-005-idf-04.ciscolive.network
-sda-005-idf-05.ciscolive.network
-sda-005-idf-06.ciscolive.network
-sda-005-idf-07.ciscolive.network
-sda-005-idf-08.ciscolive.network
-sda-005-idf-09.ciscolive.network
+sda-005-idf-01.cleur.network
+sda-005-idf-02.cleur.network
+sda-005-idf-03.cleur.network
+sda-005-idf-04.cleur.network
+sda-005-idf-05.cleur.network
+sda-005-idf-06.cleur.network
+sda-005-idf-07.cleur.network
+sda-005-idf-08.cleur.network
+sda-005-idf-09.cleur.network
 
 [UCS_HOSTS_DC1]
-dc1-esx-01.ciscolive.network
-dc1-esx-02.ciscolive.network
-dc1-esx-03.ciscolive.network
-dc1-esx-04.ciscolive.network
-dc1-esx-05.ciscolive.network
-dc1-esx-06.ciscolive.network
-dc1-esx-07.ciscolive.network
-dc1-esx-08.ciscolive.network
+dc1-esx-01.cleur.network
+dc1-esx-02.cleur.network
+dc1-esx-03.cleur.network
+dc1-esx-04.cleur.network
+dc1-esx-05.cleur.network
+dc1-esx-06.cleur.network
+dc1-esx-07.cleur.network
+dc1-esx-08.cleur.network
 
 [UCS_HOSTS_DC2]
-dc2-esx-01.ciscolive.network
-dc2-esx-02.ciscolive.network
-dc2-esx-03.ciscolive.network
-dc2-esx-04.ciscolive.network
-dc2-esx-05.ciscolive.network
-dc2-esx-06.ciscolive.network
-dc2-esx-07.ciscolive.network
-dc2-esx-08.ciscolive.network
+dc2-esx-01.cleur.network
+dc2-esx-02.cleur.network
+dc2-esx-03.cleur.network
+dc2-esx-04.cleur.network
+dc2-esx-05.cleur.network
+dc2-esx-06.cleur.network
+dc2-esx-07.cleur.network
+dc2-esx-08.cleur.network
 
 [UCS_HOSTS:children]
 UCS_HOSTS_DC1
 UCS_HOSTS_DC2
 
 [HX_HOSTS_DC1]
-dc1-hx-esx-01.ad.ciscolive.network
-dc1-hx-esx-02.ad.ciscolive.network
-dc1-hx-esx-03.ad.ciscolive.network
-dc1-hx-esx-04.ad.ciscolive.network
+dc1-hx-esx-01.ad.cleur.network
+dc1-hx-esx-02.ad.cleur.network
+dc1-hx-esx-03.ad.cleur.network
+dc1-hx-esx-04.ad.cleur.network
 
 [HX_HOSTS_DC2]
-dc2-hx-esx-01.ad.ciscolive.network
-dc2-hx-esx-02.ad.ciscolive.network
-dc2-hx-esx-03.ad.ciscolive.network
-dc2-hx-esx-04.ad.ciscolive.network
+dc2-hx-esx-01.ad.cleur.network
+dc2-hx-esx-02.ad.cleur.network
+dc2-hx-esx-03.ad.cleur.network
+dc2-hx-esx-04.ad.cleur.network
 
 [HX_HOSTS:children]
 HX_HOSTS_DC1
 HX_HOSTS_DC2
 
 [MDF]
-003-mdf-a.ciscolive.network
-003-mdf-b.ciscolive.network
-004-mdf-a.ciscolive.network
-004-mdf-b.ciscolive.network
-006-mdf-a.ciscolive.network
-006-mdf-b.ciscolive.network
-007-mdf-a.ciscolive.network
-007-mdf-b.ciscolive.network
-008-mdf-a.ciscolive.network
-008-mdf-b.ciscolive.network
-spare2-mdf-a.ciscolive.network
-spare2-mdf-b.ciscolive.network
+003-mdf-a.cleur.network
+003-mdf-b.cleur.network
+004-mdf-a.cleur.network
+004-mdf-b.cleur.network
+006-mdf-a.cleur.network
+006-mdf-b.cleur.network
+007-mdf-a.cleur.network
+007-mdf-b.cleur.network
+008-mdf-a.cleur.network
+008-mdf-b.cleur.network
+spare2-mdf-a.cleur.network
+spare2-mdf-b.cleur.network
 
 [IDF]
-003-x02.ciscolive.network
-003-x17.ciscolive.network
-003-x33.ciscolive.network
-003-x35.ciscolive.network
-003-x54.ciscolive.network
-003-x55.ciscolive.network
-004-x07.ciscolive.network
-006-x18.ciscolive.network
-006-x19.ciscolive.network
-006-x20.ciscolive.network
-006-x21.ciscolive.network
-006-x22.ciscolive.network
-006-x23.ciscolive.network
-006-x24.ciscolive.network
-006-x25.ciscolive.network
-006-x26.ciscolive.network
-006-x27.ciscolive.network
-006-x28.ciscolive.network
-006-x29.ciscolive.network
-006-x30.ciscolive.network
-006-x31.ciscolive.network
-007-x09.ciscolive.network
-007-x10.ciscolive.network
-007-x11.ciscolive.network
-007-x12.ciscolive.network
-007-x13.ciscolive.network
-007-x14.ciscolive.network
-007-x15.ciscolive.network
-007-x16.ciscolive.network
-008-x36.ciscolive.network
-008-x37.ciscolive.network
-008-x38.ciscolive.network
-008-x39.ciscolive.network
-008-x40.ciscolive.network
-008-x41.ciscolive.network
-008-x42.ciscolive.network
-008-x43.ciscolive.network
-008-x44.ciscolive.network
-008-x45.ciscolive.network
-008-x46.ciscolive.network
-008-x47.ciscolive.network
-008-x49.ciscolive.network
-008-x52.ciscolive.network
-008-x53.ciscolive.network
+003-x02.cleur.network
+003-x17.cleur.network
+003-x33.cleur.network
+003-x35.cleur.network
+003-x54.cleur.network
+003-x55.cleur.network
+004-x07.cleur.network
+006-x18.cleur.network
+006-x19.cleur.network
+006-x20.cleur.network
+006-x21.cleur.network
+006-x22.cleur.network
+006-x23.cleur.network
+006-x24.cleur.network
+006-x25.cleur.network
+006-x26.cleur.network
+006-x27.cleur.network
+006-x28.cleur.network
+006-x29.cleur.network
+006-x30.cleur.network
+006-x31.cleur.network
+007-x09.cleur.network
+007-x10.cleur.network
+007-x11.cleur.network
+007-x12.cleur.network
+007-x13.cleur.network
+007-x14.cleur.network
+007-x15.cleur.network
+007-x16.cleur.network
+008-x36.cleur.network
+008-x37.cleur.network
+008-x38.cleur.network
+008-x39.cleur.network
+008-x40.cleur.network
+008-x41.cleur.network
+008-x42.cleur.network
+008-x43.cleur.network
+008-x44.cleur.network
+008-x45.cleur.network
+008-x46.cleur.network
+008-x47.cleur.network
+008-x49.cleur.network
+008-x52.cleur.network
+008-x53.cleur.network
 
 [HOSTS:children]
 UCS_HOSTS
 HX_HOSTS
 
 [CORE1]
-core1-l3c.ciscolive.network
-core1-ts.ciscolive.network
-core1-wa.ciscolive.network
-core1-wb.ciscolive.network
+core1-l3c.cleur.network
+core1-ts.cleur.network
+core1-wa.cleur.network
+core1-wb.cleur.network
 
 [CORE2]
-core2-l3c.ciscolive.network
-core2-ts.ciscolive.network
-core2-wa.ciscolive.network
-core2-wb.ciscolive.network
+core2-l3c.cleur.network
+core2-ts.cleur.network
+core2-wa.cleur.network
+core2-wb.cleur.network
 
 [MCC_DC1]
-dc1-mccsw-1.ciscolive.network
-dc1-mccsw-2.ciscolive.network
+dc1-mccsw-1.cleur.network
+dc1-mccsw-2.cleur.network
 
 [MCC_DC2]
-dc2-mccsw-1.ciscolive.network
-dc2-mccsw-2.ciscolive.network
+dc2-mccsw-1.cleur.network
+dc2-mccsw-2.cleur.network
 
 [UCS_DC1]
-dc1-ucsmini.ciscolive.network
+dc1-ucsmini.cleur.network
 
 [UCS_DC2]
-dc2-ucsmini.ciscolive.network
+dc2-ucsmini.cleur.network
 
 [HX_DC1]
-dc1-hx-ucs.ciscolive.network
+dc1-hx-ucs.cleur.network
 
 [HX_DC2]
-dc2-hx-ucs.ciscolive.network
+dc2-hx-ucs.cleur.network
 
 [MCC:children]
 MCC_DC1
@@ -266,7 +266,7 @@ PDU_DC
 PDU_CORE
 
 [vCenter]
-cl-vcenter.ciscolive.network
+cl-vcenter.cleur.network
 
 [DC1:children]
 NXOS_DC1
