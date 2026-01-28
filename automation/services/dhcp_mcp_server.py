@@ -1067,7 +1067,8 @@ async def generate_password(
 )
 async def get_ap_name_from_bssid(bssid: str) -> str:
     """
-    Resolve AP name from BSSID (wireless MAC). Auto-refreshes cache if needed.
+    Resolve AP name from BSSID (wireless MAC). Auto-refreshes cache if needed.  Use this tool whenever you are
+    presented with an AP BSSID and need to know the AP name.
 
     Args:
         bssid: Access point BSSID (MAC address)
@@ -1410,7 +1411,8 @@ async def test_get_client_details_from_cat_center(
 )
 async def get_dhcp_lease_info_from_cpnr(input: CPNRLeaseInput | dict) -> List[CPNRLeaseResponse]:
     """
-    Query Cisco Prime Network Registrar (CPNR) for DHCP lease by IP or MAC. Returns hostname, MAC, scope, state, relay info (switch/VLAN/port), and reservation status.
+    Query Cisco Prime Network Registrar (CPNR) for DHCP lease by IP or MAC. Returns hostname, MAC, scope, state, relay info (switch/VLAN/port), and reservation status
+    IMPORTANT: This should always be checked, unless NetBox returns valid data for the IP address.
 
     Args:
         input: CPNRLeaseInput with ip OR mac (one required)
@@ -1433,6 +1435,7 @@ async def get_dhcp_lease_info_from_cpnr(input: CPNRLeaseInput | dict) -> List[CP
 async def test_get_dhcp_lease_info_from_cpnr(input: CPNRLeaseInput | dict) -> List[CPNRLeaseResponse]:
     """
     Query Cisco Prime Network Registrar (CPNR) for DHCP lease by IP or MAC. Returns hostname, MAC, scope, state, relay info (switch/VLAN/port), and reservation status.
+    IMPORTANT: This should always be checked, unless NetBox returns valid data for the IP address.
 
     Args:
         input: CPNRLeaseInput with ip OR mac (one required)
