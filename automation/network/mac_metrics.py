@@ -216,7 +216,7 @@ class MetricsCollector:
             # Determine if we should alert
             # For all threshold types: only alert if condition cleared (was False) and violated again (is True)
             # This prevents repeated alerts and requires the metric to recover before alerting again
-            should_alert = is_violated and was_violated is False
+            should_alert = is_violated and not was_violated
 
             # Update cache with current state
             self.threshold_cache[cache_key] = is_violated
