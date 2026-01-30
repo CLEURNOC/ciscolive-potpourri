@@ -66,6 +66,7 @@ if not logger.handlers:
 
 # Default paths
 DEFAULT_CONFIG_FILE = Path(__file__).parent / "poll_macs_config.json"
+DEFAULT_CACHE_FILE = Path(__file__).parent / "mac_metrics_threshold_cache.json"
 DEFAULT_WEBEX_ROOM = "Core Alarms"
 DEFAULT_PORT = 8081
 DEFAULT_COLLECTION_INTERVAL = 300  # 5 minutes
@@ -102,6 +103,7 @@ class MonitorConfig:
     worker_pool_size: int = 20
     connection_timeout: int = 5
     collection_interval: int = DEFAULT_COLLECTION_INTERVAL
+    cache_file: Path = DEFAULT_CACHE_FILE
 
 
 @dataclass
@@ -116,6 +118,7 @@ class MetricsCollector:
     last_collection_time: datetime | None = field(default=None, init=False)
     collection_lock: threading.Lock = field(default_factory=threading.Lock, init=False)
     stop_event: threading.Event = field(default_factory=threading.Event, init=False)
+    threshold_cache: dict[str, dict[str, bool]] = field(default_factory=dict, init=False)
 
     @classmethod
     def create(cls, config: MonitorConfig, targets: list[DeviceTarget]) -> "MetricsCollector":
@@ -148,6 +151,43 @@ class MetricsCollector:
             spark=spark,
         )
 
+    def _load_threshold_cache(self) -> None:
+        """Load threshold violation cache from disk."""
+        try:
+            if self.config.cache_file.exists():
+                with self.config.cache_file.open("r") as f:
+                    self.threshold_cache = json.load(f)
+                logger.debug(f"Loaded threshold cache from {self.config.cache_file}")
+            else:
+                self.threshold_cache = {}
+        except Exception as e:
+            logger.warning(f"Failed to load threshold cache: {e}")
+            self.threshold_cache = {}
+
+    def _save_threshold_cache(self) -> None:
+        """Save threshold violation cache to disk atomically and thread-safe."""
+        try:
+            # Write to temporary file first
+            temp_file = self.config.cache_file.with_suffix(".tmp")
+            with temp_file.open("w") as f:
+                json.dump(self.threshold_cache, f, indent=2)
+
+            # Atomically replace the old file with the new one
+            temp_file.replace(self.config.cache_file)
+            logger.debug(f"Saved threshold cache to {self.config.cache_file}")
+        except Exception as e:
+            logger.warning(f"Failed to save threshold cache: {e}")
+            # Clean up temp file if it exists
+            try:
+                if temp_file.exists():
+                    temp_file.unlink()
+            except Exception:
+                pass
+
+    def _get_cache_key(self, metric_name: str, device: str) -> str:
+        """Generate cache key for a metric/device combination."""
+        return f"{device}:{metric_name}"
+
     def _check_threshold(
         self,
         metric_name: str,
@@ -155,20 +195,44 @@ class MetricsCollector:
         threshold: str,
         target: DeviceTarget,
     ) -> None:
-        """Check if a metric violates its threshold and send notification."""
+        """Check if a metric violates its threshold and send notification.
+
+        Only alerts when:
+        - For < and > thresholds: condition was not violated before
+        - For == thresholds: condition cleared and then violated again
+        """
         if not threshold or not (threshold.startswith("==") or threshold.startswith("<") or threshold.startswith(">")):
             return
 
+        cache_key = self._get_cache_key(metric_name, target.device)
+
         try:
-            if eval(f"{value} {threshold}"):
+            # Check if threshold is currently violated
+            is_violated = eval(f"{value} {threshold}")
+
+            # Get previous violation state (None means unknown/first check)
+            was_violated = self.threshold_cache.get(cache_key)
+
+            # Determine if we should alert
+            # For all threshold types: only alert if condition cleared (was False) and violated again (is True)
+            # This prevents repeated alerts and requires the metric to recover before alerting again
+            should_alert = is_violated and was_violated is False
+
+            # Update cache with current state
+            self.threshold_cache[cache_key] = is_violated
+
+            # Send alert if needed
+            if should_alert:
                 self.spark.post_to_spark(
                     C.WEBEX_TEAM,
                     self.config.webex_room,
                     f"Metric **{metric_name}** on device _{target.device}_ has violated threshold {threshold}, currently {value}",
                     MessageType.WARNING,
                 )
+                logger.info(f"Threshold alert sent: {metric_name} on {target.device} = {value} (threshold: {threshold})")
+
         except Exception as e:
-            logger.error(f"Failed to check threshold for {metric_name}: {e}")
+            logger.error(f"Failed to check threshold for {metric_name} on {target.device}: {e}")
 
     def _set_metric_value(self, metric_name: str, device: str, value: str) -> None:
         """Set a metric value for a device."""
@@ -265,6 +329,9 @@ class MetricsCollector:
             logger.info(f"Starting network metrics collection from {len(self.targets)} devices")
             start_time = time.time()
 
+            # Load threshold cache before collection
+            self._load_threshold_cache()
+
             with ThreadPoolExecutor(max_workers=self.config.worker_pool_size) as executor:
                 futures = {executor.submit(self._collect_device_metrics, target): target for target in self.targets}
 
@@ -274,6 +341,9 @@ class MetricsCollector:
                         future.result()
                     except Exception as e:
                         logger.error(f"Failed to collect metrics from {target.device}: {e}")
+
+            # Save threshold cache after collection
+            self._save_threshold_cache()
 
             self.last_collection_time = datetime.now()
             elapsed = time.time() - start_time
