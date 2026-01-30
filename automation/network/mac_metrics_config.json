@@ -180,6 +180,7 @@
     },
     {
       "pattern": "CORE{}-FTD",
+      "type": "cisco_ftd_ssh",
       "range": {
         "min": 1,
         "max": 2

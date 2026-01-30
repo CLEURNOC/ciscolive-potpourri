@@ -361,7 +361,7 @@ def expand_device_targets(devices_config: list[dict]) -> list[DeviceTarget]:
     targets: list[DeviceTarget] = []
 
     for device_spec in devices_config:
-        device_type = device_spec.get("device_type", "cisco_ios")
+        device_type = device_spec.get("type", "cisco_ios")
         commands = device_spec["commands"]
 
         if "list" in device_spec:
