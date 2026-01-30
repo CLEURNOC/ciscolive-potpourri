@@ -41,20 +41,20 @@ if __name__ == "__main__":
 
     while True:
         # Read from syslog-ng pipe
-        line = sys.stdin
-        if not line:
-            continue
+        output = ""
+        for line in sys.stdin.readline():
+            output += line
 
         try:
-            line = line.strip()
-            if not line:
+            output = output.strip()
+            if not output:
                 continue
 
             # Send the normal message to Webex
-            formatted_msg = "**NEXUS DASHBOARD ALERT**\n{}".format(line)
+            formatted_msg = "**NEXUS DASHBOARD ALERT**\n{}".format(output)
 
             mtype = MessageType.WARNING
-            if re.search(r"critical", line, re.IGNORECASE):
+            if re.search(r"critical", output, re.IGNORECASE):
                 mtype = MessageType.BAD
 
             spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, formatted_msg, mtype)
