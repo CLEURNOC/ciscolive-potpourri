@@ -45,6 +45,18 @@
         "natPoolDefault1Misses"
       ]
     },
+    "natXlateFailed": {
+      "command": "show asp drop frame nat-xlate-failed",
+      "pattern": "nat-xlate-failed.\\s+(\\d+)",
+      "metric": "natXlateFailed",
+      "threshold": "> 0"
+    },
+    "natXlatePoolExhausted": {
+      "command": "show asp drop frame nat-xlate-pool-exhausted",
+      "pattern": "nat-xlate-pool-exhausted.\\s+(\\d+)",
+      "metric": "natXlatePoolExhausted",
+      "threshold": "> 0"
+    },
     "natPoolRes1": {
       "command": "show ip nat statistics | begin NAT-POOL-RES-1",
       "pattern": "total addresses (\\d+), allocated (\\d+)[^,]+, misses (\\d+)",
@@ -186,7 +198,9 @@
         "max": 2
       },
       "commands": [
-        "ftdNatTranslation"
+        "ftdNatTranslation",
+        "natXlateFailed",
+        "natXlatePoolExhausted"
       ]
     }
   ]
