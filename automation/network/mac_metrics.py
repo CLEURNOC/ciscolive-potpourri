@@ -54,7 +54,7 @@ from prometheus_client.exposition import choose_encoder
 from sparker import MessageType, Sparker  # type: ignore
 
 # Set up logging
-logger = logging.getLogger("diff-routing-tables")
+logger = logging.getLogger("mac-metrics")
 loglevel = logging.DEBUG if os.getenv("DEBUG", "false").lower() == "true" else logging.INFO
 logger.setLevel(loglevel)
 # Configure handler with format for this module only
