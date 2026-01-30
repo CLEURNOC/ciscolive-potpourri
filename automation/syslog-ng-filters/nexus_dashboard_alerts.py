@@ -41,9 +41,9 @@ if __name__ == "__main__":
 
     while True:
         # Read from syslog-ng pipe
-        line = sys.stdin.readline()
+        line = sys.stdin
         if not line:
-            break
+            continue
 
         try:
             line = line.strip()
