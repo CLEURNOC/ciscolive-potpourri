@@ -35,8 +35,11 @@ import json
 import logging
 import re
 import sys
-from dataclasses import dataclass
-from multiprocessing import Pool
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
 
 import CLEUCreds  # type: ignore
@@ -61,6 +64,7 @@ logger = logging.getLogger(__name__)
 DEFAULT_CONFIG_FILE = Path(__file__).parent / "poll_macs_config.json"
 DEFAULT_WEBEX_ROOM = "Core Alarms"
 DEFAULT_PORT = 8081
+DEFAULT_COLLECTION_INTERVAL = 300  # 5 minutes
 
 
 @dataclass
@@ -93,6 +97,7 @@ class MonitorConfig:
     devices: list[dict]
     worker_pool_size: int = 20
     connection_timeout: int = 5
+    collection_interval: int = DEFAULT_COLLECTION_INTERVAL
 
 
 @dataclass
@@ -104,6 +109,9 @@ class MetricsCollector:
     targets: list[DeviceTarget]
     gauges: dict[str, Gauge]
     spark: Sparker
+    last_collection_time: datetime | None = field(default=None, init=False)
+    collection_lock: threading.Lock = field(default_factory=threading.Lock, init=False)
+    stop_event: threading.Event = field(default_factory=threading.Event, init=False)
 
     @classmethod
     def create(cls, config: MonitorConfig, targets: list[DeviceTarget]) -> "MetricsCollector":
@@ -247,19 +255,57 @@ class MetricsCollector:
             self._set_metrics_to_zero(target)
 
     def collect_metrics(self) -> None:
-        """Collect metrics from all devices in parallel."""
-        logger.info(f"Starting network metrics collection from {len(self.targets)} devices")
+        """Collect metrics from all devices in parallel using threads."""
+        with self.collection_lock:
+            logger.info(f"Starting network metrics collection from {len(self.targets)} devices")
+            start_time = time.time()
 
-        with Pool(self.config.worker_pool_size) as pool:
-            results = [pool.apply_async(self._collect_device_metrics, [target]) for target in self.targets]
+            with ThreadPoolExecutor(max_workers=self.config.worker_pool_size) as executor:
+                futures = {executor.submit(self._collect_device_metrics, target): target for target in self.targets}
 
-            for result in results:
-                try:
-                    result.get(timeout=120)
-                except Exception as e:
-                    logger.error(f"Failed to get result from worker: {e}")
+                for future in as_completed(futures, timeout=120):
+                    target = futures[future]
+                    try:
+                        future.result()
+                    except Exception as e:
+                        logger.error(f"Failed to collect metrics from {target.device}: {e}")
 
-        logger.info("Network metrics collection completed")
+            self.last_collection_time = datetime.now()
+            elapsed = time.time() - start_time
+            logger.info(f"Network metrics collection completed in {elapsed:.2f} seconds")
+
+    def _periodic_collection_loop(self) -> None:
+        """Run periodic metrics collection in the background."""
+        logger.info(f"Starting periodic collection thread (interval: {self.config.collection_interval}s)")
+
+        # Do an initial collection
+        try:
+            self.collect_metrics()
+        except Exception as e:
+            logger.error(f"Initial metrics collection failed: {e}")
+
+        while not self.stop_event.is_set():
+            # Wait for the collection interval or until stop is signaled
+            if self.stop_event.wait(timeout=self.config.collection_interval):
+                break
+
+            try:
+                self.collect_metrics()
+            except Exception as e:
+                logger.error(f"Periodic metrics collection failed: {e}")
+
+        logger.info("Periodic collection thread stopped")
+
+    def start_periodic_collection(self) -> None:
+        """Start the background thread for periodic metrics collection."""
+        collection_thread = threading.Thread(target=self._periodic_collection_loop, daemon=True)
+        collection_thread.start()
+        logger.info("Periodic collection thread started")
+
+    def stop(self) -> None:
+        """Signal the background collection thread to stop."""
+        logger.info("Stopping periodic collection...")
+        self.stop_event.set()
 
 
 def load_config_file(config_file: Path) -> dict:
@@ -377,10 +423,15 @@ def create_app(collector: MetricsCollector) -> Flask:
 
     @app.route("/metrics")
     def metrics() -> Response:
-        collector.collect_metrics()
+        # Return cached metrics from memory (collected periodically in background)
         encoder, content_type = choose_encoder(request.headers.get("Accept"))
         data = encoder(collector.registry)
-        return Response(data, content_type=content_type)
+
+        # Add custom header with last collection time
+        response = Response(data, content_type=content_type)
+        if collector.last_collection_time:
+            response.headers["X-Last-Collection"] = collector.last_collection_time.isoformat()
+        return response
 
     return app
 
@@ -414,6 +465,12 @@ def main() -> None:
         help="Number of parallel workers (default: 20)",
     )
     parser.add_argument(
+        "--collection-interval",
+        type=int,
+        default=DEFAULT_COLLECTION_INTERVAL,
+        help=f"Metrics collection interval in seconds (default: {DEFAULT_COLLECTION_INTERVAL})",
+    )
+    parser.add_argument(
         "-v",
         "--verbose",
         action="store_true",
@@ -438,6 +495,7 @@ def main() -> None:
         commands=commands_dict,
         devices=devices_config,
         worker_pool_size=args.workers,
+        collection_interval=args.collection_interval,
     )
 
     # Expand device targets
@@ -450,19 +508,26 @@ def main() -> None:
     # Create metrics collector
     collector = MetricsCollector.create(config, targets)
 
+    # Start periodic collection in background
+    collector.start_periodic_collection()
+
     # Create Flask app
     app = create_app(collector)
 
     # Start HTTP server
     http_server = WSGIServer((C.WSGI_SERVER, args.port), app)
-    logger.info(f"Starting network metrics exporter on {C.WSGI_SERVER} port {args.port}")
+    logger.info(
+        f"Starting network metrics exporter on {C.WSGI_SERVER} port {args.port} " f"(collection interval: {args.collection_interval}s)"
+    )
     try:
         http_server.serve_forever()
     except KeyboardInterrupt:
         logger.info("Shutting down network metrics exporter")
+        collector.stop()
         http_server.stop()
     except Exception as e:
         logger.error(f"Error running network metrics exporter: {e}")
+        collector.stop()
         sys.exit(1)
 
 
