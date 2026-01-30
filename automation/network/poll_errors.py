@@ -87,6 +87,7 @@ class MonitorConfig:
     device_file: Path
     webex_room: str
     ignore_interfaces_file: Path | None = None
+    ignore_patterns: list[str] = field(default_factory=list)
     no_discards: bool = False
     cache_file: Path = field(init=False)
     suppress_seconds: int = field(init=False)
@@ -233,6 +234,7 @@ def should_ignore_interface(
     if_descr: str,
     if_alias: str,
     ignore_interfaces: dict[str, list[str]],
+    ignore_patterns: list[re.Pattern],
 ) -> bool:
     """Determine if an interface should be ignored.
 
@@ -245,6 +247,11 @@ def should_ignore_interface(
     Returns:
         True if interface should be ignored
     """
+    # Check if the ifDescr is in ignore patterns
+    for pattern in ignore_patterns:
+        if pattern.search(if_descr):
+            return True
+
     # Check explicit ignore list
     if device in ignore_interfaces and if_descr in ignore_interfaces[device]:
         return True
@@ -265,6 +272,7 @@ def check_interface_errors(
     config: MonitorConfig,
     spark: Sparker,
     ignore_interfaces: dict[str, list[str]],
+    ignore_patterns: list[re.Pattern],
 ) -> dict[str, str | int | bool]:
     """Check for interface errors and send notifications.
 
@@ -277,6 +285,7 @@ def check_interface_errors(
         config: Monitor configuration
         spark: Sparker instance
         ignore_interfaces: Interfaces to ignore
+        ignore_patterns: Compiled regex patterns to ignore interfaces
 
     Returns:
         Updated interface state
@@ -285,7 +294,7 @@ def check_interface_errors(
     if_alias = curr_data.get("ifAlias", "")
 
     # Skip if interface should be ignored
-    if should_ignore_interface(device, if_descr, if_alias, ignore_interfaces):
+    if should_ignore_interface(device, if_descr, if_alias, ignore_interfaces, ignore_patterns):
         return curr_data
 
     # Initialize counters from previous state
@@ -400,6 +409,13 @@ def main() -> int:
         help="Path to JSON file mapping devices to ignored interfaces",
     )
     parser.add_argument(
+        "--ignore-patterns",
+        "-p",
+        metavar="<PATTERN>",
+        action="append",
+        help="Regex pattern to ignore interfaces (can be specified multiple times)",
+    )
+    parser.add_argument(
         "--no-discards",
         action="store_true",
         help="Skip polling ifIn/OutDiscards (default: discards are polled)",
@@ -424,6 +440,7 @@ def main() -> int:
         webex_room=args.webex_room,
         ignore_interfaces_file=args.ignore_interfaces_file,
         no_discards=args.no_discards,
+        ignore_patterns=args.ignore_patterns,
     )
 
     # Load devices
@@ -436,6 +453,16 @@ def main() -> int:
     ignore_interfaces: dict[str, list[str]] = {}
     if config.ignore_interfaces_file:
         ignore_interfaces = load_json_file(config.ignore_interfaces_file)
+
+    # Compile ignore patterns
+    compiled_patterns: list[re.Pattern] = []
+    if config.ignore_patterns:
+        for pattern_str in config.ignore_patterns:
+            try:
+                pattern = re.compile(pattern_str)
+                compiled_patterns.append(pattern)
+            except re.error as e:
+                logger.error(f"Invalid regex pattern '{pattern_str}': {e}")
 
     # Load previous state
     prev_state = load_cache(config.cache_file)
@@ -487,6 +514,7 @@ def main() -> int:
                 config,
                 spark,
                 ignore_interfaces,
+                compiled_patterns,
             )
 
     # Save current state
