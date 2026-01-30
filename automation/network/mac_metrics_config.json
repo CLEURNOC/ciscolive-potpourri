@@ -117,6 +117,13 @@
         "natHealthEntryAddFail"
       ]
     },
+    "ftdNatTranslation": {
+      "command": "show xlate count",
+      "pattern": "(\\d+) in use",
+      "metrics": [
+        "ftdNatTranslations"
+      ]
+    },
     "qfpUtil": {
       "command": "show platform hardware qfp active datapath utilization summary",
       "pattern": "Processing: Load \\(pct\\)\\s+(\\d+)",
@@ -170,6 +177,16 @@
         "max": 2
       },
       "commands": ["qfpUtil", "nat64Trans"]
+    },
+    {
+      "pattern": "CORE{}-FTD",
+      "range": {
+        "min": 1,
+        "max": 2
+      },
+      "commands": [
+        "ftdNatTranslation"
+      ]
     }
   ]
 }
