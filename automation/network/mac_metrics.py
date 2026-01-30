@@ -33,6 +33,7 @@ from network devices via SSH and exports them to Prometheus.
 import argparse
 import json
 import logging
+import os
 import re
 import sys
 import threading
@@ -52,13 +53,16 @@ from prometheus_client import CollectorRegistry, Gauge
 from prometheus_client.exposition import choose_encoder
 from sparker import MessageType, Sparker  # type: ignore
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[logging.StreamHandler(sys.stdout)],
-)
-logger = logging.getLogger(__name__)
+# Set up logging
+logger = logging.getLogger("diff-routing-tables")
+loglevel = logging.DEBUG if os.getenv("DEBUG", "false").lower() == "true" else logging.INFO
+logger.setLevel(loglevel)
+# Configure handler with format for this module only
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(threadName)s %(name)s: %(message)s"))
+    logger.addHandler(handler)
+    logger.propagate = False
 
 # Default paths
 DEFAULT_CONFIG_FILE = Path(__file__).parent / "poll_macs_config.json"
@@ -160,7 +164,7 @@ class MetricsCollector:
                 self.spark.post_to_spark(
                     C.WEBEX_TEAM,
                     self.config.webex_room,
-                    f"Metric **{metric_name}** on device {target.device} has violated threshold {threshold}, currently {value}",
+                    f"Metric **{metric_name}** on device _{target.device}_ has violated threshold {threshold}, currently {value}",
                     MessageType.WARNING,
                 )
         except Exception as e:
