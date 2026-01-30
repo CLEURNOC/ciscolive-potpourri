@@ -149,6 +149,7 @@ class MetricsCollector:
         metric_name: str,
         value: str,
         threshold: str,
+        target: DeviceTarget,
     ) -> None:
         """Check if a metric violates its threshold and send notification."""
         if not threshold or not (threshold.startswith("==") or threshold.startswith("<") or threshold.startswith(">")):
@@ -159,7 +160,7 @@ class MetricsCollector:
                 self.spark.post_to_spark(
                     C.WEBEX_TEAM,
                     self.config.webex_room,
-                    f"Metric **{metric_name}** has violated threshold {threshold}, currently {value}",
+                    f"Metric **{metric_name}** on device {target.device} has violated threshold {threshold}, currently {value}",
                     MessageType.WARNING,
                 )
         except Exception as e:
@@ -196,7 +197,7 @@ class MetricsCollector:
                 value = match.group(1)
                 self._set_metric_value(cmd_config.metric, target.device, value)
                 if cmd_config.threshold:
-                    self._check_threshold(cmd_config.metric, value, cmd_config.threshold)
+                    self._check_threshold(cmd_config.metric, value, cmd_config.threshold, target)
 
             elif cmd_config.metrics:
                 # Multiple metrics
@@ -204,7 +205,7 @@ class MetricsCollector:
                     value = match.group(i)
                     self._set_metric_value(metric, target.device, value)
                     if cmd_config.thresholds and i <= len(cmd_config.thresholds):
-                        self._check_threshold(metric, value, cmd_config.thresholds[i - 1])
+                        self._check_threshold(metric, value, cmd_config.thresholds[i - 1], target)
         else:
             # Pattern didn't match, set to zero
             if cmd_config.metric:
