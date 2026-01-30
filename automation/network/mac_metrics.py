@@ -118,7 +118,7 @@ class MetricsCollector:
     last_collection_time: datetime | None = field(default=None, init=False)
     collection_lock: threading.Lock = field(default_factory=threading.Lock, init=False)
     stop_event: threading.Event = field(default_factory=threading.Event, init=False)
-    threshold_cache: dict[str, dict[str, bool]] = field(default_factory=dict, init=False)
+    threshold_cache: dict[str, dict] = field(default_factory=dict, init=False)
 
     @classmethod
     def create(cls, config: MonitorConfig, targets: list[DeviceTarget]) -> "MetricsCollector":
@@ -197,9 +197,10 @@ class MetricsCollector:
     ) -> None:
         """Check if a metric violates its threshold and send notification.
 
-        Only alerts when:
-        - For < and > thresholds: condition was not violated before
-        - For == thresholds: condition cleared and then violated again
+        Alerting logic:
+        - For < thresholds: alert if violated AND (first violation OR value decreased further)
+        - For > thresholds: alert if violated AND (first violation OR value increased further)
+        - For == thresholds: alert if violated AND condition was not violated before
         """
         if not threshold or not (threshold.startswith("==") or threshold.startswith("<") or threshold.startswith(">")):
             return
@@ -207,19 +208,42 @@ class MetricsCollector:
         cache_key = self._get_cache_key(metric_name, target.device)
 
         try:
-            # Check if threshold is currently violated
+            current_value = float(value)
             is_violated = eval(f"{value} {threshold}")
 
-            # Get previous violation state (None means unknown/first check)
-            was_violated = self.threshold_cache.get(cache_key)
+            # Get previous cached state
+            cached_data = self.threshold_cache.get(cache_key)
+            should_alert = False
 
-            # Determine if we should alert
-            # For all threshold types: only alert if condition cleared (was False) and violated again (is True)
-            # This prevents repeated alerts and requires the metric to recover before alerting again
-            should_alert = is_violated and not was_violated
+            if is_violated:
+                if cached_data is None:
+                    # First time seeing this metric - alert
+                    should_alert = True
+                elif threshold.startswith("=="):
+                    # For equality: only alert if it wasn't violated before (condition cleared)
+                    should_alert = not cached_data.get("violated", False)
+                elif threshold.startswith("<"):
+                    # For less-than: alert if value decreased further (even if still violated)
+                    if not cached_data.get("violated", False):
+                        # First violation
+                        should_alert = True
+                    elif cached_data.get("value") is not None:
+                        # Value decreased further
+                        should_alert = current_value < cached_data["value"]
+                elif threshold.startswith(">"):
+                    # For greater-than: alert if value increased further (even if still violated)
+                    if not cached_data.get("violated", False):
+                        # First violation
+                        should_alert = True
+                    elif cached_data.get("value") is not None:
+                        # Value increased further
+                        should_alert = current_value > cached_data["value"]
 
-            # Update cache with current state
-            self.threshold_cache[cache_key] = is_violated
+            # Update cache with current state and value
+            self.threshold_cache[cache_key] = {
+                "violated": is_violated,
+                "value": current_value if is_violated else None,
+            }
 
             # Send alert if needed
             if should_alert:
