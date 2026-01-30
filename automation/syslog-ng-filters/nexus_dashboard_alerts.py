@@ -32,7 +32,7 @@ from cleu.config import Config as C  # type: ignore
 from sparker import MessageType, Sparker  # type: ignore
 
 # --- CONFIGURATION ---
-SPARK_ROOM = "Data Center Alarms"
+SPARK_ROOM = "Data Centre Alarms"
 # ---------------------
 
 if __name__ == "__main__":
