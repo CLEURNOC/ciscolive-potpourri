@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 app = Flask("Intersight Alert Gateway")
 
 
-def get_sha256_digest(data: str) -> hashlib._Hash:
+def get_sha256_digest(data: str) -> hashlib._hashlib.HASH:
     """
     Generates a SHA256 digest from a String.
     :param data: data string set by user
