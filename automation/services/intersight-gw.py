@@ -29,7 +29,6 @@ import hashlib
 import hmac
 import json
 import logging
-from hashlib import _Hash as HASH
 from urllib.parse import urlparse
 
 import CLEUCreds  # type: ignore
@@ -44,7 +43,7 @@ logger = logging.getLogger(__name__)
 app = Flask("Intersight Alert Gateway")
 
 
-def get_sha256_digest(data: str) -> HASH:
+def get_sha256_digest(data: str) -> hashlib._Hash:
     """
     Generates a SHA256 digest from a String.
     :param data: data string set by user
