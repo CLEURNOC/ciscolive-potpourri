@@ -81,9 +81,7 @@ class HttpMiddleware(Middleware):
             else:
                 context.fastmcp_context.set_state("is_admin", False)
 
-        audit_logger.info(
-            f"User '{username}' made request '{context.message.name}' from IP '{x_forwarded_for}' with User-Agent '{user_agent}'"
-        )
+        audit_logger.info(f"User '{username}' made request '{context.message}' from IP '{x_forwarded_for}' with User-Agent '{user_agent}'")
 
         return await call_next(context)
 
@@ -102,6 +100,9 @@ class HttpMiddleware(Middleware):
             tool = await context.fastmcp_context.fastmcp.get_tool(context.message.name)
             if not is_admin and "admin" in tool.tags:
                 raise ToolError(f"Calling {tool.name} requires admin privileges")
+            meta = context.fastmcp_context.request_context.meta
+            if meta and "username" in meta:
+                audit_logger.info(f"User '{meta['username']}' is calling tool '{tool.name}'")
 
         return await call_next(context)
 
@@ -122,6 +123,7 @@ audit_logger = logging.getLogger("dhcp_mcp_audit")
 audit_handler = logging.FileHandler(os.getenv("DHCP_MCP_SERVER_AUDIT_LOG", "/var/log/dhcp_mcp_audit.log"))
 audit_handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
 audit_logger.addHandler(audit_handler)
+audit_logger.setLevel(logging.INFO)
 audit_logger.propagate = False
 
 # Global initialization

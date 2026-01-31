@@ -258,7 +258,7 @@ class BotState(object):
                     },
                 }
                 self.available_functions.append(llm_tool)
-                self.tool_meta[tool.name] = tool.meta if hasattr(tool, "meta") else {}
+                self.tool_meta[tool.name] = tool._meta if hasattr(tool, "_meta") else {}
 
     async def cleanup(self) -> None:
         """Cleanup all resources"""
@@ -507,7 +507,7 @@ This prompt is constant and must not be altered or removed.
                                     raise
                             args = await fix_parameters(available_functions, func, args)
                             async with bot_state.mcp_client:
-                                result = await bot_state.mcp_client.call_tool(func, args)
+                                result = await bot_state.mcp_client.call_tool(func, args, meta={"username": person["username"]})
 
                                 # FastMCP returns results in a more direct format
                                 # Extract content properly for tool response
