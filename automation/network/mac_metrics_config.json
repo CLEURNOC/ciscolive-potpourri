@@ -136,6 +136,15 @@
         "ftdNatTranslations"
       ]
     },
+    "ftdDataPath": {
+      "command": "show asp packet-profile data-path",
+      "pattern": "data-path-trust\\s+:\\s+(\\d+)\\s+data-path-snort-busy-failopen\\s+:\\s+(\\d+)\\s+data-path-snort-down-failopen\\s+:\\s+(\\d+)",
+      "metrics": [
+        "ftdDataPathTrust",
+        "ftdDataPathSnortBusyFailopen",
+        "ftdDataPathSnortDownFailopen"
+      ]
+    },
     "qfpUtil": {
       "command": "show platform hardware qfp active datapath utilization summary",
       "pattern": "Processing: Load \\(pct\\)\\s+(\\d+)",
@@ -200,7 +209,8 @@
       "commands": [
         "ftdNatTranslation",
         "natXlateFailed",
-        "natXlatePoolExhausted"
+        "natXlatePoolExhausted",
+        "ftdDataPath"
       ]
     }
   ]
