@@ -24,10 +24,10 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+import base64
+import hmac
 import json
 import logging
-import hmac
-import base64
 
 import CLEUCreds  # type: ignore
 import requests
