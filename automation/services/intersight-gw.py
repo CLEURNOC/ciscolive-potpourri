@@ -25,13 +25,16 @@
 # SUCH DAMAGE.
 
 import base64
+import hashlib
 import hmac
 import json
 import logging
+from hashlib import _Hash as HASH
+from urllib.parse import urlparse
 
 import CLEUCreds  # type: ignore
 import requests
-from flask import Flask, Response, jsonify, request
+from flask import Flask, Request, Response, jsonify, request
 from gevent.pywsgi import WSGIServer
 
 PORT = 9915
@@ -41,13 +44,98 @@ logger = logging.getLogger(__name__)
 app = Flask("Intersight Alert Gateway")
 
 
-def validate_signature(payload: bytes, signature: str, algorithm: str) -> bool:
-    """Validate HMAC signature of the incoming request."""
-    sig_header = signature.strip()
-    hashed_payload = hmac.new(CLEUCreds.INTERSIGHT_WEBHOOK_SECRET.encode("UTF-8"), payload, algorithm)
-    signature = base64.b64encode(hashed_payload.digest()).decode("utf-8").strip()
-    if signature != sig_header:
-        logger.error("Received invalid signature from callback; expected %s, received %s" % (signature, sig_header))
+def get_sha256_digest(data: str) -> HASH:
+    """
+    Generates a SHA256 digest from a String.
+    :param data: data string set by user
+    :return: instance of digest object
+    """
+
+    digest = hashlib.sha256()
+    digest.update(data.encode("utf-8"))
+
+    return digest
+
+
+def prepare_str_to_sign(req_tgt: str, hdrs: dict) -> str:
+    """
+    Concatenates Intersight headers in preparation to be signed
+    :param req_tgt : http method plus endpoint
+    :param hdrs: dict with header keys
+    :return: concatenated header authorization string
+    """
+    sign_str = ""
+    sign_str = sign_str + "(request-target): " + req_tgt + "\n"
+
+    length = len(hdrs.items())
+
+    i = 0
+    for key, value in hdrs.items():
+        sign_str = sign_str + key.lower() + ": " + value
+        if i < length - 1:
+            sign_str = sign_str + "\n"
+        i += 1
+
+    return sign_str
+
+
+def get_auth_header(hdrs: dict, signed_msg: bytes, key_id: str) -> str:
+    """
+    Assmeble an Intersight formatted authorization header
+    :param hdrs : object with header keys
+    :param signed_msg: base64 encoded sha256 hashed body
+    :return: concatenated authorization header
+    """
+
+    auth_str = "Signature"
+
+    auth_str = auth_str + " " + 'keyId="' + key_id + '", ' + 'algorithm="' + "hmac-sha256" + '",'
+
+    auth_str = auth_str + ' headers="(request-target)'
+
+    for key, dummy in hdrs.items():
+        auth_str = auth_str + " " + key.lower()
+    auth_str = auth_str + '"'
+
+    auth_str = auth_str + "," + ' signature="' + signed_msg.decode("ascii") + '"'
+
+    return auth_str
+
+
+def verify_auth_header(event: Request) -> bool:
+    authorization = event.headers.get("Authorization")
+    if not authorization:
+        logger.error("Missing Authorization header")
+        return False
+
+    # Generate the expected authorization header
+    host_uri = CLEUCreds.INTERSIGHT_WEBHOOK_URI
+    target_host = urlparse(host_uri).netloc
+    target_path = urlparse(host_uri).path
+    request_target = "post" + " " + target_path
+
+    body_digest = get_sha256_digest(event["body"])
+    b64_body_digest = base64.b64encode(body_digest.digest())
+    auth_header = {
+        "Host": target_host,
+        "Date": event.headers.get("Date"),
+        "Digest": "SHA-256=" + b64_body_digest.decode("ascii"),
+        "Content-Type": "application/json",
+        "Content-Length": str(len(event["body"])),
+    }
+    if auth_header["Digest"] != event.headers.get("Digest", ""):
+        logger.error(f"Digest mismatch: expected {auth_header['Digest']}, got {event.headers.get('Digest', '')}")
+        return False
+
+    string_to_sign = prepare_str_to_sign(request_target, auth_header)
+    webhook_secret = CLEUCreds.INTERSIGHT_WEBHOOK_SECRET
+    sign = hmac.new(webhook_secret.encode(), msg=string_to_sign.encode(), digestmod=hashlib.sha256).digest()
+    b64_signature = base64.b64encode(sign)
+    key_id = CLEUCreds.INTERSIGHT_WEBHOOK_KEY_ID
+    expected_auth = get_auth_header(auth_header, b64_signature, key_id)
+
+    if expected_auth != authorization:
+        logger.error("Authorization header mismatch")
         return False
 
     return True
@@ -56,15 +144,8 @@ def validate_signature(payload: bytes, signature: str, algorithm: str) -> bool:
 @app.route("/event", methods=["POST"])
 def intersight_to_webex() -> Response:
     """Process Intersight events and forward to Webex."""
-    digest = request.headers.get("digest", "")
-    try:
-        algo, signature = digest.split("=", 1)
-        algo = algo.lower()
-        if not validate_signature(request.data, signature, algo):
-            return jsonify({"error": "Invalid signature"}), 401
-    except Exception:
-        logger.error("Received invalid authorization header from callback: %s" % digest, exec_info=True)
-        return jsonify({"error": "Invalid authorization header"}), 400
+    if not verify_auth_header(request):
+        return jsonify({"error": "Unauthorized"}), 401
 
     try:
         event_data = json.loads(request.data.decode("utf-8"))
