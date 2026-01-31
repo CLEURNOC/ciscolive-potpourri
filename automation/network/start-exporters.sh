@@ -25,7 +25,7 @@
 # SUCH DAMAGE.
 
 # Start each Prometheus exporter in its own screen instance
-declare -A EXPORTERS=(["cpnr_metrics"]="cpnr_metrics.py" ["mac_metrics"]="mac_metrics.py" ["dhcp_metrics"]="dhcp_metrics.py" ["dns_metrics"]="dns_metrics.py" ["tcam_metrics"]="tcam_metrics.py" ["netapp_gw"]="netapp-rest-gw.py")
+declare -A EXPORTERS=(["cpnr_metrics"]="cpnr_metrics.py" ["mac_metrics"]="mac_metrics.py" ["dhcp_metrics"]="dhcp_metrics.py" ["dns_metrics"]="dns_metrics.py" ["tcam_metrics"]="tcam_metrics.py" ["netapp_gw"]="netapp-rest-gw.py" ["intersight_gw"]="intersight-gw.py")
 
 for sname in "${!EXPORTERS[@]}"; do
   if ! screen -ls ${sname} >/dev/null 2>&1; then
