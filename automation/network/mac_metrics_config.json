@@ -202,7 +202,11 @@
         "min": 1,
         "max": 2
       },
-      "commands": ["qfpUtil", "nat64Trans"]
+      "commands": [
+        "qfpUtil",
+        "nat64Trans",
+        "nat64Exhaustions"
+      ]
     },
     {
       "pattern": "CORE{}-FTD",
