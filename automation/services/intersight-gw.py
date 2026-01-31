@@ -65,12 +65,12 @@ def intersight_to_webex() -> Response:
 
     except requests.RequestException as e:
         logger.error(f"Failed to send event to Webex: {e}", exc_info=True)
-        return Response(jsonify({"error": "Failed to forward event"}), status=502, mimetype="application/json")
+        return jsonify({"error": "Failed to forward event"}), 502
     except Exception as e:
         logger.error(f"Unexpected error processing NetApp event: {e}", exc_info=True)
-        return Response(jsonify({"error": "Internal error"}), status=500, mimetype="application/json")
+        return jsonify({"error": "Internal error"}), 500
 
-    return Response(jsonify({"result": "OK"}), mimetype="application/json")
+    return jsonify({"result": "OK"})
 
 
 if __name__ == "__main__":
