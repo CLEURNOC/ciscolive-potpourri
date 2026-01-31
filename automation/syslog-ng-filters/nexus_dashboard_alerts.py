@@ -54,7 +54,10 @@ if __name__ == "__main__":
             formatted_msg = "**NEXUS DASHBOARD ALERT**\n{}".format(output)
 
             mtype = MessageType.WARNING
-            if re.search(r"critical", output, re.IGNORECASE):
+            if "Cleared : true" in output:
+                mtype = MessageType.GOOD
+                formatted_msg = "_Nexus Dashboard Alert Cleared_\n{}".format(output)
+            elif re.search(r"critical", output, re.IGNORECASE):
                 mtype = MessageType.BAD
 
             spark.post_to_spark(C.WEBEX_TEAM, SPARK_ROOM, formatted_msg, mtype)
