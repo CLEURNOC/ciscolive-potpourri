@@ -29,7 +29,6 @@ import logging
 
 import CLEUCreds  # type: ignore
 import requests
-from cleu.config import Config as C  # type: ignore
 from flask import Flask, Response, jsonify, request
 from gevent.pywsgi import WSGIServer
 
@@ -77,8 +76,8 @@ def intersight_to_webex() -> Response:
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
-    logger.info(f"Starting Intersight Alert Gateway on {C.WSGI_SERVER}:{PORT}")
-    http_server = WSGIServer((C.WSGI_SERVER, PORT), app)
+    logger.info(f"Starting Intersight Alert Gateway on 127.0.0.1:{PORT}")
+    http_server = WSGIServer(("127.0.0.1", PORT), app)
 
     try:
         http_server.serve_forever()
