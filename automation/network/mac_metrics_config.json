@@ -143,6 +143,11 @@
         "ftdDataPathTrust",
         "ftdDataPathSnortBusyFailopen",
         "ftdDataPathSnortDownFailopen"
+      ],
+      "thresholds": [
+        "#",
+        "> 0",
+        "> 0"
       ]
     },
     "qfpUtil": {

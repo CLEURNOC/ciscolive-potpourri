@@ -197,60 +197,112 @@ class MetricsCollector:
     ) -> None:
         """Check if a metric violates its threshold and send notification.
 
-        Alerting logic:
-        - For < thresholds: alert if violated AND (first violation OR value decreased further)
-        - For > thresholds: alert if violated AND (first violation OR value increased further)
-        - For == thresholds: alert if violated AND condition was not violated before
+        Threshold types:
+        - < : alert if value < threshold AND (first violation OR value decreased further)
+        - > : alert if value > threshold AND (first violation OR value increased further)
+        - == : alert if value == threshold AND condition was not violated before
+        - + > : alert if delta (increase) > threshold AND condition was not violated before
+        - - < : alert if delta (decrease) < threshold AND condition was not violated before
+
+        Delta thresholds (+ > and - <) are for monotonically changing counters.
         """
-        if not threshold or not (threshold.startswith("==") or threshold.startswith("<") or threshold.startswith(">")):
+        if not threshold:
+            return
+
+        # Check for valid threshold types
+        is_delta_threshold = threshold.startswith("+ >") or threshold.startswith("- <")
+        is_simple_threshold = threshold.startswith("==") or threshold.startswith("<") or threshold.startswith(">")
+
+        if not (is_delta_threshold or is_simple_threshold):
             return
 
         cache_key = self._get_cache_key(metric_name, target.device)
 
         try:
             current_value = float(value)
-            is_violated = eval(f"{value} {threshold}")
-
-            # Get previous cached state
             cached_data = self.threshold_cache.get(cache_key)
             should_alert = False
+            alert_message = ""
 
-            if is_violated:
-                if cached_data is None:
-                    # First time seeing this metric - alert
+            if is_delta_threshold:
+                # Handle delta-based thresholds (+ > and - <)
+                if cached_data is None or cached_data.get("prev_value") is None:
+                    # First time seeing this metric - no delta to calculate
+                    self.threshold_cache[cache_key] = {
+                        "violated": False,
+                        "prev_value": current_value,
+                    }
+                    return
+
+                prev_value = cached_data["prev_value"]
+                delta = current_value - prev_value
+
+                # Extract the comparison operator and threshold value
+                if threshold.startswith("+ >"):
+                    # Increase greater than threshold
+                    threshold_value = float(threshold[3:].strip())
+                    is_violated = delta > threshold_value
+                    alert_message = f"Metric **{metric_name}** on device _{target.device}_ increased by {delta:.2f} (threshold: {threshold}), currently {value}"
+                elif threshold.startswith("- <"):
+                    # Decrease less than (more negative than) threshold
+                    threshold_value = float(threshold[3:].strip())
+                    is_violated = delta < threshold_value
+                    alert_message = f"Metric **{metric_name}** on device _{target.device}_ decreased by {delta:.2f} (threshold: {threshold}), currently {value}"
+
+                # Only alert if violated and wasn't violated before (condition cleared)
+                if is_violated and not cached_data.get("violated", False):
                     should_alert = True
-                elif threshold.startswith("=="):
-                    # For equality: only alert if it wasn't violated before (condition cleared)
-                    should_alert = not cached_data.get("violated", False)
-                elif threshold.startswith("<"):
-                    # For less-than: alert if value decreased further (even if still violated)
-                    if not cached_data.get("violated", False):
-                        # First violation
-                        should_alert = True
-                    elif cached_data.get("value") is not None:
-                        # Value decreased further
-                        should_alert = current_value < cached_data["value"]
-                elif threshold.startswith(">"):
-                    # For greater-than: alert if value increased further (even if still violated)
-                    if not cached_data.get("violated", False):
-                        # First violation
-                        should_alert = True
-                    elif cached_data.get("value") is not None:
-                        # Value increased further
-                        should_alert = current_value > cached_data["value"]
 
-            # Update cache with current state and value
-            self.threshold_cache[cache_key] = {
-                "violated": is_violated,
-                "value": current_value if is_violated else None,
-            }
+                # Update cache with current state and value
+                self.threshold_cache[cache_key] = {
+                    "violated": is_violated,
+                    "prev_value": current_value,
+                }
+
+            else:
+                # Handle simple value-based thresholds (<, >, ==)
+                is_violated = eval(f"{value} {threshold}")
+
+                if is_violated:
+                    if cached_data is None:
+                        # First time seeing this metric - alert
+                        should_alert = True
+                    elif threshold.startswith("=="):
+                        # For equality: only alert if it wasn't violated before (condition cleared)
+                        should_alert = not cached_data.get("violated", False)
+                    elif threshold.startswith("<"):
+                        # For less-than: alert if value decreased further (even if still violated)
+                        if not cached_data.get("violated", False):
+                            # First violation
+                            should_alert = True
+                        elif cached_data.get("value") is not None:
+                            # Value decreased further
+                            should_alert = current_value < cached_data["value"]
+                    elif threshold.startswith(">"):
+                        # For greater-than: alert if value increased further (even if still violated)
+                        if not cached_data.get("violated", False):
+                            # First violation
+                            should_alert = True
+                        elif cached_data.get("value") is not None:
+                            # Value increased further
+                            should_alert = current_value > cached_data["value"]
+
+                # Update cache with current state and value
+                self.threshold_cache[cache_key] = {
+                    "violated": is_violated,
+                    "value": current_value if is_violated else None,
+                }
+
+                alert_message = (
+                    f"Metric **{metric_name}** on device _{target.device}_ has violated threshold {threshold}, currently {value}"
+                )
 
             # Send alert if needed
             if should_alert:
                 self.spark.post_to_spark(
                     C.WEBEX_TEAM,
                     self.config.webex_room,
-                    f"Metric **{metric_name}** on device _{target.device}_ has violated threshold {threshold}, currently {value}",
+                    alert_message,
                     MessageType.WARNING,
                 )
                 logger.info(f"Threshold alert sent: {metric_name} on {target.device} = {value} (threshold: {threshold})")
