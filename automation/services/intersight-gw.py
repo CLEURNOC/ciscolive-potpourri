@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 app = Flask("Intersight Alert Gateway")
 
 
-def get_sha256_digest(data: str) -> hashlib._hashlib.HASH:
+def get_sha256_digest(data: bytes) -> hashlib._hashlib.HASH:
     """
     Generates a SHA256 digest from a String.
     :param data: data string set by user
@@ -51,7 +51,7 @@ def get_sha256_digest(data: str) -> hashlib._hashlib.HASH:
     """
 
     digest = hashlib.sha256()
-    digest.update(data.encode("utf-8"))
+    digest.update(data)
 
     return digest
 
@@ -113,14 +113,14 @@ def verify_auth_header(event: Request) -> bool:
     target_path = urlparse(host_uri).path
     request_target = "post" + " " + target_path
 
-    body_digest = get_sha256_digest(event["body"])
+    body_digest = get_sha256_digest(event.data)
     b64_body_digest = base64.b64encode(body_digest.digest())
     auth_header = {
         "Host": target_host,
         "Date": event.headers.get("Date"),
         "Digest": "SHA-256=" + b64_body_digest.decode("ascii"),
         "Content-Type": "application/json",
-        "Content-Length": str(len(event["body"])),
+        "Content-Length": str(len(event.data.decode("ascii"))),
     }
     if auth_header["Digest"] != event.headers.get("Digest", ""):
         logger.error(f"Digest mismatch: expected {auth_header['Digest']}, got {event.headers.get('Digest', '')}")
