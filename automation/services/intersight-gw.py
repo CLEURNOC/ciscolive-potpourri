@@ -26,6 +26,8 @@
 
 import json
 import logging
+import hmac
+import base64
 
 import CLEUCreds  # type: ignore
 import requests
@@ -39,15 +41,38 @@ logger = logging.getLogger(__name__)
 app = Flask("Intersight Alert Gateway")
 
 
+def validate_signature(payload: bytes, signature: str, algorithm: str) -> bool:
+    """Validate HMAC signature of the incoming request."""
+    sig_header = signature.strip()
+    hashed_payload = hmac.new(CLEUCreds.INTERSIGHT_WEBHOOK_SECRET.encode("UTF-8"), payload, algorithm)
+    signature = base64.b64encode(hashed_payload.digest()).decode("utf-8").strip()
+    if signature != sig_header:
+        logger.error("Received invalid signature from callback; expected %s, received %s" % (signature, sig_header))
+        return False
+
+    return True
+
+
 @app.route("/event", methods=["POST"])
 def intersight_to_webex() -> Response:
     """Process Intersight events and forward to Webex."""
+    digest = request.headers.get("digest", "")
+    try:
+        algo, signature = digest.split("=")
+        algo = algo.lower()
+        if not validate_signature(request.data, signature, algo):
+            return jsonify({"error": "Invalid signature"}), 401
+    except Exception:
+        logger.error("Received invalid authorization header from callback: %s" % digest)
+        return jsonify({"error": "Invalid authorization header"}), 400
+
     try:
         event_data = json.loads(request.data.decode("utf-8"))
+        event_details = event_data.get("Event", {})
 
         logger.info(f"Received Intersight event: {event_data}")
 
-        severity = event_data.get("Severity", "unknown").lower()
+        severity = event_details.get("Severity", "unknown").lower()
         if severity == "critical":
             sev = "🚨🚨"
         elif severity == "warning":
@@ -55,7 +80,7 @@ def intersight_to_webex() -> Response:
         else:
             sev = "✅"
 
-        description = event_data.get("Description")
+        description = event_details.get("Description")
         if description:
             payload = {"markdown": f"{sev} **Intersight {severity.capitalize()} Event**: {description}"}
 
@@ -67,7 +92,7 @@ def intersight_to_webex() -> Response:
         logger.error(f"Failed to send event to Webex: {e}", exc_info=True)
         return jsonify({"error": "Failed to forward event"}), 502
     except Exception as e:
-        logger.error(f"Unexpected error processing NetApp event: {e}", exc_info=True)
+        logger.error(f"Unexpected error processing Intersight event: {e}", exc_info=True)
         return jsonify({"error": "Internal error"}), 500
 
     return jsonify({"result": "OK"})
