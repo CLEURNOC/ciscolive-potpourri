@@ -92,7 +92,7 @@ def get_auth_header(hdrs: dict, signed_msg: bytes, key_id: str) -> str:
 
     auth_str = auth_str + ' headers="(request-target)'
 
-    for key, dummy in hdrs.items():
+    for key in hdrs.keys():
         auth_str = auth_str + " " + key.lower()
     auth_str = auth_str + '"'
 
@@ -103,6 +103,7 @@ def get_auth_header(hdrs: dict, signed_msg: bytes, key_id: str) -> str:
 
 def verify_auth_header(event: Request) -> bool:
     authorization = event.headers.get("Authorization")
+    digest = event.headers.get("Digest")
     if not authorization:
         logger.error("Missing Authorization header")
         return False
@@ -122,8 +123,8 @@ def verify_auth_header(event: Request) -> bool:
         "Content-Type": "application/json",
         "Content-Length": str(len(event.data.decode("ascii"))),
     }
-    if auth_header["Digest"] != event.headers.get("Digest", ""):
-        logger.error(f"Digest mismatch: expected {auth_header['Digest']}, got {event.headers.get('Digest', '')}")
+    if auth_header["Digest"] != digest:
+        logger.error(f"Digest mismatch: expected {auth_header['Digest']}, got {digest}")
         return False
 
     string_to_sign = prepare_str_to_sign(request_target, auth_header)
@@ -159,8 +160,10 @@ def intersight_to_webex() -> Response:
             sev = "🚨🚨"
         elif severity == "warning":
             sev = "⚠️"
-        else:
+        elif severity == "cleared":
             sev = "✅"
+        else:
+            sev = "✴️"
 
         description = event_details.get("Description")
         if description:
