@@ -58,12 +58,12 @@ def intersight_to_webex() -> Response:
     """Process Intersight events and forward to Webex."""
     digest = request.headers.get("digest", "")
     try:
-        algo, signature = digest.split("=")
+        algo, signature = digest.split("=", 1)
         algo = algo.lower()
         if not validate_signature(request.data, signature, algo):
             return jsonify({"error": "Invalid signature"}), 401
     except Exception:
-        logger.error("Received invalid authorization header from callback: %s" % digest)
+        logger.error("Received invalid authorization header from callback: %s" % digest, exec_info=True)
         return jsonify({"error": "Invalid authorization header"}), 400
 
     try:
