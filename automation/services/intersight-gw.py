@@ -151,6 +151,8 @@ def intersight_to_webex() -> Response:
         event_details = event_data.get("Event", {})
 
         logger.info(f"Received Intersight event: {event_data}")
+        if not event_details:
+            event_details = {}
 
         severity = event_details.get("Severity", "unknown").lower()
         if severity == "critical":
