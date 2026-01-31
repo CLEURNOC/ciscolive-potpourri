@@ -72,11 +72,18 @@ class HttpMiddleware(Middleware):
         if token not in auth_data.get("tokens", {}):
             raise McpError(ErrorData(message="Unauthorized: Invalid token", code=-31002))
 
+        username = auth_data["tokens"][token].get("username", "unknown")
+        user_agent = headers.get("user-agent", "unknown")
+        x_forwarded_for = headers.get("x-forwarded-for", "unknown")
         if context.fastmcp_context:
             if "is_admin" in auth_data["tokens"][token] and auth_data["tokens"][token]["is_admin"]:
                 context.fastmcp_context.set_state("is_admin", True)
             else:
                 context.fastmcp_context.set_state("is_admin", False)
+
+        audit_logger.info(
+            f"User '{username}' made request '{context.message.name}' from IP '{x_forwarded_for}' with User-Agent '{user_agent}'"
+        )
 
         return await call_next(context)
 
@@ -109,6 +116,13 @@ if not logger.handlers:
     handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(threadName)s %(name)s: %(message)s"))
     logger.addHandler(handler)
     logger.propagate = False
+
+# Setup an audit log to a file
+audit_logger = logging.getLogger("dhcp_mcp_audit")
+audit_handler = logging.FileHandler(os.getenv("DHCP_MCP_SERVER_AUDIT_LOG", "/var/log/dhcp_mcp_audit.log"))
+audit_handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
+audit_logger.addHandler(audit_handler)
+audit_logger.propagate = False
 
 # Global initialization
 DHCP_BASE = os.getenv("DHCP_BASE")
