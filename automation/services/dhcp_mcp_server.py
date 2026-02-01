@@ -671,6 +671,9 @@ def _get_bssids_from_netconf(controller: str, bssids: dict[str, str]) -> None:
 
             # Convert XML to dict using xmltodict
             data_dict = xmltodict.parse(netconf_reply.xml)
+            if not data_dict:
+                logger.warning(f"Empty NETCONF response from controller {controller}")
+                return
 
             # Get the AP name to MAC mapping
             ap_name_mac_map = data_dict.get("rpc-reply", {}).get("data", {}).get("access-point-oper-data", {}).get("ap-name-mac-map", {})
@@ -705,7 +708,7 @@ def _get_bssids_from_netconf(controller: str, bssids: dict[str, str]) -> None:
                     bssids.update({mac["bssid-mac"].lower(): ap_name for mac in vap_config})
 
     except Exception as e:
-        logger.warning(f"NETCONF request failed: {e}", exc_info=True)
+        logger.warning(f"NETCONF request failed to {controller}: {e}", exc_info=True)
         return
 
 
