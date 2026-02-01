@@ -1776,7 +1776,7 @@ async def get_alerts_for_device(device_name: str) -> List[AlertResponse]:
                 if hostname == device_name or hostname == f"{device_name}.{DNS_DOMAIN}":
                     if hostname not in alertlogs:
                         response = await client.get(
-                            f"{LIBRENMS_BASE}/api/v0/alertlog/{hostname}", params={"sortorder": "DESC"}, headers=headers
+                            f"{LIBRENMS_BASE}/api/v0/logs/alertlog/{hostname}", params={"sortorder": "DESC"}, headers=headers
                         )
                         if response.status_code != 200:
                             alertlogs[hostname] = []
