@@ -101,8 +101,8 @@ class HttpMiddleware(Middleware):
             if not is_admin and "admin" in tool.tags:
                 raise ToolError(f"Calling {tool.name} requires admin privileges")
             meta = context.fastmcp_context.request_context.meta
-            if meta and "username" in meta:
-                audit_logger.info(f"User '{meta['username']}' is calling tool '{tool.name}'")
+            if meta and hasattr(meta, "username"):
+                audit_logger.info(f"User '{meta.username}' is calling tool '{tool.name}'")
 
         return await call_next(context)
 
