@@ -186,6 +186,11 @@ class InputTypeEnum(StrEnum):
     mac_address = "mac"
 
 
+class AlertStateEnum(StrEnum):
+    active = "active"
+    acknowledged = "acknowledged"
+
+
 class NetBoxTypeEnum(StrEnum):
     device = "device"
     vm = "VM"
@@ -328,7 +333,7 @@ class AlertResponse(BaseModel, extra="forbid"):
     message: str = Field(..., description="The alert message describing the issue.")
     timestamp: str = Field(..., description="The timestamp when the alert was raised.")
     instances: List[Dict[str, str]] = Field(..., description="List of alert instances with relevant details.")
-    state: StrEnum = StrEnum("State", ["active", "acknowledged"], description="The state of the alert.")
+    state: AlertStateEnum = Field(..., description="The state of the alert.")
 
 
 # UTILITIES
