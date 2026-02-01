@@ -705,7 +705,7 @@ def _get_bssids_from_netconf(controller: str, bssids: dict[str, str]) -> None:
                     bssids.update({mac["bssid-mac"].lower(): ap_name for mac in vap_config})
 
     except Exception as e:
-        logger.warning(f"NETCONF request failed: {e}")
+        logger.warning(f"NETCONF request failed: {e}", exc_info=True)
         return
 
 
@@ -728,7 +728,7 @@ def _load_bssid_cache(cache_file: Path) -> dict[str, str]:
             logger.info(f"Loaded cache with {len(bssids)} devices")
             return bssids
     except Exception as e:
-        logger.error(f"Failed to load cache file {cache_file}: {e}")
+        logger.error(f"Failed to load cache file {cache_file}: {e}", exc_info=True)
         return {}
 
 
@@ -750,7 +750,7 @@ def _save_bssid_cache_atomic(cache_file: Path, bssids: dict) -> None:
         temp_file.replace(cache_file)
         logger.debug(f"Saved cache with {len(bssids)} devices")
     except Exception as e:
-        logger.error(f"Failed to save cache file {cache_file}: {e}")
+        logger.error(f"Failed to save cache file {cache_file}: {e}", exc_info=True)
         if temp_file.exists():
             temp_file.unlink()
 
