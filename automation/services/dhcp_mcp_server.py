@@ -1798,7 +1798,7 @@ async def get_alerts_for_device(device_name: str) -> List[AlertResponse]:
                             severity=alert.get("severity"),
                             message=alert.get("name"),
                             timestamp=alert.get("timestamp"),
-                            details=instances,
+                            instances=instances,
                             state="active" if alert.get("state") == 1 else "acknowledged",
                         )
                     )
