@@ -210,6 +210,8 @@ class BotState(object):
                 "DNS_DOMAIN": C.DNS_DOMAIN,
                 "NETCONF_USERNAME": CLEUCreds.NET_USER,
                 "NETCONF_PASSWORD": CLEUCreds.NET_PASS,
+                "LIBRENMS_TOKEN": CLEUCreds.LIBRENMS_TOKEN,
+                "LIBRENMS_BASE": C.LIBRENMS_BASE,
             }
             transport = StdioTransport(
                 command="python",

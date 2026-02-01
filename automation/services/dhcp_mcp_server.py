@@ -142,6 +142,8 @@ NETCONF_USERNAME = os.getenv("NETCONF_USERNAME")
 NETCONF_PASSWORD = os.getenv("NETCONF_PASSWORD")
 NETBOX_SERVER = os.getenv("NETBOX_SERVER")
 NETBOX_API_TOKEN = os.getenv("NETBOX_API_TOKEN")
+LIBRENMS_TOKEN = os.getenv("LIBRENMS_TOKEN")
+LIBRENMS_BASE = os.getenv("LIBRENMS_BASE")
 
 tls_verify = os.getenv("DHCP_BOT_TLS_VERIFY", "True").lower() == "true"
 
@@ -319,6 +321,14 @@ class DNSResponse(BaseModel, extra="forbid"):
     query: str = Field(..., description="The original query string (IP or hostname).")
     record_type: str = Field(..., description="The type of DNS record (A, AAAA, PTR).")
     results: List[str] = Field(..., description="List of resolved DNS records.")
+
+
+class AlertResponse(BaseModel, extra="forbid"):
+    severity: str = Field(..., description="The severity level of the alert (e.g., critical, warning).")
+    message: str = Field(..., description="The alert message describing the issue.")
+    timestamp: str = Field(..., description="The timestamp when the alert was raised.")
+    instances: List[Dict[str, str]] = Field(..., description="List of alert instances with relevant details.")
+    state: StrEnum = StrEnum("State", ["active", "acknowledged"], description="The state of the alert.")
 
 
 # UTILITIES
@@ -775,6 +785,34 @@ def _refresh_bssid_cache(do_refresh: bool = False) -> dict[str, str]:
     _save_bssid_cache_atomic(Path("bssid_cache.json"), bssids)
 
     return bssids
+
+
+def _allowed_alert_key(key: str, val: str | None) -> bool:
+    """Check if the alert key is allowed to be processed.
+
+    Args:
+        key: The alert key to check
+    """
+    ikey = key.lower()
+    if (
+        val
+        and (
+            "current" in ikey
+            or "prev" in ikey
+            or "limit" in ikey
+            or "perc" in ikey
+            or "alias"
+            or "rate" in ikey
+            or "speed" in ikey
+            or "descr" in ikey
+            or "sensor_class" in ikey
+            or "msg" in ikey
+        )
+        and ikey.count("_") <= 1
+        and key != "sysDescr"
+    ):
+        return True
+    return False
 
 
 # TOOLS
@@ -1695,6 +1733,79 @@ async def perform_dns_lookup(input: DNSInput | dict) -> DNSResponse:
         record_type=record_type,
         results=results,
     )
+
+
+@server_mcp.tool(
+    annotations={
+        "title": "Get LibreNMS Alerts for Device",
+        "readOnlyHint": True,
+    },
+    enabled=not is_testing,
+)
+async def get_alerts_for_device(device_name: str) -> List[AlertResponse]:
+    """
+    Query LibreNMS for active alerts on a device. Returns alert severity, message, and details for troubleshooting.
+
+    Use this when investigating device health issues, connectivity problems, or when a user reports problems
+    with a specific network device. Device name should be the hostname (not IP address).
+
+    Args:
+        device_name: Hostname of the device to check for alerts (e.g., 'switch01', 'router-core')
+    """
+    alerts: List[AlertResponse] = []
+
+    url = f"{LIBRENMS_BASE}/api/v0/alerts"
+    params = {"state": "1,2"}  # state=1, 2=acknowledged for active alerts
+    headers = {"X-Auth-Token": LIBRENMS_TOKEN}
+
+    try:
+        async with httpx.AsyncClient(verify=tls_verify, timeout=REST_TIMEOUT) as client:
+            response = await client.get(url, headers=headers, params=params)
+            response.raise_for_status()
+            data = response.json()
+
+            alertlogs = {}
+
+            for alert in data.get("alerts", []):
+                hostname = alert.get("hostname")
+                if hostname == device_name or hostname == f"{device_name}.{DNS_DOMAIN}":
+                    if hostname not in alertlogs:
+                        response = await client.get(
+                            f"{LIBRENMS_BASE}/api/v0/alertlog/{hostname}", params={"sortorder": "DESC"}, headers=headers
+                        )
+                        if response.status_code != 200:
+                            alertlogs[hostname] = []
+                        else:
+                            log_data = response.json()
+                            alertlogs[hostname] = log_data.get("logs", [])
+                    rule_id = alert.get("rule_id")
+                    device_id = alert.get("device_id")
+                    instances = []
+                    for log_entry in alertlogs.get(hostname, []):
+                        if log_entry.get("rule_id") == rule_id and log_entry.get("device_id") == device_id and log_entry.get("state") == 1:
+                            details = log_entry.get("details", {})
+                            for instance in details.get("rule", []):
+                                filtered_instance = {k: v for k, v in instance.items() if _allowed_alert_key(k, v)}
+                                instances.append(filtered_instance)
+                            break
+                    alerts.append(
+                        AlertResponse(
+                            severity=alert.get("severity"),
+                            message=alert.get("name"),
+                            timestamp=alert.get("timestamp"),
+                            details=instances,
+                            state="active" if alert.get("state") == 1 else "acknowledged",
+                        )
+                    )
+
+    except httpx.HTTPStatusError as he:
+        logger.error(f"HTTP error getting alerts for device {device_name} from LibreNMS: {he}", exc_info=True)
+        raise ToolError(f"HTTP error {he.response.status_code}: {he.response.text}")
+    except Exception as e:
+        logger.error(f"Unable to get alerts for device {device_name} from LibreNMS: {e}", exc_info=True)
+        raise ToolError(e)
+
+    return alerts
 
 
 if __name__ == "__main__":
