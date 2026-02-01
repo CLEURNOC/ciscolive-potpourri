@@ -332,7 +332,7 @@ class AlertResponse(BaseModel, extra="forbid"):
     severity: str = Field(..., description="The severity level of the alert (e.g., critical, warning).")
     message: str = Field(..., description="The alert message describing the issue.")
     timestamp: str = Field(..., description="The timestamp when the alert was raised.")
-    instances: List[Dict[str, str]] = Field(..., description="List of alert instances with relevant details.")
+    instances: List[Dict[str, Any]] = Field(..., description="List of alert instances with relevant details.")
     state: AlertStateEnum = Field(..., description="The state of the alert.")
 
 
@@ -1747,15 +1747,12 @@ async def perform_dns_lookup(input: DNSInput | dict) -> DNSResponse:
     },
     enabled=not is_testing,
 )
-async def get_alerts_for_device(device_name: str) -> List[AlertResponse]:
+async def get_alerts_for_device(device_name: Hostname) -> List[AlertResponse]:
     """
-    Query LibreNMS for active alerts on a device. Returns alert severity, message, and details for troubleshooting.
+    Query LibreNMS for active alerts on a device. Returns alert severity, message, and details for each instance of a given alert for troubleshooting.
 
     Use this when investigating device health issues, connectivity problems, or when a user reports problems
     with a specific network device. Device name should be the hostname (not IP address).
-
-    Args:
-        device_name: Hostname of the device to check for alerts (e.g., 'switch01', 'router-core')
     """
     alerts: List[AlertResponse] = []
 
