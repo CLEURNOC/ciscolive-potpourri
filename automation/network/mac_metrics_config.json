@@ -227,7 +227,8 @@
         "ftdNatTranslation",
         "natXlateFailed",
         "natXlatePoolExhausted",
-        "ftdDataPath"
+        "ftdDataPath",
+        "ftdIPv6Stats"
       ]
     }
   ]
