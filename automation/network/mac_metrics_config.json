@@ -150,6 +150,14 @@
         "> 0"
       ]
     },
+    "ftdIPv6Stats": {
+      "command": "show service-policy interface rai-wan",
+      "pattern": "Input police Interface rai-wan:.*(\\d+) bytes;.*Output police Interface rai-wan:.*(\\d+) bytes;",
+      "metrics": [
+        "ftdIPv6InputBytes",
+        "ftdIPv6OutputBytes"
+      ]
+    },
     "qfpUtil": {
       "command": "show platform hardware qfp active datapath utilization summary",
       "pattern": "Processing: Load \\(pct\\)\\s+(\\d+)",
