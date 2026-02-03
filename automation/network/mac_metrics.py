@@ -67,6 +67,7 @@ if not logger.handlers:
 # Default paths
 DEFAULT_CONFIG_FILE = Path(__file__).parent / "poll_macs_config.json"
 DEFAULT_CACHE_FILE = Path(__file__).parent / "mac_metrics_threshold_cache.json"
+DEFAULT_VALUE_CACHE_FILE = Path(__file__).parent / "mac_metrics_value_cache.json"
 DEFAULT_WEBEX_ROOM = "Core Alarms"
 DEFAULT_PORT = 8081
 DEFAULT_COLLECTION_INTERVAL = 300  # 5 minutes
@@ -82,6 +83,9 @@ class CommandConfig:
     metrics: list[str] | None = None
     threshold: str | None = None
     thresholds: list[str] | None = None
+    cache: bool = False
+    seed_value: float = 0.0
+    seed_values: list[float] | None = None
 
 
 @dataclass
@@ -104,6 +108,7 @@ class MonitorConfig:
     connection_timeout: int = 5
     collection_interval: int = DEFAULT_COLLECTION_INTERVAL
     cache_file: Path = DEFAULT_CACHE_FILE
+    value_cache_file: Path = DEFAULT_VALUE_CACHE_FILE
 
 
 @dataclass
@@ -119,6 +124,7 @@ class MetricsCollector:
     collection_lock: threading.Lock = field(default_factory=threading.Lock, init=False)
     stop_event: threading.Event = field(default_factory=threading.Event, init=False)
     threshold_cache: dict[str, dict] = field(default_factory=dict, init=False)
+    value_cache: dict[str, float] = field(default_factory=dict, init=False)
 
     @classmethod
     def create(cls, config: MonitorConfig, targets: list[DeviceTarget]) -> "MetricsCollector":
@@ -177,6 +183,39 @@ class MetricsCollector:
             logger.debug(f"Saved threshold cache to {self.config.cache_file}")
         except Exception as e:
             logger.warning(f"Failed to save threshold cache: {e}")
+            # Clean up temp file if it exists
+            try:
+                if temp_file.exists():
+                    temp_file.unlink()
+            except Exception:
+                pass
+
+    def _load_value_cache(self) -> None:
+        """Load value cache from disk."""
+        try:
+            if self.config.value_cache_file.exists():
+                with self.config.value_cache_file.open("r") as f:
+                    self.value_cache = json.load(f)
+                logger.debug(f"Loaded value cache from {self.config.value_cache_file}")
+            else:
+                self.value_cache = {}
+        except Exception as e:
+            logger.warning(f"Failed to load value cache: {e}")
+            self.value_cache = {}
+
+    def _save_value_cache(self) -> None:
+        """Save value cache to disk atomically and thread-safe."""
+        try:
+            # Write to temporary file first
+            temp_file = self.config.value_cache_file.with_suffix(".tmp")
+            with temp_file.open("w") as f:
+                json.dump(self.value_cache, f, indent=2)
+
+            # Atomically replace the old file with the new one
+            temp_file.replace(self.config.value_cache_file)
+            logger.debug(f"Saved value cache to {self.config.value_cache_file}")
+        except Exception as e:
+            logger.warning(f"Failed to save value cache: {e}")
             # Clean up temp file if it exists
             try:
                 if temp_file.exists():
@@ -310,10 +349,37 @@ class MetricsCollector:
         except Exception as e:
             logger.error(f"Failed to check threshold for {metric_name} on {target.device}: {e}")
 
-    def _set_metric_value(self, metric_name: str, device: str, value: str) -> None:
-        """Set a metric value for a device."""
+    def _set_metric_value(self, metric_name: str, device: str, value: str, cache: bool = False, seed_value: float = 0.0) -> None:
+        """Set a metric value for a device with optional caching and seed value.
+
+        Args:
+            metric_name: Name of the metric
+            device: Device name
+            value: String value to set
+            cache: If True, cache non-zero values and use cached value when current is zero
+            seed_value: Value to add to the metric before setting
+        """
         try:
-            self.gauges[metric_name].labels(device=device).set(float(value))
+            float_value = float(value)
+            cache_key = self._get_cache_key(metric_name, device)
+
+            # Handle caching
+            if cache:
+                if float_value != 0.0:
+                    # Store non-zero value in cache
+                    self.value_cache[cache_key] = float_value
+                    logger.debug(f"Cached non-zero value {float_value} for {metric_name} on {device}")
+                elif cache_key in self.value_cache:
+                    # Use cached value if current is zero
+                    float_value = self.value_cache[cache_key]
+                    logger.debug(f"Using cached value {float_value} for {metric_name} on {device}")
+
+            # Add seed value
+            if seed_value != 0.0:
+                float_value += seed_value
+                logger.debug(f"Added seed value {seed_value} to {metric_name} on {device}, result: {float_value}")
+
+            self.gauges[metric_name].labels(device=device).set(float_value)
         except Exception as e:
             logger.error(f"Failed to set metric {metric_name} for {device}: {e}")
 
@@ -323,10 +389,11 @@ class MetricsCollector:
             if command_name in self.config.commands:
                 cmd_config = self.config.commands[command_name]
                 if cmd_config.metric:
-                    self._set_metric_value(cmd_config.metric, target.device, "0")
+                    self._set_metric_value(cmd_config.metric, target.device, "0", cache=cmd_config.cache, seed_value=cmd_config.seed_value)
                 elif cmd_config.metrics:
-                    for metric in cmd_config.metrics:
-                        self._set_metric_value(metric, target.device, "0")
+                    for i, metric in enumerate(cmd_config.metrics):
+                        seed = cmd_config.seed_values[i] if cmd_config.seed_values and i < len(cmd_config.seed_values) else 0.0
+                        self._set_metric_value(metric, target.device, "0", cache=cmd_config.cache, seed_value=seed)
 
     def _process_command_output(
         self,
@@ -339,7 +406,7 @@ class MetricsCollector:
             if cmd_config.metric:
                 # Single metric
                 value = match.group(1)
-                self._set_metric_value(cmd_config.metric, target.device, value)
+                self._set_metric_value(cmd_config.metric, target.device, value, cache=cmd_config.cache, seed_value=cmd_config.seed_value)
                 if cmd_config.threshold:
                     self._check_threshold(cmd_config.metric, value, cmd_config.threshold, target)
 
@@ -347,16 +414,18 @@ class MetricsCollector:
                 # Multiple metrics
                 for i, metric in enumerate(cmd_config.metrics, start=1):
                     value = match.group(i)
-                    self._set_metric_value(metric, target.device, value)
+                    seed = cmd_config.seed_values[i - 1] if cmd_config.seed_values and i <= len(cmd_config.seed_values) else 0.0
+                    self._set_metric_value(metric, target.device, value, cache=cmd_config.cache, seed_value=seed)
                     if cmd_config.thresholds and i <= len(cmd_config.thresholds):
                         self._check_threshold(metric, value, cmd_config.thresholds[i - 1], target)
         else:
             # Pattern didn't match, set to zero
             if cmd_config.metric:
-                self._set_metric_value(cmd_config.metric, target.device, "0")
+                self._set_metric_value(cmd_config.metric, target.device, "0", cache=cmd_config.cache, seed_value=cmd_config.seed_value)
             elif cmd_config.metrics:
-                for metric in cmd_config.metrics:
-                    self._set_metric_value(metric, target.device, "0")
+                for i, metric in enumerate(cmd_config.metrics):
+                    seed = cmd_config.seed_values[i] if cmd_config.seed_values and i < len(cmd_config.seed_values) else 0.0
+                    self._set_metric_value(metric, target.device, "0", cache=cmd_config.cache, seed_value=seed)
 
     def _collect_device_metrics(self, target: DeviceTarget) -> None:
         """Collect metrics from a single device."""
@@ -386,10 +455,13 @@ class MetricsCollector:
                         logger.error(f"Failed to execute {command_name} on {target.device}: {e}")
                         # Set zeros for failed command
                         if cmd_config.metric:
-                            self._set_metric_value(cmd_config.metric, target.device, "0")
+                            self._set_metric_value(
+                                cmd_config.metric, target.device, "0", cache=cmd_config.cache, seed_value=cmd_config.seed_value
+                            )
                         elif cmd_config.metrics:
-                            for metric in cmd_config.metrics:
-                                self._set_metric_value(metric, target.device, "0")
+                            for i, metric in enumerate(cmd_config.metrics):
+                                seed = cmd_config.seed_values[i] if cmd_config.seed_values and i < len(cmd_config.seed_values) else 0.0
+                                self._set_metric_value(metric, target.device, "0", cache=cmd_config.cache, seed_value=seed)
 
         except (NetmikoTimeoutException, NetmikoAuthenticationException) as e:
             error_type = "timeout" if isinstance(e, NetmikoTimeoutException) else "authentication"
@@ -405,8 +477,9 @@ class MetricsCollector:
             logger.info(f"Starting network metrics collection from {len(self.targets)} devices")
             start_time = time.time()
 
-            # Load threshold cache before collection
+            # Load caches before collection
             self._load_threshold_cache()
+            self._load_value_cache()
 
             with ThreadPoolExecutor(max_workers=self.config.worker_pool_size) as executor:
                 futures = {executor.submit(self._collect_device_metrics, target): target for target in self.targets}
@@ -418,8 +491,9 @@ class MetricsCollector:
                     except Exception as e:
                         logger.error(f"Failed to collect metrics from {target.device}: {e}")
 
-            # Save threshold cache after collection
+            # Save caches after collection
             self._save_threshold_cache()
+            self._save_value_cache()
 
             self.last_collection_time = datetime.now()
             elapsed = time.time() - start_time
@@ -496,6 +570,9 @@ def parse_commands(commands_dict: dict) -> dict[str, CommandConfig]:
             metrics=cmd_data.get("metrics"),
             threshold=cmd_data.get("threshold"),
             thresholds=cmd_data.get("thresholds"),
+            cache=cmd_data.get("cache", False),
+            seed_value=cmd_data.get("seed_value", 0.0),
+            seed_values=cmd_data.get("seed_values"),
         )
     return parsed
 

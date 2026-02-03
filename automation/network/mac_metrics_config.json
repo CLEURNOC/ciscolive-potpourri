@@ -156,6 +156,11 @@
       "metrics": [
         "ftdIPv6InputBytes",
         "ftdIPv6OutputBytes"
+      ],
+      "cache": true,
+      "seed_values": [
+        0,
+        0
       ]
     },
     "qfpUtil": {
