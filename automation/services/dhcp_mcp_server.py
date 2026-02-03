@@ -189,6 +189,9 @@ class InputTypeEnum(StrEnum):
 class AlertStateEnum(StrEnum):
     active = "active"
     acknowledged = "acknowledged"
+    worse = "worse"
+    better = "better"
+    changed = "changed"
 
 
 class NetBoxTypeEnum(StrEnum):
@@ -334,6 +337,7 @@ class AlertResponse(BaseModel, extra="forbid"):
     severity: str = Field(..., description="The severity level of the alert (e.g., critical, warning).")
     message: str = Field(..., description="The alert message describing the issue.")
     timestamp: str = Field(..., description="The timestamp when the alert was raised.")
+    notes: str = Field(..., description="Additional notes associated with the alert.")
     instances: List[Dict[str, Any]] = Field(..., description="List of alert instances with relevant details.")
     state: AlertStateEnum = Field(..., description="The state of the alert.")
 
@@ -829,7 +833,7 @@ async def get_librenms_alerts(device_name: Hostname | None = None) -> List[Alert
     alerts: List[AlertResponse] = []
 
     url = f"{LIBRENMS_BASE}/api/v0/alerts"
-    params = {"state": "1,2"}  # state=1 active, 2=acknowledged
+    params = {"state": "1,2,3,4,5"}  # state=1 active, 2=acknowledged, 3=worse, 4=better, 5=changed
     headers = {"X-Auth-Token": LIBRENMS_TOKEN}
 
     try:
@@ -869,6 +873,7 @@ async def get_librenms_alerts(device_name: Hostname | None = None) -> List[Alert
                             severity=alert.get("severity"),
                             message=alert.get("name"),
                             timestamp=alert.get("timestamp"),
+                            notes=alert.get("note"),
                             instances=instances,
                             state="active" if alert.get("state") == 1 else "acknowledged",
                         )
