@@ -875,7 +875,7 @@ async def get_librenms_alerts(device_name: Hostname | None = None) -> List[Alert
                             timestamp=alert.get("timestamp"),
                             notes=alert.get("note"),
                             instances=instances,
-                            state="active" if alert.get("state") == 1 else "acknowledged",
+                            state="active" if alert.get("state") in (1, 3, 4, 5) else "acknowledged",
                         )
                     )
 
