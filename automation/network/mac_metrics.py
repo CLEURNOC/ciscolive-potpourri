@@ -354,32 +354,42 @@ class MetricsCollector:
             metric_name: Name of the metric
             device: Device name
             value: String value to set
-            cache: If True, handles counter resets by adding current value to cached baseline when current < cached
+            cache: If True, handles counter resets by tracking baseline and detecting decrements
         """
         try:
-            float_value = float(value)
+            current_value = float(value)
             cache_key = self._get_cache_key(metric_name, device)
 
             # Handle caching for counters that may reset
             if cache:
                 if cache_key in self.value_cache:
-                    cached_value = self.value_cache[cache_key]
-                    if float_value < cached_value:
-                        # Counter reset detected - add current value to cached baseline
-                        logger.debug(f"Counter reset detected for {metric_name} on {device}: {float_value} < {cached_value}")
-                        float_value = float_value + cached_value
-                        self.value_cache[cache_key] = float_value
-                        logger.debug(f"Updated cached baseline to {float_value} for {metric_name} on {device}")
-                    else:
-                        # Normal case - counter increased or stayed same
-                        self.value_cache[cache_key] = float_value
-                        logger.debug(f"Updated cache to {float_value} for {metric_name} on {device}")
+                    cached_data = self.value_cache[cache_key]
+                    baseline = cached_data.get("baseline", 0.0)
+                    previous = cached_data.get("previous", 0.0)
+
+                    if current_value < previous:
+                        # Counter reset detected - add previous value to baseline
+                        baseline = baseline + previous
+                        logger.debug(
+                            f"Counter reset detected for {metric_name} on {device}: {current_value} < {previous}, new baseline: {baseline}"
+                        )
+
+                    # Update cache with new values
+                    self.value_cache[cache_key] = {"baseline": baseline, "previous": current_value}
+
+                    # Export baseline + current value
+                    export_value = baseline + current_value
+                    logger.debug(f"Exporting {metric_name} on {device}: baseline={baseline} + current={current_value} = {export_value}")
+                    self.gauges[metric_name].labels(device=device).set(export_value)
                 else:
                     # First time seeing this metric - initialize cache
-                    self.value_cache[cache_key] = float_value
-                    logger.debug(f"Initialized cache with {float_value} for {metric_name} on {device}")
+                    self.value_cache[cache_key] = {"baseline": 0.0, "previous": current_value}
+                    logger.debug(f"Initialized cache for {metric_name} on {device}: baseline=0, previous={current_value}")
+                    self.gauges[metric_name].labels(device=device).set(current_value)
+            else:
+                # No caching - just set the value directly
+                self.gauges[metric_name].labels(device=device).set(current_value)
 
-            self.gauges[metric_name].labels(device=device).set(float_value)
         except Exception as e:
             logger.error(f"Failed to set metric {metric_name} for {device}: {e}")
 
