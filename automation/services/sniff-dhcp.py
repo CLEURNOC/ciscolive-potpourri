@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2025  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2025-2026  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -57,6 +57,7 @@ def print_client_mac(pkt):
         param_list = pkt.dhcp.option.type_tree[pkt.dhcp.option.type.index("55")]
         logger.info(f"Param list is {param_list.request_list_item}")
         if "108" in param_list.request_list_item:
+            logger.info(f"{pkt.dhcp.hw.mac_addr} supports v6 mostly")
             is_v6mostly = True
 
     json_body = [
@@ -68,6 +69,16 @@ def print_client_mac(pkt):
         }
     ]
     client.write_points(json_body)
+    # Telegraf doesn't like the MAC address as a key field.  So, make it a tag.
+    json_body = [
+        {
+            "measurement": "dhcp_client",
+            "time": datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "tags": {"relay_ip": pkt.dhcp.ip.relay, "client_mac": pkt.dhcp.hw.mac_addr},
+            "fields": {"supports_v6mostly": is_v6mostly},
+        }
+    ]
+    telegraf_client.write_points(json_body)
 
 
 def main():
@@ -81,4 +92,6 @@ def main():
 
 if __name__ == "__main__":
     client = InfluxDBClient(C.MONITORING, 8086, CLEUCreds.INFLUX_USER, CLEUCreds.INFLUX_PASS, "v6mostly")
+    # This is for Telegraf to proxy to Splunk.
+    telegraf_client = InfluxDBClient(C.MONITORING, 8087, CLEUCreds.INFLUX_USER, CLEUCreds.INFLUX_PASS, "v6mostly")
     main()
