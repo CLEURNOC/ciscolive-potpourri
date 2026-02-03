@@ -846,7 +846,7 @@ async def get_librenms_alerts(device_name: Hostname | None = None) -> List[Alert
 
             for alert in data.get("alerts", []):
                 hostname = alert.get("hostname")
-                if device_name or hostname == device_name or hostname == f"{device_name}.{DNS_DOMAIN}":
+                if device_name and (hostname == device_name or hostname == f"{device_name}.{DNS_DOMAIN}"):
                     if hostname not in alertlogs:
                         response = await client.get(
                             f"{LIBRENMS_BASE}/api/v0/logs/alertlog/{hostname}", params={"sortorder": "DESC"}, headers=headers
