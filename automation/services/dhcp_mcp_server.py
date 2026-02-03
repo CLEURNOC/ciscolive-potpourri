@@ -337,7 +337,7 @@ class AlertResponse(BaseModel, extra="forbid"):
     severity: str = Field(..., description="The severity level of the alert (e.g., critical, warning).")
     message: str = Field(..., description="The alert message describing the issue.")
     timestamp: str = Field(..., description="The timestamp when the alert was raised.")
-    notes: str = Field(..., description="Additional notes associated with the alert.")
+    notes: str | None = Field(None, description="Additional notes associated with the alert.")
     instances: List[Dict[str, Any]] = Field(..., description="List of alert instances with relevant details.")
     state: AlertStateEnum = Field(..., description="The state of the alert.")
 
