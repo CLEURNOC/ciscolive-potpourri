@@ -866,7 +866,7 @@ async def get_librenms_alerts(device_name: Hostname | None = None) -> List[Alert
                                 filtered_instance = {k: v for k, v in instance.items() if _allowed_alert_key(k, v)}
                                 instances.append(filtered_instance)
                             break
-                elif not device_name:
+                else:
                     instances = []
 
                 alerts.append(
