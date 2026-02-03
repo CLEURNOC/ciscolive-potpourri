@@ -846,7 +846,7 @@ async def get_librenms_alerts(device_name: Hostname | None = None) -> List[Alert
 
             for alert in data.get("alerts", []):
                 hostname = alert.get("hostname")
-                if not device_name or hostname == device_name or hostname == f"{device_name}.{DNS_DOMAIN}":
+                if device_name or hostname == device_name or hostname == f"{device_name}.{DNS_DOMAIN}":
                     if hostname not in alertlogs:
                         response = await client.get(
                             f"{LIBRENMS_BASE}/api/v0/logs/alertlog/{hostname}", params={"sortorder": "DESC"}, headers=headers
@@ -866,18 +866,21 @@ async def get_librenms_alerts(device_name: Hostname | None = None) -> List[Alert
                                 filtered_instance = {k: v for k, v in instance.items() if _allowed_alert_key(k, v)}
                                 instances.append(filtered_instance)
                             break
-                    alerts.append(
-                        AlertResponse(
-                            hostname=hostname,
-                            alert_id=alert.get("id"),
-                            severity=alert.get("severity"),
-                            message=alert.get("name"),
-                            timestamp=alert.get("timestamp"),
-                            notes=alert.get("note"),
-                            instances=instances,
-                            state="active" if alert.get("state") in (1, 3, 4, 5) else "acknowledged",
-                        )
+                elif not device_name:
+                    instances = []
+
+                alerts.append(
+                    AlertResponse(
+                        hostname=hostname,
+                        alert_id=alert.get("id"),
+                        severity=alert.get("severity"),
+                        message=alert.get("name"),
+                        timestamp=alert.get("timestamp"),
+                        notes=alert.get("note"),
+                        instances=instances,
+                        state="active" if alert.get("state") in (1, 3, 4, 5) else "acknowledged",
                     )
+                )
 
     except httpx.HTTPStatusError as he:
         if device_name:
