@@ -1824,7 +1824,7 @@ async def perform_dns_lookup(input: DNSInput | dict) -> DNSResponse:
 )
 async def get_alerts_for_device(device_name: Hostname) -> List[AlertResponse]:
     """
-    Query LibreNMS for active alerts on a device. Returns alert severity, message, and details for each instance of a given alert for troubleshooting.
+    Query LibreNMS for active, acknowledged, worse, better, changed alerts for a device. Returns alert severity, message, and details for each instance of a given alert for troubleshooting.
 
     Use this when investigating device health issues, connectivity problems, or when a user reports problems
     with a specific network device. Device name should be the hostname (not IP address).
@@ -1834,16 +1834,17 @@ async def get_alerts_for_device(device_name: Hostname) -> List[AlertResponse]:
 
 @server_mcp.tool(
     annotations={
-        "title": "Get all active or acknowledged LibreNMS Alerts",
+        "title": "Get all active, acknowledged, worse, better, changed LibreNMS Alerts",
         "readOnlyHint": True,
     },
     enabled=not is_testing,
 )
 async def get_all_active_alerts() -> List[AlertResponse]:
     """
-    Query LibreNMS for all active or acknowledged alerts. Returns device name, alert severity, message, and details for each instance of a given alert for troubleshooting.
+    Query LibreNMS for all active, acknowledged, worse, better, changed alerts. Returns device name, alert severity, message, and details for each instance of a given alert for troubleshooting.
 
-    Use this to get a comprehensive view of all current issues across the network monitored by LibreNMS.
+    Use this to get a comprehensive view of all current issues across the network monitored by LibreNMS.  DO NOT pass
+    any arguments to this tool.
     """
     return await get_librenms_alerts()
 
