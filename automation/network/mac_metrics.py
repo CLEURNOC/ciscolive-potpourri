@@ -93,7 +93,6 @@ class DeviceTarget:
     device: str
     commands: list[str]
     device_type: str = "cisco_ios"
-    seed_values: dict[str, float | list[float]] = field(default_factory=dict)
 
 
 @dataclass
@@ -348,35 +347,37 @@ class MetricsCollector:
         except Exception as e:
             logger.error(f"Failed to check threshold for {metric_name} on {target.device}: {e}")
 
-    def _set_metric_value(self, metric_name: str, device: str, value: str, cache: bool = False, seed_value: float = 0.0) -> None:
-        """Set a metric value for a device with optional caching and seed value.
+    def _set_metric_value(self, metric_name: str, device: str, value: str, cache: bool = False) -> None:
+        """Set a metric value for a device with optional caching.
 
         Args:
             metric_name: Name of the metric
             device: Device name
             value: String value to set
-            cache: If True, cache non-zero values and use cached value when current is zero
-            seed_value: Value to add to the metric before setting
+            cache: If True, handles counter resets by adding current value to cached baseline when current < cached
         """
         try:
             float_value = float(value)
             cache_key = self._get_cache_key(metric_name, device)
 
-            # Handle caching
+            # Handle caching for counters that may reset
             if cache:
-                if float_value != 0.0:
-                    # Store non-zero value in cache
+                if cache_key in self.value_cache:
+                    cached_value = self.value_cache[cache_key]
+                    if float_value < cached_value:
+                        # Counter reset detected - add current value to cached baseline
+                        logger.debug(f"Counter reset detected for {metric_name} on {device}: {float_value} < {cached_value}")
+                        float_value = float_value + cached_value
+                        self.value_cache[cache_key] = float_value
+                        logger.debug(f"Updated cached baseline to {float_value} for {metric_name} on {device}")
+                    else:
+                        # Normal case - counter increased or stayed same
+                        self.value_cache[cache_key] = float_value
+                        logger.debug(f"Updated cache to {float_value} for {metric_name} on {device}")
+                else:
+                    # First time seeing this metric - initialize cache
                     self.value_cache[cache_key] = float_value
-                    logger.debug(f"Cached non-zero value {float_value} for {metric_name} on {device}")
-                elif cache_key in self.value_cache:
-                    # Use cached value if current is zero
-                    float_value = self.value_cache[cache_key]
-                    logger.debug(f"Using cached value {float_value} for {metric_name} on {device}")
-
-            # Add seed value
-            if seed_value != 0.0:
-                float_value += seed_value
-                logger.debug(f"Added seed value {seed_value} to {metric_name} on {device}, result: {float_value}")
+                    logger.debug(f"Initialized cache with {float_value} for {metric_name} on {device}")
 
             self.gauges[metric_name].labels(device=device).set(float_value)
         except Exception as e:
@@ -387,21 +388,11 @@ class MetricsCollector:
         for command_name in target.commands:
             if command_name in self.config.commands:
                 cmd_config = self.config.commands[command_name]
-                # Get seed values from device target
-                device_seed = target.seed_values.get(command_name, 0.0)
-
                 if cmd_config.metric:
-                    seed = device_seed if isinstance(device_seed, (int, float)) else 0.0
-                    self._set_metric_value(cmd_config.metric, target.device, "0", cache=cmd_config.cache, seed_value=seed)
+                    self._set_metric_value(cmd_config.metric, target.device, "0", cache=cmd_config.cache)
                 elif cmd_config.metrics:
-                    for i, metric in enumerate(cmd_config.metrics):
-                        if isinstance(device_seed, list) and i < len(device_seed):
-                            seed = device_seed[i]
-                        elif isinstance(device_seed, (int, float)):
-                            seed = device_seed
-                        else:
-                            seed = 0.0
-                        self._set_metric_value(metric, target.device, "0", cache=cmd_config.cache, seed_value=seed)
+                    for metric in cmd_config.metrics:
+                        self._set_metric_value(metric, target.device, "0", cache=cmd_config.cache)
 
     def _process_command_output(
         self,
@@ -411,15 +402,11 @@ class MetricsCollector:
         command_name: str,
     ) -> None:
         """Process output from a single command and update metrics."""
-        # Get seed values from device target
-        device_seed = target.seed_values.get(command_name, 0.0)
-
         if match := re.search(cmd_config.pattern, output, re.DOTALL):
             if cmd_config.metric:
                 # Single metric
                 value = match.group(1)
-                seed = device_seed if isinstance(device_seed, (int, float)) else 0.0
-                self._set_metric_value(cmd_config.metric, target.device, value, cache=cmd_config.cache, seed_value=seed)
+                self._set_metric_value(cmd_config.metric, target.device, value, cache=cmd_config.cache)
                 if cmd_config.threshold:
                     self._check_threshold(cmd_config.metric, value, cmd_config.threshold, target)
 
@@ -427,29 +414,16 @@ class MetricsCollector:
                 # Multiple metrics
                 for i, metric in enumerate(cmd_config.metrics, start=1):
                     value = match.group(i)
-                    if isinstance(device_seed, list) and i - 1 < len(device_seed):
-                        seed = device_seed[i - 1]
-                    elif isinstance(device_seed, (int, float)):
-                        seed = device_seed
-                    else:
-                        seed = 0.0
-                    self._set_metric_value(metric, target.device, value, cache=cmd_config.cache, seed_value=seed)
+                    self._set_metric_value(metric, target.device, value, cache=cmd_config.cache)
                     if cmd_config.thresholds and i <= len(cmd_config.thresholds):
                         self._check_threshold(metric, value, cmd_config.thresholds[i - 1], target)
         else:
             # Pattern didn't match, set to zero
             if cmd_config.metric:
-                seed = device_seed if isinstance(device_seed, (int, float)) else 0.0
-                self._set_metric_value(cmd_config.metric, target.device, "0", cache=cmd_config.cache, seed_value=seed)
+                self._set_metric_value(cmd_config.metric, target.device, "0", cache=cmd_config.cache)
             elif cmd_config.metrics:
-                for i, metric in enumerate(cmd_config.metrics):
-                    if isinstance(device_seed, list) and i < len(device_seed):
-                        seed = device_seed[i]
-                    elif isinstance(device_seed, (int, float)):
-                        seed = device_seed
-                    else:
-                        seed = 0.0
-                    self._set_metric_value(metric, target.device, "0", cache=cmd_config.cache, seed_value=seed)
+                for metric in cmd_config.metrics:
+                    self._set_metric_value(metric, target.device, "0", cache=cmd_config.cache)
 
     def _collect_device_metrics(self, target: DeviceTarget) -> None:
         """Collect metrics from a single device."""
@@ -478,20 +452,11 @@ class MetricsCollector:
                     except Exception as e:
                         logger.error(f"Failed to execute {command_name} on {target.device}: {e}")
                         # Set zeros for failed command
-                        device_seed = target.seed_values.get(command_name, 0.0)
-
                         if cmd_config.metric:
-                            seed = device_seed if isinstance(device_seed, (int, float)) else 0.0
-                            self._set_metric_value(cmd_config.metric, target.device, "0", cache=cmd_config.cache, seed_value=seed)
+                            self._set_metric_value(cmd_config.metric, target.device, "0", cache=cmd_config.cache)
                         elif cmd_config.metrics:
-                            for i, metric in enumerate(cmd_config.metrics):
-                                if isinstance(device_seed, list) and i < len(device_seed):
-                                    seed = device_seed[i]
-                                elif isinstance(device_seed, (int, float)):
-                                    seed = device_seed
-                                else:
-                                    seed = 0.0
-                                self._set_metric_value(metric, target.device, "0", cache=cmd_config.cache, seed_value=seed)
+                            for metric in cmd_config.metrics:
+                                self._set_metric_value(metric, target.device, "0", cache=cmd_config.cache)
 
         except (NetmikoTimeoutException, NetmikoAuthenticationException) as e:
             error_type = "timeout" if isinstance(e, NetmikoTimeoutException) else "authentication"
@@ -613,76 +578,37 @@ def expand_device_targets(devices_config: list[dict]) -> list[DeviceTarget]:
 
     Returns:
         List of DeviceTarget objects
-
-    Note:
-        seed_values can be specified in two ways:
-        1. As a dict mapping command_name -> seed_value(s) - applies to all devices
-        2. As a dict mapping device_name -> {command_name -> seed_value(s)} - per-device overrides
     """
     targets: list[DeviceTarget] = []
-
-    def _get_device_seed_values(device_name: str, seed_values_spec: dict) -> dict:
-        """Extract seed values for a specific device.
-
-        Checks if seed_values contains per-device config, otherwise returns the global config.
-        """
-        if not seed_values_spec:
-            return {}
-
-        # Check if this is per-device config (device names as keys with command dicts as values)
-        # vs global config (command names as keys with seed values)
-        first_key = next(iter(seed_values_spec), None)
-        if first_key and device_name in seed_values_spec:
-            # Per-device config exists for this device
-            return seed_values_spec[device_name]
-        elif first_key and isinstance(seed_values_spec.get(first_key), dict):
-            # Might be per-device config but this device not specified
-            # Check if the first value looks like it contains commands
-            if any(cmd in seed_values_spec[first_key] for cmd in ["command", "pattern"]):
-                # This looks like command config, not device config - shouldn't happen
-                return seed_values_spec
-            # This is per-device config but device not found - use empty
-            return {}
-        else:
-            # Global config - command names map directly to seed values
-            return seed_values_spec
 
     for device_spec in devices_config:
         device_type = device_spec.get("type", "cisco_ios")
         commands = device_spec["commands"]
-        seed_values_spec = device_spec.get("seed_values", {})
 
         if "list" in device_spec:
             for dev in device_spec["list"]:
-                device_seeds = _get_device_seed_values(dev, seed_values_spec)
-                targets.append(DeviceTarget(device=dev, commands=commands, device_type=device_type, seed_values=device_seeds))
+                targets.append(DeviceTarget(device=dev, commands=commands, device_type=device_type))
 
         elif "range" in device_spec:
             pattern = device_spec["pattern"]
             range_spec = device_spec["range"]
             for i in range(range_spec["min"], range_spec["max"] + 1):
-                device_name = pattern.format(str(i))
-                device_seeds = _get_device_seed_values(device_name, seed_values_spec)
                 targets.append(
                     DeviceTarget(
-                        device=device_name,
+                        device=pattern.format(str(i)),
                         commands=commands,
                         device_type=device_type,
-                        seed_values=device_seeds,
                     )
                 )
 
         elif "subs" in device_spec:
             pattern = device_spec["pattern"]
             for sub in device_spec["subs"]:
-                device_name = pattern.format(sub)
-                device_seeds = _get_device_seed_values(device_name, seed_values_spec)
                 targets.append(
                     DeviceTarget(
-                        device=device_name,
+                        device=pattern.format(sub),
                         commands=commands,
                         device_type=device_type,
-                        seed_values=device_seeds,
                     )
                 )
 
@@ -692,13 +618,11 @@ def expand_device_targets(devices_config: list[dict]) -> list[DeviceTarget]:
                 with file_path.open("r") as fd:
                     device_list = json.load(fd)
                     for dev in device_list:
-                        device_seeds = _get_device_seed_values(dev, seed_values_spec)
                         targets.append(
                             DeviceTarget(
                                 device=dev,
                                 commands=commands,
                                 device_type=device_type,
-                                seed_values=device_seeds,
                             )
                         )
             except Exception as e:
