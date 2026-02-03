@@ -329,6 +329,8 @@ class DNSResponse(BaseModel, extra="forbid"):
 
 
 class AlertResponse(BaseModel, extra="forbid"):
+    hostname: str = Field(..., description="The hostname of the device generating the alert.")
+    alert_id: int = Field(..., description="The unique identifier of the alert.  Needed to acknowledge the alert.")
     severity: str = Field(..., description="The severity level of the alert (e.g., critical, warning).")
     message: str = Field(..., description="The alert message describing the issue.")
     timestamp: str = Field(..., description="The timestamp when the alert was raised.")
@@ -818,6 +820,74 @@ def _allowed_alert_key(key: str, val: str | None) -> bool:
     ):
         return True
     return False
+
+
+async def get_librenms_alerts(device_name: Hostname | None = None) -> List[AlertResponse]:
+    """
+    Get all LibreNMS alerts.  If a device is specified, only return alerts for that device.
+    """
+    alerts: List[AlertResponse] = []
+
+    url = f"{LIBRENMS_BASE}/api/v0/alerts"
+    params = {"state": "1,2"}  # state=1 active, 2=acknowledged
+    headers = {"X-Auth-Token": LIBRENMS_TOKEN}
+
+    try:
+        async with httpx.AsyncClient(verify=tls_verify, timeout=REST_TIMEOUT) as client:
+            response = await client.get(url, headers=headers, params=params)
+            response.raise_for_status()
+            data = response.json()
+
+            alertlogs = {}
+
+            for alert in data.get("alerts", []):
+                hostname = alert.get("hostname")
+                if not device_name or hostname == device_name or hostname == f"{device_name}.{DNS_DOMAIN}":
+                    if hostname not in alertlogs:
+                        response = await client.get(
+                            f"{LIBRENMS_BASE}/api/v0/logs/alertlog/{hostname}", params={"sortorder": "DESC"}, headers=headers
+                        )
+                        if response.status_code != 200:
+                            alertlogs[hostname] = []
+                        else:
+                            log_data = response.json()
+                            alertlogs[hostname] = log_data.get("logs", [])
+                    rule_id = alert.get("rule_id")
+                    device_id = alert.get("device_id")
+                    instances = []
+                    for log_entry in alertlogs.get(hostname, []):
+                        if log_entry.get("rule_id") == rule_id and log_entry.get("device_id") == device_id and log_entry.get("state") == 1:
+                            details = log_entry.get("details", {})
+                            for instance in details.get("rule", []):
+                                filtered_instance = {k: v for k, v in instance.items() if _allowed_alert_key(k, v)}
+                                instances.append(filtered_instance)
+                            break
+                    alerts.append(
+                        AlertResponse(
+                            hostname=hostname,
+                            alert_id=alert.get("id"),
+                            severity=alert.get("severity"),
+                            message=alert.get("name"),
+                            timestamp=alert.get("timestamp"),
+                            instances=instances,
+                            state="active" if alert.get("state") == 1 else "acknowledged",
+                        )
+                    )
+
+    except httpx.HTTPStatusError as he:
+        if device_name:
+            logger.error(f"HTTP error getting alerts for device {device_name} from LibreNMS: {he}", exc_info=True)
+        else:
+            logger.error(f"HTTP error getting alerts from LibreNMS: {he}", exc_info=True)
+        raise ToolError(f"HTTP error {he.response.status_code}: {he.response.text}")
+    except Exception as e:
+        if device_name:
+            logger.error(f"Unable to get alerts for device {device_name} from LibreNMS: {e}", exc_info=True)
+        else:
+            logger.error(f"Unable to get alerts from LibreNMS: {e}", exc_info=True)
+        raise ToolError(e)
+
+    return alerts
 
 
 # TOOLS
@@ -1754,60 +1824,57 @@ async def get_alerts_for_device(device_name: Hostname) -> List[AlertResponse]:
     Use this when investigating device health issues, connectivity problems, or when a user reports problems
     with a specific network device. Device name should be the hostname (not IP address).
     """
-    alerts: List[AlertResponse] = []
+    return await get_librenms_alerts(device_name)
 
-    url = f"{LIBRENMS_BASE}/api/v0/alerts"
-    params = {"state": "1,2"}  # state=1, 2=acknowledged for active alerts
+
+@server_mcp.tool(
+    annotations={
+        "title": "Get all active or acknowledged LibreNMS Alerts",
+        "readOnlyHint": True,
+    },
+    enabled=not is_testing,
+)
+async def get_all_active_alerts() -> List[AlertResponse]:
+    """
+    Query LibreNMS for all active or acknowledged alerts. Returns device name, alert severity, message, and details for each instance of a given alert for troubleshooting.
+
+    Use this to get a comprehensive view of all current issues across the network monitored by LibreNMS.
+    """
+    return await get_librenms_alerts()
+
+
+@server_mcp.tool(
+    annotations={
+        "title": "Acknowledge LibreNMS Alert",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+    },
+    enabled=not is_testing,
+)
+async def acknowledge_librenms_alert(alert_id: int, note: str | None = None, until_cleared: bool = False) -> bool:
+    """
+    Acknowledge a LibreNMS alert by its ID.  Optionally add a note and choose to acknowledge until cleared.
+    """
+
+    url = f"{LIBRENMS_BASE}/api/v0/alerts/{alert_id}"
     headers = {"X-Auth-Token": LIBRENMS_TOKEN}
+    payload = {
+        "until_cleared": until_cleared,
+    }
+    if note:
+        payload["note"] = note
 
     try:
         async with httpx.AsyncClient(verify=tls_verify, timeout=REST_TIMEOUT) as client:
-            response = await client.get(url, headers=headers, params=params)
+            response = await client.put(url, headers=headers, json=payload)
             response.raise_for_status()
-            data = response.json()
-
-            alertlogs = {}
-
-            for alert in data.get("alerts", []):
-                hostname = alert.get("hostname")
-                if hostname == device_name or hostname == f"{device_name}.{DNS_DOMAIN}":
-                    if hostname not in alertlogs:
-                        response = await client.get(
-                            f"{LIBRENMS_BASE}/api/v0/logs/alertlog/{hostname}", params={"sortorder": "DESC"}, headers=headers
-                        )
-                        if response.status_code != 200:
-                            alertlogs[hostname] = []
-                        else:
-                            log_data = response.json()
-                            alertlogs[hostname] = log_data.get("logs", [])
-                    rule_id = alert.get("rule_id")
-                    device_id = alert.get("device_id")
-                    instances = []
-                    for log_entry in alertlogs.get(hostname, []):
-                        if log_entry.get("rule_id") == rule_id and log_entry.get("device_id") == device_id and log_entry.get("state") == 1:
-                            details = log_entry.get("details", {})
-                            for instance in details.get("rule", []):
-                                filtered_instance = {k: v for k, v in instance.items() if _allowed_alert_key(k, v)}
-                                instances.append(filtered_instance)
-                            break
-                    alerts.append(
-                        AlertResponse(
-                            severity=alert.get("severity"),
-                            message=alert.get("name"),
-                            timestamp=alert.get("timestamp"),
-                            instances=instances,
-                            state="active" if alert.get("state") == 1 else "acknowledged",
-                        )
-                    )
-
+            return True
     except httpx.HTTPStatusError as he:
-        logger.error(f"HTTP error getting alerts for device {device_name} from LibreNMS: {he}", exc_info=True)
+        logger.error(f"Failed to acknolwedge alert in LibreNMS: {he}", exc_info=True)
         raise ToolError(f"HTTP error {he.response.status_code}: {he.response.text}")
     except Exception as e:
-        logger.error(f"Unable to get alerts for device {device_name} from LibreNMS: {e}", exc_info=True)
+        logger.error(f"Failed to acknowledge alert in LibreNMS: {e}", exc_info=True)
         raise ToolError(e)
-
-    return alerts
 
 
 if __name__ == "__main__":
