@@ -157,11 +157,7 @@
         "ftdIPv6InputBytes",
         "ftdIPv6OutputBytes"
       ],
-      "cache": true,
-      "seed_values": [
-        0,
-        0
-      ]
+      "cache": true
     },
     "qfpUtil": {
       "command": "show platform hardware qfp active datapath utilization summary",
