@@ -1332,6 +1332,7 @@ async def get_client_details_from_cat_center(
 ) -> DNACResponse:
     """
     Query Cisco Catalyst Center (DNA Center) for client health metrics by username, MAC, or IP. Returns device type, OS, health scores (overall/onboard/connect), AP, and SSID.
+    IMPORTANT: This should always be checked, unless NetBox returns valid data for the IP address.
 
     Args:
        input_data: DNACInput with username, mac, OR ip (one required)
