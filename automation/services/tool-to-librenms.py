@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2017-2025  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2026  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,6 +28,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
+import os
 import re
 import sys
 import time
@@ -36,13 +38,23 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+import CLEUCreds  # type: ignore
 import requests
+from cleu.config import Config as C  # type: ignore
 from requests.packages.urllib3.exceptions import InsecureRequestWarning  # type: ignore
 
-import CLEUCreds  # type: ignore
-from cleu.config import Config as C  # type: ignore
-
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+
+# Set up logging
+logger = logging.getLogger("diff-routing-tables")
+loglevel = logging.DEBUG if os.getenv("DEBUG", "false").lower() == "true" else logging.INFO
+logger.setLevel(loglevel)
+# Configure handler with format for this module only
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(threadName)s %(name)s: %(message)s"))
+    logger.addHandler(handler)
+    logger.propagate = False
 
 CACHE_FILE = Path("/home/jclarke/monitored_devs.json")
 
@@ -93,7 +105,7 @@ class LibreNMSManager:
             devices = response.json()
             return [dev for dev in devices if self._should_monitor_device(dev)]
         except requests.exceptions.RequestException as e:
-            print(f"ERROR: Failed to fetch devices from Tool: {e}", file=sys.stderr)
+            logger.error(f"Failed to fetch devices from Tool: {e}", exc_info=True)
             return []
 
     def delete_device(self, device_name: str) -> requests.Response:
@@ -111,10 +123,10 @@ class LibreNMSManager:
         except requests.exceptions.HTTPError as e:
             if e.response.status_code == 400:
                 return False
-            print(f"Error checking device status for {hostname}: {e.response.text}", file=sys.stderr)
+            logger.error(f"Error checking device status for {hostname}: {e.response.text}", exc_info=True)
             return False
         except Exception as e:
-            print(f"Error checking device status for {hostname}: {e}", file=sys.stderr)
+            logger.error(f"Error checking device status for {hostname}: {e}", exc_info=True)
             traceback.print_exc()
             return False
 
@@ -137,9 +149,9 @@ class LibreNMSManager:
             response.raise_for_status()
             return True
         except requests.exceptions.RequestException as e:
-            print(f"ERROR: Failed to add {hostname} to LibreNMS: {e}", file=sys.stderr)
+            logger.error(f"Failed to add {hostname} to LibreNMS: {e}", exc_info=True)
             if hasattr(e, "response") and e.response is not None:
-                print(f"Response: {e.response.text}", file=sys.stderr)
+                logger.error(f"Response: {e.response.text}")
             return False
 
 
@@ -151,7 +163,7 @@ def load_device_cache(cache_file: Path) -> dict[str, str]:
     try:
         return json.loads(cache_file.read_text())
     except Exception as e:
-        print(f"Failed to load cache from {cache_file}: {e}", file=sys.stderr)
+        logger.error(f"Failed to load cache from {cache_file}: {e}", exc_info=True)
         return {}
 
 
@@ -163,7 +175,7 @@ def save_device_cache(cache_file: Path, devices: dict[str, str]) -> None:
         try:
             backup_file.write_text(cache_file.read_text())
         except Exception as e:
-            print(f"WARNING: Failed to create backup: {e}", file=sys.stderr)
+            logger.warning(f"Failed to create backup: {e}", exc_info=True)
 
     # Atomic write
     temp_file = cache_file.with_suffix(f"{cache_file.suffix}.tmp")
@@ -171,7 +183,7 @@ def save_device_cache(cache_file: Path, devices: dict[str, str]) -> None:
         temp_file.write_text(json.dumps(devices, indent=2))
         temp_file.replace(cache_file)
     except Exception as e:
-        print(f"ERROR: Failed to save cache: {e}", file=sys.stderr)
+        logger.error(f"Failed to save cache: {e}", exc_info=True)
         if temp_file.exists():
             temp_file.unlink()
 
@@ -197,7 +209,7 @@ def main() -> int:
     # Fetch current devices from Tool
     tool_devices = manager.get_devices_from_tool(C.TOOL)
     if not tool_devices:
-        print("WARNING: No devices retrieved from Tool", file=sys.stderr)
+        logger.warning("No devices retrieved from Tool")
         return 1
 
     changes_made = False
@@ -214,14 +226,14 @@ def main() -> int:
         if asset_tag in cached_devices and cached_devices[asset_tag] != hostname:
             old_hostname = cached_devices[asset_tag]
             if args.log:
-                print(f"=== Deleting renamed device {old_hostname} from LibreNMS ({idx}/{total_devices}) ===")
+                logger.info(f"=== Deleting renamed device {old_hostname} from LibreNMS ({idx}/{total_devices}) ===")
 
             response = manager.delete_device(old_hostname)
             if response.status_code > 299:
-                print(f"WARNING: Failed to remove {old_hostname}: {response.text}", file=sys.stderr)
+                logger.warning(f"Failed to remove {old_hostname}: {response.text}")
 
             if args.log:
-                print("=== DONE ===")
+                logger.info("=== DONE ===")
 
             del cached_devices[asset_tag]
             changes_made = True
@@ -234,14 +246,14 @@ def main() -> int:
             # Force deletion if --force flag is set
             if args.force:
                 if args.log:
-                    print(f"=== Force deleting device {hostname} from LibreNMS ({idx}/{total_devices}) ===")
+                    logger.info(f"=== Force deleting device {hostname} from LibreNMS ({idx}/{total_devices}) ===")
 
                 response = manager.delete_device(hostname)
                 if response.status_code > 299:
-                    print(f"WARNING: Failed to remove {hostname}: {response.text}", file=sys.stderr)
+                    logger.warning(f"Failed to remove {hostname}: {response.text}")
 
                 if args.log:
-                    print("=== DONE ===")
+                    logger.info("=== DONE ===")
                 time.sleep(3)
 
             # Check if device already exists
@@ -252,21 +264,21 @@ def main() -> int:
 
             # Add the device
             if args.log:
-                print(f"=== Adding device {hostname} to LibreNMS ({idx}/{total_devices}) ===")
+                logger.info(f"=== Adding device {hostname} to LibreNMS ({idx}/{total_devices}) ===")
 
             if manager.add_device(hostname):
                 cached_devices[asset_tag] = hostname
                 changes_made = True
                 if args.log:
-                    print("=== DONE ===")
+                    logger.info("=== DONE ===")
             else:
-                print(f"Failed to add {hostname}", file=sys.stderr)
+                logger.error(f"Failed to add {hostname}")
 
     # Save cache if changes were made
     if changes_made:
         save_device_cache(CACHE_FILE, cached_devices)
         if args.log:
-            print(f"\nSynchronization complete. {len(cached_devices)} devices cached.")
+            logger.info(f"Synchronization complete. {len(cached_devices)} devices cached.")
 
     return 0
 
