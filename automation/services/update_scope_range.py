@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 #
-# Copyright (c) 2017-2025  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2026  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -37,14 +37,15 @@ This will update all scopes like IDF-001-SESSION-RECORDING to have a DHCP range
 from 10.9.1.200 to 10.9.1.253 (assuming the VLAN subnet is 10.9.1.0/24).
 """
 
-from builtins import str
-from builtins import range
 import argparse
+from builtins import range, str
+
 import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning  # type: ignore
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 import sys
+
 import CLEUCreds  # type: ignore
 from cleu.config import Config as C  # type: ignore
 
