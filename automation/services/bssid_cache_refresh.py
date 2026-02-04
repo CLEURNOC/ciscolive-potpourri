@@ -185,7 +185,7 @@ def refresh_bssid_cache() -> int:
     cache_file = Path(C.BSSID_CACHE_FILE)
     bssids = _load_bssid_cache(cache_file)
 
-    for controller in C.WLCS.split(","):
+    for controller in C.WLCS:
         controller = controller.strip()
         if controller:
             logger.info(f"Refreshing BSSID cache from controller: {controller}")
