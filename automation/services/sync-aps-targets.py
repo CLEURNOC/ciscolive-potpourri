@@ -31,7 +31,6 @@ import sys
 from pathlib import Path
 
 import CLEUCreds  # type: ignore
-import urllib3
 import yaml
 from cleu.config import Config as C  # type: ignore
 from pysnmp.hlapi import (
@@ -45,9 +44,6 @@ from pysnmp.hlapi import (
     usmAesCfb256Protocol,
     usmHMAC192SHA256AuthProtocol,
 )
-
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
 
 CISCO_CONTROLLER_ADDRS = C.WLCS
 
