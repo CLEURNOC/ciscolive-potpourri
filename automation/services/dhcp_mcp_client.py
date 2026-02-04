@@ -212,6 +212,7 @@ class BotState(object):
                 "NETCONF_PASSWORD": CLEUCreds.NET_PASS,
                 "LIBRENMS_TOKEN": CLEUCreds.LIBRENMS_TOKEN,
                 "LIBRENMS_BASE": C.LIBRENMS_BASE,
+                "BSSID_CACHE_FILE": C.BSSID_CACHE_FILE,
             }
             transport = StdioTransport(
                 command="python",
