@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2017-2025  Joe Clarke <jclarke@cisco.com>
+# Copyright (c) 2017-2026  Joe Clarke <jclarke@cisco.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -252,7 +252,7 @@ def reset_password():
   <body>
     <h1>Password Changed Successfully!</h1>"""
 
-    if session.get("first_time", False):
+    if session.get("first_time", False) or request.form.get("submit_with_syslog"):
         send_syslog(
             "PRINT-LABEL: requesting to print label for userid {}".format(session["target_username"]),
             None,
@@ -277,6 +277,7 @@ def reset_password():
 @app.route("/")
 @requires_auth
 def get_main():
+    auth = request.authorization
     page = """
 <html>
   <head>
@@ -308,8 +309,9 @@ def get_main():
     </head>
     <body>
     <div class="container" role="main" style="width: 100%;">
-      <div class="page-header">
-        <h3>Password Reset Form</h3>
+      <div class="page-header">"""
+    page += """\n
+        <h3>Password Reset Form for {username}</h3>
       </div>
 
       <div class="row">
@@ -325,7 +327,11 @@ def get_main():
              <input type="password" name="new_pass_confirm" id="new_pass_confirm" class="form-control" placeholder="Confirm New Password">
            </div>
            <div class="form-group">
-             <input type="submit" name="submit" value="Reset My Password!" class="btn btn-primary">
+             <input type="submit" name="submit" value="Reset My Password!" class="btn btn-primary">\n""".format(
+        username=auth.username
+    )
+    page += '<input type="submit" name="submit_with_syslog" value="Reset Password and Print Label!" class="btn btn-primary">\n'
+    page += """
              <input type="reset" name="reset" value="Start Over" class="btn btn-default">
            </div>"""
     page += '\n<input type="hidden" name="vpnuser" value="%s"/>' % (request.args.get("vpnuser"))
