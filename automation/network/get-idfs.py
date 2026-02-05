@@ -53,6 +53,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 OUTPUT_JSON = Path("/home/jclarke/idf-devices.json")
+FULL_NAME_OUTPUT_JSON = Path("/home/jclarke/idf-devices-full.json")
 OUTPUT_RANCID = Path("/home/jclarke/idf-devices.db")
 IDF_PATTERN = re.compile(r"[xX]\d+-")
 NOTIFICATION_EMAIL = "jclarke@cisco.com"
@@ -75,11 +76,11 @@ def extract_idf_name(hostname: str) -> str | None:
     return None
 
 
-def get_idf_devices() -> list[str]:
+def get_idf_devices() -> tuple[list[str], list[str]]:
     """Retrieve IDF device hostnames from Tool API.
 
     Returns:
-        List of unique IDF names (first two dash-separated components)
+        Tuple of lists: unique IDF names (first two dash-separated components) and full hostnames
     """
     url = f"http://{C.TOOL}/get/switches/json"
 
@@ -89,6 +90,7 @@ def get_idf_devices() -> list[str]:
 
         devices = response.json()
         idf_names: set[str] = set()
+        idf_names_full: set[str] = set()
 
         for device in devices:
             # Skip devices without valid IP or that are unreachable
@@ -101,10 +103,12 @@ def get_idf_devices() -> list[str]:
                     # Extract first two components (e.g., H01-X013)
                     if idf_name := extract_idf_name(hostname):
                         idf_names.add(idf_name)
+                        idf_names_full.add(hostname)
 
         idf_list = sorted(idf_names)
+        idf_full_names = sorted(idf_names_full)
         logger.info(f"Retrieved {len(idf_list)} unique IDF devices from Tool API")
-        return idf_list
+        return (idf_list, idf_full_names)
 
     except requests.RequestException as e:
         logger.error(f"Failed to retrieve devices from Tool API: {e}")
@@ -274,7 +278,7 @@ def main() -> None:
         previous_devices = load_previous_devices(OUTPUT_JSON)
 
         # Get current IDF devices
-        idf_devices = get_idf_devices()
+        (idf_devices, idf_full_names) = get_idf_devices()
         current_devices = set(idf_devices)
 
         # Detect changes
@@ -297,6 +301,7 @@ def main() -> None:
 
         # Save outputs
         save_devices_atomic(OUTPUT_JSON, idf_devices)
+        save_devices_atomic(FULL_NAME_OUTPUT_JSON, idf_full_names)
         save_rancid_format_atomic(OUTPUT_RANCID, idf_devices)
 
         logger.info("IDF device collection completed successfully")
