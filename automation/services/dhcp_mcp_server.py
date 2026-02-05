@@ -812,6 +812,7 @@ async def get_object_info_from_netbox(inp: NetBoxInput | dict) -> List[NetBoxRes
     Args:
         inp: NetBoxInput with ip OR hostname (mutually exclusive)
     """
+
     class TimeoutHTTPAdapter(HTTPAdapter):
         def __init__(self, timeout=REST_TIMEOUT, *args, **kwargs):
             self.timeout = timeout
@@ -1126,7 +1127,10 @@ async def get_ap_name_from_bssid(bssid: str) -> str:
     enabled=not is_testing,
 )
 async def get_ap_info(ap_name: str | None = None, ip: IPAddress | None = None) -> APLocationResponse:
-    """Get the name, location, and IP for an access-point (AP).  One of ap_name or ip is required."""
+    """
+    Get the name, location, and IP for an access-point (AP).  One of ap_name or ip is required.
+    If you have an IP that doesn't appear in other tools use this tool to see if it's an AP.
+    """
     if not ap_name and not ip:
         raise ToolError("Either ap_name or ip must be provided")
 
@@ -1829,6 +1833,33 @@ async def acknowledge_librenms_alert(alert_id: int, note: str | None = None, unt
     except Exception as e:
         logger.error(f"Failed to acknowledge alert in LibreNMS: {e}", exc_info=True)
         raise ToolError(e)
+
+
+@server_mcp.tool(
+    annotations={
+        "title": "Get IPv4 address from IPv6 address",
+        "readOnlyHint": True,
+        "openWorldHint": False,
+    }
+)
+async def get_ipv4_from_ipv6(ipv6: IPAddress) -> IPAddress:
+    """
+    Translate an IPv6 address to its mapped IPv4 address using the Cisco Live Europe algorithm.
+    This only works with non-link-local addresses that end with XXXX::XX.  When you have an IPv4 address
+    you can then use it with other tools that require IPv4 input.
+
+    Args:
+        ipv6: Input IPv6 address to convert
+    """
+    if m := re.search(r":([0-9a-fA-F]{3,4})::([0-9a-fA-F]{2})$", ipv6):
+        net_hextet = int(m.group(1), 16)
+        host_octet = int(m.group(2), 16)
+        vlan = net_hextet >> 8
+        idf = net_hextet & 0xFF
+
+        return IPAddress(f"10.{vlan}.{idf}.{host_octet}")
+
+    raise ToolError("Not one of our static IPv6 addresses. Must end with XXXX::XX")
 
 
 if __name__ == "__main__":
