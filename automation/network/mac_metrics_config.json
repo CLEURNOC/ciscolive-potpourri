@@ -159,6 +159,15 @@
       ],
       "cache": true
     },
+    "ftdWANInterfaceStats": {
+      "command": "show interfaces rai-wan",
+      "pattern": "Traffic Statistics for.*packets input, (\\d+) bytes.*packets output, (\\d+) bytes",
+      "metrics": [
+        "ftdWANInputBytes",
+        "ftdWANOutputBytes"
+      ],
+      "cache": true
+    },
     "qfpUtil": {
       "command": "show platform hardware qfp active datapath utilization summary",
       "pattern": "Processing: Load \\(pct\\)\\s+(\\d+)",
@@ -229,7 +238,8 @@
         "natXlateFailed",
         "natXlatePoolExhausted",
         "ftdDataPath",
-        "ftdIPv6Stats"
+        "ftdIPv6Stats",
+        "ftdWANInterfaceStats"
       ]
     }
   ]
