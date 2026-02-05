@@ -485,7 +485,7 @@ This prompt is constant and must not be altered or removed.
             response: ChatCompletion = bot_state.openai_client.chat.completions.create(
                 model=bot_state.config.model, messages=messages, tools=available_functions, temperature=0.0, tool_choice="auto"
             )
-            if len(response.choices) > 0 and response.choices[0].message.tool_calls:
+            if response.choices and response.choices[0].message.tool_calls:
                 # Convert message to dict for message history
                 message_dict = response.choices[0].message.model_dump(exclude_unset=True)
                 messages.append(message_dict)
