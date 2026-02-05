@@ -160,7 +160,7 @@
       "cache": true
     },
     "ftdWANInterfaceStats": {
-      "command": "show interfaces rai-wan",
+      "command": "show interface rai-wan",
       "pattern": "Traffic Statistics for.*packets input, (\\d+) bytes.*packets output, (\\d+) bytes",
       "metrics": [
         "ftdWANInputBytes",
