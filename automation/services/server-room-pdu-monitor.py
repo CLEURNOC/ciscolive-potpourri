@@ -107,16 +107,18 @@ def check_pdu_health(spark: Sparker, previous_status: str | None) -> tuple[int, 
     except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as exc:
         post_alert(
             spark,
-            f"CRITICAL: **Timeout** fetching Server Room power source status from {PDU_URL}: {exc}",
+            "CRITICAL: **Timeout** fetching Server Room power source status!  Check to see if the server room still has power!",
             MessageType.BAD,
         )
+        logger.error("Timeout or connection error fetching PDU status from %s: %s", PDU_URL, exc)
         return 1, "bad"
     except requests.exceptions.RequestException as exc:
         post_alert(
             spark,
-            f"WARNING: Failed to fetch Server Room power source status from {PDU_URL}: {exc}",
+            "WARNING: Failed to fetch Server Room power source status",
             MessageType.WARNING,
         )
+        logger.warning("Error fetching PDU status from %s: %s", PDU_URL, exc)
         return 1, "warn"
 
     try:
@@ -124,9 +126,10 @@ def check_pdu_health(spark: Sparker, previous_status: str | None) -> tuple[int, 
     except Exception as exc:
         post_alert(
             spark,
-            f"WARNING: Failed to parse Server Room power source XML from {PDU_URL}: {exc}",
+            "WARNING: Failed to parse Server Room power source XML",
             MessageType.WARNING,
         )
+        logger.warning("Failed to parse Server Room power source XML from %s: %s", PDU_URL, exc)
         return 1, "warn"
 
     smart_pdu = payload.get("SmartPDU") if isinstance(payload, dict) else None
