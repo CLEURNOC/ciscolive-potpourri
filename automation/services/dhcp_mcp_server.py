@@ -1851,7 +1851,7 @@ async def get_ipv4_from_ipv6(ipv6: IPAddress) -> IPAddress:
     Args:
         ipv6: Input IPv6 address to convert
     """
-    if m := re.search(r":([0-9a-fA-F]{3,4})::([0-9a-fA-F]{2})$", ipv6):
+    if m := re.search(r":([0-9a-fA-F]{3,4})::([0-9a-fA-F]{1,2})$", ipv6):
         net_hextet = int(m.group(1), 16)
         host_octet = int(m.group(2), 16)
         vlan = net_hextet >> 8
