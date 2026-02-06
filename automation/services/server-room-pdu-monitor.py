@@ -29,8 +29,10 @@ from __future__ import annotations
 import json
 import logging
 import sys
+import subprocess
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 import CLEUCreds  # type: ignore
 import requests
@@ -100,11 +102,37 @@ def save_state(state: dict[str, str]) -> None:
             temp_file.unlink()
 
 
+def ping_reachable(url: str) -> bool:
+    host = urlparse(url).hostname
+    if not host:
+        logger.warning("Unable to parse host from %s", url)
+        return False
+    try:
+        result = subprocess.run(
+            ["fping", "-c", "1", "-t", "1000", host],
+            check=False,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        return result.returncode == 0
+    except FileNotFoundError:
+        logger.warning("fping not found; unable to validate reachability")
+        return False
+
+
 def check_pdu_health(spark: Sparker, previous_status: str | None) -> tuple[int, str]:
     try:
         response = requests.get(PDU_URL, timeout=REQUEST_TIMEOUT)
         response.raise_for_status()
     except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as exc:
+        if ping_reachable(PDU_URL):
+            logger.warning(
+                "Timeout or connection error fetching PDU status from %s, but host is reachable: %s",
+                PDU_URL,
+                exc,
+            )
+            status = previous_status or "good"
+            return 1, status
         post_alert(
             spark,
             "CRITICAL: **Timeout** fetching Server Room power source status!  Check to see if the server room still has power!",
