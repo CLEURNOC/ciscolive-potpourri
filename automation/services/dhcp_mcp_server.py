@@ -1051,7 +1051,7 @@ async def test_get_webex_device_info(inp: WebexInfoInput | dict) -> WebexInfoRes
         "openWorldHint": False,
     }
 )
-async def convert_celsius_to_fahrenheit(degrees_celsius: int) -> int:
+async def convert_celsius_to_fahrenheit(degrees_celsius: int) -> float:
     """
     Convert Celsius to Fahrenheit (°C × 1.8 + 32).
 
@@ -1061,7 +1061,7 @@ async def convert_celsius_to_fahrenheit(degrees_celsius: int) -> int:
     if degrees_celsius < -273:
         raise ToolError("degrees_celsius must be greater than or equal to -273")
 
-    return int((degrees_celsius * 1.8) + 32.0)
+    return float((degrees_celsius * 1.8) + 32.0)
 
 
 @server_mcp.tool(
