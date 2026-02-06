@@ -643,7 +643,7 @@ async def _get_dhcp_lease_info_from_cpnr(input: CPNRLeaseInput | dict) -> CPNRLe
     leases_data = data if input.mac else [data]
     date_format = "%a %b %d %H:%M:%S %Y"
     current_date = datetime.now()
-    one_year_ago = current_date - timedelta(days=365)
+    one_year_ago = current_date - timedelta(days=180)
 
     leases: List[CPNRLeaseResponse] = []
     for lease in leases_data:
@@ -651,7 +651,7 @@ async def _get_dhcp_lease_info_from_cpnr(input: CPNRLeaseInput | dict) -> CPNRLe
             continue
 
         client_last_transaction = lease["clientLastTransactionTime"]
-        # Ignore lease data if the last transaction time is more than 1 year ago to avoid stale data.
+        # Ignore lease data if the last transaction time is more than six months ago to avoid stale data.
         if client_last_transaction:
             last_transaction = datetime.strptime(client_last_transaction, date_format)
             if last_transaction < one_year_ago:
@@ -1515,7 +1515,8 @@ async def test_get_client_details_from_cat_center(
 )
 async def get_dhcp_lease_info_from_cpnr(input: CPNRLeaseInput | dict) -> List[CPNRLeaseResponse]:
     """
-    Query Cisco Prime Network Registrar (CPNR) for DHCP lease by IP or MAC. Returns hostname, MAC, scope, state, relay info (switch/VLAN/port), and reservation status
+    Query Cisco Prime Network Registrar (CPNR) for DHCP lease by IP or MAC. Returns hostname, MAC, scope, state, relay info (switch/VLAN/port), and reservation status.
+    A lease state of "leased" indicates an active lease. If multiple leases are returned for an IP, the one with state "leased" should be preferred, but all will be returned if present.
     IMPORTANT: This should always be checked, unless NetBox returns valid data for the IP address.
 
     Args:
