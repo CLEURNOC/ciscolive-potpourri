@@ -30,6 +30,7 @@ import json
 import logging
 import os
 import re
+from datetime import datetime, timedelta
 from enum import StrEnum
 from pathlib import Path
 from shlex import split
@@ -41,7 +42,6 @@ import dns.reversename
 import httpx
 import pynetbox
 import requests
-from requests.adapters import HTTPAdapter
 import xmltodict
 import yaml
 from fastmcp import FastMCP
@@ -51,6 +51,7 @@ from fastmcp.server.middleware import Middleware, MiddlewareContext
 from mcp.shared.exceptions import McpError
 from mcp.types import ErrorData
 from pydantic import BaseModel, Field
+from requests.adapters import HTTPAdapter
 from sparker import Sparker  # type: ignore
 
 
@@ -640,20 +641,33 @@ async def _get_dhcp_lease_info_from_cpnr(input: CPNRLeaseInput | dict) -> CPNRLe
 
     data = response.json()
     leases_data = data if input.mac else [data]
+    date_format = "%a %b %d %H:%M:%S %Y"
+    current_date = datetime.now()
+    one_year_ago = current_date - timedelta(days=365)
 
     leases: List[CPNRLeaseResponse] = []
     for lease in leases_data:
         if "address" not in lease or "clientMacAddr" not in lease:
             continue
 
-        relay_info = parse_relay_info(lease)
+        client_last_transaction = lease["clientLastTransactionTime"]
+        # Ignore lease data if the last transaction time is more than 1 year ago to avoid stale data.
+        if client_last_transaction:
+            last_transaction = datetime.strptime(client_last_transaction, date_format)
+            if last_transaction < one_year_ago:
+                continue
+
+        state = lease["state"]
+        if state.lower() == "leased":
+            relay_info = parse_relay_info(lease)
+        else:
+            relay_info = {}
         ip_addr = lease["address"]
         name = lease.get("clientHostName") or lease.get("clientDnsName") or "UNKNOWN"
         # Extract MAC address (after last comma)
         mac_field = lease["clientMacAddr"]
         mac_value = mac_field[mac_field.rfind(",") + 1 :]
         scope = lease["scopeName"]
-        state = lease["state"]
         is_reserved = False
 
         rsvp = await check_for_reservation({"ip": ip_addr})
@@ -1335,7 +1349,8 @@ async def get_client_details_from_cat_center(
     input_data: DNACInput | dict,
 ) -> DNACResponse:
     """
-    Query Cisco Catalyst Center (DNA Center) for client health metrics by username, MAC, or IP. Returns device type, OS, health scores (overall/onboard/connect), AP, and SSID.
+    Query Cisco Catalyst Center (DNA Center) for client health metrics by username, MAC, or IP.
+    Returns device type, OS, health scores (overall/onboard/connect), AP, and SSID.
     IMPORTANT: This should always be checked, unless NetBox returns valid data for the IP address.
 
     Args:
