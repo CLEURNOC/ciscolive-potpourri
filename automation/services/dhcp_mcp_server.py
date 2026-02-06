@@ -643,7 +643,7 @@ async def _get_dhcp_lease_info_from_cpnr(input: CPNRLeaseInput | dict) -> CPNRLe
     leases_data = data if input.mac else [data]
     date_format = "%a %b %d %H:%M:%S %Y"
     current_date = datetime.now()
-    one_year_ago = current_date - timedelta(days=180)
+    six_months_ago = current_date - timedelta(days=180)
 
     leases: List[CPNRLeaseResponse] = []
     for lease in leases_data:
@@ -654,7 +654,7 @@ async def _get_dhcp_lease_info_from_cpnr(input: CPNRLeaseInput | dict) -> CPNRLe
         # Ignore lease data if the last transaction time is more than six months ago to avoid stale data.
         if client_last_transaction:
             last_transaction = datetime.strptime(client_last_transaction, date_format)
-            if last_transaction < one_year_ago:
+            if last_transaction < six_months_ago:
                 continue
 
         state = lease["state"]
