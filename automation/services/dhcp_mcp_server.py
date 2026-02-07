@@ -145,6 +145,7 @@ LIBRENMS_TOKEN = os.getenv("LIBRENMS_TOKEN")
 LIBRENMS_BASE = os.getenv("LIBRENMS_BASE")
 BSSID_CACHE_FILE = os.getenv("BSSID_CACHE_FILE", "bssid_cache.json")
 AP_LOCATIONS_FILE = os.getenv("AP_LOCATIONS_FILE", "./cleur-aps.yaml")
+TOOL = os.getenv("TOOL", "tool." + DNS_DOMAIN)
 
 tls_verify = os.getenv("DHCP_BOT_TLS_VERIFY", "True").lower() == "true"
 
@@ -269,6 +270,12 @@ class APLocationInput(BaseModel, extra="forbid"):
     ip: IPAddress | None = Field(None, description="The IP address of the access point to look up.")
 
 
+class ToolInput(BaseModel, extra="forbid"):
+    name: str | None = Field(None, description="The device name to look up.")
+    asset_tag: str | None = Field(None, description="The asset tag to look up.")
+    ip: IPAddress | None = Field(None, description="The IP address to look up.")
+
+
 class NetBoxResponse(BaseModel, extra="forbid"):
     name: str = Field(..., description="The name of the object in NetBox.")
     type: NetBoxTypeEnum = Field(..., description="The type of the NetBox object.")
@@ -352,6 +359,17 @@ class APLocationResponse(BaseModel, extra="forbid"):
     ap_name: str = Field(..., description="The name of the access point.")
     location: str = Field(..., description="The location of the access point.")
     ip: IPAddress = Field(..., description="The IPv4 address of the access point.")
+
+
+class ToolResponse(BaseModel, extra="forbid"):
+    name: str = Field(..., description="The device name.")
+    asset_tag: str = Field(..., description="The asset tag for the device.")
+    ip: IPAddress = Field(..., description="The IP address of the device.")
+    hostname: str = Field(..., description="The device hostname.")
+    sku: str = Field(..., description="The device SKU.")
+    reachable: bool = Field(..., description="Whether the device is reachable.")
+    location: str = Field(..., description="The device location.")
+    returned: bool = Field(..., description="Whether the device has been returned.")
 
 
 # UTILITIES
@@ -1876,6 +1894,61 @@ async def get_ipv4_from_ipv6(ipv6: IPAddress) -> IPAddress:
         return IPAddress(f"10.{vlan}.{idf}.{host_octet}")
 
     raise ToolError("Not one of our static IPv6 addresses. Must end with XXXX::XX")
+
+
+@server_mcp.tool(
+    annotations={
+        "title": "Get device details for the Tool",
+        "readOnlyHint": True,
+    }
+)
+async def get_device_details_from_tool(inp: ToolInput) -> ToolResponse:
+    """
+    Get details about the device from the network automation Tool.  This includes name, IP address, asset tag, SKU, and checked out status.
+    Needs ONLY one of name, asset tag, or IP.
+    """
+
+    if isinstance(inp, dict):
+        inp = ToolInput(**inp)
+
+    if not inp.name and not inp.asset_tag and not inp.ip:
+        raise ToolError("Must provide at least one of name, asset tag, or IP")
+
+    matcher = inp.name or inp.asset_tag or inp.ip
+
+    try:
+        with httpx.AsyncClient(verify=tls_verify, timeout=REST_TIMEOUT) as client:
+            response = await client.get(
+                f"{TOOL}/get/switches/json",
+            )
+            response.raise_for_status()
+            data = response.json()
+            for device in data:
+                device_name = device.get("Name", "")
+                device_asset_tag = device.get("AssetTag", "")
+                device_ip = device.get("IPAddress", "")
+                device_hostname = device.get("Hostname", "")
+                device_sku = device.get("SKU", "")
+                device_reachable = device.get("Reachable", False)
+                device_location = device.get("Location", "")
+                device_returned = device.get("Returned", False)
+                if matcher.lower() in (device_name.lower(), device_asset_tag.lower(), device_ip.lower(), device_hostname.lower()):
+                    return ToolResponse(
+                        name=device_name,
+                        asset_tag=device_asset_tag,
+                        ip=device_ip,
+                        hostname=device_hostname,
+                        sku=device_sku,
+                        reachable=device_reachable,
+                        location=device_location,
+                        returned=device_returned,
+                    )
+    except httpx.HTTPStatusError as e:
+        logger.error(f"HTTP error getting device details from Tool: {e}", exc_info=True)
+        raise ToolError(f"HTTP error {e.response.status_code}: {e.response.text}")
+    except Exception as e:
+        logger.error(f"Unable to get device details from Tool: {e}", exc_info=True)
+        raise ToolError(e)
 
 
 if __name__ == "__main__":
