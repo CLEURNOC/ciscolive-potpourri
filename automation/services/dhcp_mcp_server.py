@@ -1351,7 +1351,7 @@ async def get_client_details_from_cat_center(
     """
     Query Cisco Catalyst Center (DNA Center) for client health metrics by username, MAC, or IP.
     Returns device type, OS, health scores (overall/onboard/connect), AP, and SSID.
-    IMPORTANT: This should always be checked, unless NetBox returns valid data for the IP address.
+    IMPORTANT: This should always be checked when asked about an IP, unless NetBox returns valid data for the IP address.
 
     Args:
        input_data: DNACInput with username, mac, OR ip (one required)
@@ -1516,8 +1516,8 @@ async def test_get_client_details_from_cat_center(
 async def get_dhcp_lease_info_from_cpnr(input: CPNRLeaseInput | dict) -> List[CPNRLeaseResponse]:
     """
     Query Cisco Prime Network Registrar (CPNR) for DHCP lease by IP or MAC. Returns hostname, MAC, scope, state, relay info (switch/VLAN/port), and reservation status.
-    A lease state of "leased" indicates an active lease. If multiple leases are returned for an IP, the one with state "leased" should be preferred, but all will be returned if present.
-    IMPORTANT: This should always be checked, unless NetBox returns valid data for the IP address.
+    A lease state of "leased" indicates an active lease. If multiple leases are returned for an IP or MAC, the one with state "leased" should be preferred, but all will be returned if present.
+    IMPORTANT: This should always be checked when asked about an IP, unless NetBox returns valid data for the IP address.
 
     Args:
         input: CPNRLeaseInput with ip OR mac (one required)

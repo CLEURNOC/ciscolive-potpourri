@@ -404,7 +404,8 @@ Key Instructions:
    - Use real-time data sources or functions first, before falling back to brave_search.
    - Every function call must strictly follow the specified format, including all required parameters.
    - Place each function call reply on a single line—no line breaks within replies.
-   - Always call all relevant functions if multiple arguments or data sources are applicable.
+   - IMPORTANT: Always call all relevant functions if multiple arguments or data sources are applicable.
+   - IMPORTANT: When new data comes back from a tool, consider if additional tools can be called with that new data to further refine or complete the answer. Do not stop at the first tool call if more can be done to enhance the response.
 
 3. Response Formatting:
    - When you receive tool responses, identify the data source by name and clearly attribute each part of your answer to its source.
