@@ -81,7 +81,7 @@ def _get_bssids_from_netconf(controller: str, bssids: dict[str, str]) -> None:
             password=CLEUCreds.NET_PASS,
             hostkey_verify=False,
             device_params={"name": "iosxe"},
-            timeout=30,
+            timeout=150,
         ) as m:
             # Get the operational data using NETCONF
             netconf_reply = m.get(filter=filter_xml)
@@ -105,6 +105,7 @@ def _get_bssids_from_netconf(controller: str, bssids: dict[str, str]) -> None:
             for ap in ap_name_mac_map:
                 if (ap_name := ap.get("wtp-name")) and (ap_mac := ap.get("wtp-mac")):
                     mac_aps[ap_mac] = ap_name
+                    bssids[ap_mac.lower()] = ap_name
 
             # Navigate to the radio-oper-data in the response
             radio_oper_data = data_dict.get("rpc-reply", {}).get("data", {}).get("access-point-oper-data", {}).get("radio-oper-data", [])
