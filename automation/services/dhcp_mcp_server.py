@@ -1917,7 +1917,7 @@ async def get_device_details_from_tool(inp: ToolInput) -> ToolResponse:
     matcher = inp.name or inp.asset_tag or inp.ip
 
     try:
-        with httpx.AsyncClient(verify=tls_verify, timeout=REST_TIMEOUT) as client:
+        async with httpx.AsyncClient(verify=tls_verify, timeout=REST_TIMEOUT) as client:
             response = await client.get(
                 f"{TOOL}/get/switches/json",
             )
