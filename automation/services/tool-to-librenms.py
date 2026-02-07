@@ -33,7 +33,6 @@ import os
 import re
 import sys
 import time
-import traceback
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -127,7 +126,6 @@ class LibreNMSManager:
             return False
         except Exception as e:
             logger.error(f"Error checking device status for {hostname}: {e}", exc_info=True)
-            traceback.print_exc()
             return False
 
     def add_device(self, hostname: str) -> bool:
