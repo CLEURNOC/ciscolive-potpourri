@@ -1130,6 +1130,19 @@ async def get_ap_name_from_bssid(bssid: str) -> str:
     bssid_str = str(normalize_mac(bssid)).lower()
     if bssid_str in bssids:
         return bssids[bssid_str]
+    # Add one to the last octet and try again.
+    # ISE returns the AP radio MAC, and the BSSIDs _usually_ start one higher.
+    octets = bssid_str.split(":")
+    if len(octets) == 6:
+        try:
+            last_octet = int(octets[5], 16)
+            last_octet = (last_octet + 1) % 256
+            octets[5] = f"{last_octet:02x}"
+            alt_bssid_str = ":".join(octets)
+            if alt_bssid_str in bssids:
+                return bssids[alt_bssid_str]
+        except ValueError:
+            pass
     raise ToolError(f"No AP name found for BSSID {bssid_str}")
 
 
