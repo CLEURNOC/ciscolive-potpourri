@@ -46,7 +46,7 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning  # type:
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 # Set up logging
-logger = logging.getLogger("diff-routing-tables")
+logger = logging.getLogger("tool-to-librenms")
 loglevel = logging.DEBUG if os.getenv("DEBUG", "false").lower() == "true" else logging.INFO
 logger.setLevel(loglevel)
 # Configure handler with format for this module only
