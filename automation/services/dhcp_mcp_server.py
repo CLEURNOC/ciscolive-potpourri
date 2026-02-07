@@ -1919,7 +1919,7 @@ async def get_device_details_from_tool(inp: ToolInput) -> ToolResponse:
     try:
         async with httpx.AsyncClient(verify=tls_verify, timeout=REST_TIMEOUT) as client:
             response = await client.get(
-                f"{TOOL}/get/switches/json",
+                f"http://{TOOL}/get/switches/json",
             )
             response.raise_for_status()
             data = response.json()
