@@ -1900,7 +1900,8 @@ async def get_ipv4_from_ipv6(ipv6: IPAddress) -> IPAddress:
     annotations={
         "title": "Get device details for the Tool",
         "readOnlyHint": True,
-    }
+    },
+    enabled=not is_testing,
 )
 async def get_device_details_from_tool(inp: ToolInput) -> ToolResponse:
     """
