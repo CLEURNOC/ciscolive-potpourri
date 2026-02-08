@@ -1989,11 +1989,13 @@ async def create_wifi_snag(inp: GitHubIssueInput | dict, ctx: Context) -> GitHub
     url = f"https://api.github.com/repos/{SNAG_REPO}/issues"
     payload: Dict[str, Any] = {"title": inp.title}
     payload["body"] = f"{username}|{inp.body}"
-    payload["assignee"] = WIFI_SNAG_USER
+    if WIFI_SNAG_USER:
+        payload["assignees"] = [WIFI_SNAG_USER]
 
     headers = {
         "Accept": "application/vnd.github.v3+json",
         "Authorization": f"token {GH_TOKEN}",
+        "User-Agent": "cleur-noc-mcp",
     }
 
     try:
