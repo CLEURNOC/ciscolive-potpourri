@@ -213,6 +213,9 @@ class BotState(object):
                 "LIBRENMS_TOKEN": CLEUCreds.LIBRENMS_TOKEN,
                 "LIBRENMS_BASE": C.LIBRENMS_BASE,
                 "BSSID_CACHE_FILE": C.BSSID_CACHE_FILE,
+                "GH_TOKEN": CLEUCreds.GH_TOKEN,
+                "WIFI_SNAG_USER": CLEUCreds.WIFI_SNAG_USER,
+                "SNAG_REPO": C.SNAG_REPO,
             }
             transport = StdioTransport(
                 command="python",

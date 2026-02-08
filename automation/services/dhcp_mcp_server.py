@@ -44,7 +44,7 @@ import pynetbox
 import requests
 import xmltodict
 import yaml
-from fastmcp import FastMCP
+from fastmcp import FastMCP, Context
 from fastmcp.exceptions import ToolError
 from fastmcp.server.dependencies import get_http_headers
 from fastmcp.server.middleware import Middleware, MiddlewareContext
@@ -143,9 +143,12 @@ NETBOX_SERVER = os.getenv("NETBOX_SERVER")
 NETBOX_API_TOKEN = os.getenv("NETBOX_API_TOKEN")
 LIBRENMS_TOKEN = os.getenv("LIBRENMS_TOKEN")
 LIBRENMS_BASE = os.getenv("LIBRENMS_BASE")
+SNAG_REPO = os.getenv("SNAG_REPO")
+GH_TOKEN = os.getenv("GITHUB_TOKEN")
 BSSID_CACHE_FILE = os.getenv("BSSID_CACHE_FILE", "bssid_cache.json")
 AP_LOCATIONS_FILE = os.getenv("AP_LOCATIONS_FILE", "./cleur-aps.yaml")
 TOOL = os.getenv("TOOL", "tool." + DNS_DOMAIN)
+WIFI_SNAG_USER = os.getenv("WIFI_SNAG_USER", "CLEUR-bot")
 
 tls_verify = os.getenv("DHCP_BOT_TLS_VERIFY", "True").lower() == "true"
 
@@ -276,6 +279,11 @@ class ToolInput(BaseModel, extra="forbid"):
     ip: IPAddress | None = Field(None, description="The IP address to look up.")
 
 
+class GitHubIssueInput(BaseModel, extra="forbid"):
+    title: str = Field(..., description="The issue title.")
+    body: str = Field(..., description="The issue body/description.")
+
+
 class NetBoxResponse(BaseModel, extra="forbid"):
     name: str = Field(..., description="The name of the object in NetBox.")
     type: NetBoxTypeEnum = Field(..., description="The type of the NetBox object.")
@@ -370,6 +378,11 @@ class ToolResponse(BaseModel, extra="forbid"):
     reachable: bool = Field(..., description="Whether the device is reachable.")
     location: str = Field(..., description="The device location.")
     returned: bool = Field(..., description="Whether the device has been returned.")
+
+
+class GitHubIssueResponse(BaseModel, extra="forbid"):
+    number: int = Field(..., description="The GitHub issue number.")
+    url: str = Field(..., description="The HTML URL for the issue.")
 
 
 # UTILITIES
@@ -1950,6 +1963,55 @@ async def get_device_details_from_tool(inp: ToolInput) -> ToolResponse:
     except Exception as e:
         logger.error(f"Unable to get device details from Tool: {e}", exc_info=True)
         raise ToolError(e)
+
+
+@server_mcp.tool(
+    annotations={
+        "title": "Create WiFi Snag",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+    }
+)
+async def create_wifi_snag(inp: GitHubIssueInput | dict, ctx: Context) -> GitHubIssueResponse:
+    """
+    Create a GitHub issue in the WiFi Snag repo.  For this tool to work, ask the user for a title and body.
+    For example, "what do you want to call this issue?" and, "please describe the issue in detail".
+    """
+
+    if isinstance(inp, dict):
+        inp = GitHubIssueInput(**inp)
+
+    if not hasattr(ctx.request_context.meta, "username"):
+        username = "NOC Info Bot"
+    else:
+        username = ctx.request_context.meta.username
+
+    url = f"https://api.github.com/repos/{SNAG_REPO}/issues"
+    payload: Dict[str, Any] = {"title": inp.title}
+    payload["body"] = f"{username}|{inp.body}"
+    payload["assignee"] = WIFI_SNAG_USER
+
+    headers = {
+        "Accept": "application/vnd.github.v3+json",
+        "Authorization": f"token {GH_TOKEN}",
+    }
+
+    try:
+        async with httpx.AsyncClient(verify=tls_verify, timeout=REST_TIMEOUT) as client:
+            response = await client.post(url, headers=headers, json=payload)
+            response.raise_for_status()
+            data = response.json()
+    except httpx.HTTPStatusError as he:
+        logger.error(f"HTTP error creating GitHub issue in {SNAG_REPO}: {he}", exc_info=True)
+        raise ToolError(f"HTTP error {he.response.status_code}: {he.response.text}")
+    except Exception as e:
+        logger.error(f"Failed to create GitHub issue in {SNAG_REPO}: {e}", exc_info=True)
+        raise ToolError(e)
+
+    return GitHubIssueResponse(
+        number=data.get("number"),
+        url=data.get("html_url"),
+    )
 
 
 if __name__ == "__main__":
