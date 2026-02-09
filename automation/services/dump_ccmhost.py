@@ -17,8 +17,10 @@ try:
 except Exception:
     CLEUCreds = None
 
-DEFAULT_URL = "https://dc1-dns.cleur.network:8443/web-services/rest/resource/CCMHost"
-DEFAULT_ZONE_ORIGIN = "cleur.network"
+from cleu.config import Config as C  # type: ignore
+
+DEFAULT_URL = f"{C.DNS_BASE}/CCMHost"
+DEFAULT_ZONE_ORIGIN = C.DNS_DOMAIN
 DEFAULT_OUTPUT = "ccmhost.json"
 
 
