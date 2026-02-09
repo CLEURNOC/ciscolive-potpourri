@@ -35,7 +35,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def build_headers(auth_value: Optional[str]) -> Dict[str, str]:
+def build_headers() -> Dict[str, str]:
     headers = {"Accept": "application/json"}
 
     return headers
@@ -79,7 +79,7 @@ def main() -> int:
     if args.insecure and InsecureRequestWarning is not None:
         requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
-    headers = build_headers(args.auth)
+    headers = build_headers()
     params = {"zoneOrigin": args.zone_origin}
 
     try:
