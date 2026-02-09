@@ -55,7 +55,7 @@
       "command": "show asp drop frame nat-xlate-pool-exhausted",
       "pattern": "nat-xlate-pool-exhausted.\\s+(\\d+)",
       "metric": "natXlatePoolExhausted",
-      "threshold": "> 0"
+      "threshold": "+ > 10"
     },
     "natPoolRes1": {
       "command": "show ip nat statistics | begin NAT-POOL-RES-1",
