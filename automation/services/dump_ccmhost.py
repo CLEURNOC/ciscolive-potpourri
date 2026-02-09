@@ -31,17 +31,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--url", default=DEFAULT_URL, help="Base CCMHost URL")
     parser.add_argument("--zone-origin", default=DEFAULT_ZONE_ORIGIN, help="zoneOrigin query parameter")
     parser.add_argument("--output", default=DEFAULT_OUTPUT, help="Output JSON file")
-    parser.add_argument("--auth", help="Authorization header value")
     parser.add_argument("--insecure", action="store_true", help="Disable TLS certificate verification")
     return parser.parse_args()
 
 
 def build_headers(auth_value: Optional[str]) -> Dict[str, str]:
     headers = {"Accept": "application/json"}
-    if auth_value:
-        headers["Authorization"] = auth_value
-    elif CLEUCreds is not None and hasattr(CLEUCreds, "BASIC_AUTH"):
-        headers["Authorization"] = CLEUCreds.BASIC_AUTH
+
     return headers
 
 
@@ -61,7 +57,9 @@ def fetch_all(url: str, params: Dict[str, str], headers: Dict[str, str], verify:
     next_params: Optional[Dict[str, str]] = params
 
     while next_url:
-        response = requests.get(next_url, params=next_params, headers=headers, verify=verify)
+        response = requests.get(
+            next_url, params=next_params, auth=(CLEUCreds.CPNR_USERNAME, CLEUCreds.CPNR_PASSWORD), headers=headers, verify=verify
+        )
         response.raise_for_status()
         data = response.json()
         if isinstance(data, list):
