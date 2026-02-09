@@ -38,8 +38,8 @@ def build_headers(auth_value: Optional[str]) -> Dict[str, str]:
     headers = {"Accept": "application/json"}
     if auth_value:
         headers["Authorization"] = auth_value
-    elif CLEUCreds is not None and hasattr(CLEUCreds, "JCLARKE_BASIC"):
-        headers["Authorization"] = CLEUCreds.JCLARKE_BASIC
+    elif CLEUCreds is not None and hasattr(CLEUCreds, "BASIC_AUTH"):
+        headers["Authorization"] = CLEUCreds.BASIC_AUTH
     return headers
 
 
