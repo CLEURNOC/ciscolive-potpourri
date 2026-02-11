@@ -980,9 +980,18 @@ async def get_vlan_name_from_ip(ip: IPAddress) -> str:
     Get the VLAN name for a given IP address by querying NetBox. This finds the most specific prefix containing the IP and returns the VLAN name from that prefix.
     """
 
+    class TimeoutHTTPAdapter(HTTPAdapter):
+        def __init__(self, timeout=REST_TIMEOUT, *args, **kwargs):
+            self.timeout = timeout
+            super().__init__(*args, **kwargs)
+
+        def send(self, request, **kwargs):
+            kwargs["timeout"] = kwargs.get("timeout") or self.timeout
+            return super().send(request, **kwargs)
+
     session = requests.Session()
     session.verify = tls_verify
-    adapter = HTTPAdapter(timeout=REST_TIMEOUT)
+    adapter = TimeoutHTTPAdapter(timeout=REST_TIMEOUT)
     session.mount("http://", adapter)
     session.mount("https://", adapter)
 
