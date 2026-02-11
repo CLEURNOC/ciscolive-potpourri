@@ -28,7 +28,7 @@ import logging
 import sys
 import time
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import ClassVar
 
 import CLEUCreds  # type: ignore
@@ -50,8 +50,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Adjust START_TIME to the start of the event (convert datetime string to UNIX epoch milliseconds)
-START_TIME = int(datetime.fromisoformat("2025-12-11T00:00:00").timestamp() * 1000)
+# Look back seven days (convert datetime to UNIX epoch milliseconds)
+START_TIME = int((datetime.now() - timedelta(days=7)).timestamp() * 1000)
 
 PORT = 8093
 
