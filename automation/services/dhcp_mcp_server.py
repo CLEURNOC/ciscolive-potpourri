@@ -970,6 +970,47 @@ async def get_object_info_from_netbox(inp: NetBoxInput | dict) -> List[NetBoxRes
 
 @server_mcp.tool(
     annotations={
+        "title": "Get VLAN Name from IP Address",
+        "readOnlyHint": True,
+    },
+    enabled=not is_testing,
+)
+async def get_vlan_name_from_ip(ip: IPAddress) -> str:
+    """
+    Get the VLAN name for a given IP address by querying NetBox. This finds the most specific prefix containing the IP and returns the VLAN name from that prefix.
+    """
+
+    session = requests.Session()
+    session.verify = tls_verify
+    adapter = HTTPAdapter(timeout=REST_TIMEOUT)
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+
+    pnb = pynetbox.api(NETBOX_SERVER, NETBOX_API_TOKEN)
+    pnb.http_session = session
+
+    try:
+        ip_str = str(ip)
+        ip_for_prefix = ip_str.split("/")[0]
+        prefixes = list(pnb.ipam.prefixes.filter(contains=ip_for_prefix))
+
+        if not prefixes:
+            raise ValueError(f"No prefixes found in NetBox containing IP address {ip_for_prefix}")
+
+        prefixes.sort(key=lambda pref: int(str(pref.prefix).split("/")[-1]), reverse=True)
+        for pref in prefixes:
+            if pref.vlan:
+                return pref.vlan.name
+
+        return "N/A"
+
+    except Exception as e:
+        logger.error(f"Error getting VLAN name from NetBox for IP {ip}: {e}", exc_info=True)
+        raise ToolError(e)
+
+
+@server_mcp.tool(
+    annotations={
         "title": "Get Webex Device Info",
         "readOnlyHint": True,
     },
