@@ -48,7 +48,6 @@ Flask
 gevent
 xmltodict
 webargs
-ollama
 gunicorn
 future
 pyshark
