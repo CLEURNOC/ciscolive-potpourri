@@ -57,7 +57,7 @@ from sparker import Sparker  # type: ignore
 
 class HttpMiddleware(Middleware):
     async def on_request(self, context: MiddlewareContext, call_next) -> Any:
-        headers = get_http_headers(include={"authorization"})
+        headers = get_http_headers(include={"authorization", "user-agent", "x-forwarded-for"})
         auth = headers.get("authorization")
         if not auth or not auth.startswith("Bearer "):
             raise McpError(ErrorData(message="Unauthorized: Missing or invalid Authorization header", code=-31002))
