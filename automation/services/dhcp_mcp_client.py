@@ -264,7 +264,7 @@ class BotState(object):
                     },
                 }
                 self.available_functions.append(llm_tool)
-                self.tool_meta[tool.name] = tool._meta if hasattr(tool, "_meta") else {}
+                self.tool_meta[tool.name] = tool.meta if hasattr(tool, "meta") else {}
 
     async def cleanup(self) -> None:
         """Cleanup all resources"""

@@ -78,9 +78,9 @@ class HttpMiddleware(Middleware):
         x_forwarded_for = headers.get("x-forwarded-for", "unknown")
         if context.fastmcp_context:
             if "is_admin" in auth_data["tokens"][token] and auth_data["tokens"][token]["is_admin"]:
-                context.fastmcp_context.set_state("is_admin", True)
+                await context.fastmcp_context.set_state("is_admin", True)
             else:
-                context.fastmcp_context.set_state("is_admin", False)
+                await context.fastmcp_context.set_state("is_admin", False)
 
         audit_logger.info(f"User '{username}' made request '{context.message}' from IP '{x_forwarded_for}' with User-Agent '{user_agent}'")
 
@@ -89,7 +89,7 @@ class HttpMiddleware(Middleware):
     async def on_list_tools(self, context: MiddlewareContext, call_next) -> List[str]:
         result = await call_next(context)
         if context.fastmcp_context:
-            is_admin = context.fastmcp_context.get_state("is_admin")
+            is_admin = await context.fastmcp_context.get_state("is_admin")
             if is_admin:
                 return result
 
@@ -97,8 +97,9 @@ class HttpMiddleware(Middleware):
 
     async def on_call_tool(self, context: MiddlewareContext, call_next) -> Any:
         if context.fastmcp_context:
-            is_admin = context.fastmcp_context.get_state("is_admin")
-            tool = await context.fastmcp_context.fastmcp.get_tool(context.message.name)
+            is_admin = await context.fastmcp_context.get_state("is_admin")
+            tools = await context.fastmcp_context.fastmcp.list_tools()
+            tool = next((t for t in tools if t.name == context.message.name), None)
             if not is_admin and "admin" in tool.tags:
                 raise ToolError(f"Calling {tool.name} requires admin privileges")
             meta = context.fastmcp_context.request_context.meta
@@ -164,6 +165,11 @@ app = None
 if transport == "http":
     server_mcp.add_middleware(HttpMiddleware())
     app = server_mcp.http_app()
+
+if is_testing:
+    server_mcp.disable(tags={"production"})
+else:
+    server_mcp.disable(tags={"testing"})
 
 AT_MACADDR = 9
 
@@ -973,7 +979,7 @@ async def get_object_info_from_netbox(inp: NetBoxInput | dict) -> List[NetBoxRes
         "title": "Get VLAN Name from IP Address",
         "readOnlyHint": True,
     },
-    enabled=not is_testing,
+    tags={"production"},
 )
 async def get_vlan_name_from_ip(ip: IPAddress) -> str:
     """
@@ -1023,7 +1029,7 @@ async def get_vlan_name_from_ip(ip: IPAddress) -> str:
         "title": "Get Webex Device Info",
         "readOnlyHint": True,
     },
-    enabled=not is_testing,
+    tags={"production"},
 )
 async def get_webex_device_info(inp: WebexInfoInput | dict) -> WebexInfoResponse:
     """
@@ -1102,7 +1108,7 @@ async def get_webex_device_info(inp: WebexInfoInput | dict) -> WebexInfoResponse
         "title": "Get Webex Device Info",
         "readOnlyHint": True,
     },
-    enabled=is_testing,
+    tags={"testing"},
 )
 async def test_get_webex_device_info(inp: WebexInfoInput | dict) -> WebexInfoResponse:
     """
@@ -1197,7 +1203,7 @@ async def generate_password(
         "title": "Get AP name from BSSID",
         "readOnlyHint": True,
     },
-    enabled=not is_testing,
+    tags={"production"},
 )
 async def get_ap_name_from_bssid(bssid: str) -> str:
     """
@@ -1219,7 +1225,7 @@ async def get_ap_name_from_bssid(bssid: str) -> str:
         "title": "Get AP info (name, location, IP)",
         "readOnlyHint": True,
     },
-    enabled=not is_testing,
+    tags={"production"},
 )
 async def get_ap_info(ap_name: str | None = None, ip: IPAddress | None = None) -> APLocationResponse:
     """
@@ -1272,7 +1278,7 @@ async def get_ap_info(ap_name: str | None = None, ip: IPAddress | None = None) -
         "title": "Get Client Details from ISE",
         "readOnlyHint": True,
     },
-    enabled=not is_testing,
+    tags={"production"},
 )
 async def get_user_details_from_ise(ise_input: ISEInput | dict) -> ISEResponse:
     """
@@ -1382,7 +1388,7 @@ async def get_user_details_from_ise(ise_input: ISEInput | dict) -> ISEResponse:
         "title": "Get Client Details from ISE",
         "readOnlyHint": True,
     },
-    enabled=is_testing,
+    tags={"testing"},
 )
 async def test_get_user_details_from_ise(ise_input: ISEInput | dict) -> ISEResponse:
     """
@@ -1424,7 +1430,7 @@ async def test_get_user_details_from_ise(ise_input: ISEInput | dict) -> ISERespo
         "title": "Get Client Details from Catalyst Center",
         "readOnlyHint": True,
     },
-    enabled=not is_testing,
+    tags={"production"},
 )
 async def get_client_details_from_cat_center(
     input_data: DNACInput | dict,
@@ -1548,7 +1554,7 @@ async def get_client_details_from_cat_center(
         "title": "Get Client Details from Catalyst Center",
         "readOnlyHint": True,
     },
-    enabled=is_testing,
+    tags={"testing"},
 )
 async def test_get_client_details_from_cat_center(
     input_data: DNACInput | dict,
@@ -1592,7 +1598,7 @@ async def test_get_client_details_from_cat_center(
         "title": "Get DHCP Lease Info from CPNR",
         "readOnlyHint": True,
     },
-    enabled=not is_testing,
+    tags={"production"},
 )
 async def get_dhcp_lease_info_from_cpnr(input: CPNRLeaseInput | dict) -> List[CPNRLeaseResponse]:
     """
@@ -1616,7 +1622,7 @@ async def get_dhcp_lease_info_from_cpnr(input: CPNRLeaseInput | dict) -> List[CP
         "title": "Get DHCP Lease Info from CPNR",
         "readOnlyHint": True,
     },
-    enabled=is_testing,
+    tags={"testing"},
 )
 async def test_get_dhcp_lease_info_from_cpnr(input: CPNRLeaseInput | dict) -> List[CPNRLeaseResponse]:
     """
@@ -1657,9 +1663,8 @@ async def test_get_dhcp_lease_info_from_cpnr(input: CPNRLeaseInput | dict) -> Li
         "readOnlyHint": False,
         "destructiveHint": True,
     },
-    enabled=not is_testing,
     meta={"auth_list": ALLOWED_TO_DELETE},
-    tags=["admin"],
+    tags={"admin", "production"},
 )
 async def delete_dhcp_reservation_from_cpnr(ip: IPAddress) -> bool:
     """
@@ -1694,9 +1699,8 @@ async def delete_dhcp_reservation_from_cpnr(ip: IPAddress) -> bool:
         "readOnlyHint": False,
         "destructiveHint": True,
     },
-    enabled=is_testing,
     meta={"auth_list": ALLOWED_TO_DELETE},
-    tags=["admin"],
+    tags={"admin", "testing"},
 )
 async def test_delete_dhcp_reservation_from_cpnr(ip: IPAddress) -> bool:
     """
@@ -1717,7 +1721,7 @@ async def test_delete_dhcp_reservation_from_cpnr(ip: IPAddress) -> bool:
         "title": "Create DHCP Reservation in CPNR",
         "readOnlyHint": False,
     },
-    enabled=not is_testing,
+    tags={"production"},
 )
 async def create_dhcp_reservation_in_cpnr(ip: IPAddress) -> bool:
     """
@@ -1775,7 +1779,7 @@ async def create_dhcp_reservation_in_cpnr(ip: IPAddress) -> bool:
         "title": "Create DHCP Reservation in CPNR",
         "readOnlyHint": False,
     },
-    enabled=is_testing,
+    tags={"testing"},
 )
 async def test_create_dhcp_reservation_in_cpnr(ip: IPAddress) -> bool:
     """
@@ -1869,7 +1873,7 @@ async def perform_dns_lookup(input: DNSInput | dict) -> DNSResponse:
         "title": "Get LibreNMS Alerts for Device",
         "readOnlyHint": True,
     },
-    enabled=not is_testing,
+    tags={"production"},
 )
 async def get_alerts_for_device(device_name: Hostname) -> List[AlertResponse]:
     """
@@ -1886,7 +1890,7 @@ async def get_alerts_for_device(device_name: Hostname) -> List[AlertResponse]:
         "title": "Get all active, acknowledged, worse, better, changed LibreNMS Alerts",
         "readOnlyHint": True,
     },
-    enabled=not is_testing,
+    tags={"production"},
 )
 async def get_all_active_alerts() -> List[AlertResponse]:
     """
@@ -1904,7 +1908,7 @@ async def get_all_active_alerts() -> List[AlertResponse]:
         "readOnlyHint": False,
         "destructiveHint": False,
     },
-    enabled=not is_testing,
+    tags={"production"},
 )
 async def acknowledge_librenms_alert(alert_id: int, note: str | None = None, until_cleared: bool = False) -> bool:
     """
@@ -1964,7 +1968,7 @@ async def get_ipv4_from_ipv6(ipv6: IPAddress) -> IPAddress:
         "title": "Get device details for the Tool",
         "readOnlyHint": True,
     },
-    enabled=not is_testing,
+    tags={"production"},
 )
 async def get_device_details_from_tool(inp: ToolInput) -> ToolResponse:
     """
