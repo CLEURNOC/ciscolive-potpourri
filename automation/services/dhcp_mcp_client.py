@@ -240,9 +240,7 @@ class BotState(object):
 
             transport = StreamableHttpTransport(
                 f"https://{C.DHCP_MCP_SERVER}/mcp",
-                headers={
-                    "Authorization": f"Bearer {CLEUCreds.DHCP_MCP_API_TOKEN}",
-                },
+                auth=CLEUCreds.DHCP_MCP_API_TOKEN,
                 httpx_client_factory=custom_httpx_client_factory,
             )
         return fastmcp.Client(transport)
