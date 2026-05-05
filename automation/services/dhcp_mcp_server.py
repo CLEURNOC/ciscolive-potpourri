@@ -51,6 +51,7 @@ from fastmcp.server.middleware import Middleware, MiddlewareContext
 from mcp.shared.exceptions import McpError
 from mcp.types import ErrorData
 from pydantic import BaseModel, Field
+from pydantic.fields import FieldInfo
 from requests.adapters import HTTPAdapter
 from sparker import Sparker  # type: ignore
 
@@ -179,6 +180,12 @@ DEFAULT_INT_TYPE = "Ethernet"
 
 ALLOWED_TO_DELETE = ("jclarke@cisco.com", "josterfe@cisco.com", "anjesani@cisco.com", "eagcagul@cisco.com", "james@bottswanamedia.info")
 
+
+def field_from(model: type[BaseModel], name: str) -> FieldInfo:
+    """Return the FieldInfo for `name` on `model` so flat tool params can reuse its metadata."""
+    return model.model_fields[name]
+
+
 # TYPES
 
 LINT_REG = r"[\da-z-]{1,15}"
@@ -237,57 +244,63 @@ IPAddress = Annotated[
 
 
 class NetBoxInput(BaseModel, extra="forbid"):
-    ip: IPAddress | None = Field(None, description="The IP address to look up in NetBox.")
-    hostname: Hostname | None = Field(None, description="The hostname to look up in NetBox.")
+    ip: IPAddress | None = Field(None, description="IPv4 or IPv6 address to look up in NetBox.", examples=["10.100.253.10"])
+    hostname: Hostname | None = Field(None, description="Hostname (not FQDN) to look up in NetBox.", examples=["core-sw-01"])
 
 
 class WebexInfoInput(BaseModel, extra="forbid"):
-    mac: MACAddress | None = Field(None, description="The MAC address of the Webex device to look up.")
-    ip: IPAddress | None = Field(None, description="The IP address of the Webex device to look up.")
-    device_name: str | None = Field(None, description="The name of the Webex device to look up.")
+    mac: MACAddress | None = Field(None, description="MAC address of the Webex device.", examples=["00:11:22:33:44:55"])
+    ip: IPAddress | None = Field(None, description="IP address of the Webex device.", examples=["10.100.253.10"])
+    device_name: str | None = Field(None, description="Display name of the Webex device.", examples=["Hall 7 Room Kit"])
 
 
 class ISEInput(BaseModel, extra="forbid"):
-    username: str | None = Field(None, description="The username of the client to look up in ISE.")
-    mac: MACAddress | None = Field(None, description="The MAC address of the client to look up in ISE.")
-    ip: IPAddress | None = Field(None, description="The IP address of the client to look up in ISE.")
+    username: str | None = Field(None, description="Username of the client to look up in ISE.", examples=["jdoe"])
+    mac: MACAddress | None = Field(None, description="MAC address of the client to look up in ISE.", examples=["00:11:22:33:44:55"])
+    ip: IPAddress | None = Field(None, description="IP address of the client to look up in ISE.", examples=["10.100.253.10"])
 
 
 class DNACInput(BaseModel, extra="forbid"):
-    username: str | None = Field(None, description="The username of the client to look up in Catalyst Center.")
-    mac: MACAddress | None = Field(None, description="The MAC address of the client to look up in Catalyst Center.")
-    ip: IPAddress | None = Field(None, description="The IP address of the client to look up in Catalyst Center.")
+    username: str | None = Field(None, description="Username of the client to look up in Catalyst Center.", examples=["jdoe"])
+    mac: MACAddress | None = Field(
+        None, description="MAC address of the client to look up in Catalyst Center.", examples=["00:11:22:33:44:55"]
+    )
+    ip: IPAddress | None = Field(None, description="IP address of the client to look up in Catalyst Center.", examples=["10.100.253.10"])
 
 
 class CPNRReservationInput(BaseModel, extra="forbid"):
-    ip: IPAddress | None = Field(None, description="The IP address of the reservation to look up in CPNR.")
-    mac: MACAddress | None = Field(None, description="The MAC address of the reservation to look up in CPNR.")
+    ip: IPAddress | None = Field(None, description="IP address of the reservation to look up in CPNR.", examples=["10.100.253.10"])
+    mac: MACAddress | None = Field(None, description="MAC address of the reservation to look up in CPNR.", examples=["00:11:22:33:44:55"])
 
 
 class CPNRLeaseInput(BaseModel, extra="forbid"):
-    ip: IPAddress | None = Field(None, description="The IP address of the lease to look up in CPNR.")
-    mac: MACAddress | None = Field(None, description="The MAC address of the lease to look up in CPNR.")
+    ip: IPAddress | None = Field(None, description="IP address of the lease to look up in CPNR.", examples=["10.100.253.10"])
+    mac: MACAddress | None = Field(None, description="MAC address of the lease to look up in CPNR.", examples=["00:11:22:33:44:55"])
 
 
 class DNSInput(BaseModel, extra="forbid"):
-    ip: IPAddress | None = Field(None, description="The IP address to perform a reverse DNS lookup on.")
-    hostname: Hostname | None = Field(None, description="The hostname to perform a forward DNS lookup on.")
+    ip: IPAddress | None = Field(None, description="IP address to perform a reverse DNS lookup on.", examples=["10.100.253.10"])
+    hostname: Hostname | None = Field(None, description="Hostname to perform a forward DNS lookup on.", examples=["core-sw-01"])
 
 
 class APLocationInput(BaseModel, extra="forbid"):
-    ap_name: str | None = Field(None, description="The name of the access point to look up.")
-    ip: IPAddress | None = Field(None, description="The IP address of the access point to look up.")
+    ap_name: str | None = Field(None, description="Name of the access point to look up.", examples=["AP-WORLD-OF-SOLUTIONS-01"])
+    ip: IPAddress | None = Field(None, description="IP address of the access point to look up.", examples=["10.100.253.10"])
 
 
 class ToolInput(BaseModel, extra="forbid"):
-    name: str | None = Field(None, description="The device name to look up.")
-    asset_tag: str | None = Field(None, description="The asset tag to look up.")
-    ip: IPAddress | None = Field(None, description="The IP address to look up.")
+    name: str | None = Field(None, description="Device name to look up.", examples=["core-sw-01"])
+    asset_tag: str | None = Field(None, description="Asset tag to look up.", examples=["CL-12345"])
+    ip: IPAddress | None = Field(None, description="IP address to look up.", examples=["10.100.253.10"])
 
 
 class GitHubIssueInput(BaseModel, extra="forbid"):
-    title: str = Field(..., description="The issue title.")
-    body: str = Field(..., description="The issue body/description.")
+    title: str = Field(..., description="Short summary for the GitHub issue title.", examples=["Poor WiFi in Hall 8"])
+    body: str = Field(
+        ...,
+        description="Detailed description of the issue.",
+        examples=["Users in Hall 8 report intermittent disconnects from the CLEUR-NOC SSID since 09:00."],
+    )
 
 
 class NetBoxResponse(BaseModel, extra="forbid"):
@@ -856,12 +869,21 @@ async def get_librenms_alerts(device_name: Hostname | None = None) -> List[Alert
         "readOnlyHint": True,
     }
 )
-async def get_object_info_from_netbox(inp: NetBoxInput | dict) -> List[NetBoxResponse]:
+async def get_object_info_from_netbox(
+    ip: Annotated[IPAddress | None, field_from(NetBoxInput, "ip")] = None,
+    hostname: Annotated[Hostname | None, field_from(NetBoxInput, "hostname")] = None,
+) -> List[NetBoxResponse]:
     """
-    Query NetBox IPAM for devices/VMs by IP or hostname. Returns name, type, IP, contacts, and notes.
+    Look up a device or VM in NetBox by IP address or hostname.
 
-    Args:
-        inp: NetBoxInput with ip OR hostname (mutually exclusive)
+    Use when you need to identify a device or VM, find its contacts, or read usage notes. Provide exactly one of ip or hostname.
+
+    Optional: ip (IPv4 or IPv6), hostname (short name, not FQDN)
+
+    Examples:
+    - "What device is at 10.100.253.10?"
+    - "Who owns the VM named core-sw-01?"
+    - "Show me the NetBox info for 10.100.100.5"
     """
 
     class TimeoutHTTPAdapter(HTTPAdapter):
@@ -883,19 +905,15 @@ async def get_object_info_from_netbox(inp: NetBoxInput | dict) -> List[NetBoxRes
     pnb.http_session = session
 
     try:
-        # Handle dict input for LLMs that pass JSON objects
-        if isinstance(inp, dict):
-            inp = NetBoxInput(**inp)
-
         # Determine query type
         # Ensure only one of ip or hostname is specified
-        if inp.ip and inp.hostname:
+        if ip and hostname:
             raise ValueError("Only one of 'ip' or 'hostname' may be specified.")
-        if inp.ip:
-            ip = str(inp.ip)
+        if ip:
+            ip = str(ip)
             name = None
-        elif inp.hostname:
-            name = str(inp.hostname)
+        elif hostname:
+            name = str(hostname)
             ip = None
         else:
             raise ValueError("Invalid input. Either 'ip' or 'hostname' property must be specified.")
@@ -1031,19 +1049,26 @@ async def get_vlan_name_from_ip(ip: IPAddress) -> str:
     },
     tags={"production"},
 )
-async def get_webex_device_info(inp: WebexInfoInput | dict) -> WebexInfoResponse:
+async def get_webex_device_info(
+    mac: Annotated[MACAddress | None, field_from(WebexInfoInput, "mac")] = None,
+    ip: Annotated[IPAddress | None, field_from(WebexInfoInput, "ip")] = None,
+    device_name: Annotated[str | None, field_from(WebexInfoInput, "device_name")] = None,
+) -> WebexInfoResponse:
     """
-    Get Webex device details by MAC, IP, or device name. Returns product info, serial, connection status, workspace location, and environmental metrics.
+    Fetch details for a Webex device by MAC address, IP address, or display name.
 
-    Args:
-      inp: WebexInfoInput with mac, ip, OR device_name (one required)
+    Use when a user asks about a Webex or video-conferencing endpoint. Provide exactly one of mac, ip, or device_name. Chain with convert_celsius_to_fahrenheit to convert room temperature readings.
+
+    Optional: mac (colon-delimited), ip (IPv4 or IPv6), device_name (display name or SEP-prefixed MAC)
+
+    Examples:
+    - "What is the status of the Hall 7 Room Kit?"
+    - "Is the device at 10.100.253.10 online?"
+    - "Show me the Webex info for 00:11:22:33:44:55"
     """
-
-    if isinstance(inp, dict):
-        inp = WebexInfoInput(**inp)
 
     # Validate and parse input
-    provided = [(k, v) for k, v in [("mac", inp.mac), ("ip", inp.ip), ("device_name", inp.device_name)] if v]
+    provided = [(k, v) for k, v in [("mac", mac), ("ip", ip), ("device_name", device_name)] if v]
     if not provided:
         raise ToolError("At least one of mac, ip, or device_name must be specified")
     if len(provided) > 1:
@@ -1110,30 +1135,37 @@ async def get_webex_device_info(inp: WebexInfoInput | dict) -> WebexInfoResponse
     },
     tags={"testing"},
 )
-async def test_get_webex_device_info(inp: WebexInfoInput | dict) -> WebexInfoResponse:
+async def test_get_webex_device_info(
+    mac: Annotated[MACAddress | None, field_from(WebexInfoInput, "mac")] = None,
+    ip: Annotated[IPAddress | None, field_from(WebexInfoInput, "ip")] = None,
+    device_name: Annotated[str | None, field_from(WebexInfoInput, "device_name")] = None,
+) -> WebexInfoResponse:
     """
-    Get Webex device details by MAC, IP, or device name. Returns product info, serial, connection status, workspace location, and environmental metrics.
+    Fetch details for a Webex device by MAC address, IP address, or display name.
 
-    Args:
-      inp: WebexInfoInput with mac, ip, OR device_name (one required)
+    Use when a user asks about a Webex or video-conferencing endpoint. Provide exactly one of mac, ip, or device_name. Chain with convert_celsius_to_fahrenheit to convert room temperature readings.
+
+    Optional: mac (colon-delimited), ip (IPv4 or IPv6), device_name (display name or SEP-prefixed MAC)
+
+    Examples:
+    - "What is the status of the Hall 7 Room Kit?"
+    - "Is the device at 10.100.253.10 online?"
+    - "Show me the Webex info for 00:11:22:33:44:55"
     """
-
-    if isinstance(inp, dict):
-        inp = WebexInfoInput(**inp)
 
     # Validate input
-    if not (inp.mac or inp.ip or inp.device_name):
+    if not (mac or ip or device_name):
         raise ToolError("At least one of mac, ip, or device_name must be specified")
-    if sum([inp.mac is not None, inp.ip is not None, inp.device_name is not None]) > 1:
+    if sum([mac is not None, ip is not None, device_name is not None]) > 1:
         raise ToolError("Only one of mac, ip, or device_name may be specified")
 
     # Return sample, but valid data for testing purposes
     sample_response = WebexInfoResponse(
-        name=inp.device_name or "Test Webex Device",
+        name=device_name or "Test Webex Device",
         product="Webex Room Kit",
         device_type="Room Device",
-        mac=inp.mac or "00:11:22:33:44:55",
-        ip=inp.ip or "192.0.2.10",
+        mac=mac or "00:11:22:33:44:55",
+        ip=ip or "192.0.2.10",
         serial_number="ABC123XYZ",
         software="RoomOS 10.20.1",
         connection_status="Connected",
@@ -1280,20 +1312,23 @@ async def get_ap_info(ap_name: str | None = None, ip: IPAddress | None = None) -
     },
     tags={"production"},
 )
-async def get_user_details_from_ise(ise_input: ISEInput | dict) -> ISEResponse:
+async def get_user_details_from_ise(
+    username: Annotated[str | None, field_from(ISEInput, "username")] = None,
+    mac: Annotated[MACAddress | None, field_from(ISEInput, "mac")] = None,
+    ip: Annotated[IPAddress | None, field_from(ISEInput, "ip")] = None,
+) -> ISEResponse:
     """
-    Query Cisco ISE for client auth session by username, MAC, or IP. Returns NAS, client IPs, AP, VLAN, SSID, and timestamp.
+    Query Cisco ISE for the active authentication session of a client by username, MAC address, or IP.
 
-    Args:
-        ise_input: ISEInput with username, mac, OR ip (one required)
+    Returns NAS IP, client IPs, associated AP, VLAN, SSID, and auth timestamp. Provide exactly one of username, mac, or ip. Chain get_ap_name_from_bssid on the associated_access_point field to resolve the AP name.
+
+    Optional: username (network login name), mac (colon-delimited), ip (IPv4 or IPv6)
+
+    Examples:
+    - "Is jdoe currently on the network?"
+    - "What SSID is the device with MAC 00:11:22:33:44:55 using?"
+    - "Find the ISE session for 10.100.253.10"
     """
-
-    if isinstance(ise_input, dict):
-        ise_input = ISEInput(**ise_input)
-
-    username = ise_input.username
-    mac = ise_input.mac
-    ip = ise_input.ip
 
     if not username and not mac and not ip:
         raise ToolError("One of username, mac, or ip is required")
@@ -1390,20 +1425,23 @@ async def get_user_details_from_ise(ise_input: ISEInput | dict) -> ISEResponse:
     },
     tags={"testing"},
 )
-async def test_get_user_details_from_ise(ise_input: ISEInput | dict) -> ISEResponse:
+async def test_get_user_details_from_ise(
+    username: Annotated[str | None, field_from(ISEInput, "username")] = None,
+    mac: Annotated[MACAddress | None, field_from(ISEInput, "mac")] = None,
+    ip: Annotated[IPAddress | None, field_from(ISEInput, "ip")] = None,
+) -> ISEResponse:
     """
-    Query Cisco ISE for client auth session by username, MAC, or IP. Returns NAS, client IPs, AP, VLAN, SSID, and timestamp.
+    Query Cisco ISE for the active authentication session of a client by username, MAC address, or IP.
 
-    Args:
-        ise_input: ISEInput with username, mac, OR ip (one required)
+    Returns NAS IP, client IPs, associated AP, VLAN, SSID, and auth timestamp. Provide exactly one of username, mac, or ip. Chain get_ap_name_from_bssid on the associated_access_point field to resolve the AP name.
+
+    Optional: username (network login name), mac (colon-delimited), ip (IPv4 or IPv6)
+
+    Examples:
+    - "Is jdoe currently on the network?"
+    - "What SSID is the device with MAC 00:11:22:33:44:55 using?"
+    - "Find the ISE session for 10.100.253.10"
     """
-
-    if isinstance(ise_input, dict):
-        ise_input = ISEInput(**ise_input)
-
-    username = ise_input.username
-    mac = ise_input.mac
-    ip = ise_input.ip
 
     if not username and not mac and not ip:
         raise ToolError("One of username, mac, or ip is required")
@@ -1433,24 +1471,23 @@ async def test_get_user_details_from_ise(ise_input: ISEInput | dict) -> ISERespo
     tags={"production"},
 )
 async def get_client_details_from_cat_center(
-    input_data: DNACInput | dict,
+    username: Annotated[str | None, field_from(DNACInput, "username")] = None,
+    mac: Annotated[MACAddress | None, field_from(DNACInput, "mac")] = None,
+    ip: Annotated[IPAddress | None, field_from(DNACInput, "ip")] = None,
 ) -> DNACResponse:
     """
-    Query Cisco Catalyst Center (DNA Center) for client health metrics by username, MAC, or IP.
-    Returns device type, OS, health scores (overall/onboard/connect), AP, and SSID.
-    IMPORTANT: This should always be checked when asked about an IP, unless NetBox returns valid data for the IP address.
+    Query Cisco Catalyst Center for wireless or wired client health by username, MAC address, or IP.
 
-    Args:
-       input_data: DNACInput with username, mac, OR ip (one required)
+    Returns device type, OS, health scores (overall/onboard/connect), AP, and SSID. Provide exactly one of username, mac, or ip. Always check this tool when asked about an IP unless NetBox already returned valid data; when only an IP is known it will be resolved to a MAC via CPNR internally.
+
+    Optional: username (network login name), mac (colon-delimited), ip (IPv4 or IPv6)
+
+    Examples:
+    - "What is the health score for jdoe's device?"
+    - "Show me Catalyst Center data for MAC 00:11:22:33:44:55"
+    - "What SSID is 10.100.253.10 connected to?"
     """
     # Validate input
-    if isinstance(input_data, dict):
-        input_data = DNACInput(**input_data)
-
-    username = input_data.username
-    mac = input_data.mac
-    ip = input_data.ip
-
     if not username and not mac and not ip:
         raise ToolError("At least one of username, mac, or ip must be specified")
     if sum([username is not None, mac is not None, ip is not None]) > 1:
@@ -1557,22 +1594,23 @@ async def get_client_details_from_cat_center(
     tags={"testing"},
 )
 async def test_get_client_details_from_cat_center(
-    input_data: DNACInput | dict,
+    username: Annotated[str | None, field_from(DNACInput, "username")] = None,
+    mac: Annotated[MACAddress | None, field_from(DNACInput, "mac")] = None,
+    ip: Annotated[IPAddress | None, field_from(DNACInput, "ip")] = None,
 ) -> DNACResponse:
     """
-    Query Cisco Catalyst Center (DNA Center) for client health metrics by username, MAC, or IP. Returns device type, OS, health scores (overall/onboard/connect), AP, and SSID.
+    Query Cisco Catalyst Center for wireless or wired client health by username, MAC address, or IP.
 
-    Args:
-       input_data: DNACInput with username, mac, OR ip (one required)
+    Returns device type, OS, health scores (overall/onboard/connect), AP, and SSID. Provide exactly one of username, mac, or ip. Always check this tool when asked about an IP unless NetBox already returned valid data.
+
+    Optional: username (network login name), mac (colon-delimited), ip (IPv4 or IPv6)
+
+    Examples:
+    - "What is the health score for jdoe's device?"
+    - "Show me Catalyst Center data for MAC 00:11:22:33:44:55"
+    - "What SSID is 10.100.253.10 connected to?"
     """
     # Validate input
-    if isinstance(input_data, dict):
-        input_data = DNACInput(**input_data)
-
-    username = input_data.username
-    mac = input_data.mac
-    ip = input_data.ip
-
     if not username and not mac and not ip:
         raise ToolError("At least one of username, mac, or ip must be specified")
     if sum([username is not None, mac is not None, ip is not None]) > 1:
@@ -1600,17 +1638,26 @@ async def test_get_client_details_from_cat_center(
     },
     tags={"production"},
 )
-async def get_dhcp_lease_info_from_cpnr(input: CPNRLeaseInput | dict) -> List[CPNRLeaseResponse]:
+async def get_dhcp_lease_info_from_cpnr(
+    ip: Annotated[IPAddress | None, field_from(CPNRLeaseInput, "ip")] = None,
+    mac: Annotated[MACAddress | None, field_from(CPNRLeaseInput, "mac")] = None,
+) -> List[CPNRLeaseResponse]:
     """
-    Query Cisco Prime Network Registrar (CPNR) for DHCP lease by IP or MAC. Returns hostname, MAC, scope, state, relay info (switch/VLAN/port), and reservation status.
-    A lease state of "leased" indicates an active lease. If multiple leases are returned for an IP or MAC, the one with state "leased" should be preferred, but all will be returned if present.
-    IMPORTANT: This should always be checked when asked about an IP, unless NetBox returns valid data for the IP address.
+    Look up DHCP lease records in CPNR by IP address or MAC address.
 
-    Args:
-        input: CPNRLeaseInput with ip OR mac (one required)
+    Returns hostname, MAC, scope, lease state, relay info (switch/VLAN/port), and reservation status. Provide exactly one of ip or mac. A "leased" state means active; prefer that entry when multiple results are returned. Always check this tool when investigating an IP unless NetBox already returned valid data.
+
+    Optional: ip (IPv4), mac (colon-delimited)
+
+    Examples:
+    - "Who has IP 10.100.253.10?"
+    - "What is the DHCP scope for MAC 00:11:22:33:44:55?"
+    - "Is 10.100.100.5 reserved?"
     """
 
-    leases = await _get_dhcp_lease_info_from_cpnr(input)
+    if not ip and not mac:
+        raise ToolError("At least one of ip or mac must be specified")
+    leases = await _get_dhcp_lease_info_from_cpnr({"ip": ip} if ip else {"mac": mac})
     if leases:
         return leases
 
@@ -1624,27 +1671,32 @@ async def get_dhcp_lease_info_from_cpnr(input: CPNRLeaseInput | dict) -> List[CP
     },
     tags={"testing"},
 )
-async def test_get_dhcp_lease_info_from_cpnr(input: CPNRLeaseInput | dict) -> List[CPNRLeaseResponse]:
+async def test_get_dhcp_lease_info_from_cpnr(
+    ip: Annotated[IPAddress | None, field_from(CPNRLeaseInput, "ip")] = None,
+    mac: Annotated[MACAddress | None, field_from(CPNRLeaseInput, "mac")] = None,
+) -> List[CPNRLeaseResponse]:
     """
-    Query Cisco Prime Network Registrar (CPNR) for DHCP lease by IP or MAC. Returns hostname, MAC, scope, state, relay info (switch/VLAN/port), and reservation status.
-    IMPORTANT: This should always be checked, unless NetBox returns valid data for the IP address.
+    Look up DHCP lease records in CPNR by IP address or MAC address.
 
-    Args:
-        input: CPNRLeaseInput with ip OR mac (one required)
+    Returns hostname, MAC, scope, lease state, relay info (switch/VLAN/port), and reservation status. Provide exactly one of ip or mac. A "leased" state means active; prefer that entry when multiple results are returned. Always check this tool when investigating an IP unless NetBox already returned valid data.
+
+    Optional: ip (IPv4), mac (colon-delimited)
+
+    Examples:
+    - "Who has IP 10.100.253.10?"
+    - "What is the DHCP scope for MAC 00:11:22:33:44:55?"
+    - "Is 10.100.100.5 reserved?"
     """
 
-    if isinstance(input, dict):
-        input = CPNRLeaseInput(**input)
-
-    if not input.mac and not input.ip:
+    if not mac and not ip:
         raise ToolError("At least one of mac or ip must be specified")
-    if input.mac is not None and input.ip is not None:
+    if mac is not None and ip is not None:
         raise ToolError("Only one of mac or ip may be specified")
 
     # Return sample, but valid data for testing purposes
     # Use input data for sample response
-    ip = input.ip or "192.0.2.10"
-    mac = input.mac or "00:11:22:33:44:55"
+    ip = ip or "192.0.2.10"
+    mac = mac or "00:11:22:33:44:55"
     sample_lease = CPNRLeaseResponse(
         ip=ip,
         name="test-host",
@@ -1801,19 +1853,23 @@ async def test_create_dhcp_reservation_in_cpnr(ip: IPAddress) -> bool:
         "readOnlyHint": True,
     }
 )
-async def perform_dns_lookup(input: DNSInput | dict) -> DNSResponse:
+async def perform_dns_lookup(
+    ip: Annotated[IPAddress | None, field_from(DNSInput, "ip")] = None,
+    hostname: Annotated[Hostname | None, field_from(DNSInput, "hostname")] = None,
+) -> DNSResponse:
     """
-    DNS lookup: forward (A/AAAA/CNAME) or reverse (PTR). Auto-appends domain for short hostnames.
+    Perform a forward (A/AAAA/CNAME) or reverse (PTR) DNS lookup.
 
-    Args:
-        input: DNSInput with ip OR hostname (one required)
+    Use to resolve a hostname to its IP addresses or an IP to its PTR record. Provide exactly one of ip or hostname. Short hostnames without a dot automatically get the site domain appended.
+
+    Optional: ip (IPv4 or IPv6), hostname (short name or FQDN)
+
+    Examples:
+    - "What IP does core-sw-01 resolve to?"
+    - "What is the hostname of 10.100.253.10?"
+    - "Look up the DNS records for 10.100.100.5"
     """
 
-    if isinstance(input, dict):
-        input = DNSInput(**input)
-
-    ip = input.ip
-    hostname = input.hostname
     target = ip or hostname
     if not target:
         raise ToolError("Either ip or hostname must be provided")
@@ -1970,19 +2026,28 @@ async def get_ipv4_from_ipv6(ipv6: IPAddress) -> IPAddress:
     },
     tags={"production"},
 )
-async def get_device_details_from_tool(inp: ToolInput) -> ToolResponse:
+async def get_device_details_from_tool(
+    name: Annotated[str | None, field_from(ToolInput, "name")] = None,
+    asset_tag: Annotated[str | None, field_from(ToolInput, "asset_tag")] = None,
+    ip: Annotated[IPAddress | None, field_from(ToolInput, "ip")] = None,
+) -> ToolResponse:
     """
-    Get details about the device from the network automation Tool.  This includes name, IP address, asset tag, SKU, and checked out status.
-    Needs ONLY one of name, asset tag, or IP.
+    Retrieve device inventory details from the NOC Tool by name, asset tag, or IP address.
+
+    Returns name, IP, asset tag, SKU, reachability, location, and return status. Provide exactly one of name, asset_tag, or ip.
+
+    Optional: name (device display name), asset_tag (inventory label), ip (IPv4)
+
+    Examples:
+    - "What are the details for core-sw-01?"
+    - "Look up device with asset tag CL-12345"
+    - "Is the device at 10.100.253.10 reachable?"
     """
 
-    if isinstance(inp, dict):
-        inp = ToolInput(**inp)
-
-    if not inp.name and not inp.asset_tag and not inp.ip:
+    if not name and not asset_tag and not ip:
         raise ToolError("Must provide at least one of name, asset tag, or IP")
 
-    matcher = inp.name or inp.asset_tag or inp.ip
+    matcher = name or asset_tag or ip
 
     try:
         async with httpx.AsyncClient(verify=tls_verify, timeout=REST_TIMEOUT) as client:
@@ -2026,14 +2091,23 @@ async def get_device_details_from_tool(inp: ToolInput) -> ToolResponse:
         "destructiveHint": False,
     }
 )
-async def create_wifi_snag(inp: GitHubIssueInput | dict, ctx: Context) -> GitHubIssueResponse:
+async def create_wifi_snag(
+    title: Annotated[str, field_from(GitHubIssueInput, "title")],
+    body: Annotated[str, field_from(GitHubIssueInput, "body")],
+    ctx: Context,
+) -> GitHubIssueResponse:
     """
-    Create a GitHub issue in the WiFi Snag repo.  For this tool to work, ask the user for a title and body.
-    For example, "what do you want to call this issue?" and, "please describe the issue in detail".
-    """
+    Create a new GitHub issue in the WiFi Snag repository to track a wireless problem.
 
-    if isinstance(inp, dict):
-        inp = GitHubIssueInput(**inp)
+    Always ask the user for both a title and a detailed description before calling this tool. Side effect: writes a GitHub issue to the configured SNAG_REPO.
+
+    Required: title (short summary), body (detailed description of the issue)
+
+    Examples:
+    - "Log a WiFi issue in Hall 8"
+    - "Create a snag for slow speeds on CLEUR-NOC"
+    - "File a ticket for the AP outage in Booth 42"
+    """
 
     if not hasattr(ctx.request_context.meta, "username"):
         username = "NOC Info Bot"
@@ -2041,8 +2115,8 @@ async def create_wifi_snag(inp: GitHubIssueInput | dict, ctx: Context) -> GitHub
         username = ctx.request_context.meta.username
 
     url = f"https://api.github.com/repos/{SNAG_REPO}/issues"
-    payload: Dict[str, Any] = {"title": inp.title}
-    payload["body"] = f"{username}|{inp.body}"
+    payload: Dict[str, Any] = {"title": title}
+    payload["body"] = f"{username}|{body}"
     if WIFI_SNAG_USER:
         payload["assignees"] = [WIFI_SNAG_USER]
 
