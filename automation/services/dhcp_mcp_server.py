@@ -756,7 +756,7 @@ def _load_bssid_cache() -> dict[str, str]:
             logger.info(f"Loaded cache with {len(bssids)} devices")
             return bssids
     except Exception as e:
-        logger.error(f"Failed to load cache file {cache_file}: {e}", exc_info=True)
+        logger.exception("Failed to load cache file %s", cache_file)
         return {}
 
 
@@ -846,15 +846,15 @@ async def get_librenms_alerts(device_name: Hostname | None = None) -> List[Alert
 
     except httpx.HTTPStatusError as he:
         if device_name:
-            logger.error(f"HTTP error getting alerts for device {device_name} from LibreNMS: {he}", exc_info=True)
+            logger.exception("HTTP error getting alerts for device %s from LibreNMS", device_name)
         else:
-            logger.error(f"HTTP error getting alerts from LibreNMS: {he}", exc_info=True)
+            logger.exception("HTTP error getting alerts from LibreNMS")
         raise ToolError(f"HTTP error {he.response.status_code}: {he.response.text}")
     except Exception as e:
         if device_name:
-            logger.error(f"Unable to get alerts for device {device_name} from LibreNMS: {e}", exc_info=True)
+            logger.exception("Unable to get alerts for device %s from LibreNMS", device_name)
         else:
-            logger.error(f"Unable to get alerts from LibreNMS: {e}", exc_info=True)
+            logger.exception("Unable to get alerts from LibreNMS")
         raise ToolError(e)
 
     return alerts
@@ -988,7 +988,7 @@ async def get_object_info_from_netbox(
             raise ValueError(f"No objects found in NetBox matching IP address {ip}")
 
     except Exception as e:
-        logger.error(f"Error getting object info from NetBox: {e}", exc_info=True)
+        logger.exception(f"Error getting object info from NetBox")
         raise ToolError(e)
 
 
@@ -1038,7 +1038,7 @@ async def get_vlan_name_from_ip(ip: IPAddress) -> str:
         return "N/A"
 
     except Exception as e:
-        logger.error(f"Error getting VLAN name from NetBox for IP {ip}: {e}", exc_info=True)
+        logger.exception("Error getting VLAN name from NetBox for IP %s", ip)
         raise ToolError(e)
 
 
@@ -1298,10 +1298,10 @@ async def get_ap_info(ap_name: str | None = None, ip: IPAddress | None = None) -
             search_term = f"name={ap_name}" if ap_name else f"ip={ip}"
             raise ToolError(f"AP with {search_term} not found in locations file")
     except yaml.YAMLError as e:
-        logger.error(f"Failed to parse YAML file {locations_file}: {e}", exc_info=True)
+        logger.exception("Failed to parse YAML file %s", locations_file)
         raise ToolError("Failed to parse AP locations file")
     except Exception as e:
-        logger.error(f"Failed to load AP locations file {locations_file}: {e}", exc_info=True)
+        logger.exception("Failed to load AP locations file %s", locations_file)
         raise ToolError("Failed to load AP locations file")
 
 
@@ -1352,10 +1352,10 @@ async def get_user_details_from_ise(
             )
             response.raise_for_status()
     except httpx.HTTPStatusError as e:
-        logger.error(f"HTTP error getting client details from ISE: {e}", exc_info=True)
+        logger.exception("HTTP error getting client details from ISE")
         raise ToolError(f"HTTP error {e.response.status_code}: {e.response.text}")
     except Exception as e:
-        logger.error(f"Unable to get client details from ISE: {e}", exc_info=True)
+        logger.exception("Unable to get client details from ISE")
         raise ToolError(e)
 
     session_details = xmltodict.parse(response.text)["sessionParameters"]
@@ -1735,10 +1735,10 @@ async def delete_dhcp_reservation_from_cpnr(ip: IPAddress) -> bool:
             response = await client.delete(url, auth=BASIC_AUTH, headers=CNR_HEADERS)
             response.raise_for_status()
     except httpx.HTTPStatusError as he:
-        logger.error(f"HTTP error deleting reservation for {ip} from CPNR: {he}", exc_info=True)
+        logger.exception("HTTP error deleting reservation for %s from CPNR", ip)
         raise ToolError(f"HTTP error {he.response.status_code}: {he.response.text}")
     except Exception as e:
-        msg = "Failed to delete reservation for %s: %s" % (ip, str(e))
+        msg = "Failed to delete reservation for %s" % ip
         logger.exception(msg)
         raise ToolError(msg)
 
@@ -1816,10 +1816,10 @@ async def create_dhcp_reservation_in_cpnr(ip: IPAddress) -> bool:
             response = await client.post(url, auth=BASIC_AUTH, headers=CNR_HEADERS, json=payload)
             response.raise_for_status()
     except httpx.HTTPStatusError as he:
-        logger.error(f"HTTP error creating reservation for {ip} => {mac_addr} in CPNR: {he}", exc_info=True)
+        logger.exception("HTTP error creating reservation for %s => %s in CPNR", ip, mac_addr)
         raise ToolError(f"HTTP error {he.response.status_code}: {he.response.text}")
     except Exception as e:
-        msg = f"Failed to create DHCP reservation for {ip} => {mac_addr}: {e}"
+        msg = "Failed to create DHCP reservation for %s => %s" % (ip, mac_addr)
         logger.exception(msg)
         raise ToolError(msg)
 
@@ -1985,10 +1985,10 @@ async def acknowledge_librenms_alert(alert_id: int, note: str | None = None, unt
             response.raise_for_status()
             return True
     except httpx.HTTPStatusError as he:
-        logger.error(f"Failed to acknolwedge alert in LibreNMS: {he}", exc_info=True)
+        logger.exception("Failed to acknolwedge alert in LibreNMS")
         raise ToolError(f"HTTP error {he.response.status_code}: {he.response.text}")
     except Exception as e:
-        logger.error(f"Failed to acknowledge alert in LibreNMS: {e}", exc_info=True)
+        logger.exception("Failed to acknowledge alert in LibreNMS")
         raise ToolError(e)
 
 
@@ -2077,10 +2077,10 @@ async def get_device_details_from_tool(
                         returned=device_returned,
                     )
     except httpx.HTTPStatusError as e:
-        logger.error(f"HTTP error getting device details from Tool: {e}", exc_info=True)
+        logger.exception("HTTP error getting device details from Tool")
         raise ToolError(f"HTTP error {e.response.status_code}: {e.response.text}")
     except Exception as e:
-        logger.error(f"Unable to get device details from Tool: {e}", exc_info=True)
+        logger.exception("Unable to get device details from Tool")
         raise ToolError(e)
 
 
@@ -2132,10 +2132,10 @@ async def create_wifi_snag(
             response.raise_for_status()
             data = response.json()
     except httpx.HTTPStatusError as he:
-        logger.error(f"HTTP error creating GitHub issue in {SNAG_REPO}: {he}", exc_info=True)
+        logger.exception("HTTP error creating GitHub issue in %s", SNAG_REPO)
         raise ToolError(f"HTTP error {he.response.status_code}: {he.response.text}")
     except Exception as e:
-        logger.error(f"Failed to create GitHub issue in {SNAG_REPO}: {e}", exc_info=True)
+        logger.exception("Failed to create GitHub issue in %s", SNAG_REPO)
         raise ToolError(e)
 
     return GitHubIssueResponse(
