@@ -755,7 +755,7 @@ def _load_bssid_cache() -> dict[str, str]:
             bssids = json.load(fd)
             logger.info(f"Loaded cache with {len(bssids)} devices")
             return bssids
-    except Exception as e:
+    except Exception:
         logger.exception("Failed to load cache file %s", cache_file)
         return {}
 
@@ -988,7 +988,7 @@ async def get_object_info_from_netbox(
             raise ValueError(f"No objects found in NetBox matching IP address {ip}")
 
     except Exception as e:
-        logger.exception(f"Error getting object info from NetBox")
+        logger.exception("Error getting object info from NetBox")
         raise ToolError(e)
 
 
@@ -1297,10 +1297,10 @@ async def get_ap_info(ap_name: str | None = None, ip: IPAddress | None = None) -
 
             search_term = f"name={ap_name}" if ap_name else f"ip={ip}"
             raise ToolError(f"AP with {search_term} not found in locations file")
-    except yaml.YAMLError as e:
+    except yaml.YAMLError:
         logger.exception("Failed to parse YAML file %s", locations_file)
         raise ToolError("Failed to parse AP locations file")
-    except Exception as e:
+    except Exception:
         logger.exception("Failed to load AP locations file %s", locations_file)
         raise ToolError("Failed to load AP locations file")
 
@@ -1737,7 +1737,7 @@ async def delete_dhcp_reservation_from_cpnr(ip: IPAddress) -> bool:
     except httpx.HTTPStatusError as he:
         logger.exception("HTTP error deleting reservation for %s from CPNR", ip)
         raise ToolError(f"HTTP error {he.response.status_code}: {he.response.text}")
-    except Exception as e:
+    except Exception:
         msg = "Failed to delete reservation for %s" % ip
         logger.exception(msg)
         raise ToolError(msg)
@@ -1818,7 +1818,7 @@ async def create_dhcp_reservation_in_cpnr(ip: IPAddress) -> bool:
     except httpx.HTTPStatusError as he:
         logger.exception("HTTP error creating reservation for %s => %s in CPNR", ip, mac_addr)
         raise ToolError(f"HTTP error {he.response.status_code}: {he.response.text}")
-    except Exception as e:
+    except Exception:
         msg = "Failed to create DHCP reservation for %s => %s" % (ip, mac_addr)
         logger.exception(msg)
         raise ToolError(msg)
